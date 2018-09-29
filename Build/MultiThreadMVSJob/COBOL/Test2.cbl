@@ -1,0 +1,6 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.  TEST2.
+
+       PROCEDURE DIVISION.
+           DISPLAY "Two".
+           STOP RUN.

@@ -1,0 +1,6 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.  TEST6.
+
+       PROCEDURE DIVISION.
+           DISPLAY "Six".
+           STOP RUN.
