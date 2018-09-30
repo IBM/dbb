@@ -1,7 +1,4 @@
-# Samples/API_Examples Folder
-The API_Examples folder contains short scripts demonstrating how to use DBB APIs that might not be found in the other Sample applications. 
-
-### ISPFExec/TSOExec Interactive Gateway Support Example (DBB v1.0.2 or higher)
+# ISPFExec/TSOExec Interactive Gateway Support Example (DBB v1.0.2 or higher)
 DBB v1.0 introduced the ISPFExec and TSOExec commands that allows users to run ISPF and TSO commands during their build process.  The DBB toolkit achieves this by using the [Legacy TSO/ISPF Client Gateway](https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.f54pc00/isppctsoclit.htm).  Beginning in DBB v1.0.2, users now have the option to use the [Interactive TSO/ISPF Client Gateway](https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.f54pc00/isppccea.htm).
 
 Advantages of using the Interactive ISPF Gateway:
