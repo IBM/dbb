@@ -1,10 +1,10 @@
-# Samples/Utilities Folder
-The Utilities folder is comprised of additional scripts to provided additional capabilities of IBM's Dependency Based Build. Currently, the scripts provided in this folder are:
+# BuildReportPruner
+Utility scripts demonstating rule based BuildReport pruning and preserving.
 * Pruner.groovy: allows the user to prune build results in the DBB Repository Web Application.
 * Saver.groovy: allows the user to toggle a save property in build results on the DBB Repository Web Application so that thwy cannot be pruned.
 
 
-## Configuring Utilities for your system
+## Configuring the BuildReport pruner for your system
 The Utilities folder contains a properties file that needs to be edited before some scripts can be executed. The instructions on what needs to be updated are included within the properties file.
 * user.properties - Contains credential properties to allow the user to connect to the DBB Repository Web Application
  
