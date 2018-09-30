@@ -17,6 +17,6 @@ Sample | Description
 [Build/MortgageApplication](https://github.com/IBM/dbb/tree/master/Build/MortgageApplication) | Sample application demonstrating many of the  build functions provided by DBB.
 [Build/MultiThreadMVSJob](https://github.com/IBM/dbb/tree/master/Build/MultiThreadMVSJob) | Sample showing how to modilfy a compilation script to run in a multi-thread environment.
 [Build/PublishLoadModules](https://github.com/IBM/dbb/tree/master/Build/PublishLoadModules) | Sample demonstrating how to publish load modules to Artifactory after a successful build.
-[Snippets/InteractiveGateway](https://github.com/IBM/dbb/tree/master/Snippets/InteractiveGateway) | Example showing how to use the new ISOFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
-[Utilities/BuildManager](https://github.com/IBM/dbb/tree/master/Utilities/BuildManager) | Background process for queueing and managing build scripts without additional JVM overhead.
+[Snippets/InteractiveGateway](https://github.com/IBM/dbb/tree/master/Snippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
+[Utilities/BuildManager](https://github.com/IBM/dbb/tree/master/Utilities/BuildManager) | Background process for queueing and managing build scripts without additional JVM start-up overhead.
 [Utilities/BuildReportPruner](https://github.com/IBM/dbb/tree/master/Utilities/BuildReportPruner) | Utility scripts demonstating rule based BuildReport pruning and preserving. 
