@@ -1,0 +1,42 @@
+*********************************************************************** 00010000
+EPSMORT    DFHMSD TYPE=&SYSPARM,MODE=INOUT,LANG=COBOL,              @P3CX0008000
+               STORAGE=AUTO,TIOAPFX=YES,DSATTS=(COLOR,HILIGHT),        X00090000
+               MAPATTS=(COLOR,HILIGHT)                                  00091000
+*       MENU MAP.
+EPMENU  DFHMDI SIZE=(24,80),CTRL=(PRINT,FREEKB)                         00110000
+LITLOAN  DFHMDF POS=(8,15),LENGTH=23,INITIAL='Amount of Loan:',        *
+               ATTRB=(ASKIP,NORM)
+EPLOAN   DFHMDF POS=(8,42),LENGTH=12,INITIAL='999999999.99',           *
+               ATTRB=(NUM,FSET,IC,NORM)
+         DFHMDF POS=(8,55),                                            *
+               ATTRB=ASKIP
+LITYEARS DFHMDF POS=(9,15),LENGTH=24,                                  *
+               INITIAL='Length of Loan in Years:',                     *
+               ATTRB=(PROT,NORM)
+EPYEARS  DFHMDF POS=(9,42),LENGTH=2,INITIAL='99',                      *
+               ATTRB=(NUM,FSET,NORM),COLOR=GREEN
+         DFHMDF POS=(9,45),LENGTH=0,                                   *
+               ATTRB=ASKIP
+EPDIFF1  DFHMDF POS=(10,15),LENGTH=22,INITIAL='Interest Rate: ',       *
+               ATTRB=(PROT,NORM)
+EPRATE   DFHMDF POS=(10,42),LENGTH=5,INITIAL='99.99',                  *
+               ATTRB=(NUM,FSET,NORM),COLOR=GREEN
+         DFHMDF POS=(15,7),LENGTH=60,                                  *
+               INITIAL='Press PF9 to see companies that can match or be*
+               at this rate',                                          *
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=BLUE
+         DFHMDF POS=(14,15),LENGTH=43,                                 *
+               INITIAL='Press F3 to quit or Enter to calculate loan',  *
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=BLUE
+EPDIFF2  DFHMDF POS=(17,15),LENGTH=22,INITIAL='Monthly Payment: ',     *
+               ATTRB=(PROT,NORM)
+EPPAYMNT DFHMDF POS=(17,42),LENGTH=12,                                 *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=YELLOW
+MSGERR  DFHMDF POS=(24,15),ATTRB=(PROT,DRK),LENGTH=40,                 X00340000
+               INITIAL='INVALID KEY PRESSED'                            00350000
+         DFHMDF POS=(2,48),LENGTH=0,                                   *
+               ATTRB=ASKIP
+         DFHMDF POS=(5,25),LENGTH=26,INITIAL='EPS MORTGAGE CALCULATOR',*
+               ATTRB=(ASKIP,BRT)
+EPSMORT  DFHMSD TYPE=FINAL                                               0036000
+        END                                                             00370000

@@ -1,0 +1,112 @@
+*********************************************************************** 00010000
+EPSMLIS  DFHMSD TYPE=&SYSPARM,MODE=INOUT,LANG=COBOL,                   X
+               STORAGE=AUTO,TIOAPFX=YES,DSATTS=(COLOR,HILIGHT),        X 0009000
+               MAPATTS=(COLOR,HILIGHT)                                   0009100
+EPSMLIS  DFHMDI SIZE=(24,80),CTRL=(PRINT,FREEKB)                         0011000
+         DFHMDF POS=(1,24),LENGTH=26,INITIAL='Better Mortgage Rates',  *
+               ATTRB=(ASKIP,BRT)
+         DFHMDF POS=(24,58),LENGTH=0,                                  *
+               ATTRB=ASKIP
+*       MENU MORTGAGE LIST.
+
+LITCOMP  DFHMDF POS=(3,1),LENGTH=24,INITIAL='Company',                 *
+               ATTRB=(ASKIP,NORM)
+LITPHN   DFHMDF POS=(3,26),LENGTH=13,INITIAL='Phone Number',           *
+               ATTRB=(PROT,NORM)
+EPDIFF1  DFHMDF POS=(3,40),LENGTH=13,INITIAL='Interest Rate',          *
+               ATTRB=(PROT,NORM)
+EPDIFF2  DFHMDF POS=(3,54),LENGTH=16,INITIAL='Monthly Payment',        *
+               ATTRB=(PROT,NORM)
+LITPHN1  DFHMDF POS=(3,71),LENGTH=7,INITIAL='# Years',                 *
+               ATTRB=(PROT,NORM)
+EPCMP1   DFHMDF POS=(4,1),LENGTH=24,                                   *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPPHN1   DFHMDF POS=(4,26),LENGTH=13,                                  *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPRATE1  DFHMDF POS=(4,45),LENGTH=5,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPLOAN1  DFHMDF POS=(4,56),LENGTH=12,                                  *
+               ATTRB=(NUM,IC,NORM)
+EPYEARS1 DFHMDF POS=(4,74),LENGTH=2,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPCMP2   DFHMDF POS=(5,1),LENGTH=24,                                   *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPPHN2   DFHMDF POS=(5,26),LENGTH=13,                                  *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPRATE2  DFHMDF POS=(5,45),LENGTH=5,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPLOAN2  DFHMDF POS=(5,56),LENGTH=12,                                  *
+               ATTRB=(NUM,IC,NORM)
+EPYEARS2 DFHMDF POS=(5,74),LENGTH=2,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPCMP3   DFHMDF POS=(6,1),LENGTH=24,                                   *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPPHN3   DFHMDF POS=(6,26),LENGTH=13,                                  *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPRATE3  DFHMDF POS=(6,45),LENGTH=5,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPLOAN3  DFHMDF POS=(6,56),LENGTH=12,                                  *
+               ATTRB=(NUM,IC,NORM)
+EPYEARS3 DFHMDF POS=(6,74),LENGTH=2,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPCMP4   DFHMDF POS=(7,1),LENGTH=24,                                   *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPPHN4   DFHMDF POS=(7,26),LENGTH=13,                                  *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPRATE4  DFHMDF POS=(7,45),LENGTH=5,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPLOAN4  DFHMDF POS=(7,56),LENGTH=12,                                  *
+               ATTRB=(NUM,IC,NORM)
+EPYEARS4 DFHMDF POS=(7,74),LENGTH=2,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPCMP5   DFHMDF POS=(8,1),LENGTH=24,                                   *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPPHN5   DFHMDF POS=(8,26),LENGTH=13,                                  *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPRATE5  DFHMDF POS=(8,45),LENGTH=5,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPLOAN5  DFHMDF POS=(8,56),LENGTH=12,                                  *
+               ATTRB=(NUM,IC,NORM)
+EPYEARS5 DFHMDF POS=(8,74),LENGTH=2,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPCMP6   DFHMDF POS=(9,1),LENGTH=24,                                   *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPPHN6   DFHMDF POS=(9,26),LENGTH=13,                                  *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPRATE6  DFHMDF POS=(9,45),LENGTH=5,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPLOAN6  DFHMDF POS=(9,56),LENGTH=12,                                  *
+               ATTRB=(NUM,IC,NORM)
+EPYEARS6 DFHMDF POS=(9,74),LENGTH=2,                                   *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPCMP7   DFHMDF POS=(10,1),LENGTH=24,                                  *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPPHN7   DFHMDF POS=(10,26),LENGTH=13,                                 *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPRATE7  DFHMDF POS=(10,45),LENGTH=5,                                  *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPLOAN7  DFHMDF POS=(10,56),LENGTH=12,                                 *
+               ATTRB=(NUM,IC,NORM)
+EPYEARS7 DFHMDF POS=(10,74),LENGTH=2,                                  *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPCMP8   DFHMDF POS=(11,1),LENGTH=24,                                  *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPPHN8   DFHMDF POS=(11,26),LENGTH=13,                                 *
+               ATTRB=(PROT,NORM),HILIGHT=OFF,COLOR=GREEN
+EPRATE8  DFHMDF POS=(11,45),LENGTH=5,                                  *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+EPLOAN8  DFHMDF POS=(11,56),LENGTH=12,                                 *
+               ATTRB=(NUM,IC,NORM)
+         DFHMDF POS=(11,69),                                           *
+               ATTRB=ASKIP
+EPYEARS8 DFHMDF POS=(11,74),LENGTH=2,                                  *
+               ATTRB=(NUM,NORM),COLOR=GREEN
+         DFHMDF POS=(11,77),LENGTH=0,                                  *
+               ATTRB=ASKIP
+         DFHMDF POS=(23,17),LENGTH=43,                                 *
+               INITIAL='Press F3 to quit or Enter to calculate loan',  *
+               ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=BLUE
+MSGERR   DFHMDF POS=(24,17),LENGTH=40,INITIAL='INVALID KEY PRESSED',   X
+               ATTRB=(PROT,DRK)
+EPSMLIS DFHMSD TYPE=FINAL
+        END
