@@ -52,7 +52,7 @@ new File(properties.workDir).mkdirs()
    
 // if buildHash argument omitted, then just copy MortgageApplication/build/files.txt to buildlist and exit
 if (properties.buildHash == null) {
-    println("** Git commit build hash option (--buildHash) omitted.  Copying $scriptDir/files.txt to $properties.workDir/buildlist.txt")
+    println("** Git commit build hash option (--buildHash) omitted.  Copying $scriptDir/files.txt to $properties.workDir/buildList.txt")
     Files.copy(Paths.get("$scriptDir/files.txt"), Paths.get("$properties.workDir/buildList.txt"))
 	System.exit(0)
 }    
@@ -67,7 +67,7 @@ if (lastBuildResult)
 
 // if no lastBuildHash, then just copy MortgageApplication/build/files.txt to buildlist and exit
 if (lastBuildHash == null) {
-    println("Could not locate last successful build commit hash for build group $properties.collection.  Copying $scriptDir/files.txt to $properties.workDir/buildlist.txt")
+    println("Could not locate last successful build commit hash for build group $properties.collection.  Copying $scriptDir/files.txt to $properties.workDir/buildList.txt")
     Files.copy(Paths.get("$scriptDir/files.txt"), Paths.get("$properties.workDir/buildList.txt"))
 	System.exit(0)
 }  
@@ -96,7 +96,7 @@ println(out)
       
 // if no changed files, created empty build list file and exit
 if (changedFiles.size() == 0) {
-	println("** No changed files detected since last successful build.  Creating empty file $properties.workDir/buildlist.txt")
+	println("** No changed files detected since last successful build.  Creating empty file $properties.workDir/buildList.txt")
 	new File("$properties.workDir/buildList.txt").createNewFile()
 	System.exit(0)
 }
@@ -144,7 +144,7 @@ changedFiles.each { changedFile ->
 }
 
 // Write build list to file
-println("** Writing buildlist to $properties.workDir/buildlist.txt")
+println("** Writing buildlist to $properties.workDir/buildList.txt")
 def buildListFile = new File("$properties.workDir/buildList.txt")
 buildList.each { file ->
     buildListFile << (file + "\n")
