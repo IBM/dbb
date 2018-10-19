@@ -12,6 +12,7 @@ For instructions on how to contribute new samples and bug fixes, please read the
 ## Content
 Sample | Description
 --- | ---
+[Automation/idManagement](https://github.com/IBM/dbb/tree/master/Automation/idManagement) | Create and delete ids on a z/OS system.
 [Build/BuildReport](https://github.com/IBM/dbb/tree/master/Build/BuildReport) | Sample showing how to extend the BuildReport to provide additional functionality
 [Build/HelloWorld](https://github.com/IBM/dbb/tree/master/Build/HelloWorld) | The HelloWorld sample provides simple source file types and the Groovy build scripts to compile them
 [Build/IDE](https://github.com/IBM/dbb/tree/master/Build/IDE) | A collection of 3 samples from PLI, COBOL, and ASM created by the IDz/ZOD team with instructions to run them on IDz/ZOD.
@@ -21,4 +22,4 @@ Sample | Description
 [Snippets/InteractiveGateway](https://github.com/IBM/dbb/tree/master/Snippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
 [Utilities/BuildManager](https://github.com/IBM/dbb/tree/master/Utilities/BuildManager) | Background process for queueing and managing build scripts without additional JVM start-up overhead.
 [Utilities/BuildReportPruner](https://github.com/IBM/dbb/tree/master/Utilities/BuildReportPruner) | Utility scripts demonstating rule based BuildReport pruning and preserving.
-[Automation/idManagement] (https://github.com/IBM/dbb/tree/master/Automation/idManagement) | Create and delete ids on a z/OS system.
+
