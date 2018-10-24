@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>MortgageApplication</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+		<nature>com.ibm.ftt.ui.views.project.navigator.local</nature>
+		<nature>com.ibm.ftt.dbbz.integration.dbbzprojectnature</nature>
+	</natures>
+</projectDescription>
