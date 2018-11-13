@@ -1,0 +1,75 @@
+//&USRID.SSHG  JOB '','SSH KEYGEN',NOTIFY=&USRID.,
+//       MSGCLASS=2,REGION=0M,CLASS=1,MSGLEVEL=1,
+//       SCHENV=JOB@ANY,LINES=(10000,WARNING)
+//*
+//*******************************************
+//*             DEL/DEF SSH PDS
+//*******************************************
+//DELPDS   EXEC PGM=IDCAMS
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD  *
+   DELETE &USRID..SSH.PDS PURGE
+   IF MAXCC LT 9 THEN SET MAXCC EQ 0
+                 ELSE SET MAXCC EQ 16
+/*
+//ALLOC  EXEC PGM=IEFBR14
+//SSHPDS DD  DSN=&USRID..SSH.PDS,
+//             DCB=(RECFM=VB,LRECL=1000,BLKSIZE=0),
+//             DISP=(NEW,CATLG,DELETE),
+//             SPACE=(CYL,(1,1,1),RLSE),
+//             LABEL=RETPD=300,UNIT=DISK
+//*******************************************
+//*             SSH KEY GEN
+//*******************************************
+//SSHGEN  EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+set -x
+echo ' '
+echo 'Current working directory :'
+echo ' '
+pwd
+
+echo ' '
+echo 'Deleting the directory if it exists'
+echo ' '
+rm -fR  .ssh
+mkdir .ssh
+ssh-keygen -f /u/&LOWUSR./.ssh/id_rsa -q -N ""
+ssh-keyscan -H sfgitlab.opr.statefarm.org >>>> ~/.ssh/known_hosts
+/*
+//STDENV    DD DSN=C03058.MFCD.GIT.GITPARMS,DISP=SHR
+/*
+//*******************************************
+//*             COPY PUBLIC KEY TO PDS
+//*******************************************
+//CPYSTEP  EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+)BLANK
+/sf/dbbz/bin/groovyz copytopds.groovy \
+/u/&LOWUSR./.ssh/id_rsa.pub \
+&USRID..SSH.PDS \
+PUB1
+)BLANK
+//*******************************************
+//*             EMAIL SSH KEY
+//*******************************************
+//EMAILKEY EXEC PLIXG,
+//             PROG=PIQCY,
+//             GPARM='DEV TO PROD'
+//STEPLIB DD DSN=C03058.MFCD.GIT.LOAD,DISP=SHR
+//        DD DSN=SFDEV.PROD.LOADLIB8,DISP=SHR
+//SYSPRINT  DD SYSOUT=*
+//CARDIN    DD *
+SUBJECT: SSH PUB KEY
+10&USRID.
+/*
+//MEMOIN    DD DSN=&USRID..SSH.PDS(PUB1),DISP=SHR
+/*

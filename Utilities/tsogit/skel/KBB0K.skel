@@ -1,0 +1,90 @@
+//&USRID.PUSH  JOB '','PUSH REPO',NOTIFY=&USRID.,
+//       MSGCLASS=2,REGION=0M,CLASS=1,MSGLEVEL=1,
+//       SCHENV=JOB@ANY,LINES=(10000,WARNING)
+//*
+//*******************************************
+//*          Copy to HFS STEP
+//*******************************************
+)SET  SCRPT = copytohfs
+)IM KBB0Q
+//*******************************************
+//*             ADD   STEP
+//*******************************************
+//ADDSTP  EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+set -x
+echo ' '
+echo 'Current working directory :'
+echo ' '
+pwd
+
+echo ' '
+echo 'Switching to the repository direectory'
+echo ' '
+cd &GITPROJ.
+echo ' '
+echo 'Add changes'
+echo ' '
+git add . 2>>&&1
+/*
+//STDENV    DD DSN=C03058.MFCD.GIT.GITPARMS,DISP=SHR
+/*
+//*******************************************
+//*             COMMIT STEP
+//*******************************************
+//CMITSTP EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+set -x
+echo ' '
+echo 'Current working directory :'
+echo ' '
+pwd
+
+echo ' '
+echo 'Switching to the repository direectory'
+echo ' '
+cd &GITPROJ.
+echo ' '
+echo 'commit changes'
+echo ' '
+git commit -m '&comitmsg.' 2>>&&1
+/*
+//STDENV    DD DSN=C03058.MFCD.GIT.GITPARMS,DISP=SHR
+/*
+/*
+//*******************************************
+//*             PUSH   STEP
+//*******************************************
+//PUSHSTP EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+set -x
+echo ' '
+echo 'Current working directory :'
+echo ' '
+pwd
+
+echo ' '
+echo 'Switching to the repository direectory'
+echo ' '
+cd &GITPROJ.
+echo ' '
+echo 'Doing a Git Push'
+echo ' '
+
+git push origin &BRNCHNAM. 2>>&&1
+/*
+//STDENV    DD DSN=C03058.MFCD.GIT.GITPARMS,DISP=SHR
+/*
+/*

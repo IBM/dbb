@@ -23,4 +23,4 @@ Sample | Description
 [Utilities/BuildManager](https://github.com/IBM/dbb/tree/master/Utilities/BuildManager) | Background process for queueing and managing build scripts without additional JVM start-up overhead.
 [Utilities/BuildReportPruner](https://github.com/IBM/dbb/tree/master/Utilities/BuildReportPruner) | Utility scripts demonstating rule based BuildReport pruning and preserving.
 [Utilities/Jenkins](https://github.com/IBM/dbb/tree/master/Utilities/Jenkins) | Utility shell scripts supplied to address issues when running Jenkins remote agents on z/OS UNIX System Services (USS).
-
+[Utilities/tsogit](https://github.com/IBM/dbb/tree/master/Utilities/tsogit) | REXX utility tool used to provide basic Git functionality against GitLab.  The tool manages copying code from the local Git repo on Unix System Services (USS) to the Partition Data Set (PDS) where code changes are made.

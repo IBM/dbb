@@ -1,0 +1,257 @@
+)ATTR
+   @ TYPE(TEXT)   INTENS(LOW)  SKIP(ON) CAPS(OFF)
+   _ TYPE(INPUT)  INTENS(LOW)  HILITE(USCORE) COLOR(WHITE) CAPS(OFF)
+   % TYPE(INPUT)  INTENS(LOW)  HILITE(USCORE) COLOR(WHITE) CAPS(ON)
+   # TYPE(TEXT)   INTENS(HIGH) CAPS(OFF)
+   ¢ TYPE(OUTPUT) INTENS(HIGH) CAPS(OFF)
+   $ TYPE(TEXT)   INTENS(LOW) CAPS(ON) SKIP(ON) CAPS(OFF)
+/********************************************************************/
+/*                                                                  */
+/* NAME:  sacxs                                                     */
+/*                                                                  */
+/*    DESCRIPTION: Push panel for git utility generator             */
+/*                                                                  */
+/********************************************************************/
+/*                    LOG OF CHANGES                                */
+/*                                                                  */
+/* VER  CONTROL  YYYY/MM/DD  ANALYST   DESCRIPTION                  */
+/* ---  -------  ----------  -------   -----------                  */
+/* A00  MF-CD    2018/09/25  balaji    initial creation             */
+/*
+/*
+/*                                                                  */
+/********************************************************************/
+
+)BODY EXPAND(!!)
+
++! !    GIT UTILITY GENERATOR - Push      ! !
++
++Command ===>_ZCMD
++
++
+ Please enter needed info and hit Enter.  (** Case Sensitive)
+
+
+
+  Git Group        : _z                                       $  **
+
+  Git Project      : _z                                       $  **
+
+  Program name     : _z    $  **
+
+
+  Branch Name      : _z                   $  **
+
+
+  Input pds prefix : %z                   $
+
+  Git commit message _z                                       $
+
+
+  Enter (Y/N) for each component type. Entering a Y presents a screen
+  where you enter a list of components of that type alone.
+
+
+  Cobol : _z$    Pli : _z$   Jcl : _z$ Linkdeck : _z$
+
+  Rexx  : _z$   Skel : _z$  Panel: _z$ Message  : _z$
+
+copybook: _z$   psb  : _z$  dbd  : _z$ bmsmap   : _z$
+
+
+¢MSGX1
+)INIT
+  .ZVARS = '(GITGRP,GITPROJ,PGMNAME,BRNCHNAM,PDSHLQ,COMITMSG +
+             CBLFLG PLIFLG JCLFLG LNKFLG REXFLG SKELFLG PNLFLG   +
+             MSGFLG CPYFLG PSBFLG DBDFLG BMSFLG )'
+  .CURSOR   = GITGRP
+  &ZCMD     = ' '
+  &GITGRP   = ' '
+  &GITPROJ  = ' '
+  &BRNCHNAM = ' '
+  &PDSHLQ   = ' '
+  &COMITMSG = ' '
+  &PGMNAME  = ' '
+  &CBLFLG   = ' '
+  &PLIFLG   = ' '
+  &JCLFLG   = ' '
+  &LNKFLG   = ' '
+  &REXFLG   = ' '
+  &SKELFLG  = ' '
+  &PNLFLG   = ' '
+  &MSGFLG   = ' '
+  &CPYFLG   = ' '
+  &PSBFLG   = ' '
+  &DBDFLG   = ' '
+  &BMSFLG   = ' '
+
+  VGET (GITGRP GITPROJ PGMNAME BRNCHNAM PDSHLQ) PROFILE
+  VGET (CBLFLG PLIFLG JCLFLG LNKFLG) PROFILE
+  VGET (REXFLG SKELFLG PNLFLG MSGFLG) PROFILE
+  VGET (CPYFLG PSBFLG DBDFLG BMSFLG) PROFILE
+)PROC
+  IF (VER(&GITGRP,NB))
+  ELSE
+      &ZEDLMSG = 'Please enter a git group name'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(GITGRP) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&GITPROJ,NB))
+  ELSE
+      &ZEDLMSG = 'Please enter a git project name'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(GITPROJ) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&BRNCHNAM,NB))
+  ELSE
+      &ZEDLMSG = 'Please enter a git branch name'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(BRNCHNAM) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+
+  IF (&BRNCHNAM EQ MASTER OR &BRNCHNAM EQ master)
+    &ZEDLMSG = 'Push to master not allowed. Enter another branch name'
+    .MSGLOC = MSGX1
+    .MSG = ISRZ001
+    .ATTR(BRNCHNAM) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+
+  IF (VER(&PGMNAME,NB))
+  ELSE
+      &ZEDLMSG = 'Please enter a program name'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(GITPROJ) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&PDSHLQ,NB))
+  ELSE
+      &ZEDLMSG = 'Please enter a hlq'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(PDSHLQ) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&COMITMSG,NB))
+  ELSE
+      &ZEDLMSG = 'Please enter a commit message'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(COMITMSG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&CBLFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(CBLFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&PLIFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(PLIFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&JCLFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(JCLFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&LNKFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(LNKFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&REXFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(REXFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&SKELFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(SKELFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&PNLFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(PNLFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+  IF (VER(&MSGFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(MSGFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+
+  IF (VER(&CPYFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(CPYFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+
+  IF (VER(&PSBFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(PSBFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+
+  IF (VER(&DBDFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(DBDFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+
+  IF (VER(&BMSFLG,NB,LIST,Y,y,N,n))
+  ELSE
+      &ZEDLMSG = 'Please enter a Y/N'
+      .MSGLOC = MSGX1
+      .MSG = ISRZ001
+    .ATTR(BMSFLG) = 'HILITE(REVERSE)'
+    GOTO THEEND
+
+
+  VPUT (GITGRP GITPROJ PGMNAME BRNCHNAM PDSHLQ COMITMSG) PROFILE
+  VPUT (CBLFLG PLIFLG JCLFLG LNKFLG ) PROFILE
+  VPUT (REXFLG SKELFLG PNLFLG MSGFLG) PROFILE
+  VPUT (CPYFLG PSBFLG DBDFLG BMSFLG) PROFILE
+
+THEEND:
+)END

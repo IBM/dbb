@@ -1,0 +1,18 @@
+//&USRID.SSHT  JOB '','SSH TEST  ',NOTIFY=&USRID.,
+//       MSGCLASS=2,REGION=0M,CLASS=1,MSGLEVEL=1,
+//       SCHENV=JOB@ANY,LINES=(10000,WARNING)
+//*
+//*******************************************
+//*             TEST SSH CONNECTION
+//*******************************************
+//TESTSSH EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+
+ssh -T git@sfgitlab.opr.statefarm.org
+/*
+//STDENV    DD DSN=C03058.MFCD.GIT.GITPARMS,DISP=SHR
+/*

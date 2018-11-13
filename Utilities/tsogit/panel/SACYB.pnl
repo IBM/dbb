@@ -1,0 +1,59 @@
+)ATTR
+   @ TYPE(TEXT)   INTENS(HIGH)  SKIP(ON) CAPS(ON) COLOR(WHITE)
+   _ TYPE(INPUT)  INTENS(HIGH) CAPS(ON) HILITE(USCORE) COLOR(WHITE)
+   # TYPE(TEXT)   INTENS(HIGH) COLOR(WHITE)
+   ¢ TYPE(OUTPUT) INTENS(HIGH) COLOR(WHITE)
+   $ TYPE(TEXT)   INTENS(HIGH) CAPS(ON) SKIP(ON) COLOR(WHITE)
+/********************************************************************/
+/*                                                                  */
+/* NAME:  sacyb                                                     */
+/*                                                                  */
+/*    DESCRIPTION: submit jcl panel                                 */
+/*                                                                  */
+/********************************************************************/
+/*                    LOG OF CHANGES                                */
+/*                                                                  */
+/* VER  CONTROL  YYYY/MM/DD  ANALYST   DESCRIPTION                  */
+/* ---  -------  ----------  -------   -----------                  */
+/* A00  MF-CD    2018/11/02  balaji    initial creation             */
+/*                                                                  */
+/*                                                                  */
+/*                                                                  */
+/*                                                                  */
+/********************************************************************/
+
+)BODY EXPAND(!!)
++
++! !    JCL SUBMIT/EDIT SCREEN            ! !
++
++Command ===>_ZCMD
++
++
+
+
+
+ Please select option and hit Enter.
+
+
+                      1. Submit JCL just created
+                      2. Edit JCL just created
+
+             #Option:_Z$
+
+
+¢MSGX
+
+
+)INIT
+  .ZVARS = '(SUBJOB)'
+  .CURSOR = SUBJOB
+  &SUBJOB = ' '
+)PROC
+  IF (VER(&SUBJOB,LIST,NB,1,2))
+  ELSE
+      &ZEDLMSG = 'Please enter a valid opt.'
+      .MSGLOC = MSGX
+      .MSG = ISRZ001
+    .ATTR(SUBJOB) = 'HILITE(REVERSE)'
+  VPUT (SUBJOB) PROFILE
+)END

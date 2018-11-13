@@ -1,0 +1,76 @@
+//&USRID.CMDS  JOB '','EXEC CMD',NOTIFY=&USRID.,
+//       MSGCLASS=2,REGION=0M,CLASS=1,MSGLEVEL=1,
+//       SCHENV=JOB@ANY,LINES=(10000,WARNING)
+//*
+//*******************************************
+//* TWO STEPS HAVE BEEN CODED IN THIS SAMPLE.
+//*
+//* CPYSTEP :COPY ARTIFACTS BETWEEN
+//*           USS AND Z/OS AND VICE VERSA.
+//*           MAKE CHANGES TO THE SAMPLE
+//*           COMMANDS IN STDIN
+//*
+//* USSSTEP :EXECUTE GIT COMMANDS AND UNIX
+//*          COMMANDS. THE COMMANDS SHOULD
+//*          BE ENTERED IN STDIN DD
+//*
+//* commands are CASE sensitive
+//*
+//*******************************************
+//*
+//CPYSTEP  EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//*
+//*
+//*
+//*
+//* HOW TO EDIT THE COPY STEP STDIN
+//*
+//* COPYTOHFS - COPIES FROM PDS TO USS DIRECTORY
+//*
+//* COPYTOPDS - COPIES FROM USS DIRECTORY TO PDS
+//*
+//* /SF/DBBZ/BIN/GROOVYZ COPYTOHFS.GROOVY \   ---  NO CHANGES
+//* /U/XXXX/YYYYYYYYYYYYYYY\  ----  XXXX - ALIAS YYY --  GIT REPO NAME
+//* /AAAAA/BBB/CCCCC.EXT \ --- AAAA -PGMNAME BBB - FOLDER CCCC -COMPNAM
+//* DDDD.DDDDD.DDDDD \----  PDS NAME
+//* MXXYY
+//*
+//*
+//*
+//*
+//STDIN     DD *
+
+/sf/dbbz/bin/groovyz copytohfs.groovy \
+/u/dq9u/buildScriptsApp\
+/pxxxx/pli/mxxyy.pli \
+DQ9U.PXXXX.OCT11.PLI \
+mxxyy
+
+/sf/dbbz/bin/groovyz copytopds.groovy \
+/u/dq9u/buildScriptsApp\
+/pxxxx/pli/mxxyy.pli \
+DQ9U.PXXXX.OCT11.PLI \
+mxxyy
+                                           **
+//*******************************************
+//* EXECUTE UNIX/GIT COMMANDS WITH THIS STEP
+//*******************************************
+//USSSTP  EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+/*
+//STDENV    DD DSN=C03058.MFCD.GIT.GITPARMS,DISP=SHR
+git pull origin balaji1 \
+--verbose \
+2>>&&1
+
+ls -la
+
+/*

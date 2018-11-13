@@ -1,0 +1,79 @@
+//&USRID.CLON  JOB '','CLONE REPO',NOTIFY=&USRID.,
+//       MSGCLASS=2,REGION=0M,CLASS=1,MSGLEVEL=1,
+//       SCHENV=JOB@ANY,LINES=(10000,WARNING)
+//*
+//*******************************************
+//*             CLONE STEP
+//*******************************************
+//CLONE   EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+set -x
+echo ' '
+echo 'Current working directory :'
+echo ' '
+pwd
+
+echo ' '
+echo 'Deleting the directory if it exists'
+echo ' '
+rm -fR  &GITPROJ.
+
+echo ' '
+echo 'Cloning the repository'
+echo ' '
+git clone  \
+--progress \
+git@sfgitlab.opr.statefarm.org:\
+&GITGRP./\
+&GITPROJ..git \
+2>>&&1
+/*
+//STDENV    DD DSN=C03058.MFCD.GIT.GITPARMS,DISP=SHR
+/*
+//*******************************************
+//*             BRANCH STEP
+//*******************************************
+//BRANCH  EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+set -x
+echo ' '
+echo 'Current working directory :'
+echo ' '
+pwd
+
+echo ' '
+echo 'Switching to the directory where the repository has been cloned'
+echo ' '
+cd &GITPROJ.
+
+)IF &BRNCHFLG. = Y  | &BRNCHFLG. = y THEN
+)DO
+echo ' '
+echo 'Creating the new branch'
+echo ' '
+git checkout -b &BRNCHNAM.
+)ENDDO
+)ELSE
+)DO
+echo ' '
+echo 'Switching to the existing branch'
+echo ' '
+git checkout &BRNCHNAM.
+)ENDDO
+/*
+//STDENV    DD DSN=C03058.MFCD.GIT.GITPARMS,DISP=SHR
+/*
+)IM KBB0P
+)SET  SCRPT = copytopds
+//*******************************************
+//*          Copy to PDS STEP
+//*******************************************
+)IM KBB0Q

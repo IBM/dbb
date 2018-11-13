@@ -1,0 +1,19 @@
+//&USRID.UPLD JOB '',NOTIFY=&USRID.,                                    00010001
+//        REGION=5000K,CLASS=9,SCHENV=DB2@HA0D,                         00030000
+//        MSGLEVEL=1,MSGCLASS=F                                         00040000
+//STEP20 EXEC PGM=IEBCOPY                                               00050001
+//SYSPRINT DD SYSOUT=*                                                  00060001
+//IN1     DD  DSN=&UPLDDS.,DISP=SHR                                     00062001
+//OUT1  DD DSN=&LG600DS.,DISP=SHR                                       00080001
+//SYSUT3 DD UNIT=TEMPDISK,SPACE=(CYL,(180,50),RLSE)                     00090001
+//SYSUT4 DD UNIT=TEMPDISK,SPACE=(CYL,(180,50),RLSE)                     00100001
+//SYSIN DD *                                                            00110001
+ COPY OUTDD=OUT1,INDD=((IN1,R))                                         00120001
+ COPY OUTDD=OUT1,I=OUT1                                                 00130001
+/*                                                                      00140001
+//STEP20   EXEC PGM=IDCAMS                                              00150001
+//SYSPRINT DD SYSOUT=*                                                  00160001
+//SYSIN    DD *                                                         00170001
+    DELETE &UPLDDS.        PURGE                                        00180001
+ IF MAXCC GT 8 THEN SET MAXCC = 16                                      00220001
+/*                                                                      00230001

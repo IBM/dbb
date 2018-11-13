@@ -1,0 +1,42 @@
+//&USRID.RQ JOB ,'UPLOAD RQST',
+//    MSGLEVEL=1,MSGCLASS=2,CLASS=1,REGION=2048K,
+//    SCHENV=JOB@ANY
+//*********************************************************************/
+//*****************************************************************
+/*
+//DELP10   EXEC PGM=IDCAMS
+//SYSPRINT  DD SYSOUT=*
+//SYSIN     DD *
+    DELETE &USRID..TEMP.RQST PURGE
+  IF MAXCC GT 8 THEN SET MAXCC = 16
+               ELSE SET MAXCC = 0
+/*
+//STEP10  EXEC PGM=IEBGENER
+//SYSPRINT  DD SYSOUT=*
+//SYSUT1  DD *
+&USRID.
+&TSTMP.
+/*
+//SYSUT2  DD DSN=&USRID..TEMP.RQST,
+//          UNIT=DISK,
+//          DCB=(RECFM=FB,LRECL=80,BLKSIZE=0,DSORG=PS),
+//          SPACE=(TRK,(1,1)),DISP=(NEW,CATLG,DELETE)
+//SYSIN     DD DUMMY
+/*
+//STEP20   EXEC CDCOPY
+//FROMDD   DD  DSN=&USRID..TEMP.RQST,
+//             DISP=SHR
+//SYSIN     DD  *
+    SIGNON                                         -
+         ESF=YES
+  SUBMIT PROC=COPYGDG SNODE=TSDEV                   -
+                   &&DDNAME=FROMDD                   -
+                 &&DSN2=PIC.MFCD.ISS.RQST(+1) -
+                   &&DISP2=(NEW,CATLG)               -
+                   &&UNIT=DISK                       -
+                   &&SPACE=(TRK,(1,2),RLSE)          -
+                   &&WTO=YES                         -
+                   &&WTODSN=DSN2                    -
+                   NEWNAME=&USRID.RQ
+  SIGNOFF
+/*

@@ -1,0 +1,139 @@
+//CPYSTEP  EXEC PGM=COZBATCH
+//STEPLIB   DD DSN=SYS1.COZSSH.LOADLIB,DISP=SHR
+//SYSOUT    DD SYSOUT=*
+//STDOUT    DD SYSOUT=*
+//STDERR    DD SYSOUT=*
+//STDIN     DD *
+)SEL &CBLFLG. = Y
+)DOT CBLLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./cobol/&COMPNAM..cbl \
+&PDSHLQ..COBOL \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &PLIFLG. = Y
+)DOT PLILIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./pli/&COMPNAM..pli \
+&PDSHLQ..PLI \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &LNKFLG. = Y
+)DOT LNKLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./link/&COMPNAM..lnk \
+&PDSHLQ..LINK \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &JCLFLG. = Y
+)DOT JCLLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./jcl/&COMPNAM..jcl \
+&PDSHLQ..JCL  \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &REXFLG. = Y
+)DOT REXLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./rexx/&COMPNAM..rex \
+&PDSHLQ..ISPCLIB \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &PNLFLG. = Y
+)DOT PNLLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./panel/&COMPNAM..pnl \
+&PDSHLQ..ISPPLIB \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &MSGFLG. = Y
+)DOT MSGLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./message/&COMPNAM..pmsg \
+&PDSHLQ..ISPMLIB \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &SKELFLG. = Y
+)DOT SKELLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./skel/&COMPNAM..skel \
+&PDSHLQ..ISPSLIB \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &CPYFLG. = Y
+)DOT CPYLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./copybook/&COMPNAM..cpy \
+&PDSHLQ..COPYBOOK \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &PSBFLG. = Y
+)DOT PSBLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./psb/&COMPNAM..psb \
+&PDSHLQ..PSB \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &DBDFLG. = Y
+)DOT DBDLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./dbd/&COMPNAM..dbd \
+&PDSHLQ..DBD \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+)SEL &BMSFLG. = Y
+)DOT BMSLIST
+)BLANK
+/sf/dbbz/bin/groovyz &SCRPT..groovy \
+/u/&LOWUSR./&GITPROJ.\
+/&PGMNAME./bms/&COMPNAM..bms \
+&PDSHLQ..BMS \
+&COMPNAM.
+)BLANK
+)ENDDOT
+)ENDSEL
+/*
