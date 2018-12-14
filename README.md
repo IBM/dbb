@@ -19,8 +19,11 @@ Sample | Description
 [Build/MortgageApplication](https://github.com/IBM/dbb/tree/master/Build/MortgageApplication) | Sample application demonstrating many of the  build functions provided by DBB.
 [Build/MultiThreadMVSJob](https://github.com/IBM/dbb/tree/master/Build/MultiThreadMVSJob) | Sample showing how to modilfy a compilation script to run in a multi-thread environment.
 [Build/PublishLoadModules](https://github.com/IBM/dbb/tree/master/Build/PublishLoadModules) | Sample demonstrating how to publish load modules to Artifactory after a successful build.
+[Migration/mappingExtension](https://github.com/IBM/dbb/tree/master/Migration/mappingExtension) | Sample showing how to extend the DBB Migration tool script to detect possible round-trip encoding problems when importing and loading to HFS.
+[Migration/sclm](https://github.com/IBM/dbb/tree/master/Migration/sclm) | This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
 [Snippets/InteractiveGateway](https://github.com/IBM/dbb/tree/master/Snippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
+[Snippets/zUnitTestCase](https://github.com/IBM/dbb/tree/master/Snippets/zUnitTestCase) | Example showing how to use the JCLExec command added in DBB v1.0.1
 [Utilities/BuildManager](https://github.com/IBM/dbb/tree/master/Utilities/BuildManager) | Background process for queueing and managing build scripts without additional JVM start-up overhead.
 [Utilities/BuildReportPruner](https://github.com/IBM/dbb/tree/master/Utilities/BuildReportPruner) | Utility scripts demonstating rule based BuildReport pruning and preserving.
 [Utilities/Jenkins](https://github.com/IBM/dbb/tree/master/Utilities/Jenkins) | Utility shell scripts supplied to address issues when running Jenkins remote agents on z/OS UNIX System Services (USS).
-
+[Utilities/ReadSMFRecords](https://github.com/IBM/dbb/tree/master/Utilities/ReadSMFRecords) | Groovy scripts to read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities.
