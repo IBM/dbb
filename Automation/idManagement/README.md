@@ -25,11 +25,11 @@ https://commons.apache.org/proper/commons-cli/
 
 In each of the scripts there are two hardcoded definitions that must be
 modified prior to use. You will find:
-a DDStatement with("HLQ.ISPFGWY.EXEC") specification. The HLQ must be modified
+a DDStatement with ("HLQ.ISPFGWY.EXEC") specification. The HLQ must be modified
 to identify a High Level Qualifier on your system.
-a conf directory in the statement cmd.setConfDir("/var/dbb/conf"). The
+a conf directory in the statement cmd.setConfDir ("/var/dbb/conf"). The
 directory needs to be created on your system (it can be any directory)
 
 In addition the useradd script points to a properties file that has been
-hardcoded to a default /etc/IBM/ directory. This is to allow the useradd script
+hardcoded to a default `/etc/IBM/` directory. This is to allow the useradd script
 be run with those defaults identified.
