@@ -28,16 +28,18 @@ Please review the [SCLM Assumptions documentation](https://github.com/IBM/dbb/bl
 * Fill in information related to the SCLM project in conf/sclmmig.config file.
 
 ## Migration Phases
-* The migration process is comprised of three phases each containing multiple steps.  The phases and steps need to be executed in the order presented here.
-    1. SCLM Extraction
-    2. Source Code Migration
-    3. Build Script Generation (Coming Soon)
+The migration process is comprised of three phases each containing multiple tasks.  
+* Phase 1 - SCLM Extraction
+* Phase 2 - Source Code Migration
+* Phase 3 - Build Script Generation (Coming Soon)
 
-### SCLM Extraction
-This step involves 3 tasks corresponding to the 3 shell scripts in the 'bin' directory.
-Each of the shell scripts calls the same Groovy script in 'SclmExtract.groovy' and pass in
-the target REXX execute which is one of the 3 REXX files in the 'rexx' directory.  The 'SclmExtract.groovy'
-actually calls this REXX script using ISPFExec API. At the end of each task, user is required
+The phases and tasks need to be executed in the order presented here.
+
+### SCLM Extraction 
+This phase involves three tasks corresponding to the 3 shell scripts in the 'bin' directory.
+Each of the shell scripts calls the same Groovy script 'SclmExtract.groovy' passing in
+the target REXX script to execute which is one of the 3 REXX files in the 'rexx' directory.  The 'SclmExtract.groovy'
+actually calls this REXX script using ISPFExec API. At the end of each task, the user is required
 to review the generated files, log and report.
 
 1. Extract Metadata
