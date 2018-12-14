@@ -2,12 +2,30 @@
 # SCLM Migration Sample
 This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
 
-## File Structure
-<TODO>
+## Overview
+* The sample is a combination of Unix shell scripts, Apache Groovy scripts and REXX scripts
+* Uses the existing [DBB migration tool](https://www.ibm.com/support/knowledgecenter/SS6T76_1.0.2/migration.html)
+* The migration process is comprised of three phases:
+    * SCLM Extraction
+    * Source Code Migration
+    * Build Script Generation (Coming Soon)
 
-## Pre-requisite
-1. Since this sample requires DBB Toolkit, user is required to set up the DBB_HOME environment.
-2. Fill in information related to the SCLM project in conf/sclmmig.config file.
+## Folder Content
+* bin - Contains the shell scripts that drive the migration process
+* conf - Contains the sclmmig.config file that must be edited before the migration process is started
+* groovy - Contains Groovy/DBB scripts that are invoked by the shell scripts
+* rexx - Contains REXX scripts used to extract SCLM metadata
+
+## Prerequisites
+* DBB Toolkit
+    * DBB_HOME environment variable must be set
+* Rocket’s Git and supporting open source tools
+* IBM Java v8 64bit
+    * JAVA_HOME environment variable must be set
+* ISPF Legacy Gateway
+
+## Configuration
+* Fill in information related to the SCLM project in conf/sclmmig.config file.
 
 ## Outline Steps
 These steps need to be executed in the exact order as described below:
