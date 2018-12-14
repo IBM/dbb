@@ -6,16 +6,9 @@ This sample provides scripts to migrate source members from IBM Software Configu
 * The sample is a combination of Unix shell scripts, Apache Groovy scripts and REXX scripts
 * Uses the existing [DBB migration tool](https://www.ibm.com/support/knowledgecenter/SS6T76_1.0.2/migration.html)
 * Users can choose to how many versions to migrate thus preserving change history 
-* The migration process is comprised of three phases:
-    * SCLM Extraction
-    * Source Code Migration
-    * Build Script Generation (Coming Soon)
 
-## Folder Content
-* bin - Contains the shell scripts that drive the migration process
-* conf - Contains the sclmmig.config file that must be edited before the migration process is started
-* groovy - Contains Groovy/DBB scripts that are invoked by the shell scripts
-* rexx - Contains REXX scripts used to extract SCLM metadata
+## Assumptions
+Please review the [SCLM Assumptions documentation](https://github.com/IBM/dbb/blob/master/Migration/sclm/sclmAssumptions.md)  before running the migration process.
 
 ## Prerequisites
 * DBB Toolkit
@@ -25,18 +18,22 @@ This sample provides scripts to migrate source members from IBM Software Configu
     * JAVA_HOME environment variable must be set
 * ISPF Legacy Gateway
 
+## Folder Content
+* bin - Contains the shell scripts that drive the migration process
+* conf - Contains the sclmmig.config file that must be edited before the migration process is started
+* groovy - Contains Groovy/DBB scripts that are invoked by the shell scripts
+* rexx - Contains REXX scripts used to extract SCLM metadata
+
 ## Configuration
 * Fill in information related to the SCLM project in conf/sclmmig.config file.
 
-## Outline Steps
-These steps need to be executed in the exact order as described below:
-1. Extract build information and source members into temporary data sets and files on HFS.
-2. Generate an zimport shell script.
-3. Execute the zimport shell script to migrate source members to local Git repository.
-4. Generate build related mapping files.
-5. Generate build scripts.
+## Migration Phases
+* The migration process is comprised of three phases each containing multiple steps.  The phases and steps need to be executed in the order presented here.
+    1. SCLM Extraction
+    2. Source Code Migration
+    3. Build Script Generation (Coming Soon)
 
-## Extract Information From SCLM
+### SCLM Extraction
 This step involves 3 tasks corresponding to the 3 shell scripts in the 'bin' directory.
 Each of the shell scripts calls the same Groovy script in 'SclmExtract.groovy' and pass in
 the target REXX execute which is one of the 3 REXX files in the 'rexx' directory.  The 'SclmExtract.groovy'
