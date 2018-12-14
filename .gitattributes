@@ -10,3 +10,5 @@
 *.groovy working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.sh working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.properties working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.rexx working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.config working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
