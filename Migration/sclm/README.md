@@ -33,7 +33,7 @@ The migration process is comprised of three phases each of which contain multipl
 * Source Code Migration
 * Build Script Generation (Coming Soon)
 
-The phases and steps need to be executed in the order presented here as output from one step may be reqired input in a later step.
+The phases and steps need to be executed in the order presented here as output from one step may be required input in a later step.
 
 ## Phase 1 : SCLM Extraction
 This phase involves the execution of three shell scripts in the 'bin' directory. Each of the shell scripts calls `groovy/SclmExtract.groovy` passing in a target REXX script to execute in the 'rexx' directory.  At the end of each task, the user is required
