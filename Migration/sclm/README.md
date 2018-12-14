@@ -1,10 +1,11 @@
 
 # SCLM Migration Sample
-This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
+This sample provides scripts to migrate source members from IBM Software Configuration and Library Manager (SCLM) to a local Git repository. Additionally an update is planned for January 2019 to also include scripts to generate Groovy/DBB build script stubs (may require configuration) from SCLM build definitions.
 
 ## Overview
 * The sample is a combination of Unix shell scripts, Apache Groovy scripts and REXX scripts
 * Uses the existing [DBB migration tool](https://www.ibm.com/support/knowledgecenter/SS6T76_1.0.2/migration.html)
+* Users can choose to how many versions to migrate thus preserving change history 
 * The migration process is comprised of three phases:
     * SCLM Extraction
     * Source Code Migration
