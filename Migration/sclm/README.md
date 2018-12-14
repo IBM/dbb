@@ -53,7 +53,18 @@ This step interrogates the SCLM repository metadata and produces several output 
     * `<outputDir>/langext.txt` - Verify the default type and file extension are correctly set for each language.
     * `<outputDir/logs/EXTMTDT.log` - (if error).
 
-### Step 2 - Generate System Definitions XML (Optional at this time)
+### Step 2 - Extract Source Members
+This step extracts source members from SCLM and copies them to temporary datasets in preparation for migrating them to a Git local repository.
+* *Action* : Execute shell script 'extsource.sh'
+* *Output* : The source members are extracted into temporary data sets. The data sets are 
+created in the form of ${HLQ}.Vxx.${GROUP}.${TYPE}, where 'xx' is corresponding to the
+versions of the member. A file 'members.txt' is also generated in the output directory
+that lists all of the source members along with their associated language definition.
+* *Review* : The following files should be reviewed before proceeding to the next step:
+    * `<outputDir>/EXTSRC_Report.txt` - Note any warnings or errors in this report file. 
+    * `<outputDir/logs/EXTSRC.log` - (if error).  
+
+### Step 3 - Generate System Definitions XML (Optional at this time)
 This step produces output that will be required in *Phase 3 - Build Script Generation* that should be completed early 2019. 
 * *Action* : Execute shell script `bin/gensysdefxml.sh`
 * *Output* : The following files are generated during a successful run:
@@ -61,18 +72,7 @@ This step produces output that will be required in *Phase 3 - Build Script Gener
     * `<outputDir>/fileMetaData.xml`
 * *Review* : The following files should be reviewed before proceeding to the next step:
     * `<outputDir>/GENDEF_Report.txt` - Note any warnings or errors in this report file. 
-    * `<outputDir/logs/GENEF.log` - (if error).
-
-### Step 3 - Extract Source Members
-*Summary* :
-*Action* : Runs the shell script 'extsource.sh'
-*Output* : The source members are extracted into temporary data sets. The data sets are 
-created in the form of ${HLQ}.Vxx.${GROUP}.${TYPE}, where 'xx' is corresponding to the
-versions of the member. A file 'members.txt' is also generated in the output directory
-that lists all of the source members along with their associated language definition.
-*Review* : If this step failed, user is recommended to review the EXTSRC.log in the 'logs'
-directory under the output directory. If this step succeeded, user is recommended to review
-the EXTSRC_Report.txt file for warinings and errors.    
+    * `<outputDir/logs/GENDEF.log` - (if error).
 
 You are done with the SCLM extraction when all of the 3 sub-steps completed successfully.
 
