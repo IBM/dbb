@@ -36,7 +36,7 @@ and
 >              if (foundEmptyShiftOutShiftIn)
 >                  return [1, "Line $line contains empty Shift In and Shift Out"]
 
-The above snippets show how we detect new line characters and empty Shift-In and Shift-Out after reading in the record.  In this sample, we return an error code (0=No Failure; 1=Error detected with round-trip encoding) and an error message.  The next step is to incorporate this pre-process into the existing migrate.groovy.  In this example, the action we will take when encountering these scenarios is to continue migrating these members but flagging this file in the **.gitignore** file as 'binary' so that there is no EBCDIC to UTF-8 conversion when committing to Git repository.  
+The above snippets show how we detect new line characters and empty Shift-In and Shift-Out after reading in the record.  In this sample, we return an error code (0=No Failure; 1=Error detected with round-trip encoding) and an error message.  The next step is to incorporate this pre-process into the existing migrate.groovy.  In this example, the action we will take when encountering these scenarios is to continue migrating these members but flagging this file in the **.gitattributes** file as 'binary' so that there is no EBCDIC to UTF-8 conversion when committing to Git repository.  
 
 First, adding a reference of this script in migrate.groovy:
 
