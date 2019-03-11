@@ -46,7 +46,7 @@ Secondly, call this method on each member being migrated:
 
 >                def (rc, msg) = detector(mappingInfo.dataset, mappingInfo.member)
 
-Lastly, check the rc and flagging this file in .gitignore when one of these scenarios are detected:
+Lastly, check the rc and flagging this file in .gitattributes when one of these scenarios are detected:
 
 >                if (rc)
 >                    gitAttributeLine = repository.toPath().relativize(hfsFile.toPath()).toFile().path + " binary"
