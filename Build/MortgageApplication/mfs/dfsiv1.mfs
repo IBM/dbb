@@ -1,0 +1,84 @@
+**************************** INSTALL/IVP ****************************** 
+*                                                                     * 
+*                   M O D U L E    P R O L O G U E                    * 
+*                                                                     * 
+*********************************************************************** 
+*                                                                     * 
+*          NAME:  DFSIVF1                                             * 
+*                                                                     * 
+*   DESCRIPTION:  MFS FOR TRAN IVTNO - NON-CONVERSATIONAL HIDAM/OSAM  * 
+*                                                                     * 
+***********************************************************************  
+*                                                                     * 
+*        STATUS:  IMS 3.1                                             * 
+*                                                                     * 
+*   MODULE TYPE:  MFS                                                 * 
+*                                                                     * 
+*       CHANGES:  PROLOGUE ADDED AND MINOR CHANGES FOR 3.1            * 
+*                                                                     * 
+*                                                                     * 
+*---+----1----+----2----+----3----+----4----+----5----+----6----+----7* 
+* DEFAULT TRAN:   IVTNO                                                 
+*         PSB :   DFSIVP1                                               
+* DEVICE:         3277 MOD 2                                            
+* DATABASE:       DFSIVD1                                               
+* SYSTEM:         NON_CONVERSATIONAL                                    
+*                 SINGLE SEGMENT/SINGLE TRANSMISSION INPUT              
+*                 SINGLE SEGMENT OUTPUT                                 
+* * * * * * * * * *                                                     
+IVTNO    MSG   TYPE=OUTPUT,SOR=(IVTNOF,IGNORE),NXT=IVTNOMI1             
+         SEG                                                            
+         MFLD  MSG,LTH=40                                               
+         MFLD  CMD,LTH=8                                                
+         MFLD  NAME1,LTH=10                                             
+         MFLD  NAME2,LTH=10                                             
+         MFLD  EXT#,LTH=10                                              
+         MFLD  ZIP,LTH=7                                                
+         MFLD  SEGNO,LTH=4                                              
+         MFLD  (SDATE,DATE2)                                            
+         MSGEND                                                         
+IVTNOMI1 MSG   TYPE=INPUT,SOR=(IVTNOF,IGNORE),NXT=IVTNO                 
+         SEG                                                            
+         MFLD  'IVTNO     ',LTH=10                                      
+         MFLD  CMD,LTH=8                                                
+         MFLD  NAME1,LTH=10                                             
+         MFLD  NAME2,LTH=10                                             
+         MFLD  EXT#,LTH=10                                              
+         MFLD  ZIP,LTH=7                                                
+         MSGEND                                                         
+IVTNOF   FMT                                                            
+         DEV   TYPE=3270-A02,FEAT=IGNORE,SYSMSG=SYSMSGA,DSCA=X'00E0'    
+         DIV   TYPE=INOUT                                               
+         DPAGE CURSOR=((10,34))                                         
+         DFLD  '**************************************************',   X
+               ATTR=PROT,POS=(2,14),LTH=50                              
+         DFLD  '*     IMS INSTALLATION VERIFICATION PROCEDURE    *',   X
+               ATTR=PROT,POS=(3,14),LTH=50                              
+         DFLD  '**************************************************',   X
+               ATTR=PROT,POS=(4,14),LTH=50                              
+         DFLD  'TRANSACTION TYPE : NON-CONV (OSAM DB)',                X
+               ATTR=PROT,POS=(7,40),LTH=37,EATTR=BOX                    
+         DFLD  'DATE             :',ATTR=PROT,POS=(8,40),LTH=18         
+SDATE    DFLD  POS=(8,59),LTH=8,ATTR=PROT                               
+         DFLD  'PROCESS  CODE  (*1) :',ATTR=PROT,POS=(10,10),LTH=21     
+CMD      DFLD  POS=(10,34),LTH=8,ATTR=(HI,MOD)                          
+         DFLD  '(*1) PROCESS CODE ',ATTR=PROT,POS=(11,60),LTH=18        
+         DFLD  'LAST  NAME          :',ATTR=PROT,POS=(12,10),LTH=21     
+NAME1    DFLD  POS=(12,34),LTH=10,ATTR=(HI,MOD),EATTR=(HBLINK,BLUE)     
+         DFLD  '       ADD        ',ATTR=PROT,POS=(12,60),LTH=18        
+         DFLD  '       DELETE     ',ATTR=PROT,POS=(13,60),LTH=18        
+         DFLD  'FIRST  NAME         :',ATTR=PROT,POS=(14,10),LTH=21     
+NAME2    DFLD  POS=(14,34),LTH=10,ATTR=(HI,MOD),EATTR=(HREV)            
+         DFLD  '       UPDATE     ',ATTR=PROT,POS=(14,60),LTH=18        
+         DFLD  '       DISPLAY    ',ATTR=PROT,POS=(15,60),LTH=18        
+         DFLD  'EXTENSION  NUMBER   :',ATTR=PROT,POS=(16,10),LTH=21     
+EXT#     DFLD  POS=(16,34),LTH=10,ATTR=(HI,MOD),EATTR=(HUL,CD)          
+         DFLD  '       TADD       ',ATTR=PROT,POS=(16,60),LTH=18        
+         DFLD  'INTERNAL  ZIP CODE  :',ATTR=PROT,POS=(18,10),LTH=21     
+ZIP      DFLD  POS=(18,34),LTH=7,ATTR=(HI,MOD),EATTR=(HD,BOX)           
+MSG      DFLD  POS=(21,10),LTH=40,ATTR=PROT,EATTR=YELLOW                
+         DFLD  'SEGMENT# :',ATTR=PROT,POS=(21,60),LTH=10                
+SEGNO    DFLD  POS=(21,72),LTH=4,ATTR=PROT                              
+SYSMSGA  DFLD  POS=(23,1),LTH=79,ATTR=HI                                
+         FMTEND                                                         
+         END                                                            

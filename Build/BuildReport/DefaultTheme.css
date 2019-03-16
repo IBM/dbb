@@ -1,0 +1,44 @@
+body {
+    font: 12px Arial, sans-serif;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #A9A9A9;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+tr.even {
+	background-color: #f2f2f2
+}
+
+th {
+    background-color: #81C4E8;
+    color: white;
+}
+
+td.label {
+	font-weight: bold;
+}
+
+.bottomRight {
+   float:right;
+   text-align:right;
+   font: 10px Arial, sans-serif;
+}
+
+.dep {
+	font: 11px Arial, sans-serif;
+}
+
+.depType {
+	font: 9px Arial, sans-serif;
+	background-color: #81C4E8;
+}

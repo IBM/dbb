@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style type="text/css">
+<!-- %CSS_STYLES_GO_HERE% -->
+</style>
+</head>
+
+<body>
+<h2>Build Report</h2>
+<p id="main"></p>
+
+<script type="text/javascript">
+var buildReportFile = "";
+var xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = render;
+xmlhttp.open("GET", buildReportFile, true);
+xmlhttp.send();
+
+function toggle(dep, text)
+{
+	if (document.getElementById(text).text == 'Show Dependencies')
+		document.getElementById(text).text = 'Hide Dependencies';
+	else
+		document.getElementById(text).text = 'Show Dependencies';
+	
+	if (document.getElementById(dep).style.display == 'none')
+		document.getElementById(dep).style.display = 'block';
+	else
+		document.getElementById(dep).style.display = 'none';
+};
+
+/* %RENDER_SCRIPT_GO_HERE% */
+
+</script>
+
+</body>
+</html>
