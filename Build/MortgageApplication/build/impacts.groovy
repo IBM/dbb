@@ -23,6 +23,7 @@ import groovy.time.*
  *
  * options:
  *  -b,--buildHash <hash>         Git commit hash for the build
+ *  -l,--lastBuildHash <hash>     Git commit hash for the last build
  *  -c,--collection <name>        Name of the dependency data collection
  *  -i,--id <id>                  DBB repository id
  *  -p,--pw <password>            DBB password
@@ -39,66 +40,74 @@ def scriptDir = getScriptDir()
 
 // parse command line arguments and load build properties
 def usage = "impact.groovy [options]"
-def opts = tools.parseArgs(args, usage)
-def properties = tools.loadProperties(opts)
-tools.validateRequiredProperties(["sourceDir", "workDir", "dbb.RepositoryClient.url", "dbb.RepositoryClient.userId", "password", "collection"])
-	
+def opts = parseArgs(args, usage)
+
+// get start time
 def startTime = new Date()
-properties.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
-println("** Impact analysis start at $properties.startTime")
+println("** Impact analysis start at $startTime")
 
 // create workdir (if necessary)
-new File(properties.workDir).mkdirs()
-   
-// if buildHash argument omitted, then just copy MortgageApplication/build/files.txt to buildlist and exit
-if (properties.buildHash == null) {
-    println("** Git commit build hash option (--buildHash) omitted.  Copying $scriptDir/files.txt to $properties.workDir/buildList.txt")
-    Files.copy(Paths.get("$scriptDir/files.txt"), Paths.get("$properties.workDir/buildList.txt"))
-	System.exit(0)
-}    
+new File(opts.w).mkdirs()
 
-// get the last successful build's buildHash
-println("** Searching for last successful build commit hash for build group $properties.collection")
-def lastBuildHash = null
-def repositoryClient = tools.getDefaultRepositoryClient()
-def lastBuildResult = repositoryClient.getLastBuildResult(properties.collection, BuildResult.COMPLETE, BuildResult.CLEAN)
-if (lastBuildResult)
-    lastBuildHash = lastBuildResult.getProperty("buildHash")                  
-
-// if no lastBuildHash, then just copy MortgageApplication/build/files.txt to buildlist and exit
-if (lastBuildHash == null) {
-    println("Could not locate last successful build commit hash for build group $properties.collection.  Copying $scriptDir/files.txt to $properties.workDir/buildList.txt")
-    Files.copy(Paths.get("$scriptDir/files.txt"), Paths.get("$properties.workDir/buildList.txt"))
-	System.exit(0)
-}  
-else {
-	println("Last successful build commit hash located. label : ${lastBuildResult.getLabel()} , buildHash : $lastBuildHash")
+// return if hashes are same
+if (opts.l == opts.b) {
+	new File("$opts.w/buildList.txt").delete()
+	new File("$opts.w/buildList.txt").createNewFile()
+	return
 }
 
-// execute git command
-def cmd = "git diff --name-only $lastBuildHash $properties.buildHash"
-def out = new StringBuffer()
-def err = new StringBuffer()
+// run git diff to find changed files
+def cmd = "git -C ${opts.sourceDir} --no-pager diff --name-status ${opts.l} ${opts.b}"
+def git_diff = new StringBuffer()
+def git_error = new StringBuffer()
 
 println("** Executing Git command: $cmd")
 def process = cmd.execute()
-process.consumeProcessOutput(out, err)
+process.consumeProcessOutput(git_diff, git_error)
 process.waitForOrKill(1000)
 
 // handle command error
-if (err.size() > 0) {
-	println "** Error occurred executing git command: ${err.toString()}"
-	System.exit(1)
+if (git_error.size() > 0) {
+	println "** Error occurred executing git command: ${git_error.toString()}"
+	println "** Attempting to parse unstable git command for changed files..."
 }
-def changedFiles = out.readLines()
-println("Number of changed files detected since build ${lastBuildResult.getLabel()} : ${changedFiles.size()}")  
-println(out)
+
+// build file lists
+def changedFiles = []
+def deletedFiles = []
+println(git_diff.toString().trim())
+for (line in git_diff.toString().split("\n")) {
+	// process files from git diff
+	try {
+		action = line.split()[0]
+		file = line.split()[1]
+		// handle deleted files
+		if (action == "D") {
+			println("Detected deleted file: ${file}")
+			deletedFiles.add(file)
+		}
+		// handle changed files
+		else {
+			println("Detected changed file: ${file}")
+			changedFiles.add(file)
+		}
+	}
+	catch (Exception e) {
+		// no changes or unhandled format
+	}
+}
+
+println("Number of changed files detected since build ${opts.l} : ${changedFiles.size()}")  
+println("Number of deleted files detected since build ${opts.l} : ${deletedFiles.size()}")
+
+// repo client 
+def repositoryClient = getDefaultRepositoryClient()
       
 // if no changed files, created empty build list file and exit
 if (changedFiles.size() == 0) {
-	println("** No changed files detected since last successful build.  Creating empty file $properties.workDir/buildList.txt")
-	new File("$properties.workDir/buildList.txt").createNewFile()
-	System.exit(0)
+	println("** No changed files detected since last successful build.  Creating empty file $opts.w/buildlist.txt")
+	new File("$opts.w/buildList.txt").delete()
+	new File("$opts.w/buildList.txt").createNewFile()
 }
 
 // scan the changed files to make sure dependency data is up to date
@@ -106,18 +115,26 @@ println("** Scan the changed file list to collect the latest dependency data")
 def scanner = new DependencyScanner()
 def logicalFiles = [] as List<LogicalFile>
 
+// add changed files to collection
 changedFiles.each { file ->
    	println("Scanning changed file $file")
-   	def logicalFile = scanner.scan(file, properties.sourceDir)
+   	def logicalFile = scanner.scan(file, opts.sourceDir)
    	logicalFiles.add(logicalFile)
 }
 
-println("** Store the dependency data in repository collection '$properties.collection'")
 // create collection if needed
-if (!repositoryClient.collectionExists(properties.collection))
-   	repositoryClient.createCollection(properties.collection) 
+if (!repositoryClient.collectionExists(opts.c))
+   	repositoryClient.createCollection(opts.c) 
+	
+// remove deleted files from collection
+deletedFiles.each { file ->
+	println("Deleting deleted file $file")
+	repositoryClient.deleteLogicalFile(opts.c, file as String)
+	
+}
    	   
-repositoryClient.saveLogicalFiles(properties.collection, logicalFiles);
+println("** Store the dependency data in repository collection '$opts.c'")
+repositoryClient.saveLogicalFiles(opts.c, logicalFiles);
 println(repositoryClient.getLastStatus())
 
 
@@ -144,8 +161,8 @@ changedFiles.each { changedFile ->
 }
 
 // Write build list to file
-println("** Writing buildlist to $properties.workDir/buildList.txt")
-def buildListFile = new File("$properties.workDir/buildList.txt")
+println("** Writing buildlist to $opts.w/buildlist.txt")
+def buildListFile = new File("$opts.w/buildList.txt")
 buildList.each { file ->
     buildListFile << (file + "\n")
 }
@@ -156,3 +173,39 @@ def duration = TimeCategory.minus(endTime, startTime)
 println("** Impact analysis finished at $endTime")
 println("** Total # build files calculated = ${buildList.size()}")
 println("** Total analysis time : $duration")
+
+
+def parseArgs(String[] cliArgs, String usage) {
+	def cli = new CliBuilder(usage: usage)
+	cli.s(longOpt:'sourceDir', args:1, argName:'dir', 'Absolute path to source directory')
+	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the build output directory')
+	cli.b(longOpt:'buildHash', args:1, argName:'hash', 'Git commit hash for the build')
+	cli.l(longOpt:'lastBuildHash', args:1, argName:'hash', 'Git commit hash for the last build')
+	cli.q(longOpt:'hlq', args:1, argName:'hlq', 'High level qualifier for partition data sets')
+	cli.c(longOpt:'collection', args:1, argName:'name', 'Name of the dependency data collection')
+	cli.t(longOpt:'team', args:1, argName:'hlq', 'Team build hlq for user build syslib concatenations')
+	cli.r(longOpt:'repo', args:1, argName:'url', 'DBB repository URL')
+	cli.i(longOpt:'id', args:1, argName:'id', 'DBB repository id')
+	cli.p(longOpt:'pw', args:1, argName:'password', 'DBB password')
+	cli.P(longOpt:'pwFile', args:1, argName:'file', 'Absolute or relative (from sourceDir) path to file containing DBB password')
+	cli.e(longOpt:'logEncoding', args:1, argName:'encoding', 'Encoding of output logs. Default is EBCDIC')
+	cli.u(longOpt:'userBuild', 'Flag indicating running a user build')
+	cli.E(longOpt:'errPrefix', args:1, argName:'errorPrefix', 'Unique id used for IDz error message datasets')
+	cli.h(longOpt:'help', 'Prints this message')
+	cli.C(longOpt:'clean', 'Deletes the dependency collection and build reeult group from the DBB repository then terminates (skips build)')
+
+	def opts = cli.parse(cliArgs)
+	if (opts.h) { // if help option used, print usage and exit
+		 cli.usage()
+		System.exit(0)
+	}
+
+	return opts
+}
+
+def getDefaultRepositoryClient() {
+	// TODO: Get default repository with arguments instead of properties
+	def properties = BuildProperties.getInstance()
+	def repositoryClient = new RepositoryClient().forceSSLTrusted(true)
+	return repositoryClient
+}

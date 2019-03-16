@@ -1,10 +1,10 @@
 /* REXX */
-
+/*%STUB CPPLEFPL*/
 /*********************************************************************/
 /*                                                                   */
-/* NAME := EXTMTDT                                                   */
+/* NAME := EXMTDT                                                    */
 /*                                                                   */
-/* DESCRIPTIVE NAME := SCLM definition migration part 1              */
+/* DESCRIPTIVE NAME := Extract metadata from SCLM project            */
 /*                                                                   */
 /* FUNCTION := Extract information from SCLM accounting files,       */
 /*             project definitions and Architecture definitions to   */
@@ -16,17 +16,47 @@
 
   Trace o
 
+  Parse arg propmem
   /*-------------------------------------------------*/
   /* Parsing the property member from input, if none */
   /* is provided then look for a member named        */
   /* MIGCFG in the same source data set              */
   /*-------------------------------------------------*/
   Parse SOURCE . . thisExec . thisDsn . . . .
-  Parse arg propmem
+  If thisDsn = '?' & propmem = '' Then
+  Do
+    Say 'Exec is running from compiled REXX. Parse SOURCE not supported.'
+    Say 'As such the config data set and member must be passed as a parameter.'
+    Call ExitRtn(8)
+  End
+
   If propmem = '' Then
   Do
+    If sysdsn("'"thisDsn"(MIGCFG)'") = 'MEMBER NOT FOUND' Then
+    Do
+      Say 'Configuration member MIGCFG not found in 'thisDsn'.'
+      Call ExitRtn(8)
+    End
     propmem = thisDsn'('MIGCFG')'
   End
+  Else
+  Do
+    Parse var propmem cfgDsn '(' cfgmem ')' .
+    If sysdsn("'"cfgDsn"'") = 'DATASET NOT FOUND' Then
+    Do
+      Say 'Configuration data set 'cfgDsn' not found.'
+      Call ExitRtn(8)
+    End
+    If cfgMem <> '' Then
+    Do
+      If sysdsn("'"cfgDsn"("cfgMem")'") = 'MEMBER NOT FOUND' Then
+      Do
+        Say 'Configuration member 'cfgMem' not found in 'cfgDsn'.'
+        Call ExitRtn(8)
+      End
+    End
+  End
+
   Say 'Parsing the SCLM Migration information from 'propmem
 
   /*-------------------------------------------------*/
@@ -55,10 +85,7 @@
   /* Parsing the parameters from the property file   */
   /*-------------------------------------------------*/
   Do i = 1 to props.0
-    next = Strip(props.i)
-    If next = '' | Pos('#',next) = 1 Then
-       Iterate
-    Parse Var next key '=' value
+    Parse Var props.i key '=' value
     key = strip(Translate(key))
     value = strip(value)
     Select
@@ -71,7 +98,7 @@
       When (key = 'OUTPUTDIR') Then outputDir = value
       When (key = 'ALLLANGS')  Then allLangs = value
       When (key = 'EMPTY')     Then empty = value
-      When (key = 'EXIST')     Then exist = value      
+      When (key = 'EXIST')     Then exist = value
       Otherwise
         Say 'Invalid property - 'key
     End
@@ -167,7 +194,7 @@
     Do i = 1 to isrlmsg.0
       rc = repLine('E' isrlmsg.i)
     End
-    exit(8)
+    Call ExitRtn(8)
   End
   Else
   Do
@@ -194,7 +221,7 @@
     Do
       rc = repLine(' ' ' ')
       rc = repLine('E' 'Projdefs is empty. Something went wrong')
-      exit(8)
+      Call ExitRtn(8)
     End
 
     Call getLang
@@ -205,7 +232,8 @@
   rc = repLine(' ' ' ')
   rc = repLine('I' 'Processing ARCHDEFs')
   rc = DButilArch()
-  If rc > 4 Then Exit(8)
+  If rc > 4 Then
+    Call ExitRtn(8)
 
   elapsed = Time('E')
   /* Work out the type of archdef                               */
@@ -225,7 +253,8 @@
 
   /* Next we are going to process the member information        */
   rc = DButilMems()
-  If rc > 4 Then Exit(8)
+  If rc > 4 Then
+    Call ExitRtn(8)
 
   /* Update member info stem with language definition           */
   rc = repLine(' ' ' ')
@@ -269,6 +298,7 @@
   rc = repLine('*' ' ')
   rc = repLine('*' Copies('*',80))
 
+  Call ExitRtn(0)
 Exit
 
 /*---------------------------------------------------------------*/
@@ -867,7 +897,7 @@ ProcArch :
       rc = repLine('E' "Problem allocating "bndDsn)
       rc = repLine('E' "LISTDSI Return code "ListdsiRC ||,
                          "Reason Code "SYSREASON)
-      Exit 8
+      Call ExitRtn(8)
     End
   End
   /* Get rid of quotes for member usage */
@@ -894,7 +924,7 @@ ProcArch :
         rc = repLine('E' "Problem allocating "prebndDsn)
         rc = repLine('E' "LISTDSI Return code "ListdsiRC ||,
                            "Reason Code "SYSREASON)
-        Exit 8
+        Call ExitRtn(8)
       End
     End
     /* Get rid of quotes for member usage */
@@ -1030,6 +1060,14 @@ ProcMems :
                              ' and language of 'sclmlang'.' ||,
                              ' But default type already set to ' ||,
                              langs.z.dfltsrc' for this language.')
+          rc = repLine('W' 'Adding the default type and extension anyway,' ||,
+                             ' but default SYSLIBs may be generated ' ||,
+                             ' incorrectly if there is no FLMINCLS.')
+          ll = ll + 1
+          langs.ll = langs.z
+          langs.ll.dfltsrc = sclmtype
+          langs.ll.languageCode = langs.z.languageCode
+          langs.ll.ext = langs.z.ext
         End
         Otherwise
           Nop
@@ -1519,15 +1557,32 @@ procStmt:
       /* For example LIST,MAP,AMODE=24                  */
       If pass = 2 Then
       Do
-        keyCnt = keyCnt + 1
-        memInfo.memCnt.stmt.keyCnt = Substr(statement,1,5)
 
         Parse var statement parmx parameters
+        /* If we already have a PARM for this member    */
+        /* Then just append the PARM to it              */
+        append = 0
+        Do pp = 1 to keyCnt
+          If memInfo.memCnt.stmt.pp = parmx Then
+          Do
+            append = 1
 
-        valCnt = 1
-        memInfo.memCnt.stmt.keyCnt.nameval.valCnt.name = "parameters"
-        memInfo.memCnt.stmt.keyCnt.nameval.valCnt.val = Strip(parameters)
-        memInfo.memCnt.stmt.keyCnt.nameval.0 = 1
+            valCnt = 1
+            memInfo.memCnt.stmt.pp.nameval.valCnt.val =,
+               memInfo.memCnt.stmt.pp.nameval.valCnt.val ||,
+               ','Strip(parameters)
+          End
+        End
+        If append = 0 Then
+        Do
+          keyCnt = keyCnt + 1
+          memInfo.memCnt.stmt.keyCnt = parmx
+
+          valCnt = 1
+          memInfo.memCnt.stmt.keyCnt.nameval.valCnt.name = "parameters"
+          memInfo.memCnt.stmt.keyCnt.nameval.valCnt.val = Strip(parameters)
+          memInfo.memCnt.stmt.keyCnt.nameval.0 = 1
+        End
       End
     End
     When (Substr(statement,1,4) = 'SREF')  Then
@@ -1588,12 +1643,13 @@ procStmt:
                 End
               End
             End
+
             If archFound = 1 Then
             Do
               CCCnt = CCCnt + 1
               memCnt = memCnt + CCCnt
-              storekeyCnt  = keyCnt
-              storekeyWord = keyWord
+              storekeyCnt.rr  = keyCnt
+              storekeyWord.rr = keyWord
               memInfo.memCnt.name = ccMem
               memInfo.memCnt.type = incltype
               memInfo.memCnt.memLang = '?'
@@ -1612,11 +1668,14 @@ procStmt:
               Do
                 archFound = 1
                 archMems.ccd = ccMem':'incltype':'archType':Processed'
+                storekeyWord.rr = keyWord
               End
             End
           End
           When (Keyword = 'LINK ') Then
             Parse var statement 'LINK' memName copytype .
+          Otherwise
+            Nop
         End
         If recursINCL = 0 & archFound = 1 Then
         Do
@@ -1646,19 +1705,19 @@ procStmt:
                              "Call procStmt("stem"a"rr");" ||,
                              "End")
 
-            rr = rr - 1
             memInfo.memCnt.stmt.0 = keyCnt
 
-            If storekeyWord = 'INCL ' &,
+            If storekeyWord.rr = 'INCL ' &,
               (archType = 'CC' | archType = 'GEN' | archType = 'COPY') Then
             Do
               memCnt = memCnt - CCCnt
               if memFound Then
                 CCCnt = CCCnt - 1
-              keyCnt = storekeyCnt
-              storekeyCnt  = 0
-              storekeyWord = ''
+              keyCnt = storekeyCnt.rr
+              storekeyCnt.rr  = 0
+              storekeyWord.rr = ''
             End
+            rr = rr - 1
           End
         End
       End
@@ -1744,6 +1803,8 @@ createBnd :
 
       prebndCnt = prebndCnt + 1
     End
+    Otherwise
+      Nop
   End
 
 Return
@@ -1789,6 +1850,7 @@ xmlKeyRef :
   Do m = 1 to memCnt
     /* Need to see if we have this one already */
     lang = memInfo.m.memLang
+
     Do z = 1 to langCnt While (lang <> kref.z)
     End
     If z > langCnt Then
@@ -1800,9 +1862,10 @@ xmlKeyRef :
     End
     Else
       krl = z
-    krk = kref.krl.stmt.0
 
     Do k = 1 to memInfo.m.stmt.0
+      krk = kref.krl.stmt.0
+
       If memInfo.m.stmt.k = 'LOAD' |,
          memInfo.m.stmt.k = 'OBJ'  |,
          memInfo.m.stmt.k = 'LIST' |,
@@ -1820,9 +1883,9 @@ xmlKeyRef :
         End
         Else
           krk = z
-        krv = kref.krl.stmt.krk.nameval.0
 
         Do v = 1 to memInfo.m.stmt.k.nameval.0
+          krv = kref.krl.stmt.krk.nameval.0
           If memInfo.m.stmt.k.nameval.v.name = 'type' Then
           Do
             libType = memInfo.m.stmt.k.nameval.v.val
@@ -1834,11 +1897,13 @@ xmlKeyRef :
               kref.krl.stmt.krk.nameval.krv = libType
             End
           End
+          If kref.krl.stmt.krk.nameval.0 < krv Then
+            kref.krl.stmt.krk.nameval.0 = krv
         End
       End
-      kref.krl.stmt.krk.nameval.0 = krv
+      If kref.krl.stmt.0 < krk Then
+        kref.krl.stmt.0 = krk
     End
-    kref.krl.stmt.0 = krk
   End
   kref.0 = langCnt
 
@@ -1983,3 +2048,15 @@ repLine :
     Address syscall "writefile (repfile) 755 report. 1"
 
 Return 0
+
+/*---------------------------------------------------------------*/
+/* Exit routine                                                  */
+/*---------------------------------------------------------------*/
+exitRtn :
+
+  Parse arg max_rc
+
+  ZISPFRC = max_rc
+  Address ISPEXEC 'VPUT (ZISPFRC) SHARED'
+
+Exit max_rc

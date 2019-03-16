@@ -108,6 +108,7 @@ migrationScriptFile << 'rm -rf $repo' << '\n'
 migrationScriptFile << 'git init $repo' << '\n\n'
 
 migrationScriptFile << "outputFile=$memberToFileFile" << '\n'
+migrationScriptFile << 'rm -f $outputFile' << '\n\n'
 
 def membersFile = new File("$workDir/members.txt")
 //******************************************************************************
@@ -131,6 +132,7 @@ def members = []
 membersFile.eachLine { members << it }
 members.sort()
 
+def bndLangs = [] as Set
 //******************************************************************************
 //* Loop through each member and record the member information (data set, lang,
 //* version), when a new version is seen, then generate script to migrate
@@ -138,22 +140,28 @@ members.sort()
 //******************************************************************************
 members.each {
    
-    (version, dataset, member, lang) = parseLine(it)
-    
-    if (newFilesAdded && currentVersion != version)
-    {
-        if (!currentVersion.isEmpty())
+    if (it ==~ /.*\.V\d\..*/) {
+        (version, dataset, member, lang) = parseLine(it)
+
+        if (newFilesAdded && currentVersion != version)
         {
-            // Add to GIT and commit the current batch
-            outputMigrateAndCommitScript(currentVersion, datasets, langs)
-            newFilesAdded = false
+            if (!currentVersion.isEmpty())
+            {
+                // Add to GIT and commit the current batch
+                outputMigrateAndCommitScript(currentVersion, datasets, langs)
+                newFilesAdded = false
+            }
+            currentVersion = version
         }
-        currentVersion = version
+
+        langs << lang
+        datasets << dataset
+        newFilesAdded = true
     }
-    
-    langs << lang
-    datasets << dataset
-    newFilesAdded = true
+    else {
+        (dsn,lang) = it.split(' ')
+        bndLangs << lang
+    }
 }
 
 // Add and commit the last batch
@@ -166,14 +174,19 @@ if (newFilesAdded)
 def bindingFileDataset = "${tempHlq}.BND"
 if (ZFile.exists("//'${bindingFileDataset}'"))
 {
-    migrationScriptFile << '$DBB_HOME/migration/bin/migrate.sh -r $repo ' << "-m MappingRule[hlq:${tempHlq},toLower:true,extension:bnd] BND" << '\n'
+    if (selectionCriteria == 'LANG') {
+        bndLangs.each { lang ->
+            migrationScriptFile << '$DBB_HOME/migration/bin/migrate.sh -r $repo ' << '-o $outputFile' << " -m MappingRule[hlq:${tempHlq},toLower:true,extension:bnd,tagFile:" << '$tagFile]' <<" $lang" << '\n'
+        }
+    }
+    else {
+        migrationScriptFile << '$DBB_HOME/migration/bin/migrate.sh -r $repo ' << '-o $outputFile' << " -m MappingRule[hlq:${tempHlq},toLower:true,extension:bnd] BND" << '\n'
+    }
     migrationScriptFile << 'cd $repo' << '\n'
     migrationScriptFile << 'git add *' << '\n'
     migrationScriptFile << "git commit -m 'Linkedit decks'" << '\n'
     migrationScriptFile << 'cd $currDir' << '\n\n'
 }
-
-def scriptMappingsFile = new File('$workDir/scriptmappings.properties')
 
 // Add .gitattributes and commit
 migrationScriptFile << 'cd $repo' << '\n'
@@ -204,6 +217,7 @@ def outputMigrateAndCommitScript(def currentVersion, def datasets, def langs)
      }
      else  //selectionCriteria == 'TYPE'
      {                   
+         if (datasets.size() > 0) {    
          datasets.each { dataset ->
              (proj,group,type) = dataset.trim().split("\\.")
              def ext = fileExtMap["$type"]
@@ -211,6 +225,7 @@ def outputMigrateAndCommitScript(def currentVersion, def datasets, def langs)
                  migrationScriptFile << '$DBB_HOME/migration/bin/migrate.sh -r $repo ' << '-o $outputFile' << " -m MappingRule[hlq:${tempHlq}.${currentVersion}.${proj}.${group},toLower:true,extension:$ext] $type" << '\n'
              else
                  migrationScriptFile << '$DBB_HOME/migration/bin/migrate.sh -r $repo ' << '-o $outputFile' << " -m MappingRule[hlq:${tempHlq}.${currentVersion}.${proj}.${group},toLower:true] $type" << '\n'
+         }
          }
      }
             

@@ -70,6 +70,11 @@ def loadProperties(OptionAccessor opts) {
 		
 		System.exit(0)
 	}
+	
+	// add build hash if not specific
+	if (!opts.b) {
+		properties.buildHash = getCurrentGitHash() as String
+	}
 
 	// load datasets.properties containing system specific PDS names used by Mortgage Application build
 	properties.load(new File("${getScriptDir()}/datasets.properties"))
@@ -80,8 +85,7 @@ def loadProperties(OptionAccessor opts) {
 	// load bindlinkEditScanner.properties containing Link Edit scanning options used by Mortgage Application build
 	properties.load(new File("${getScriptDir()}/linkEditScanner.properties"))
 
-	println("** Build properties at startup:")
-	println(properties.list()) 
+	
 
 	return properties                                 
 }
@@ -131,11 +135,7 @@ def getBuildList(List<String> args) {
 		println("** Building files listed in $properties.buildListFile")
 	    files = new File(properties.buildListFile) as List<String>
 	}   
-	// build the entire Mortgage Application listed in files.txt   
-	else { 
-	    println("** Building files listed in ${getScriptDir()}/files.txt")
-	    files = new File("${getScriptDir()}/files.txt") as List<String>
-	}	
+	
 	return files
 }
 
@@ -288,5 +288,65 @@ def finalizeBuildResult(Map args) {
 		buildResult.setState(buildResult.COMPLETE)
 		buildResult.save() 
 	}
+}
+def getCurrentGitHash() {
+	def properties = BuildProperties.getInstance()
+	def buildPropFile = new File("${getScriptDir()}/build.properties")
+		   
+	def cmd = "git --git-dir=${properties.sourceDir}/.git rev-parse HEAD"
+	def git_hash = new StringBuffer()
+	def git_error = new StringBuffer()
+	
+	println("** Executing Git command: $cmd")
+	def process = cmd.execute()
+	process.consumeProcessOutput(git_hash, git_error)
+	process.waitForOrKill(1000)
+	return git_hash
+}
+
+def getImpactArguments() {
+	def properties = BuildProperties.getInstance()
+	def buildPropFile = new File("${getScriptDir()}/build.properties")
+	
+	impactArgumentList = []
+	if (properties.workDir) {
+		impactArgumentList.add("--workDir")
+		impactArgumentList.add("${properties.workDir}")
+	}
+	if (properties.sourceDir) {
+		impactArgumentList.add("--sourceDir")
+		impactArgumentList.add("${properties.sourceDir}")
+	}
+	if (properties.collection) {
+		impactArgumentList.add("--collection")
+		impactArgumentList.add("${properties.collection}")
+	}
+	if (properties.'dbb.RepositoryClient.url') {
+		def repositoryClientUrl=properties.'dbb.RepositoryClient.url'
+		impactArgumentList.add("--repo")
+		impactArgumentList.add("${repositoryClientUrl}")
+	}
+	if (properties.'dbb.RepositoryClient.userId') {
+		def repositoryClientID=properties.'dbb.RepositoryClient.userId'
+		impactArgumentList.add("--id")
+		impactArgumentList.add("${repositoryClientID}")
+	}
+	if (properties.'dbb.RepositoryClient.password') {
+		def repositoryPassword=properties.'dbb.RepositoryClient.password'
+		impactArgumentList.add("--pw")
+		impactArgumentList.add("${repositoryPassword}")
+	}
+	if (properties.'dbb.RepositoryClient.passwordFile') {
+		def repositoryPasswordFile=properties.'dbb.RepositoryClient.passwordFile'
+		impactArgumentList.add("--pwFile")
+		impactArgumentList.add("${repositoryPasswordFile}")
+	}
+	// add git hash to impact arguments
+	currentGitHash = getCurrentGitHash() as String
+	currentGitHash = currentGitHash.trim()
+	impactArgumentList.add("--buildHash")
+	impactArgumentList.add("${currentGitHash}")
+	
+	return impactArgumentList
 }
 

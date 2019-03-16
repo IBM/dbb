@@ -23,6 +23,7 @@ Please review the [SCLM Assumptions documentation](https://github.com/IBM/dbb/bl
 * conf - Contains the sclmmig.config file that must be edited before the migration process is started
 * groovy - Contains Groovy/DBB scripts that are invoked by the shell scripts
 * rexx - Contains REXX scripts used to extract SCLM metadata
+* template - Contains template for the generated Groovy scripts
 
 ## Configuration
 * Fill in information related to the SCLM project in conf/sclmmig.config file.

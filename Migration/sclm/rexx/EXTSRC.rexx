@@ -190,6 +190,23 @@ retrvVersions:
   membersfile = outputDir'/sclmMigration/'projLower'/members.txt'
   Address SYSCALL "writefile (membersfile) 755 outputs."
 
+    
+  bndPds = tempHlq'.BND'
+  bndSize = 0
+  bndMembers. = ''                 
+  x = Outtrap('bnds.')                              
+  ADDRESS TSO "LISTDS ('"bndPds"') MEMBERS"                       
+  x = Outtrap('OFF')                              
+  Do n = 7 TO bnds.0
+     member = STRIP(bnds.n)
+     bndSize = bndSize + 1
+     bndMembers.bndSize = bndPds'('member')'     
+  End
+  
+  bndMembers.0 = bndSize
+  Address SYSCALL "writefile (membersfile) 755 bndMembers. 1"
+  
+
   /*-------------------------------------------------*/
   /* Output the report                               */
   /*-------------------------------------------------*/
