@@ -60,7 +60,7 @@ To use the client, the shell script must be somewhere on your system. The script
 * Target: The groovy file, expected to be passed when using the `groovyz` command.
  
 #### Example Usage
-`/var/rocket/bin/bash client.sh groovyz /u/george/MortgageApplication/build/build.groovy`
+`/var/rocket/bin/bash client.sh groovyz /u/usr/MortgageApplication/build/build.groovy`
 
 `/var/rocket/bin/bash client.sh -kill` (stop the Build Daemon & Build Processes)
 
@@ -69,7 +69,7 @@ To use the client, the shell script must be somewhere on your system. The script
 The Build Daemon manages the Build Process instances, and dispatches commands. Build Processes are preloaded from the specifications in the configuration file.
 
 #### Example Usage
-`/usr/lpp/java/J8.0_64/bin/java -classpath com.ibm.dbb.manager.jar build.daemon.BuildDaemon /u/kporter/Daemon/config.properties`
+`/usr/lpp/java/J8.0_64/bin/java -classpath com.ibm.dbb.manager.jar build.daemon.BuildDaemon /u/usr/Daemon/config.properties`
 
 *Please note that the Build Daemon requires a configuration file argument. The Daemon is expected to be a background process.*
 

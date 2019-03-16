@@ -87,11 +87,11 @@ if (versionLimit == 0)
 def targetDir = "$outputDir/sclmMigration/${proj.toLowerCase()}"
 def rexxExecs = [EXTMTDT:['members.xml','langext.txt','projseq.txt','archtype.txt','keyref.xml'], GENDEF:['systemDefinition.xml','fileMetaData.xml'], EXTSRC:['members.txt']]
 def rexxExec
-def rexxExecName = parameters.x
-if (rexxExecName)
+def rexxExecToRun = parameters.x
+if (rexxExecToRun)
 {
     rexxExec = rexxExecs.find { exec, outputs ->
-        exec == rexxExecName
+        exec == rexxExecToRun
     }    
 }
 else
@@ -120,7 +120,7 @@ println "Executes ${rexxExec.key}"
 //******************************************************************************
 if (outputDir.exists())
 {
-    println "Deletes any existing output files in directory $targetDir"
+    //println "Deletes any existing output files in directory $targetDir"
     rexxExec.value.each { output ->        
         new File("$targetDir/$output").delete()        
     }
@@ -139,10 +139,10 @@ println "Creates data set '$rexxDataset'"
 new CreatePDS().dataset(rexxDataset).options('CYL SPACE(1,5) LRECL(80) RECFM(F,B) BLKSIZE(32720) DSORG(PO) DSNTYPE(LIBRARY)').execute()
 
 def rexxFileLocation = scriptLocation.resolve("../rexx").toFile()
-def member = rexxExec.key
-def rexxFile = new File(rexxFileLocation, "${member}.rexx")
-println "Copies file $rexxFile to $rexxDataset($member)"
-new CopyToPDS().file(rexxFile).dataset(rexxDataset).member(member).execute()
+def rexxExecName = rexxExec.key
+def rexxFile = new File(rexxFileLocation, "${rexxExecName}.rexx")
+println "Copies file $rexxFile to $rexxDataset($rexxExecName)"
+new CopyToPDS().file(rexxFile).dataset(rexxDataset).member(rexxExecName).execute()
 
 println "Copies $configFile to $rexxDataset(MIGCFG)"
 new CopyToPDS().file(configFile).dataset(rexxDataset).member('MIGCFG').execute()
@@ -150,12 +150,12 @@ new CopyToPDS().file(configFile).dataset(rexxDataset).member('MIGCFG').execute()
 //******************************************************************************
 //* Execute the REXX exec
 //******************************************************************************
-println "Executes $rexxDataset($member)"
+println "Executes $rexxDataset($rexxExecName)"
 def logDir = new File("$targetDir/logs")
 logDir.exists()?:logDir.mkdirs()
-def logFile = new File(logDir, "${member}.log")
+def logFile = new File(logDir, "${rexxExecName}.log")
 def step = new ISPFExec().confDir(dbbConf).logFile(logFile).logEncoding('Cp1047').keepCommandScript(false)
-step.command("EX '${rexxDataset}($member)'")
+step.command("EX '${rexxDataset}($rexxExecName)'")
 step.addDDStatment("CMDSCP", "${tempHlq}.ISPFGWY.EXEC", "TRACKS SPACE(1,1) LRECL(270) RECFM(F,B) DSORG(PS)", false)
 def rc = step.execute()
 
@@ -164,11 +164,50 @@ def rc = step.execute()
 //******************************************************************************
 if (rc)
 {
-    println "Failed to run $rexxDataset($member), rc = $rc.  See $logFile for more details"
+    println "Failed to run $rexxDataset($rexxExecName), rc = $rc.  See $logFile for more details"
     System.exit(1)
 }
 
-println "Successfully executed $rexxDataset($member)"
+def processFileInplace(file, Closure processText) {
+    def text = file.text
+    file.write(processText(text))
+}
+
+if (rexxExec.key == 'EXTSRC') {
+    println "Additional Processing"
+    def metadataFile = new File(targetDir, 'fileMetaData.xml')
+    def parser = new XmlSlurper().parse(metadataFile)
+    
+    def langdefrules = parser."**".findAll { node ->
+        node.name() == 'langdefrule' && node.@match.toString().contains('bnd')
+    }
+    
+    def memberToLang = [:]
+    langdefrules.each { langdefrule ->
+        def member = langdefrule.@match.toString() - '.*/' - '\\.bnd$'
+        def langdef = langdefrule.@languageDefinition.toString() - '${resource.def.prefix}' - '${resource.def.suffix}'
+        memberToLang."$member" = langdef
+    }
+    
+    def newContent = []
+    
+    def membersFile = new File(targetDir, 'members.txt')
+    processFileInplace(membersFile) { text ->
+        text.eachLine { line ->
+            if (line.split(' ').length == 1) {
+                def member = line.trim().drop(line.indexOf('(')+1) - ')'
+                def langdef = memberToLang."$member"
+                newContent << "$line $langdef"
+            }
+            else {
+                newContent << line
+            }
+        }
+        newContent.join('\n')
+    }
+}
+
+println "Successfully executed $rexxDataset($rexxExecName)"
 println "The following files were generated in directory $targetDir:"
 rexxExec.value.each { output ->
     println "   $output"

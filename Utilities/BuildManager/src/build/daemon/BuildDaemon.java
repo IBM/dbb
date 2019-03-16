@@ -89,7 +89,7 @@ public class BuildDaemon {
 	public void preload() throws IOException {
         for (int i = 0; i < processQueueLimit; i++) {
     			try {
-				buildProcessPool[i] = new BuildProcessInterface("id_" + i, this.dbbHome, this.javaHome, 
+				buildProcessPool[i] = new BuildProcessInterface("id_" + i, this.dbbHome, this.javaHome,
 						this.properties.getProperty("build_process.groovyz.preload.options"),
 						this.properties.getProperty("build_process.groovyz.preload.classpath")
 						);
@@ -104,13 +104,13 @@ public class BuildDaemon {
 		this.buildCommandQueue.add(new BuildCommand(command, outboundConnection));
 	}
 	
-	public BuildCommand consume() { 
+	public BuildCommand consume() {
 		return this.buildCommandQueue.poll();
 	}
 	
 
 	
-    public static void main(String[] args) throws IOException, ConfigurationException { 
+    public static void main(String[] args) throws IOException, ConfigurationException {
     		BuildDaemon buildDaemon;
     		try {
     			buildDaemon = new BuildDaemon(args[0]);
@@ -128,7 +128,7 @@ public class BuildDaemon {
     		    public void run(){
     		      while(true) {
     		    	  	try {
-					Thread.sleep(1000);
+					Thread.sleep(25);
 					if (buildDaemon.buildProcessPool.length > 0) {
 						for (int i = 0; i < buildDaemon.processQueueLimit; i++) {
 		        				if (buildDaemon.buildProcessPool[i].status == 0) {
@@ -161,22 +161,22 @@ public class BuildDaemon {
             connectionSocket = buildDaemon.serverSocket.accept();
 	    		inboundConnection = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 	        outboundConnection = new DataOutputStream(connectionSocket.getOutputStream());
-	        
-	        
+	
+	
             // read message
 	        String inboundMessage;
 	        try {
 	        		inboundMessage = inboundConnection.readLine().replace("'", "");
-	        } 
+	        }
 	        catch (NullPointerException e) {
 	        		inboundMessage = "ERROR";
 	        }
-            
-        
+
+
             System.out.println("COMMAND RECEIVED: " + inboundMessage);
             // check for command
             String COMMAND = inboundMessage.split(" ")[0];
-            
+
             if (COMMAND.contains("kill")) {
             		try {
             			outboundConnection.writeBytes("*** Kill command received. \n");
@@ -196,7 +196,7 @@ public class BuildDaemon {
 					buildDaemon.buildProcessPool[buildDaemon.processQueueLimit-1].listener.join();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
-				} 
+				}
 				// shut down command thread
 				try {
 					System.out.println("*** Shutting down command thread.");
@@ -223,12 +223,12 @@ public class BuildDaemon {
             		}
             		outboundConnection.close();
             }
-            
+
         }
-        
+
         // close socket
         buildDaemon.serverSocket.close();
-        System.out.println("*** DAEMON SHUTDOWN"); 
+        System.out.println("*** DAEMON SHUTDOWN");
     }
 }
 
