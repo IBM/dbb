@@ -1,0 +1,146 @@
+import com.ibm.dbb.build.*
+import com.ibm.dbb.dependency.*
+import com.ibm.dbb.repository.*
+import java.util.*
+import java.nio.file.*
+
+@groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
+
+def cli = new CliBuilder(usage: "build.groovy [options] buildfile")
+cli.s(longOpt:'sourceDir', args:1, argName:'dir', 'Absolute path to source directory')
+cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the build output directory')
+cli.q(longOpt:'HLQ', args:1, argName:'HLQ', 'High level qualifier for partition data sets')
+cli.h(longOpt:'help', 'Prints this message')
+
+//********************************************************************************
+//* Parse options
+//********************************************************************************
+def opts = cli.parse(args)
+
+//********************************************************************************
+//* Display usage for -h option
+//********************************************************************************
+if (opts.h)
+{ 
+    cli.usage()
+    System.exit(0)
+}
+
+//********************************************************************************
+//* Read in the list of files to built from the input file
+//********************************************************************************
+def inputFile = new File(opts.arguments()[0])
+if (!inputFile || !inputFile.exists())
+{   
+   println "The input file '$inputFile' does not exist"
+   System.exit(1)
+}
+
+def buildList = inputFile as List<String>
+if (buildList.size() == 0)
+{
+    println "Nothing to build , empty build list"
+    System.exit(0)
+}
+
+//********************************************************************************
+//* Load the properties files
+//********************************************************************************
+def properties = BuildProperties.getInstance()
+${DBBBuildTemplateConverter.loadPropertyFiles()}
+
+
+//********************************************************************************
+//* Initialize the required properties for this build
+//********************************************************************************
+def HLQ = opts.a ?: properties.get('HLQ')
+def sourceDir = opts.s ?: properties.get('sourceDir')
+def workDir = opts.w ?: properties.get('workDir')
+
+[HLQ:HLQ, workDir:workDir, sourceDir:sourceDir].each { key, value ->
+    if (!value)
+    {
+        println "Missing required $key"
+        System.exit(2)
+    }
+}
+
+def repoClient = createRepositoryClient()
+if (!repoClient.collectionExists(properties.collection))
+    repoClient.createCollection(properties.collection)
+    
+ println "** Scan the build list to collect dependency data"
+ def scanner = new DependencyScanner()
+ def logicalFiles = [] as List<LogicalFile>
+    
+ buildList.each { file ->
+     println "Scanning $file"
+     def logicalFile = scanner.scan(file, properties.sourceDir)
+     logicalFiles.add(logicalFile)
+        
+     if (logicalFiles.size() == 500)
+     {
+         println "** Storing ${logicalFiles.size()} logical files in repository collection '$properties.collection'"
+         repoClient.saveLogicalFiles(properties.collection, logicalFiles);
+         println repoClient.getLastStatus()
+         logicalFiles.clear()
+     }
+ }
+
+ println "** Storing remaining ${logicalFiles.size()} logical files in repository collection '$properties.collection'"
+ repoClient.saveLogicalFiles(properties.collection, logicalFiles);
+ println repoClient.getLastStatus()
+
+ 
+//********************************************************************************
+//* Create the required data sets
+//********************************************************************************
+ createDatasets(HLQ)
+ 
+//********************************************************************************
+//* Define a build order list
+//********************************************************************************
+def buildOrder = [${DBBBuildTemplateConverter.getBuildOrder()}]
+
+//********************************************************************************
+//* Process the list of files with the build order scripts
+//********************************************************************************
+def processCounter = 0
+buildOrder.each { script ->
+    def buildFiles = ScriptMappings.getMappedList(script, buildList)
+    buildFiles.each { buildFile ->
+        def buildFilePath = Paths.get(buildFile)
+        def buildFileName = buildFilePath.fileName.toString()
+        def parentPath = buildFilePath.parent.toString()
+        def dsMapping = BuildProperties.getFileProperty('datasetMapping', parentPath)
+        def member = "${buildFileName.take(buildFileName.lastIndexOf('.'))?:buildFileName}".toUpperCase()
+        def argMap = [FILE:buildFile, MEMBER:member, DSMAPPING: dsMapping]
+        runScript(new File("${script}.groovy"), argMap)
+        processCounter++
+    }
+}
+
+//********************************************************************************
+ //* Signal build completed
+ //********************************************************************************
+println "** Total files processed: $processCounter"
+
+
+//********************************************************************************
+//* Pre-processing before running the main build:
+//*   1.  Create all necessary data sets.
+//********************************************************************************
+def createDatasets(def HLQ)
+{
+${DBBBuildTemplateConverter.createDatasets()}
+}
+
+def RepositoryClient createRepositoryClient()
+{
+    def repoClient = new RepositoryClient()
+    repoClient.setUrl(BuildProperties.getProperty('dbb.RepositoryClient.url'))
+    repoClient.setUserId(BuildProperties.getProperty('dbb.RepositoryClient.userId'))
+    repoClient.setPasswordFile(new File(BuildProperties.getProperty('dbb.RepositoryClient.passwordFile')))
+    repoClient.setForceSSLTrusted(true)
+    repoClient
+}

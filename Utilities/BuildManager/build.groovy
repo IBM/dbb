@@ -36,7 +36,7 @@ ant.copy(todir: tempBinDir)
 		fileset(dir: "src", excludes: "**/*.java")
 }
 
-def jarFile = "dbb.manager.jar"
+def jarFile = "com.ibm.dbb.manager.jar"
 	ant.jar(destfile: "resources/$jarFile", basedir: tempBinDir)
 	
 	tempBinDir.deleteDir()

@@ -1,10 +1,10 @@
 /* REXX */
-
+/*%STUB CPPLEFPL*/
 /*********************************************************************/
 /*                                                                   */
 /* NAME := GENDEF                                                    */
 /*                                                                   */
-/* DESCRIPTIVE NAME := SCLM definition migration part 2              */
+/* DESCRIPTIVE NAME := Generate systemDefinition.xml                 */
 /*                                                                   */
 /* FUNCTION := Using information in files created from SCLM          */
 /*             migration part 1 generate system definition XML for   */
@@ -15,17 +15,47 @@
 
   Trace o
 
+  Parse arg propmem
   /*-------------------------------------------------*/
   /* Parsing the property member from input, if none */
   /* is provided then look for a member named        */
   /* MIGCFG in the same source data set              */
   /*-------------------------------------------------*/
   Parse SOURCE . . thisExec . thisDsn . . . .
-  Parse arg propmem
+  If thisDsn = '?' & propmem = '' Then
+  Do
+    Say 'Exec is running from compiled REXX. Parse SOURCE not supported.'
+    Say 'As such the config data set and member must be passed as a parameter.'
+    call ExitRtn(8)
+  End
+
   If propmem = '' Then
   Do
+    If sysdsn("'"thisDsn"(MIGCFG)'") = 'MEMBER NOT FOUND' Then
+    Do
+      Say 'Configuration member MIGCFG not found in 'thisDsn'.'
+      Call ExitRtn(8)
+    End
     propmem = thisDsn'('MIGCFG')'
   End
+  Else
+  Do
+    Parse var propmem cfgDsn '(' cfgmem ')' .
+    If sysdsn("'"cfgDsn"'") = 'DATASET NOT FOUND' Then
+    Do
+      Say 'Configuration data set 'cfgDsn' not found.'
+      Call ExitRtn(8)
+    End
+    If cfgMem <> '' Then
+    Do
+      If sysdsn("'"cfgDsn"("cfgMem")'") = 'MEMBER NOT FOUND' Then
+      Do
+        Say 'Configuration member 'cfgMem' not found in 'cfgDsn'.'
+        Call ExitRtn(8)
+      End
+    End
+  End
+
   Say 'Parsing the SCLM Migration information from 'propmem
 
   /*-------------------------------------------------*/
@@ -54,10 +84,7 @@
   /* Parsing the parameters from the property file   */
   /*-------------------------------------------------*/
   Do i = 1 to props.0
-    next = Strip(props.i)
-    If next = '' | Pos('#',next) = 1 Then
-       Iterate
-    Parse Var next key '=' value    
+    Parse Var props.i key '=' value
     key = strip(Translate(key))
     value = strip(value)
     Select
@@ -182,19 +209,18 @@
     /* Process the language definitions              */
     Call LangDefs
 
-    projdefs. = ''
-    langexts. = ''
-    archtype. = ''
+    If rc = 0 Then
+    Do
+      projdefs. = ''
+      langexts. = ''
+      archtype. = ''
 
-    If rc <> 0 Then
-      leave
+      /* Process the member metadata                   */
+      Call fileMetaData
 
-    /* Process the member metadata                   */
-    Call fileMetaData
-
-    /* Process the system definition XML             */
-    Call genXML
-
+      /* Process the system definition XML             */
+      Call genXML
+    End
   End
 
   rc = repLine(' ' ' ')
@@ -204,6 +230,7 @@
   rc = repLine('*' ' ')
   rc = repLine('*' Copies('*',80))
 
+  Call exitRtn(0)
 Exit
 
 /*---------------------------------------------------------------*/
@@ -382,13 +409,25 @@ DsDefs :
             rc = repLine(' ' ' ')
             rc = repLine('E' 'DSINFO Failed for 'Strip(dsname))
             If exist = 'true' Then
+            Do
+              rc = repLine('W' 'Flag to not create data set definitions ' ||,
+                               'for non-exising data sets set to true. ' ||,
+                               'Data set definition not created for ' ||,
+                               Strip(dsname)'.')
               Iterate
+            End
           End
 
           /* If the Empty option is selected then a dsdef is not */
           /* created if the data set is empty.                   */
           If empty = 'true' & ZDS#MEM = 0 Then
+          Do
+            rc = repLine('W' 'Flag to not create data set definitions ' ||,
+                             'for data sets with no members is set to ' ||,
+                             'true. Data set definition not created for ' ||,
+                             Strip(dsname)'.')
             Iterate
+          End
 
           /* Determine if Type 1 or Type 2 */
           If Extend_Type <> '' then
@@ -565,8 +604,6 @@ DsDefs :
           End
         End
 
-        /* Need to see if this is a valid data set */
-   /*   sysdsnRC = sysdsn("'"dsname"'") */
         /* Need to see if we have this one already */
         dsname = Strip(dsname)
         Do z = 1 to t3 While (dsname <> Typet3.z)
@@ -685,6 +722,20 @@ DsDefs :
                   ZDSBLK = ZDSBLK + 4
               End
             End
+            If ZDSRF = 'U' & ZDSLREC <> '0' Then
+            Do
+              rc = repLine(' ' ' ')
+              rc = repLine('W'    'Temporary data set 'dsname' has '        ||,
+                                  'RECFM 'ZDSRF' and LRECL 'ZDSLREC'.')
+              rc = repLine('W'    'Due to a defect in RTC (472084) it is '  ||,
+                                  'not possible to create this data set '   ||,
+                                  'definition.')
+              rc = repLine('W'    'It will be created with LRECL or 0 and ' ||,
+                                  'blocksize of 6144 and will need to be '  ||,
+                                  'changed in the user interface.')
+              ZDSLREC = '0'
+              ZDSBLK = '6144'
+            End
             If ZDSRF = 'U' & ZDSBLK = '' Then
             Do
               If ZDSLREC = '0' Then
@@ -739,7 +790,7 @@ GetDsinfo :
       rc = repLine(' ' ' ')
       rc = repLine('E' 'Unhandled Space unit or 'ZDSSPC' for ' ||,
                      'data set : 'dsname)
-      Exit 8
+      Call exitRtn(8)
     End
   End
   Call interp_stmt("priSpaceA" ZDS1EX)
@@ -1490,6 +1541,7 @@ langTran :
           trancnt = trancnt + 1
 
           ddList = 0
+          syslinDD = 0
 
           /* Initialize the DD list based on the compiler being called */
           /* Have had to add all the aliases as well.                  */
@@ -1737,6 +1789,10 @@ getAllocs :
               rc = repLine('W' 'Changing to IOTYPE=W to assume ' ||,
                                  'temporary data set.')
             End
+            When (keyref <> '' & dflttyp = '') Then
+            Do
+              dflttyp = keyref
+            End
             Otherwise
               Nop
           End
@@ -1887,24 +1943,12 @@ getAllocs :
                                                 'value='keyType
                             condDDset = 1
                           End
-                          If keyType = dflttyp Then
-                          Do
-                            noDefKey = 0
-                            condDD.dsnum.condVal = ''
-                          End
                         End
                       End
                       If dsnum = 0 Then
                         dsnum = 1
                     End
                   End
-                End
-                If condDDset & noDefKey Then
-                Do
-                  dsnum = dsnum + 1
-                  condDD.dsnum.dsn = dflttyp
-                  condDD.dsnum.cond = 'name='keyWord'TYPE ' ||,
-                                      'value='dflttyp
                 End
               End
             End
@@ -1928,6 +1972,16 @@ getAllocs :
                 trans.tr.ddnum.condCnt.dsdef = Strip(dflttyp)
                 trans.tr.ddnum.condCnt.condition = ''
                 trans.tr.ddnum.condCnt.conddefVal = ''
+              End
+
+              /* Validate the default type is in the SCLM types table */
+              Do j = 1 to types.0 while(trans.tr.ddnum.condCnt.dsdef <> types.j)
+              End
+              If j > types.0 Then
+              Do
+                rc = repLine(' ' ' ')
+                rc = repLine('E' 'Default type 'trans.tr.ddnum.condCnt.dsdef ||,
+                                 ' not found in FLMTYPEs for IOTYPE O or P')
               End
 
               If outmem = '@@FLMONM' Then
@@ -1986,9 +2040,6 @@ getAllocs :
 
             /* If this is a binder language we need to add any */
             /* used object decks to the front of the SYSLIB    */
-            If trans.tr.binder = 'true' & keyref = 'INCL' Then
-              Call binderSyslib
-
           End
           When (iotype = 'I') Then
           Do
@@ -2384,6 +2435,21 @@ getAllocs :
            trans.tr.ddnum.ddname = 'SYSCPRT' Then
           trans.tr.ddnum.dsnum.publish = 'true'
 
+        /* If this is a SYSLIN DD then store the dataset name used to  */
+        /* add to link edit SYSLIB later                               */
+
+        If ddnum = syslinDD Then
+        Do
+          Do j = 1 to lecCnt While (trans.tr.ddnum.dsnum.dsdef <> lecSys.j)
+          End
+          If j > lecCnt Then
+          Do
+            /* Not found so add to list */
+            lecCnt = lecCnt + 1
+            lecSys.lecCnt = trans.tr.ddnum.dsnum.dsdef
+          End
+        End
+
       End
       Otherwise
         Nop
@@ -2409,7 +2475,7 @@ binderSyslib:
   Do kr = 1 to keyrefs.0 While (typeNotFound)
     If Pos('<keyword name=',keyrefs.kr) <> 0 Then
     Do
-      Parse var keyrefs.kr '<keyword name="'keyWord'">'
+      Parse var keyrefs.kr '<keyword name="'keyWord'" valueCnt' .
       If keyWord = 'OBJ' Then
       Do
         kr = kr + 1
@@ -2465,6 +2531,7 @@ InitASMDD:
   trans.tr.19.ddname = 'Not Applicable'
   trans.tr.20.ddname = 'ASMAOPT'
   trans.tr.DDcnt = 20
+  syslinDD = 1
 
 Return
 
@@ -2505,6 +2572,7 @@ InitCobDD:
   trans.tr.28.ddname = 'SYSUT14'
   trans.tr.29.ddname = 'SYSUT15'
   trans.tr.DDcnt = 29
+  syslinDD = 1
 
 Return
 
@@ -2542,6 +2610,7 @@ InitCDD:
   trans.tr.25.ddname = 'SYSCDBG'
   trans.tr.26.ddname = 'ASMLIB'
   trans.tr.DDcnt = 26
+  syslinDD = 2
 
 Return
 
@@ -2567,6 +2636,7 @@ InitPliDD:
   trans.tr.13.ddname = 'Not Applicable'
   trans.tr.14.ddname = 'SYSCIN'
   trans.tr.DDcnt = 14
+  syslinDD = 1
 
 Return
 
@@ -2596,7 +2666,15 @@ InitPlxDD:
   trans.tr.17.ddname = 'Not Applicable'
   trans.tr.18.ddname = 'Not Applicable'
   trans.tr.19.ddname = 'Not Applicable'
-  trans.tr.DDcnt = 19
+  trans.tr.20.ddname = 'ASMLIN'
+  trans.tr.21.ddname = 'ASMLIB'
+  trans.tr.22.ddname = 'ASMPRINT'
+  trans.tr.23.ddname = 'ASMPUNCH'
+  trans.tr.24.ddname = 'ASMUT1'
+  trans.tr.25.ddname = 'ASMTERM'
+  trans.tr.26.ddname = 'SYSADATA'
+  trans.tr.DDcnt = 26
+  syslinDD = 20
 
 Return
 
@@ -2616,6 +2694,7 @@ InitEPliDD:
   trans.tr.7.ddname  = 'SYSXMLSD'
   trans.tr.8.ddname  = 'SYSDEBUG'
   trans.tr.DDcnt = 8
+  syslinDD = 5
 
 Return
 
@@ -2746,6 +2825,7 @@ InitJovDD:
   trans.tr.18.ddname = 'Not Applicable'
   trans.tr.19.ddname = 'Not Applicable'
   trans.tr.DDcnt = 19
+  syslinDD = 6
 
 Return
 
@@ -2801,6 +2881,19 @@ findDDnum:
     End
     Else
       ddNames = ddNames || ddn || ','
+  End
+
+  /* If this is a SYSLIB DD for a LE/370 translator then need to */
+  /* add all OBJ types to the front of the SYSLIB. However this  */
+  /* only works for CC types. If you use Generic ARCHDEFs to     */
+  /* control the compiles then we don't know what OUTx statement */
+  /* is used for the binder input. SCLM works it out internally. */
+
+  If ((trans.tr.porder = '2' | trans.tr.porder = '3') & ddnum = 4) |,
+     ((trans.tr.porder = '0' | trans.tr.porder = '1') & ddn = 'SYSLIB') Then
+  Do
+    If trans.tr.binder = 'true' Then
+      Call binderSyslib
   End
 
 Return
@@ -2976,7 +3069,7 @@ proc@@ :
       End
     End
   End
-  name = Translate(name,'@','#')
+  name = Translate(name,'@@','##')
 
 Return name
 
@@ -3786,7 +3879,7 @@ xmlMetaFile:
                       /* SCLM adds PARM after options before PARMx */
                       If Pos('PARM'tt,trans.tt.options) = 0 Then
                       Do
-                        trans.tt.options = trans.tt.options',&amp;PARM'tt
+                        trans.tt.options = trans.tt.options',&PARM'tt
                         trans.tt.parm    = 'PARM'tt
                       End
                     End
@@ -3986,6 +4079,8 @@ chkmem1: Procedure
         When (char = '>') Then newString = newString||'&gt;'
         When (char = '"') Then newString = newString||'&quot;'
         When (char = "'") Then newString = newString||'&apos;'
+        Otherwise
+          Nop
       End
 
     End
@@ -4014,6 +4109,18 @@ repLine :
     Address syscall "writefile (repfile) 755 report."
   End
   Else
-    Address syscall "writefile (repfile) 755 report. 1" 
+    Address syscall "writefile (repfile) 755 report. 1"
 
 Return 0
+
+/*---------------------------------------------------------------*/
+/* Exit routine                                                  */
+/*---------------------------------------------------------------*/
+exitRtn :
+
+  Parse arg max_rc
+
+  ZISPFRC = max_rc
+  Address ISPEXEC 'VPUT (ZISPFRC) SHARED'
+
+Exit max_rc

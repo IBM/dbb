@@ -1,0 +1,76 @@
+@groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
+
+import com.ibm.dbb.build.*
+import com.ibm.dbb.dependency.*
+import com.ibm.dbb.repository.*
+import groovy.transform.*
+
+//* Parse standard arguments
+def FILE = argMap.FILE
+def MEMBER = argMap.MEMBER
+def DSMAPPING = argMap.DSMAPPING
+
+//* Define required properties
+def collection = BuildProperties.getProperty('collection')
+def sourceDir = BuildProperties.getProperty('sourceDir')
+def failOnError = BuildProperties.getProperty('failOnError')
+@Field def HLQ = BuildProperties.getProperty("HLQ")
+
+println("Building $FILE using ${this.class.getName()}.groovy script")
+
+//* Copy source file to PDS
+copyToDataset(sourceDir, FILE)
+
+//* Resolve program dependencies and copy from zFS to PDS.
+def repoClient = createRepositoryClient()
+def resolver = new DependencyResolver().collection(collection).sourceDir(sourceDir).repositoryClient(repoClient).file(FILE)
+
+${DBBScriptTemplateConverter.generateResolutionRules()}
+
+// resolve dependencies and copy them to dataset
+def physicalDependencies = resolver.resolve()
+physicalDependencies.each { physicalDependency ->    
+    if (physicalDependency.resolved)
+        copyToDataset(sourceDir, physicalDependency.file)    
+}
+
+//* Execute build commands
+def job = new MVSJob()
+
+job.start()
+
+${DBBScriptTemplateConverter.generateExecuteMethodInvocations()}
+
+job.stop()
+
+//* Definitions of execute methods
+${DBBScriptTemplateConverter.generateExecuteMethods()}
+
+
+/**********************************************************************/
+/* Copying the file associated with a given filePath to the           */
+/* associated data set that is mapped to its parent, see              */
+/* datasetMappings.properties                                         */
+/**********************************************************************/
+def copyToDataset(def sourceDir, def filePath)
+{
+    def file = new File(filePath)
+    def dsn = BuildProperties.getFileProperty('datasetMapping', file.parent)
+    if (dsn)
+    {
+        def member = "${file.name.take(file.name.lastIndexOf('.'))?:file.name}".toUpperCase()
+        def absFile = file.absolute ? file : new File("$sourceDir/$file")
+        //println "Copying file $absFile to ${HLQ}.${dsn}($member)"
+        new CopyToPDS().file(absFile).dataset("${HLQ}.${dsn}").member(member).execute()
+    }
+}
+
+def RepositoryClient createRepositoryClient()
+{
+    def repoClient = new RepositoryClient()
+    repoClient.setUrl(BuildProperties.getProperty('dbb.RepositoryClient.url'))
+    repoClient.setUserId(BuildProperties.getProperty('dbb.RepositoryClient.userId'))
+    repoClient.setPasswordFile(new File(BuildProperties.getProperty('dbb.RepositoryClient.passwordFile')))
+    repoClient.setForceSSLTrusted(true)
+    repoClient
+}

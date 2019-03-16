@@ -49,6 +49,9 @@ def properties = tools.loadProperties(opts)
 tools.validateRequiredProperties(["sourceDir", "workDir", "hlq"])
 if (!properties.userBuild) 
 	tools.validateRequiredProperties(["dbb.RepositoryClient.url", "dbb.RepositoryClient.userId", "password", "collection"])
+	
+println("** Build properties at startup:")
+println(properties.list())
 
 def startTime = new Date()
 properties.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
@@ -65,7 +68,43 @@ println("** Build output will be in $properties.workDir")
 tools.createDatasets()
 
 // create build list from input build file
-def buildList = tools.getBuildList(opts.arguments())
+def buildList
+if (opts.arguments()) {
+	buildList = tools.getBuildList(opts.arguments())
+}
+// incremental build  
+else { 
+	
+	// get the last successful build's buildHash
+	println("** Searching for last successful build commit hash for build group $properties.collection")
+	def lastBuildHash = null
+	def repositoryClient = tools.getDefaultRepositoryClient()
+	def lastBuildResult = repositoryClient.getLastBuildResult(properties.collection, BuildResult.COMPLETE, BuildResult.CLEAN)
+	// pull hash from last build result
+	if (lastBuildResult)
+		lastBuildHash = lastBuildResult.getProperty("buildHash")
+	
+	// if no last build result, do full build
+	if (lastBuildHash == null) {
+		println("Could not locate last successful build commit hash for build group $properties.collection.  Building all files.")
+		buildList = new File("$scriptDir/files.txt") as List<String>
+	}
+	else {
+		lastBuildHash = lastBuildHash.trim()
+		println("Last successful build commit hash located. label : ${lastBuildResult.getLabel()} , buildHash : $lastBuildHash")
+		println("** Running incremental build")
+		GroovyObject script = loadScript(new File("${properties.sourceDir}/MortgageApplication/build/impacts.groovy"))
+		// get arguments needed for impacts.groovy
+		impactArguments = tools.getImpactArguments()
+		// add last build hash to impact arguments
+		impactArguments.add("--lastBuildHash")
+		impactArguments.add("${lastBuildHash}")
+		// invoke impacts.groovy
+		script.invokeMethod("_run", impactArguments as String[])
+		// copy output of impacts.groovy to buildlist
+		buildList = new File("${properties.workDir}/buildList.txt") as List<String>
+	}
+}	
 
 // scan all the files in the process list for dependency data (team build only)
 if (!properties.userBuild && buildList.size() > 0) { 
@@ -127,7 +166,7 @@ tools.finalizeBuildResult(jsonReport:jsonFile, htmlReport:htmlFile, filesProcess
 def endTime = new Date()
 def duration = TimeCategory.minus(endTime, startTime)
 def state = (properties.error) ? "ERROR" : "CLEAN"
-println("** Build finished at $endTime")
+println("** Build ended at $endTime")
 println("** Build State : $state")
 println("** Total files processed : $processCounter")
 println("** Total build time  : $duration")
