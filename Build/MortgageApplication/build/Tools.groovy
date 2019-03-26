@@ -85,9 +85,19 @@ def loadProperties(OptionAccessor opts) {
 	// load bindlinkEditScanner.properties containing Link Edit scanning options used by Mortgage Application build
 	properties.load(new File("${getScriptDir()}/linkEditScanner.properties"))
 
-	
-
 	return properties                                 
+}
+
+def validateRequiredOpts(OptionAccessor opts) {
+	if (!opts.s) {
+		assert opts.s : 'Missing argument --sourceDir'
+	}
+	if (!opts.w) {
+		assert opts.w : 'Missing argument --workDir'
+	}
+	if (!opts.q) {
+		assert opts.q : 'Missing argument --hlq'
+	}
 }
 
 def validateRequiredProperties(List<String> props) {
