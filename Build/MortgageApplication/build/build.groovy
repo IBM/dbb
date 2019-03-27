@@ -69,10 +69,11 @@ tools.createDatasets()
 
 // create build list from input build file
 def buildList
+def incremental = false
 if (opts.arguments()) {
 	buildList = tools.getBuildList(opts.arguments())
 }
-// incremental build  
+// incremental build or full build 
 else { 
 	
 	// get the last successful build's buildHash
@@ -103,36 +104,39 @@ else {
 		script.invokeMethod("_run", impactArguments as String[])
 		// copy output of impacts.groovy to buildlist
 		buildList = new File("${properties.workDir}/buildList.txt") as List<String>
+		incremental = true
 	}
 }	
 
 // scan all the files in the process list for dependency data (team build only)
-if (!properties.userBuild && buildList.size() > 0) { 
-	// create collection if needed
-	def repositoryClient = tools.getDefaultRepositoryClient()
-	if (!repositoryClient.collectionExists(properties.collection))
-    	repositoryClient.createCollection(properties.collection) 
-    	
-	println("** Scan the build list to collect dependency data")
-	def scanner = new DependencyScanner()
-	def logicalFiles = [] as List<LogicalFile>
-	
-	buildList.each { file ->
-    	println("Scanning $file")
-    	def logicalFile = scanner.scan(file, properties.sourceDir)
-    	logicalFiles.add(logicalFile)
-    	
-    	if (logicalFiles.size() == 500) {
-    		println("** Storing ${logicalFiles.size()} logical files in repository collection '$properties.collection'")
- 			repositoryClient.saveLogicalFiles(properties.collection, logicalFiles);
-			println(repositoryClient.getLastStatus())  
-			logicalFiles.clear() 		
-    	}
-	}
+if (!incremental) {
+	if (!properties.userBuild && buildList.size() > 0) { 
+		// create collection if needed
+		def repositoryClient = tools.getDefaultRepositoryClient()
+		if (!repositoryClient.collectionExists(properties.collection))
+			repositoryClient.createCollection(properties.collection) 
+			
+		println("** Scan the build list to collect dependency data")
+		def scanner = new DependencyScanner()
+		def logicalFiles = [] as List<LogicalFile>
+		
+		buildList.each { file ->
+			println("Scanning $file")
+			def logicalFile = scanner.scan(file, properties.sourceDir)
+			logicalFiles.add(logicalFile)
+			
+			if (logicalFiles.size() == 500) {
+				println("** Storing ${logicalFiles.size()} logical files in repository collection '$properties.collection'")
+				repositoryClient.saveLogicalFiles(properties.collection, logicalFiles);
+				println(repositoryClient.getLastStatus())  
+				logicalFiles.clear() 		
+			}
+		}
 
-	println("** Storing remaining ${logicalFiles.size()} logical files in repository collection '$properties.collection'")
-	repositoryClient.saveLogicalFiles(properties.collection, logicalFiles);
-	println(repositoryClient.getLastStatus())
+		println("** Storing remaining ${logicalFiles.size()} logical files in repository collection '$properties.collection'")
+		repositoryClient.saveLogicalFiles(properties.collection, logicalFiles);
+		println(repositoryClient.getLastStatus())
+	}
 }
 
 def processCounter = 0
