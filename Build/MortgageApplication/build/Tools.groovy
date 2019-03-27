@@ -301,9 +301,8 @@ def finalizeBuildResult(Map args) {
 }
 def getCurrentGitHash() {
 	def properties = BuildProperties.getInstance()
-	def buildPropFile = new File("${getScriptDir()}/build.properties")
 		   
-	def cmd = "git --git-dir=${properties.sourceDir}/.git rev-parse HEAD"
+	def cmd = "git -C ${properties.sourceDir} rev-parse HEAD"
 	def git_hash = new StringBuffer()
 	def git_error = new StringBuffer()
 	
@@ -316,7 +315,6 @@ def getCurrentGitHash() {
 
 def getImpactArguments() {
 	def properties = BuildProperties.getInstance()
-	def buildPropFile = new File("${getScriptDir()}/build.properties")
 	
 	impactArgumentList = []
 	if (properties.workDir) {
