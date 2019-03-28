@@ -225,7 +225,7 @@ def generateBuildReport() {
 
 def getDefaultDependencyResolver(String file) {
     def properties = BuildProperties.getInstance()
-	def path = new DependencyPath().sourceDir(properties.sourceDir).directory("MortgageApplication/copybook")
+	def path = new DependencyPath().sourceDir(properties.sourceDir).directory("Build/MortgageApplication/copybook")
 	def rule = new ResolutionRule().library("SYSLIB").path(path)
     def resolver = new DependencyResolver().sourceDir(properties.sourceDir).file(file).rule(rule)
     if (properties.userBuild)
@@ -242,15 +242,15 @@ def getDefaultImpactResolver(String file) {
 	def properties = BuildProperties.getInstance()
 	
 	// Add rule to assocuate changes to copybooks with the need to recompile programs that reference them.
-   	def cpypath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("MortgageApplication/copybook")
+   	def cpypath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("Build/MortgageApplication/copybook")
    	def cpyrule = new ResolutionRule().library("SYSLIB").path(cpypath)
 	   
 	// Add rule to associate changes to BMS maps with need to recompile programs that use the generated copybook.
-   	def bmspath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("MortgageApplication/bms")
+   	def bmspath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("Build/MortgageApplication/bms")
    	def bmsrule = new ResolutionRule().library("SYSLIB").path(bmspath)
 	   
 	// Add rule to associate changes to COBOL source with the need to linkedit .lnk files that reference them.
-   	def cobpath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("MortgageApplication/cobol")
+   	def cobpath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("Build/MortgageApplication/cobol")
    	def coblnkrule = new ResolutionRule().category("LINK").path(cobpath)
 	def cobrule = new ResolutionRule().category("COB").path(cobpath)
 	   

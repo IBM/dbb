@@ -94,7 +94,7 @@ else {
 		lastBuildHash = lastBuildHash.trim()
 		println("Last successful build commit hash located. label : ${lastBuildResult.getLabel()} , buildHash : $lastBuildHash")
 		println("** Running incremental build")
-		GroovyObject script = loadScript(new File("${properties.sourceDir}/MortgageApplication/build/impacts.groovy"))
+		GroovyObject script = loadScript(new File("${properties.sourceDir}/Build/MortgageApplication/build/impacts.groovy"))
 		// get arguments needed for impacts.groovy
 		impactArguments = tools.getImpactArguments()
 		// add last build hash to impact arguments
