@@ -29,33 +29,33 @@
 *.config zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.template zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 
-# file encodings: git 2.14.3 and earlier
-# *.cpy zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.cbl zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.bms zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.pli zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.mfs zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.bnd zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.lnk zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.rex zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.rexx zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.txt zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.groovy zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.sh zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.properties zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.asm zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.jcl zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.data zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.exec zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.mac zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.c zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.opt zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.h zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.copy zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.lmod zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.dtl zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.config zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
-# *.template zos-working-tree-encoding=ibm-1047 working-tree-encoding=ibm-1047 git-encoding=utf-8
+# file encodings: Git 2.14.4
+# *.cpy working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.cbl working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.bms working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.pli working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.mfs working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.bnd working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.lnk working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.rex working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.rexx working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.txt working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.groovy working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.sh working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.properties working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.asm working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.jcl working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.data working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.exec working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.mac working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.c working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.opt working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.h working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.copy working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.lmod working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.dtl working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.config working-tree-encoding=ibm-1047 git-encoding=utf-8
+# *.template working-tree-encoding=ibm-1047 git-encoding=utf-8
 
 # binary files
 *.png binary
