@@ -10,4 +10,6 @@ println("File: ${file}")
 
 // scan tar file
 def scanner = new DependencyScanner()
-println(scanner.scan(file, sourceDir))
+for (f in scanner.scanArchive(file, sourceDir)) {
+	println(f)
+}
