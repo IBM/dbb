@@ -162,6 +162,8 @@ changedFiles.each { changedFile ->
 
 // Write build list to file
 println("** Writing buildlist to $opts.w/buildlist.txt")
+new File("$opts.w/buildList.txt").delete()
+new File("$opts.w/buildList.txt").createNewFile()
 def buildListFile = new File("$opts.w/buildList.txt")
 buildList.each { file ->
     buildListFile << (file + "\n")
