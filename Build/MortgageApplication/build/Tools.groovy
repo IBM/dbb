@@ -72,7 +72,7 @@ def loadProperties(OptionAccessor opts) {
 	}
 	
 	// add build hash if not specific
-	if (!opts.b) {
+	if (!opts.b && !properties.userBuild) {
 		properties.buildHash = getCurrentGitHash() as String
 	}
 
