@@ -18,7 +18,7 @@ println("Source Directory: ${sourceDir}")
 println("File: ${file}")
 
 // resolve dependency
-def path = new DependencyPath().sourceDir(sourceDir).archive("Snippets/ArchiveFunctions/archive/archive_copybook.tar").directory(sourceDir)
+def path = new DependencyPath().sourceDir(sourceDir).archive("Snippets/ArchiveFunctions/archive/archive_copybook.tar").directory("copybook")
 def rule = new ResolutionRule().library("SYSLIB").path(path)
 def resolver = new DependencyResolver().sourceDir(sourceDir).file(file).rule(rule)
 resolver.setScanner(new DependencyScanner())
@@ -26,7 +26,7 @@ resolver.setScanner(new DependencyScanner())
 println(resolver.resolve())
 
 // resolve normally
-path = new DependencyPath().sourceDir(sourceDir).directory("copybook/")
+path = new DependencyPath().sourceDir(sourceDir).directory("copybook")
 rule = new ResolutionRule().library("SYSLIB").path(path)
 resolver = new DependencyResolver().sourceDir(sourceDir).file(file).rule(rule)
 resolver.setScanner(new DependencyScanner())
