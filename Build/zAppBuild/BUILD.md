@@ -48,7 +48,7 @@ Options:
 required options:
  -w,--workspace <arg>     Absolute path to workspace (root) directory
                           containing all required source directories
- -a,--application <arg>   Project directory name (relative to workspace)
+ -a,--application <arg>   Application directory name (relative to workspace)
  -o,--outDir <arg>        Absolute path to the build output root directory
  -h,--hlq <arg>           High level qualifier for partition data sets
 
@@ -56,12 +56,10 @@ build options:
  -p,--propFiles           Comma separated list of additional property files 
                           to load. Absolute paths or relative to workspace
  -f,--fullBuild           Flag indicating to build all programs for
-                          project
+                          the application
  -i,--impactBuild         Flag indicating to build only programs impacted
                           by changed files since last successful build.
-                          Provide a *.txt build file to scope the build
-                          list
- -s,--scanOnly            Flag indicating to only scan files for project
+ -s,--scanOnly            Flag indicating to only scan files for application
  -r,--reset               Deletes the application's dependency collections 
                           and build result group from the DBB repository
  -v,--verbose             Flag to turn on script trace
