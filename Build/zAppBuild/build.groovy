@@ -295,9 +295,9 @@ def populateBuildProperties(String[] args) {
 	if (!props.userBuild)
 		props.applicationCurrentBranch = gitUtils.getCurrentGitBranch(buildUtils.getAbsolutePath(props.application))
 	props.topicBranchBuild = (props.applicationCurrentBranch.equals(props.mainBuildBranch)) ? null : 'true'
-	props.applicationBuildGroup = ((props.applicationCurrentBranch) ? "${props.application}" : "${props.application}-${props.applicationCurrentBranch}") as String
+	props.applicationBuildGroup = ((props.applicationCurrentBranch) ? "${props.application}-${props.applicationCurrentBranch}" : "${props.application}") as String
 	props.applicationBuildLabel = "build.${props.startTime}" as String
-	props.applicationCollectionName = ((props.applicationCurrentBranch) ? "${props.application}" : "${props.application}-${props.applicationCurrentBranch}") as String
+        props.applicationCollectionName = ((props.applicationCurrentBranch) ? "${props.application}-${props.applicationCurrentBranch}" : "${props.application}") as String
 	props.applicationOutputsCollectionName = "${props.applicationCollectionName}-outputs" as String
 	props.buildOutDir = "${props.outDir}/${props.applicationBuildLabel}" as String
 	
