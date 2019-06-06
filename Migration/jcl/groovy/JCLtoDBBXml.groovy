@@ -94,7 +94,7 @@ touch.waitForProcessOutput(sout, serr)
 touch.waitForOrKill(1000)
 
 println "Parsing $dataset($member)"
-def cmd = "$dbbHome/bin/dmh4000 -x $dataset $member"
+def cmd = "$dbbHome/lib/dmh4000 -x $dataset $member"
 def proc = cmd.execute(null, outputDir)
 proc.waitForProcessOutput(sout, serr)
 stdout << sout

@@ -11,7 +11,7 @@ if [[ -z "${DBB_HOME}" ]]; then
   echo "Need to specified the required environment variable 'DBB_HOME'"
   exit 8
 fi
-NLSPATH=$DBB_HOME/bin/dmhmsg.cat:$NLSPATH
+NLSPATH=$DBB_HOME/lib/dmhmsg.cat:$NLSPATH
 
 CMD="$DBB_HOME/bin/groovyz $scriptDir/../groovy/JCLtoDBBXml.groovy $@"
 
