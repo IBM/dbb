@@ -7,6 +7,7 @@ However this will result in an error message because the build.groovy script has
 * --outDir <arg> - Absolute path to the build output root directory on USS
 * --hlq <arg> -  High level qualifier for created build partition data sets
 
+
 Example:
 ```
 $DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1 --outDir /u/build/out --hlq BUILD.APP1
@@ -17,11 +18,11 @@ Since we are still missing a build target or calculated build option, the build 
 
 **Build one program**
 ```
-$DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1 --outDir /u/build/out --hlq BUILD.APP1 cobol/epsmpmt.cbl
+$DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1 --outDir /u/build/out --hlq BUILD.APP1 app1/cobol/epsmpmt.cbl
 ```
 **Build a list of programs contained in a text file**
 ```
-$DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1 --outDir /u/build/out --hlq BUILD.APP1 buildList.txt
+$DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1 --outDir /u/build/out --hlq BUILD.APP1 u/usr1/buildList.txt
 ```
 **Build all programs in the application**
 ```
@@ -40,7 +41,7 @@ $DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1
 ```
 $DBB_HOME/bin/groovyz <ussLocation>/zAppBuild/build.groovy [options] buildfile
 
-buildFile (optional):  Path of the source file to build (relative to workspace). 
+buildFile (optional):  Path of the source file to build (absolute or relative to workspace). 
 If buildFile is a text file (*.txt), then it is assumed to be a build list file.
 
 Options:

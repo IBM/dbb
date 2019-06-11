@@ -283,7 +283,7 @@ def getAbsolutePath(String path) {
  * relativizePath - converts an absolute path to a relative path from the workspace directory
  */
 def relativizePath(String path) {
-	if (!path)
+	if (!path.startsWith('/'))
 		return path
 	String relPath = new File(props.workspace).toURI().relativize(new File(path.trim()).toURI()).getPath()
 	// Directories have '/' added to the end.  Lets remove it.

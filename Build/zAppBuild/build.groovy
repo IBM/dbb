@@ -377,13 +377,6 @@ def createBuildList() {
 	buildList.addAll(buildSet)
 	buildSet = null
 	
-	// scan and update source collection with build list files for non-impact builds
-	// since impact build list creation already scanned the incoming changed files
-	// we do not need to scan them again
-	if (!props.impactBuild && !props.userBuild) {
-		impactUtils.updateCollection(buildList, null, repositoryClient)
-	}
-	
 	// write out build list to file (for documentation, not actually used by build scripts)
 	String buildListFileLoc = "${props.buildOutDir}/buildList.${props.buildListFileExt}"
 	println "** Writing build list file to $buildListFileLoc"
@@ -394,6 +387,13 @@ def createBuildList() {
 			if (props.verbose) println file
 			writer.write("$file\n")
 		}
+	}
+	
+	// scan and update source collection with build list files for non-impact builds
+	// since impact build list creation already scanned the incoming changed files
+	// we do not need to scan them again
+	if (!props.impactBuild && !props.userBuild) {
+		impactUtils.updateCollection(buildList, null, repositoryClient)
 	}
 	
 	return buildList
