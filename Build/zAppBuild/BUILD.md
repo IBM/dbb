@@ -22,7 +22,7 @@ $DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1
 ```
 **Build a list of programs contained in a text file**
 ```
-$DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1 --outDir /u/build/out --hlq BUILD.APP1 u/usr1/buildList.txt
+$DBB_HOME/bin/groovyz build.groovy --workspace /u/build/repos --application app1 --outDir /u/build/out --hlq BUILD.APP1 /u/usr1/buildList.txt
 ```
 **Build all programs in the application**
 ```
