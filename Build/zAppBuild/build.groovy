@@ -179,12 +179,15 @@ options:
 	cli.help(longOpt:'help', 'Prints this message')
 	
 	def opts = cli.parse(args)
+	if (!opts) {
+		System.exit(1)
+	}
 	
 	if(opts.v && args.size() > 1)
 		println "** Input args = ${args[1..-1].join(' ')}"
 	
 	// if help option used, print usage and exit
-	if (opts.help) {
+    if (opts.help) {
 		cli.usage()
 		System.exit(0)
 	}
