@@ -304,8 +304,12 @@ def populateBuildProperties(String[] args) {
 	props.applicationOutputsCollectionName = "${props.applicationCollectionName}-outputs" as String
 	props.buildOutDir = "${props.outDir}/${props.applicationBuildLabel}" as String
 	
-	if (props.verbose)
-		println "** Build properties at start up:\n${props.list()}"
+	if (props.verbose) {
+		println("java.version="+System.getProperty("java.runtime.version"))
+		println("java.home="+System.getProperty("java.home"))
+		println("user.dir="+System.getProperty("user.dir"))
+		println ("** Build properties at start up:\n${props.list()}")
+	}
 
 }
 

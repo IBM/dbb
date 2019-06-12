@@ -126,7 +126,7 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 	
 	// add DD statements to the compile command
 	compile.dd(new DDStatement().name("SYSIN").dsn("${props.cobol_srcPDS}($member)").options('shr').report(true))
-	compile.dd(new DDStatement().name("SYSPRINT").options(props.cobol_tempOptions))
+	compile.dd(new DDStatement().name("SYSPRINT").options(props.cobol_printTempOptions))
 	compile.dd(new DDStatement().name("SYSMDECK").options(props.cobol_tempOptions))
 	(1..17).toList().each { num ->
 		compile.dd(new DDStatement().name("SYSUT$num").options(props.cobol_tempOptions))
@@ -185,7 +185,7 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 	
 	// add DD statements to the linkedit command
 	linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${props.cobol_loadPDS}($member)").options('shr').output(true).deployType('LOAD'))
-	linkedit.dd(new DDStatement().name("SYSPRINT").options(props.cobol_tempOptions))
+	linkedit.dd(new DDStatement().name("SYSPRINT").options(props.cobol_printTempOptions))
 	linkedit.dd(new DDStatement().name("SYSUT1").options(props.cobol_tempOptions))
 	
 	// add a syslib to the compile command with optional CICS concatenation
@@ -211,6 +211,11 @@ def getRepositoryClient() {
 	
 	return repositoryClient
 }
+
+
+
+
+
 
 
 

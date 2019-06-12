@@ -38,6 +38,10 @@ import groovy.time.*
  * name. The properties in build.properties are used as default property values and can be 
  * overridden by command line options.
  */
+
+println("java.version="+System.getProperty("java.runtime.version"))
+println("java.home="+System.getProperty("java.home"))
+println("user.dir="+System.getProperty("user.dir"))
  
 // load the Tools.groovy utility script
 def tools = loadScript(new File("Tools.groovy"))
