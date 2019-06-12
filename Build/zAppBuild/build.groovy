@@ -204,6 +204,7 @@ def populateBuildProperties(String[] args) {
 	// parse incoming options and arguments
 	def opts = parseArgs(args)
 	def zAppBuildDir =  getScriptDir()
+	props.zAppBuildDir = zAppBuildDir
 	
 	// set required command line arguments
 	if (opts.w) props.workspace = opts.w
@@ -294,7 +295,6 @@ def populateBuildProperties(String[] args) {
 	if (opts.arguments()) props.buildFile = opts.arguments()[0].trim()
 		
 	// set calculated properties
-	props.zAppBuildDir = zAppBuildDir
 	if (!props.userBuild)
 		props.applicationCurrentBranch = gitUtils.getCurrentGitBranch(buildUtils.getAbsolutePath(props.application))
 	props.topicBranchBuild = (props.applicationCurrentBranch.equals(props.mainBuildBranch)) ? null : 'true'
