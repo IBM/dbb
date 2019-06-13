@@ -1,0 +1,48 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<varclass name=vcrep  type='char 48'>
+<varclass name=vcdir  type='char 48'>
+<varclass name=vcbra  type='char 48'>
+<varlist>
+<vardcl name=bgzrepos varclass=vcrep>
+<vardcl name=bgzusdir varclass=vcdir>
+<vardcl name=bgzbranc varclass=vcbra>
+</varlist>
+<panel name=bgzADD width=76 depth=24 keylist=bgzsabx applid=bgz
+             help=bgzA0005>&pan_title
+<ab>
+  &bgzmenu
+  &bgzhelp
+</ab>
+<area>
+  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzrepos_prompt;
+  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzusdir_prompt;
+  <dtafld datavar=bgzbranc entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzbranc_prompt;
+</area>
+<divider>
+</divider>
+<info>
+ <p compact>&panel_instruct_1;
+</info>
+<area>
+  <grphdr div=none
+  indent=2>&status_prompt &modfile_prompt
+  </grphdr>
+  <lstfld vardcl=no scrollvar=zamt>
+    <lstcol datavar=bgzadcmd usage=in caps=on colwidth=1>
+    <lstcol datavar=bgzstat usage=out colwidth=3>
+    <lstcol datavar=bgzfile usage=out colwidth=60>
+      <scrfld displen=1024>
+  </lstfld>
+</area>
+<cmdarea name=bgzcmd caps=off>
+<source type=init>
+</source>
+<source type=reinit>
+</source>
+<source type=proc>
+</source>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->

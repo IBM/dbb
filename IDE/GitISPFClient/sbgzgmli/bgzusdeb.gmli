@@ -1,0 +1,25 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<varclass name=vccmd  type='char 8'>
+  <xlatl format=upper>
+  </xlatl>
+<varclass name=vcnme type='char 54'>
+
+<varlist>
+  <vardcl name=zcmd varclass=vccmd>
+  <vardcl name=bgzflnme varclass=vcnme>
+</varlist>
+<panel name=BGZUSDEL keylist=BGZSABx applid=BGZ depth=12 width=72 help=BGZA0099
+       window=yes padc=user wintitle='&window_title;'>&panel_title;
+<area depth=1 extend=on>
+  <dtafld datavar=bgzflnme pmtfmt=none pmtwidth=* entwidth=54
+         usage=out>&ufile_prompt;
+      <scrfld displen=1024>
+   <grphdr>&group_header_1;
+   <info width=*>
+     <p compact indent=2>&panel_instruct_1;
+     <divider>
+     <p compact indent=2>&panel_instruct_2;
+   </info>
+ </area>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->

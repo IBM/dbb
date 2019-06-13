@@ -1,0 +1,46 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<varclass name=vcrep  type='char 48'>
+<varclass name=vcdir  type='char 48'>
+<varlist>
+<vardcl name=bgzrepos varclass=vcrep>
+<vardcl name=bgzusdir varclass=vcdir>
+</varlist>
+<panel name=bgzSLREP help=bgzA0099 keylist=bgzsnab applid=bgz
+      width=&panel_width; depth=22 window=yes padc=user
+      wintitle='&window_title;'>&panel_title;
+
+<area depth=1 extend=on>
+  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzrepos_prompt;
+  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzusdir_prompt;
+<divider>
+<region dir=vert>
+ <selfld name=bgzSEL selwidth=* init=no autotab=no listtype=radio
+ choicecols=2 choicedepth=8 pmtloc=above entwidth=2
+          pmtwidth=24>&selfld_01_text;
+     <choice><ps var=bgzSEL value=1>&choice_01_text;</ps>
+     <choice><ps var=bgzSEL value=2>&choice_02_text;</ps>
+     <choice><ps var=bgzSEL value=3>&choice_03_text;</ps>
+     <choice><ps var=bgzSEL value=4>&choice_04_text;</ps>
+     <choice><ps var=bgzSEL value=5>&choice_05_text;</ps>
+     <choice><ps var=bgzSEL value=6>&choice_06_text;</ps>
+     <choice><ps var=bgzSEL value=7>&choice_07_text;</ps>
+     <choice><ps var=bgzSEL value=8>&choice_08_text;</ps>
+     <choice><ps var=bgzSEL value=9>&choice_09_text;</ps>
+     <choice><ps var=bgzSEL value=10>&choice_10_text;</ps>
+ </selfld>
+</region>
+<divider>
+<info>
+ <p compact>&panel_instruct1;
+</info>
+</area>
+<source type=init>
+  &bgzSEL = ''
+</source>
+<source type=reinit>
+  &bgzSEL = ''
+</source>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->

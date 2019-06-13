@@ -1,0 +1,18 @@
+BGZC031 .TYPE=WARNING .HELP=* .ALARM=YES
+'SMSG="Invalid select code ">Codes CB (Change working branch), PB (Push branc' +
+'h on github), DB (Delete local branch) and JU (Jump to working directory) al' +
+'lowed'
+BGZC032 'Remove dir failed' .TYPE=WARNING .HELP=* .ALARM=YES
+'&BGZLNGER.'
+BGZC033 'File not US ASCII       ' .TYPE=WARNING .HELP=* .ALARM=YES
+'The file being edited has a codepage not equal to Microsoft cp1252 or ISO-88' +
+'59-1. As such certain characters may not be displayed correctly.'
+BGZC034 'Invalid z/OS Unix file' .TYPE=WARNING .HELP=* .ALARM=YES
+'When creating a new z/OS Unix file the file name must be entered'
+BGZC035 'Unix File delete        ' .TYPE=NOTIFY .HELP=* .ALARM=NO
+'The Unix file has been deleted'
+BGZC036 'Unix File rename        ' .TYPE=NOTIFY .HELP=* .ALARM=NO
+'The Unix file has been renamed'
+/* COPYRIGHT IBM CORP 2019 */
+/* ISPDTLC Release: 7.3.  Level: PID                                  */
+/* z/OS 02.03.00.  Created - Date: 14 May 2019, Time: 09:35           */
