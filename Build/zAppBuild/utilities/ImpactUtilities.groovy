@@ -168,7 +168,11 @@ def createImpactResolver(String changedFile, String rules, RepositoryClient repo
 }
 
 def updateCollection(changedFiles, deletedFiles, RepositoryClient repositoryClient) {
-
+	if (!repositoryClient) {
+		if (props.verbose) println "** Unable to update collections. No repository client."
+		return
+	}
+	
 	if (props.verbose) println "** Updating collection ${props.applicationCollectionName}"
 	def scanner = new DependencyScanner()
 	List<LogicalFile> logicalFiles = new ArrayList<LogicalFile>()
