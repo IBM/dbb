@@ -35,14 +35,14 @@ sortedList.each { buildFile ->
 	
 	// execute mvs commands in a mvs job
 	def maxRC = props.getFileProperty('bms_maxRC', buildFile).toInteger()
-    def rc = new MVSJob().executable(copyGen)
+        def rc = new MVSJob().executable(copyGen)
 	                     .executable(compile)
-						 .executable(linkEdit)
-						 .maxRC(0)
-						 .execute()
+			     .executable(linkEdit)
+			     .maxRC(0)
+			     .execute()
 	
     if (rc > maxRC) {
-	    String errorMsg = "*! The build return code ($rc) for $buildFile exceeded the maximum return code allowed ($axRC)"
+	    String errorMsg = "*! The build return code ($rc) for $buildFile exceeded the maximum return code allowed ($maxRC)"
 		println(errorMsg)
 		props.error = "true"
 		buildUtils.updateBuildResult(errorMsg:errorMsg,logs:["${member}.log":logFile],client:getRepositoryClient())
