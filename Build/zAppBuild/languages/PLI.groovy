@@ -137,6 +137,8 @@ sortedList.each { buildFile ->
 	 compile.dd(new DDStatement().name("SYSLIB").dsn(props.pli_incPDS).options("shr"))
 	 if (props.bms_cpyPDS)
 		 compile.dd(new DDStatement().dsn(props.bms_cpyPDS).options("shr"))
+	 if(props.team)
+		 compile.dd(new DDStatement().dsn(props.pli_BMS_PDS).options("shr"))
 	 if (buildUtils.isCICS(logicalFile))
 		 compile.dd(new DDStatement().dsn(props.SDFHCOB).options("shr"))
  

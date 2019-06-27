@@ -143,6 +143,8 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 	compile.dd(new DDStatement().name("SYSLIB").dsn(props.cobol_cpyPDS).options("shr"))
 	if (props.bms_cpyPDS)
 		compile.dd(new DDStatement().dsn(props.bms_cpyPDS).options("shr"))
+	if(props.team)
+		compile.dd(new DDStatement().dsn(props.cobol_BMS_PDS).options("shr"))
 	if (buildUtils.isCICS(logicalFile))
 		compile.dd(new DDStatement().dsn(props.SDFHCOB).options("shr"))
 

@@ -174,6 +174,7 @@ options:
 	cli.e(longOpt:'errPrefix', args:1, 'Unique id used for IDz error message datasets')
 	cli.srcDir(longOpt:'sourceDir', args:1, 'Absolute path to workspace (root) directory containing all required source directories for user build')
 	cli.wrkDir(longOpt:'workDir', args:1, 'Absolute path to the build output root directory for user build')
+	cli.t(longOpt:'team', args:1, argName:'hlq', 'Team build hlq for user build syslib concatenations')
 
 	// utility options
 	cli.help(longOpt:'help', 'Prints this message')
@@ -290,6 +291,7 @@ def populateBuildProperties(String[] args) {
 	// set IDz/ZOD user build options
 	if (opts.err) props.errPrefix = opts.err
 	if (opts.u) props.userBuild = 'true'
+	if (opts.t) props.team = opts.t
 	
 	// set build file from first non-option argument
 	if (opts.arguments()) props.buildFile = opts.arguments()[0].trim()
