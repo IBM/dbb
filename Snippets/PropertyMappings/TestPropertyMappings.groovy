@@ -32,8 +32,8 @@ def setlist = [] as List<String>
 def another = "Three"
 def filepat = "MortgageApplication/cobol/*.cbl"
 def value2 = "Five"
-
 setlist.add("MortgageApplication/mfs_2/*.mfs")
+
 println("\n Try setValue -> ${another} : ${setlist[0]}")
 mapping.setValue(another,setlist)
 println(" Try addFilePattern -> ${value2} : ${filepat} \n")
@@ -43,25 +43,26 @@ println(" Print again values of the key : ${mapping.getKeyName()}")
 mapping.getValues().each{value->
 	println(value)
 }
-///
-	//Print all the properties.
-	println("\n Print all the properties :")
-	println(properties.list())
-	
-	//Replace the file of the four
-	println("\nReplace Four")
-	def setlist2 = [] as List<String>
-	setlist2.add("C:/Users/JeromeSarrasin/git/MortgageApplication/cobol_cics/*.cbl")
-	mapping.setValue("Four",setlist2)
-	
-	//Print all the properties.
-	println("\n Print all the properties :")
-	println(properties.list())
-	
-	//Add a file for the value Four
-	println("\nAdd a file for the value Four")
-	mapping.addFilePattern("Four","C:/Users/JeromeSarrasin/git/MortgageApplication/copybook/*.cpy")
-	
-	//Print all the properties.
-	println("\n Print all the properties :")
-	println(properties.list())
+
+
+//Print all the properties.
+println("\n Print all the properties :")
+println(properties.list())
+
+//Replace the file of the four
+println("\nReplace Four")
+def setlist2 = [] as List<String>
+setlist2.add("C:/Users/JeromeSarrasin/git/MortgageApplication/cobol_cics/*.cbl")
+mapping.setValue("Four",setlist2)
+
+//Print all the properties.
+println("\n Print all the properties :")
+println(properties.list())
+
+//Add a file for the value Four
+println("\nAdd a file for the value Four")
+mapping.addFilePattern("Four","C:/Users/JeromeSarrasin/git/MortgageApplication/copybook/*.cpy")
+
+//Print all the properties.
+println("\n Print all the properties :")
+println(properties.list())
