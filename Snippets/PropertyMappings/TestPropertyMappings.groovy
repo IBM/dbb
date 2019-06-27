@@ -7,7 +7,7 @@ import com.ibm.dbb.build.*
 def mapping = new PropertyMappings("theNewName")
 //load the properties
 def properties = BuildProperties.getInstance()
-def theFile = new File("${getScriptDir()}/noscriptmapping.properties")
+def theFile = new File("${getScriptDir()}/mapping.properties")
 
 println(" Print values of the key : ${mapping.getKeyName()}")
 
