@@ -24,7 +24,7 @@ Sample | Description
 [IDE/GitISPFClient](IDE/GitISPFClient) | An ISPF interface that interacts with a Git repository to allow cloning, staging, checking in, pushing and pulling as well as other git commands.
 [Migration/mappingExtension](Migration/mappingExtension) | Sample showing how to extend the DBB Migration tool script to detect possible round-trip encoding problems when importing and loading to HFS.
 [Migration/sclm](Migration/sclm) | This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
-[Snippets/InteractiveGateway](nippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
+[Snippets/InteractiveGateway](Snippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
 [Snippets/zUnitTestCase](Snippets/zUnitTestCase) | Example showing how to use the JCLExec command added in DBB v1.0.1
 [Utilities/BuildManager](Utilities/BuildManager) | Background process for queueing and managing build scripts without additional JVM start-up overhead.
 [Utilities/BuildReportPruner](Utilities/BuildReportPruner) | Utility scripts demonstating rule based BuildReport pruning and preserving.
