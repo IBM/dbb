@@ -19,8 +19,7 @@ def isGitDir(String dir) {
 	boolean isGit = false
 	
 	Process process = cmd.execute()
-	process.consumeProcessOutput(gitResponse, gitError)
-	process.waitForOrKill(timeout)
+	process.waitForProcessOutput(gitResponse, gitError)
 	if (gitError) {
 		println("*? Warning executing isGitDir($dir). Git command: $cmd error: $gitError")	
 	}
@@ -43,8 +42,7 @@ def getCurrentGitBranch(String gitDir) {
 	StringBuffer gitError = new StringBuffer()
 	
 	Process process = cmd.execute()
-	process.consumeProcessOutput(gitBranch, gitError)
-	process.waitForOrKill(timeout)
+	process.waitForProcessOutput(gitBranch, gitError)
 	if (gitError) {
 		println("*! Error executing Git command: $cmd error: $gitError")
 	}
@@ -63,8 +61,7 @@ def getCurrentGitHash(String gitDir) {
 	StringBuffer gitError = new StringBuffer()
 	
 	Process process = cmd.execute()
-	process.consumeProcessOutput(gitHash, gitError)
-	process.waitForOrKill(timeout)
+	process.waitForProcessOutput(gitHash, gitError) 	
 	if (gitError) {
 		print("*! Error executing Git command: $cmd error: $gitError")
 	}
@@ -83,8 +80,7 @@ def getPreviousGitHash(String gitDir) {
 	StringBuffer gitError = new StringBuffer()
 	
 	Process process = cmd.execute()
-	process.consumeProcessOutput(gitStdout, gitError)
-	process.waitForOrKill(timeout)
+	process.waitForProcessOutput(gitStdout, gitError)
 	if (gitError) {
 		print("*! Error executing Git command: $cmd error: $gitError")
 	}
@@ -101,8 +97,7 @@ def getChangedFiles(String gitDir, String baseHash, String currentHash) {
 	def deletedFiles = []
 	
 	def process = cmd.execute()
-	process.consumeProcessOutput(git_diff, git_error)
-	process.waitForOrKill(timeout)
+	process.waitForProcessOutput(git_diff, git_error)
 	
 	// handle command error
 	if (git_error.size() > 0) {
