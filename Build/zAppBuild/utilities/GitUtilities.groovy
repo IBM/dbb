@@ -50,6 +50,54 @@ def getCurrentGitBranch(String gitDir) {
 }
 
 /*
+ * Returns the current Git branch in detached HEAD state
+ *
+ * @param  String gitDir  		Local Git repository directory
+ * @return String gitBranch     The current Git branch
+ */
+ def getCurrentGitDetachedBranch(String gitDir) {
+	 String cmd = "git -C $gitDir show -s --pretty=%D HEAD"
+	 StringBuffer gitBranch = new StringBuffer()
+	 StringBuffer gitError = new StringBuffer()
+
+	 Process process = cmd.execute();
+	 process.waitForProcessOutput(gitBranch, gitError)
+	 if (gitError) {
+		 println("*! Error executing Git command: $cmd error: $gitError")
+	 }
+
+	String gitBranchString = gitBranch.toString()
+	def gitBranchArr = gitBranchString.split(',')
+	def solution = ""
+	for (i = 0; i < gitBranchArr.length; i++) {
+		if (gitBranchArr[i].contains("/")) {
+			solution = gitBranchArr[i].replaceAll(".*?/", "").trim()
+		}
+	}
+
+	return (solution != "") ? solution : println("*! Error parsing branch name: $gitBranch")
+ }
+
+/*
+ * Returns true if this is a detached HEAD
+ *
+ * @param  String gitDir  		Local Git repository directory
+ */
+ def isGitDetachedHEAD(String gitDir) {
+	 String cmd = "git -C $gitDir status"
+	 StringBuffer gitStatus = new StringBuffer()
+	 StringBuffer gitError = new StringBuffer()
+
+	 Process process = cmd.execute()
+	 process.waitForProcessOutput(gitStatus, gitError)
+	 if (gitError) {
+		 println("*! Error executing Git command: $cmd error $gitError")
+	 }
+	 
+	 return gitStatus.toString().contains("HEAD detached at")
+ }
+
+/*
  * Returns the current Git hash
  *
  * @param  String gitDir  		Local Git repository directory

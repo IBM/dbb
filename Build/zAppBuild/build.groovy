@@ -297,8 +297,14 @@ def populateBuildProperties(String[] args) {
 	if (opts.arguments()) props.buildFile = opts.arguments()[0].trim()
 		
 	// set calculated properties
-	if (!props.userBuild)
-		props.applicationCurrentBranch = gitUtils.getCurrentGitBranch(buildUtils.getAbsolutePath(props.application))
+	if (!props.userBuild) {
+		def gitDir = buildUtils.getAbsolutePath(props.application)
+		if ( gitUtils.isGitDetachedHEAD(gitDir) ) 
+			props.applicationCurrentBranch = gitUtils.getCurrentGitDetachedBranch(gitDir)
+		else
+			props.applicationCurrentBranch = gitUtils.getCurrentGitBranch(gitDir)
+	}
+	
 	props.topicBranchBuild = (props.applicationCurrentBranch.equals(props.mainBuildBranch)) ? null : 'true'
 	props.applicationBuildGroup = ((props.applicationCurrentBranch) ? "${props.application}-${props.applicationCurrentBranch}" : "${props.application}") as String
 	props.applicationBuildLabel = "build.${props.startTime}" as String
