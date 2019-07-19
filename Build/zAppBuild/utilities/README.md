@@ -7,3 +7,4 @@ ADMIN.pw | Encrypted password file for password "ADMIN" which is the default ID 
 BuidUtilities.groovy | Common build utilty methods.
 GitUtilities.groovy | Git command methods.
 ImpactUtilities.groovy | Methods used for ImpactBuilds.
+BindUtilities.groovy | Use for the DB2 binding.
