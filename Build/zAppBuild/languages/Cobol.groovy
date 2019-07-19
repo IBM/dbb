@@ -9,6 +9,7 @@ import groovy.transform.*
 @Field BuildProperties props = BuildProperties.getInstance()
 @Field def buildUtils= loadScript(new File("${props.zAppBuildDir}/utilities/BuildUtilities.groovy"))
 @Field def impactUtils= loadScript(new File("${props.zAppBuildDir}/utilities/ImpactUtilities.groovy"))
+@Field def bindUtils= loadScript(new File("${props.zAppBuildDir}/utilities/BindUtilities.groovy"))
 @Field RepositoryClient repositoryClient
 
 println("** Building files mapped to ${this.class.getName()}.groovy script")
@@ -31,7 +32,9 @@ sortedList.each { buildFile ->
 	// create mvs commands
 	LogicalFile logicalFile = dependencyResolver.getLogicalFile()
 	String member = CopyToPDS.createMemberName(buildFile)
-	File logFile = new File("${props.buildOutDir}/${member}.log")
+	File logFile = new File( props.userBuild ? "${props.buildOutDir}/${member}.log" : "${props.buildOutDir}/${member}.cobol.log")
+	if (logFile.exists())
+		logFile.delete()
 	MVSExec compile = createCompileCommand(buildFile, logicalFile, member, logFile)
 	MVSExec linkEdit = createLinkEditCommand(buildFile, logicalFile, member, logFile)
 	
@@ -43,7 +46,10 @@ sortedList.each { buildFile ->
 	int rc = compile.execute()
 	int maxRC = props.getFileProperty('cobol_compileMaxRC', buildFile).toInteger()
 	
+	boolean bindFlag = true
+	
 	if (rc > maxRC) {
+		bindFlag = false
 		String errorMsg = "*! The compile return code ($rc) for $buildFile exceeded the maximum return code allowed ($maxRC)"
 		println(errorMsg)
 		props.error = "true"
@@ -57,6 +63,7 @@ sortedList.each { buildFile ->
 			maxRC = props.getFileProperty('cobol_linkEditMaxRC', buildFile).toInteger()
 		
 			if (rc > maxRC) {
+				bindFlag = false
 				String errorMsg = "*! The link edit return code ($rc) for $buildFile exceeded the maximum return code allowed ($maxRC)"
 				println(errorMsg)
 				props.error = "true"
@@ -72,6 +79,19 @@ sortedList.each { buildFile ->
 			
 	}
 	
+	if (bindFlag && logicalFile.isSQL() && props.RUN_DB2_BIND && props.RUN_DB2_BIND.toBoolean() ) {
+		int bindMaxRC = props.getFileProperty('bind_maxRC', buildFile).toInteger()
+		def owner = ( props.userBuild || ! props.OWNER ) ? System.getProperty("user.name") : props.OWNER
+		
+		def (bindRc, bindLogFile) = bindUtils.bindPackage(buildFile, props.cobol_dbrmPDS, props.buildOutDir, props.CONFDIR, 
+				props.SUBSYS, props.COLLID, owner, props.QUAL, props.verbose && props.verbose.toBoolean());
+		if ( bindRc > bindMaxRC) {
+			String errorMsg = "*! The bind package return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_maxRC)"
+			println(errorMsg)
+			props.error = "true"
+			buildUtils.updateBuildResult(errorMsg:errorMsg,logs:["${member}_bind.log":bindLogFile],client:getRepositoryClient())
+		}
+	}
 	
 	// clean up passed DD statements
 	job.stop()
@@ -106,6 +126,12 @@ def createCobolParms(String buildFile, LogicalFile logicalFile) {
 
 	if (errPrefix)
 		parameters = "$parms,errPrefix"
+
+	// add debug options
+	if (props.debug)  {
+		def compileDebugParms = props.getFileProperty('cobol_compileDebugParms', buildFile)
+		parms = "$parms,$compileDebugParms"
+	}
 		
 	if (parms.startsWith(','))
 		parms = parms.drop(1)
@@ -134,8 +160,10 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 	
 	// Write SYSLIN to temporary dataset if performing link edit
 	String doLinkEdit = props.getFileProperty('cobol_linkEdit', buildFile)
-	if (doLinkEdit && doLinkEdit.toBoolean())
+	String linkEditStream = props.getFileProperty('cobol_linkEditStream', buildFile)
+	if (linkEditStream == null && doLinkEdit && doLinkEdit.toBoolean()) {
 		compile.dd(new DDStatement().name("SYSLIN").dsn("&&TEMPOBJ").options(props.cobol_tempOptions).pass(true))
+	}
 	else
 		compile.dd(new DDStatement().name("SYSLIN").dsn("${props.cobol_objPDS}($member)").options('shr').output(true))
 		
@@ -181,6 +209,20 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String member, File logFile) {
 	String parms = props.getFileProperty('cobol_linkEditParms', buildFile)
 	String linker = props.getFileProperty('cobol_linkEditor', buildFile)
+	String linkEditStream = props.getFileProperty('cobol_linkEditStream', buildFile)
+	
+	// Create the link stream if needed
+	if ( linkEditStream != null ) {
+		def lnkFile = new File("${props.buildOutDir}/linkCard.lnk")
+		if (lnkFile.exists())
+			lnkFile.delete()
+
+		lnkFile << "  " + linkEditStream.replace("\\n","\n").replace('${member}',member)
+		if (props.verbose)
+			println("Copying ${props.buildOutDir}/linkCard.lnk to ${props.linkedit_srcPDS}($member)")
+		new CopyToPDS().file(lnkFile).dataset(props.linkedit_srcPDS).member(member).execute()
+
+	}
 	
 	// define the MVSExec command to link edit the program
 	MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
@@ -190,6 +232,15 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 	linkedit.dd(new DDStatement().name("SYSPRINT").options(props.cobol_printTempOptions))
 	linkedit.dd(new DDStatement().name("SYSUT1").options(props.cobol_tempOptions))
 	
+	// add the link source code
+	if ( linkEditStream != null ) {
+		linkedit.dd(new DDStatement().name("SYSLIN").dsn("${props.linkedit_srcPDS}($member)").options("shr"))
+	}
+	
+	// add RESLIB if needed
+	if ( props.RESLIB ) {
+		linkedit.dd(new DDStatement().name("RESLIB").dsn(props.RESLIB).options("shr"))
+	}
 	// add a syslib to the compile command with optional CICS concatenation
 	linkedit.dd(new DDStatement().name("SYSLIB").dsn(props.cobol_objPDS).options("shr"))
 	linkedit.dd(new DDStatement().dsn(props.SCEELKED).options("shr"))

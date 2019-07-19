@@ -26,13 +26,16 @@ sortedList.each { buildFile ->
 	// copy build file to input data set
 	// copy build file and dependency files to data sets
 	String rules = props.getFileProperty('assembler_resolutionRules', buildFile)
+	String assembler_srcPDS = props.getFileProperty('assembler_srcPDS', buildFile)
 	DependencyResolver dependencyResolver = buildUtils.createDependencyResolver(buildFile, rules)
-	buildUtils.copySourceFiles(buildFile, props.assembler_srcPDS, props.assembler_macroPDS, dependencyResolver)
+	buildUtils.copySourceFiles(buildFile, assembler_srcPDS, props.assembler_macroPDS, dependencyResolver)	
 	
 	// create mvs commands
 	LogicalFile logicalFile = dependencyResolver.getLogicalFile()
 	String member = CopyToPDS.createMemberName(buildFile)
-	File logFile = new File("${props.buildOutDir}/${member}.log")
+	File logFile = new File( props.userBuild ? "${props.buildOutDir}/${member}.log" : "${props.buildOutDir}/${member}.asm.log")
+	if (logFile.exists())
+		logFile.delete()
 	MVSExec assembler = createAssemblerCommand(buildFile, member, logFile)
 	MVSExec linkEdit = createLinkEditCommand(buildFile, member, logFile)
 	
@@ -66,8 +69,10 @@ sortedList.each { buildFile ->
 			else {
 				// only scan the load module if load module scanning turned on for file
 				String scanLoadModule = props.getFileProperty('assembler_scanLoadModule', buildFile)
-				if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient())
-					impactUtils.saveStaticLinkDependencies(buildFile, props.linkedit_loadPDS, logicalFile, repositoryClient)
+				if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient()) {
+					String assembler_loadPDS = props.getFileProperty('assembler_loadPDS', buildFile)
+					impactUtils.saveStaticLinkDependencies(buildFile, assembler_loadPDS, logicalFile, repositoryClient)
+				}
 			}
 		}
 			
@@ -95,7 +100,8 @@ def createAssemblerCommand(String buildFile, String member, File logFile) {
 	MVSExec assembler = new MVSExec().file(buildFile).pgm(props.assembler_pgm).parm(parameters)
 	
 	// add DD statements to the compile command
-	assembler.dd(new DDStatement().name("SYSIN").dsn("${props.assembler_srcPDS}($member)").options('shr'))
+	String assembler_srcPDS = props.getFileProperty('assembler_srcPDS', buildFile)
+	assembler.dd(new DDStatement().name("SYSIN").dsn("${assembler_srcPDS}($member)").options('shr'))
 	assembler.dd(new DDStatement().name("SYSPRINT").options(props.assembler_tempOptions))
 	assembler.dd(new DDStatement().name("SYSUT1").options(props.assembler_tempOptions))
 
@@ -109,12 +115,14 @@ def createAssemblerCommand(String buildFile, String member, File logFile) {
 	
 	// create a SYSLIB concatenation with optional MACLIB and MODGEN	
 	assembler.dd(new DDStatement().name("SYSLIB").dsn(props.assembler_macroPDS).options("shr"))
-        if (props.SCEEMAC)
+	if (props.SCEEMAC)
 		assembler.dd(new DDStatement().dsn(props.SCEEMAC).options("shr"))
 	if (props.MACLIB)
 		assembler.dd(new DDStatement().dsn(props.MACLIB).options("shr"))
 	if (props.MODGEN)
 		assembler.dd(new DDStatement().dsn(props.MODGEN).options("shr"))
+	if (props.SDFSMAC)
+		assembler.dd(new DDStatement().dsn(props.SDFSMAC).options("shr"))
 		
 	// add IDz User Build Error Feedback DDs
 	if (props.errPrefix) {
@@ -139,14 +147,19 @@ def createLinkEditCommand(String buildFile, String member, File logFile) {
 	MVSExec linkedit = new MVSExec().file(buildFile).pgm(props.assembler_linkEditor).parm(parameters)
 	
 	// add DD statements to the linkedit command
-	linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${props.assembler_loadPDS}($member)").options('shr').output(true).deployType('LOAD'))
+	String assembler_loadPDS = props.getFileProperty('assembler_loadPDS', buildFile)
+	String assembler_deployType = props.getFileProperty('assembler_deployType', buildFile)
+	if ( assembler_deployType == null )
+		assembler_deployType = 'LOAD'
+	linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${assembler_loadPDS}($member)").options('shr').output(true).deployType(assembler_deployType))
 	linkedit.dd(new DDStatement().name("SYSPRINT").options(props.assembler_tempOptions))
 	linkedit.dd(new DDStatement().name("SYSUT1").options(props.assembler_tempOptions))
 	
 	// add a syslib to the linkedit command
 	linkedit.dd(new DDStatement().name("SYSLIB").dsn(props.assembler_objPDS).options("shr"))
 	linkedit.dd(new DDStatement().dsn(props.SCEELKED).options("shr"))
-	linkedit.dd(new DDStatement().dsn(props.SDFHLOAD).options("shr"))
+	if ( props.SDFHLOAD )
+		linkedit.dd(new DDStatement().dsn(props.SDFHLOAD).options("shr"))
 
 	// add a copy command to the linkedit command to append the SYSPRINT from the temporary dataset to the HFS log file
 	linkedit.copy(new CopyToHFS().ddName("SYSPRINT").file(logFile).hfsEncoding(props.logEncoding).append(true))

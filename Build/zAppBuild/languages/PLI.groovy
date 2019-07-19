@@ -32,7 +32,9 @@ sortedList.each { buildFile ->
 	// create mvs commands
 	LogicalFile logicalFile = dependencyResolver.getLogicalFile()
 	String member = CopyToPDS.createMemberName(buildFile)
-	File logFile = new File("${props.buildOutDir}/${member}.log")
+	File logFile = new File( props.userBuild ? "${props.buildOutDir}/${member}.log" : "${props.buildOutDir}/${member}.pli.log")
+	if (logFile.exists())
+		logFile.delete()
 	MVSExec compile = createCompileCommand(buildFile, logicalFile, member, logFile)
 	MVSExec linkEdit = createLinkEditCommand(buildFile, logicalFile, member, logFile)
 	
@@ -128,7 +130,8 @@ sortedList.each { buildFile ->
 	 
 	 // Write SYSLIN to temporary dataset if performing link edit
 	 String doLinkEdit = props.getFileProperty('pli_linkEdit', buildFile)
-	 if (doLinkEdit && doLinkEdit.toBoolean())
+	 String linkEditStream = props.getFileProperty('pli_linkEditStream', buildFile)
+	 if (linkEditStream == null && doLinkEdit && doLinkEdit.toBoolean())
 		 compile.dd(new DDStatement().name("SYSLIN").dsn("&&TEMPOBJ").options(props.pli_tempOptions).pass(true))
 	 else
 		 compile.dd(new DDStatement().name("SYSLIN").dsn("${props.pli_objPDS}($member)").options('shr').output(true))
@@ -175,6 +178,21 @@ sortedList.each { buildFile ->
  def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String member, File logFile) {
 	 String parms = props.getFileProperty('pli_linkEditParms', buildFile)
 	 String linker = props.getFileProperty('pli_linkEditor', buildFile)
+	 String linkEditStream = props.getFileProperty('pli_linkEditStream', buildFile)
+	 
+	 // Create the link stream if needed
+	 if ( linkEditStream != null ) {
+		 def lnkFile = new File("${props.buildOutDir}/linkCard.lnk")
+		 if (lnkFile.exists())
+			 lnkFile.delete()
+ 
+		 lnkFile << "  " + linkEditStream.replace("\\n","\n").replace('${member}',member)
+		 if (props.verbose)
+			 println("Copying ${props.buildOutDir}/linkCard.lnk to ${props.linkedit_srcPDS}($member)")
+		 new CopyToPDS().file(lnkFile).dataset(props.linkedit_srcPDS).member(member).execute()
+ 
+	 }
+	 
 	 
 	 // define the MVSExec command to link edit the program
 	 MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
@@ -183,6 +201,15 @@ sortedList.each { buildFile ->
 	 linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${props.pli_loadPDS}($member)").options('shr').output(true).deployType('LOAD'))
 	 linkedit.dd(new DDStatement().name("SYSPRINT").options(props.pli_tempOptions))
 	 linkedit.dd(new DDStatement().name("SYSUT1").options(props.pli_tempOptions))
+	 
+	 // add the link source code
+	 if ( linkEditStream != null ) {
+		 linkedit.dd(new DDStatement().name("SYSLIN").dsn("${props.linkedit_srcPDS}($member)").options("shr"))
+	 }
+	 
+	 // add RESLIB
+	 if ( props.RESLIB )
+		 linkedit.dd(new DDStatement().name("RESLIB").dsn(props.RESLIB).options("shr"))
 	 
 	 // add a syslib to the compile command with optional CICS concatenation
 	 linkedit.dd(new DDStatement().name("SYSLIB").dsn(props.pli_objPDS).options("shr"))
