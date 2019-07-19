@@ -258,10 +258,11 @@ def generateResolutionRules()
             
             if (dd.@dsn) {
                 if (dd.@name) {
-                    def dds = concats."${dd.@name}"
+                    def ddnameKey = convertToJavaIdentifier(dd.@name)
+                    def dds = concats."$ddnameKey"
                     if (!dds) {
                         dds = [] as Set
-                        concats."${dd.@name}" = dds
+                        concats."$ddnameKey" = dds
                     }
                     dds << dd
 
@@ -311,7 +312,7 @@ def generateResolutionRules()
  * Utility method to convert an executor name into
  * a valid Java/Groovy method name.
  */
-def convertToJavaIdentifier(text)
+def convertToJavaIdentifier(def text)
 {
     def newText = ''
     text.getChars().eachWithIndex { ch, index ->
