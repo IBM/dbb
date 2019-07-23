@@ -171,6 +171,7 @@ def parseInput(String[] cliArgs){
 		buildPropFile.withInputStream {
     			buildProperties.load(it)
 		}
+		if (buildProperties.workDir != null)    
 		properties.workDir = buildProperties.workDir
 	}
 
