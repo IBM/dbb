@@ -28,7 +28,9 @@ sortedList.each { buildFile ->
 	
 	// create mvs commands
 	String member = CopyToPDS.createMemberName(buildFile)
-	File logFile = new File("${props.buildOutDir}/${member}.log")
+	File logFile = new File( props.userBuild ? "${props.buildOutDir}/${member}.log" : "${props.buildOutDir}/${member}.bms.log")
+	if (logFile.exists())
+		logFile.delete()
 	MVSExec copyGen = createCopyGenCommand(buildFile, member, logFile)
 	MVSExec compile = createCompileCommand(buildFile, member, logFile)
 	MVSExec linkEdit = createLinkEditCommand(buildFile, member, logFile)

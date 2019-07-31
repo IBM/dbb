@@ -31,7 +31,9 @@ sortedList.each { buildFile ->
 	DependencyResolver dependencyResolver = buildUtils.createDependencyResolver(buildFile, rules)
 	LogicalFile logicalFile = dependencyResolver.getLogicalFile()
 	String member = CopyToPDS.createMemberName(buildFile)
-	File logFile = new File("${props.buildOutDir}/${member}.log")
+	File logFile = new File( props.userBuild ? "${props.buildOutDir}/${member}.log" : "${props.buildOutDir}/${member}.linkedit.log")
+	if (logFile.exists())
+		logFile.delete()
 	MVSExec linkEdit = createLinkEditCommand(buildFile, logicalFile, member, logFile)
 	
 	// execute mvs commands in a mvs job
