@@ -30,3 +30,4 @@ Sample | Description
 [Utilities/BuildReportPruner](Utilities/BuildReportPruner) | Utility scripts demonstating rule based BuildReport pruning and preserving.
 [Utilities/Jenkins](Utilities/Jenkins) | Utility shell scripts supplied to address issues when running Jenkins remote agents on z/OS UNIX System Services (USS).
 [Utilities/ReadSMFRecords](Utilities/ReadSMFRecords) | Groovy scripts to read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities.
+[Utilities/Validation](Utilities/Validation) | Groovy scripts that can aid in the validation of product installs.
