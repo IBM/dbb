@@ -1,0 +1,31 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<panel name=bgzINIT depth=24 keylist=bgzsabx applid=bgz
+             help=bgzA0009>&pan_title
+<ab>
+  &bgzmenu
+  &bgzhelp
+</ab>
+<info>
+ <p compact>&panel_instruct_1;
+</info>
+<divider>
+</divider>
+<area>
+ <region width=*>
+  <region dir=horiz>
+  <dtacol pmtwidth=* vardcl=no>
+    <dtafld datavar=bgzusdir usage=in caps=off pmtfmt=none
+            entwidth=47>&directory_prompt;
+            <scrfld displen=256>
+  </dtacol>
+  </region>
+ </region>
+</area>
+ <cmdarea name=bgzcmd caps=on>
+
+<:-- panel logic -->
+<source type=proc>
+VER (&bgzCMD,LIST, ,MSG=bgzA001)
+</source>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->

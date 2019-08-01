@@ -1,0 +1,33 @@
+@groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
+
+import com.ibm.dbb.*
+import com.ibm.dbb.build.*
+import com.ibm.dbb.dependency.*
+import com.ibm.dbb.repository.*
+import groovy.transform.*
+
+def source = ${DBBScriptTemplateConverter.generateSourceInformation()}
+println("Running ${this.class.getName()}.groovy script generated from $source")
+
+dbbHome = System.getenv("DBB_HOME")
+if (!dbbHome)
+{
+    println "Need to specified the required environment 'DBB_HOME'"
+    System.exit(1)
+}
+dbbConf = System.getenv("DBB_CONF")?:EnvVars.getConf()
+
+def failOnError = true
+
+//* Execute build commands
+def job = new MVSJob()
+
+job.start()
+
+${DBBScriptTemplateConverter.generateExecuteMethodInvocations()}
+
+job.stop()
+
+//* Definitions of execute methods
+${DBBScriptTemplateConverter.generateExecuteMethods()}
+

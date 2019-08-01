@@ -32,7 +32,7 @@ Please review the [SCLM Assumptions documentation](https://github.com/IBM/dbb/bl
 The migration process is comprised of three phases each of which contain multiple steps.  
 * SCLM Extraction
 * Source Code Migration
-* Build Script Generation (Coming Soon)
+* Build Script Generation
 
 Step by step instructions are located in the [Migration Process](https://github.com/IBM/dbb/blob/master/Migration/sclm/migrationSteps.md) documentation.
 

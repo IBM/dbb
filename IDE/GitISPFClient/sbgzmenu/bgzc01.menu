@@ -1,0 +1,25 @@
+BGZC010 .TYPE=WARNING .HELP=* .ALARM=YES
+'Suppress .files from USS list'
+BGZC011 .TYPE=WARNING .HELP=* .ALARM=YES
+'Git user.email'
+BGZC012 .TYPE=WARNING .HELP=* .ALARM=YES
+'Git user.name'
+BGZC013 .TYPE=WARNING .HELP=* .ALARM=YES
+'Client Code Page'
+BGZC014 'No repository specified' .TYPE=WARNING .HELP=* .ALARM=YES
+'A Git repository and a z/OS UNIX directory must be entered for Git clone'
+BGZC015 'Invalid zOS UNIX dir' .TYPE=WARNING .HELP=* .ALARM=YES
+'The zOS UNIX directory must start with the / character'
+BGZC016 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
+'Codes JU (Jump USS), ST (Status), AD (add), CO (Commit), PS (Push), CP (Comm' +
+'it & Push), PL (Pull), BR (Branch), CM (Git Command) and RM (Remove Working ' +
+'Directory) allowed'
+BGZC017 .TYPE=WARNING .HELP=* .ALARM=YES
+'_TAG_REDIR_ERR'
+BGZC018 .TYPE=WARNING .HELP=* .ALARM=YES
+'_TAG_REDIR_IN'
+BGZC019 .TYPE=WARNING .HELP=* .ALARM=YES
+'_TAG_REDIR_OUT'
+/* COPYRIGHT IBM CORP 2019 */
+/* ISPDTLC Release: 7.3.  Level: PID                                  */
+/* z/OS 02.03.00.  Created - Date: 21 Mar 2019, Time: 12:34           */

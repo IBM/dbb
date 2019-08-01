@@ -1,0 +1,18 @@
+# line endings
+* text eol=lf
+
+# file encodings
+*.cpy zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.cbl zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.bms zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.pli zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.mfs zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.bnd zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.lnk zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.txt zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.groovy zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.sh zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.properties zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.asm zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.jcl zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.mac zos-working-tree-encoding=ibm-1047 git-encoding=utf-8

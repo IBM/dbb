@@ -22,6 +22,7 @@ def tools = loadScript(new File("Tools.groovy"))
 
 // define the BPXWDYN options for allocated temporary datasets
 def tempCreateOptions = "cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new"
+def tempPrintCreateOptions = "cyl space(5,5) unit(vio) blksize(133) lrecl(133) recfm(f,b) new"
 
 // copy program to PDS 
 println("Copying ${properties.sourceDir}/$file to $cobolPDS($member)")
@@ -55,7 +56,7 @@ def compile = new MVSExec().file(file).pgm("IGYCRCTL").parm(compileParms)
 // add DD statements to the compile command
 compile.dd(new DDStatement().name("SYSIN").dsn("$cobolPDS($member)").options("shr").report(true))
 compile.dd(new DDStatement().name("SYSLIN").dsn("&&TEMPOBJ").options(tempCreateOptions).pass(true))
-compile.dd(new DDStatement().name("SYSPRINT").options(tempCreateOptions))
+compile.dd(new DDStatement().name("SYSPRINT").options(tempPrintCreateOptions))
 compile.dd(new DDStatement().name("SYSUT1").options(tempCreateOptions))
 compile.dd(new DDStatement().name("SYSUT2").options(tempCreateOptions))
 compile.dd(new DDStatement().name("SYSUT3").options(tempCreateOptions))

@@ -1,0 +1,70 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<varclass name=vcflnam  type='char 8'>
+<varclass name=vcrep  type='char 48'>
+<varlist>
+<vardcl name=bgzflnam varclass=vcflnam>
+<vardcl name=bgzusrep varclass=vcrep>
+</varlist>
+<panel name=bgzSLUDL help=bgzA0099 keylist=bgzsnab applid=bgz
+      width=&panel_width; depth=22 window=yes padc=user
+      wintitle='&window_title;'>&pan_title;
+
+<source type=init>
+  &bgzSEL = ''
+VGET (bgzEUTF) SHARED
+IF (&bgzEUTF = 'FALSE' | &bgzDEFE = 'U') &bgzDUTF = 'FALSE'
+</source>
+<area depth=1 extend=on>
+<info>
+ <p>&panel_title;
+</info>
+<divider>
+<dtafld datavar=bgzusrep entwidth=48 pmtwidth=16 usage=out
+       pmtfmt=none>&bgzrepos_prompt;
+<divider>
+<region dir=vert>
+ <selfld name=bgzSEL selwidth=* init=no autotab=no listtype=radio
+ choicecols=2 choicedepth=10 pmtloc=above entwidth=2
+ pmtwidth=**>&selfld_01_text                          &selfld_04_text;
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=1>&choice_01_text;</ps>
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=2>&choice_02_text;</ps>
+     <choice unavail=bgzdutf unavailmat=FALSE>
+             <ps var=bgzSEL value=3>&choice_03_text;</ps>
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=4>&choice_04_text;</ps>
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=5>&choice_05_text;</ps>
+     <choice unavail=bgzdutf unavailmat=FALSE>
+             <ps var=bgzSEL value=6>&choice_06_text;</ps>
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=7>&choice_07_text;</ps>
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=8>&choice_08_text;</ps>
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=9>&choice_09_text;</ps>
+     <choice unavail=bgzdefl unavailmat=U>
+             <ps var=bgzSEL value=10>&choice_10_text;</ps>
+     <choice><ps var=bgzSEL value=11>&choice_11_text;</ps>
+     <choice><ps var=bgzSEL value=12>&choice_12_text;</ps>
+     <choice><ps var=bgzSEL value=13>&choice_13_text;</ps>
+     <choice><ps var=bgzSEL value=14>&choice_14_text;</ps>
+     <choice><ps var=bgzSEL value=15>&choice_15_text;</ps>
+     <choice><ps var=bgzSEL value=16>&choice_16_text;</ps>
+     <choice><ps var=bgzSEL value=17>&choice_17_text;</ps>
+ </selfld>
+</region>
+<divider>
+<info>
+ <p compact>&ins_choice;
+</info>
+</area>
+<source type=reinit>
+  &bgzSEL = ''
+</source>
+<source type=proc>
+IF (&bgzDUTF = 'FALSE') VER(&bgzSEL,LISTX,3 6)
+</source>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->

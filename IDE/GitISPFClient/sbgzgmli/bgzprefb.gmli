@@ -1,0 +1,30 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<panel name=bgzPREFS width=72 depth=24 keylist=bgzsabx applid=bgz
+             help=bgzA0003>&pan_title
+<ab>
+  &bgzmenu
+  &bgzhelp
+</ab>
+<area>
+  <lstfld vardcl=no>
+    <lstcol datavar=bgzprnam usage=out colwidth=30>
+    <lstcol datavar=bgzprval usage=in colwidth=38>
+       <scrfld displen=1024>
+  </lstfld>
+</area>
+ <cmdarea name=bgzcmd caps=on>
+
+<:-- panel logic -->
+<source type=init>
+&bgzSET = 1
+VPUT (bgzSET) SHARED
+</source>
+<source type=reinit>
+&bgzSET = 1
+VPUT (bgzSET) SHARED
+</source>
+<source type=proc>
+VER (&bgzCMD,LIST, ,MSG=bgzA001)
+</source>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->

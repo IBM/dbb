@@ -1,0 +1,34 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<varclass name=vcuss  type='char 58'>
+<varlist>
+<vardcl name=bgzussdr varclass=vcuss>
+</varlist>
+<panel name=BGZUSREN keylist=BGZSABx applid=BGZ depth=17 width=70 help=BGZA0011
+       window=yes padc=user wintitle='&window_title;'>&panel_title;
+<area>
+    <dtafld datavar=bgzussdr usage=out pmtfmt=none pmtwidth=*
+                             entwidth=58>&ussdir_prompt;
+            <scrfld displen=256>
+</area>
+<area depth=1 extend=on>
+   <info width=*>
+     <p compact>&panel_instruct_3;
+   </info>
+   <divider>
+   </divider>
+   <dtafld datavar=bgzoldnm vardcl=no pmtfmt=none pmtwidth=*
+         entwidth=30 usage=out>&old_prompt;
+           <scrfld displen=256>
+   <divider>
+   </divider>
+   <dtafld datavar=bgznewnm vardcl=no pmtfmt=none pmtwidth=*
+         entwidth=30 caps=off required=yes usage=in>&new_prompt;
+           <scrfld displen=256>
+   <grphdr>&group_header_1;
+   <info width=*>
+     <p compact indent=2>&panel_instruct_1;
+     <p compact indent=2>&panel_instruct_2;
+   </info>
+ </area>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->

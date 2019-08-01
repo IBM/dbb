@@ -38,6 +38,10 @@ import groovy.time.*
  * name. The properties in build.properties are used as default property values and can be 
  * overridden by command line options.
  */
+
+println("java.version="+System.getProperty("java.runtime.version"))
+println("java.home="+System.getProperty("java.home"))
+println("user.dir="+System.getProperty("user.dir"))
  
 // load the Tools.groovy utility script
 def tools = loadScript(new File("Tools.groovy"))
@@ -121,8 +125,13 @@ if (!incremental) {
 		def logicalFiles = [] as List<LogicalFile>
 		
 		buildList.each { file ->
+			// ignore whitespace files
+			if (file.isAllWhitespace())
+				return // only applies to local function
+			// scan file
 			println("Scanning $file")
 			def logicalFile = scanner.scan(file, properties.sourceDir)
+			// add file to logical file list
 			logicalFiles.add(logicalFile)
 			
 			if (logicalFiles.size() == 500) {

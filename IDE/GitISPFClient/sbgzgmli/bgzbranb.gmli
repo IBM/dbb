@@ -1,0 +1,50 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<varclass name=vcrep  type='char 48'>
+<varclass name=vcdir  type='char 48'>
+<varlist>
+<vardcl name=bgzrepos varclass=vcrep>
+<vardcl name=bgzusdir varclass=vcdir>
+</varlist>
+<panel name=bgzBRANC width=76 depth=24 keylist=bgzsabx applid=bgz
+             help=bgzA0007>&pan_title
+<ab>
+  &bgzmenu
+  &bgzhelp
+</ab>
+<area>
+  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzrepos_prompt;
+  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzusdir_prompt;
+</area>
+<divider>
+</divider>
+<info>
+ <p compact>&panel_instruct_1;
+</info>
+<divider>
+</divider>
+<area>
+  <grphdr div=none
+  indent=5>&branch_prompt
+  </grphdr>
+  <region dir=horiz indent=5>
+   <dtafld datavar=bgznbran usage=in entwidth=45 vardcl=no>
+     <scrfld displen=1024>
+  </region>
+  <lstfld vardcl=no scrollvar=zamt>
+    <lstcol datavar=bgzbrcmd usage=in caps=on colwidth=2>
+    <lstcol datavar=bgzline usage=out colwidth=45>
+      <scrfld displen=1024>
+  </lstfld>
+</area>
+<cmdarea name=bgzcmd caps=off>
+<source type=init>
+</source>
+<source type=reinit>
+</source>
+<source type=proc>
+VER (&bgzBRCMD,LIST,CB,PB,DB,JU,/,MSG=bgzC031)
+</source>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->
