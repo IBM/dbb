@@ -1,0 +1,42 @@
+#
+# File associated properties used by Mortgage Application sample scripts
+# ** These are pre-configured and require no editing **
+#
+---
+buildProperties:
+
+  # Script Mappings - used to associate build scripts to programs
+  - key: scriptMapping
+    value: BMSProcessing
+    filePatterns: 
+      - "**/*.bms"
+    
+  - key: scriptMapping
+    value: Compile
+    filePatterns: 
+      - "**/cobol/epsmlist.cbl"
+      - "**/cobol/epsnbrvl.cbl"
+    
+  - key: scriptMapping
+    value: CobolCompile
+    filePatterns: 
+      - "**/cobol/epsmpmt.cbl"
+      - "**/cobol_cics/*.cbl"
+      - "**/cobol_cics_db2/*.cbl"
+    
+  - key: scriptMapping
+    value: LinkEdit
+    filePatterns:
+      - "**/*.lnk"
+    
+  - key: scriptMapping
+    value: MFSGENUtility
+    filePatterns:
+      - "**/*.mfs"
+
+  # Language hints
+  - key: dbb.DependencyScanner.languageHint
+    value: COB
+    filePatterns:
+      - "**/*.cbl"
+      - "**/*.cpy"

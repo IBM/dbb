@@ -1,0 +1,22 @@
+#
+# Default properties used by Mortgage Application build scripts
+# Please provide values for the first four properties listed below.
+#
+---
+buildProperties:
+
+  # DBB Repository Web Application authentication properties
+  - key: dbb.RepositoryClient.url
+    value:
+  - key: dbb.RepositoryClient.userId
+    value: ADMIN
+  - key: dbb.RepositoryClient.passwordFile
+    value: ${sourceDir}/Build/MortgageApplication/build/ADMIN.pw
+
+####################################################################
+### The following properties can use the default values provided ###
+####################################################################
+
+# DBB Repository Dependency Data Collection Name
+  - key: collection
+    value: MortgageApplication
