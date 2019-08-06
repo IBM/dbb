@@ -121,6 +121,7 @@ def generateExecuteMethods()
                 tempOutput += "    def $methodName = new MVSExec()"
                 tempOutput += execute.@file ? ".file(\"${execute.@file}\")" : ''
                 tempOutput += execute.@pgm ? ".pgm(\"${execute.@pgm}\")" : ''
+                tempOutput += execute.@ddnames ? ".ddnames(\"${execute.@ddnames}\")" : ''
                 if (execute.@parm) {
                     //handle parm variable substitution
                     def parms = []

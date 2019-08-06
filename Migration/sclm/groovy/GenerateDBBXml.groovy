@@ -171,7 +171,7 @@ def xml = {
                             def dsName = dsdef?.@dsName
                             def needTaskLib = (dsName && !dsName.text().isEmpty())                                                           
                             execute(type: callMethodTypes[translator.@callMethod.toInteger()], name : translator.@name, file : '${FILE}', maxRC: translator.@maxRC,
-                            parm: translator.@defaultOptions, pgm: dsdefs_3.find {it.@name == translator.@dataSetDefinition}?.@dsMember) {
+                            parm: translator.@defaultOptions, pgm: dsdefs_3.find {it.@name == translator.@dataSetDefinition}?.@dsMember, ddnames: translator.@ddnamelist) {
                                 translator.allocation.each { dd(convertAllocationToDD(it))}
                                 translator.concatenation.each { concatenation ->
                                     if (concatenation.allocation.size() > 0) {
