@@ -1,4 +1,4 @@
 Build/.classpath
 Build/.project
 Build/.settings/**
-
+**/bin/

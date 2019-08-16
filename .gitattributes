@@ -32,6 +32,7 @@
 *.gmli zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.menu zos-working-tree-encoding=ibm-1047 wgit-encoding=utf-8
 *.py zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.java zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 
 # binary files
 *.png binary
