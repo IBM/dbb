@@ -1,5 +1,5 @@
-from zoautil import MVSCmd, Datasets
-from zoautil.types import DDStatement
+from zoautil_py import MVSCmd, Datasets
+from zoautil_py.types import DDStatement
 import logging
 import logging.config
 logging.config.fileConfig('logging.conf')
