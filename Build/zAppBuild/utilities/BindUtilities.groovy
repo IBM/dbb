@@ -74,7 +74,7 @@ EXIT CODE(&LASTCC)
 def bind(String[] cliArgs)
 {
 	def cli = new CliBuilder(usage: "BindUtilities.groovy [options]", header: '', stopAtNonOption: false)
-	cli.f(longOpt:'file', args:1, required:true, 'The build file name.")
+	cli.f(longOpt:'file', args:1, required:true, 'The build file name.')
 	cli.d(longOpt:'dbrmHLQ', args:1, required:true, 'DBRM partition data sets')	
 	cli.w(longOpt:'workDir', args:1, required:true, 'Absolute path to the working directory')
 	cli.c(longOpt:'confDir', args:1, required:true, 'Absolute path to runIspf.sh folder')
