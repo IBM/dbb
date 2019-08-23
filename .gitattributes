@@ -1,5 +1,5 @@
 # line endings
-* text eol=lf 
+* text eol=lf
 
 # file encodings for Rocket Git for Z version 2.14.4 and higher
 *.cpy zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
@@ -30,7 +30,8 @@
 *.template zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.gml zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.gmli zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
-*.menu zos-working-tree-encoding=ibm-1047 wgit-encoding=utf-8
+*.menu zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.skel zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.py zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.java zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 

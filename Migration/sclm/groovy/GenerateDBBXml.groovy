@@ -1,11 +1,11 @@
 /*
  * Generate the DBB.xml file from the systemDefinition.xml file.
- * 
+ *
  * Limitation: we ignore resourcePrefix and resourceSuffix.  RTC uses
  * this prefix and suffix to append to the language definition name.
  * We could do the same with the name of the script file, but that also
  * requires us to generate the scriptMappings.txt that has the same language
- * definition names matching with what in DBB.xml file.   
+ * definition names matching with what in DBB.xml file.
  */
 import groovy.xml.*
 import groovy.transform.*
@@ -149,7 +149,7 @@ def xml = {
             propertyFile(file : 'scriptMappings.properties')
             propertyFile(file : 'datasetMappings.properties')
         }
-        
+
         //Generate <datasets>
         datasets() {
             (dsdefs_0 + dsdefs_1).each { dsdef ->
@@ -169,7 +169,7 @@ def xml = {
                         if (translator) {
                             def dsdef = dsdefs_3.find {it.@name == translator.@dataSetDefinition}
                             def dsName = dsdef?.@dsName
-                            def needTaskLib = (dsName && !dsName.text().isEmpty())                                                           
+                            def needTaskLib = (dsName && !dsName.text().isEmpty())
                             execute(type: callMethodTypes[translator.@callMethod.toInteger()], name : translator.@name, file : '${FILE}', maxRC: translator.@maxRC,
                             parm: translator.@defaultOptions, pgm: dsdefs_3.find {it.@name == translator.@dataSetDefinition}?.@dsMember, ddnames: translator.@ddnamelist) {
                                 translator.allocation.each { dd(convertAllocationToDD(it))}
@@ -189,7 +189,7 @@ def xml = {
                                     dd(name : 'TASKLIB', dsn : dsName, options: 'shr')
                                 translator.variable.each {
                                     def propValue = it.@value.toString()
-                                    propValue = (propValue == '*' ? '${MEMBER}' : propValue) 
+                                    propValue = (propValue == '*' ? '${MEMBER}' : propValue)
                                     property(name : "${it.@name}", value : "${propValue}")
                                 }
                             }
@@ -219,9 +219,9 @@ def convertToBpxwdynOptions(dsdef)
         options << "dir(${dsdef.@directoryBlocks.toInteger()})"
     if (!dsdef.@dsType.text().isEmpty() && dsdef.@dsType.toInteger() < 4)
         options << dsTypeOptions[dsdef.@dsType.toInteger()]
-    options <<  "recfm(${dsdef.@recordFormat.text().isEmpty() ? 'FB' : dsdef.@recordFormat.toString().toUpperCase().findAll { ch -> ch in validRecfm }.join(',')})"
+    options <<  "recfm(${dsdef.@recordFormat.text().isEmpty() ? 'F,B' : dsdef.@recordFormat.toString().toUpperCase().findAll { ch -> ch in validRecfm }.join(',')})"
     options << "lrecl(${dsdef.@recordLength.text().isEmpty() ? 80 : dsdef.@recordLength.toInteger()})"
-    options << "blksize(${dsdef.@blockSize.text().isEmpty() ? 80 : dsdef.@blockSize.toInteger()})"    
+    options << "blksize(${dsdef.@blockSize.text().isEmpty() ? 80 : dsdef.@blockSize.toInteger()})"
     if (!dsdef.@storageClass.text().isEmpty())
         options << "STORCLAS(${dsdef.@storageClass.toString()})"
     if (!dsdef.@managementClass.text().isEmpty())
@@ -232,7 +232,7 @@ def convertToBpxwdynOptions(dsdef)
         options << "vol(${dsdef.@volumeSerial.toString()})"
     if (!dsdef.@genericUnit.text().isEmpty())
         options << "unit(${dsdef.@genericUnit.toString()})"
-    options.join(' ').trim()    
+    options.join(' ').trim()
 }
 
 
@@ -243,36 +243,36 @@ def convertAllocationToDD(def allocation)
         dd.'name' = allocation.@name
     if (allocation.@input.toBoolean()) {
         dd.'dsn' = '${HLQ}.${DSMAPPING}(${MEMBER})'
-        dd.'options' = 'shr' 
-        dd.'report' = true        
+        dd.'options' = 'shr'
+        dd.'report' = true
     }
     else {
         if (!allocation.@dataSetDefinition.text().isEmpty()) {
             def dsdef = (dsdefs_0 + dsdefs_1 + dsdefs_2 + dsdefs_3).find { it.@name == allocation.@dataSetDefinition}
             if (!dsdef)
                 println "Cannot find ${allocation.@dataSetDefinition.text()}"
-            
-            def appendedMember = ''        
+
+            def appendedMember = ''
             if (allocation.@member.toBoolean())
-                appendedMember = '(${' + (allocation.@outputNameKind.toString() == 'USE_VARIABLE' ? allocation.@outputName.toString() : 'MEMBER') + '})'                                   
+                appendedMember = '(${' + (allocation.@outputNameKind.toString() == 'USE_VARIABLE' ? allocation.@outputName.toString() : 'MEMBER') + '})'
             dd.'dsn' = getFullyQualifiedDsn(dsdef) + appendedMember
-            dd.'options' = dsdef.@dsDefUsageType.toInteger() == 2 ? convertToBpxwdynOptions(dsdef) : 'shr'                            
+            dd.'options' = dsdef.@dsDefUsageType.toInteger() == 2 ? convertToBpxwdynOptions(dsdef) : 'shr'
         }
         if (!allocation.@output.text().isEmpty()) {
             dd.'output' = allocation.@output.toBoolean()
         }
         if (!allocation.@condition.text().isEmpty()) {
-            dd.'condition' = convertAntEqualsCondition(allocation.@condition.toString())            
-        }        
-    }                  
-    dd    
+            dd.'condition' = convertAntEqualsCondition(allocation.@condition.toString())
+        }
+    }
+    dd
 }
 
 def getFullyQualifiedDsn(dsdef)
 {
     def usageType = dsdef.@dsDefUsageType.toInteger()
     def addHlq = (usageType != 2) && (usageType == 0 || (usageType == 1 && (dsdef.@prefixDSN.isEmpty() || dsdef.@prefixDSN.toBoolean())) || (usageType == 3 && dsdef.@prefixDSN.toBoolean()))
-    def fullyQualifiedDsn = addHlq ? '${HLQ}.' + dsdef.@dsName.toString() : dsdef.@dsName.toString() 
+    def fullyQualifiedDsn = addHlq ? '${HLQ}.' + dsdef.@dsName.toString() : dsdef.@dsName.toString()
 }
 
 /*
@@ -285,7 +285,7 @@ def convertAntEqualsCondition(def conditionText)
     if (condition.name().toString() == 'equals') {
         def arg1 = condition.@arg1.toString()
         def arg2 = condition.@arg2.toString()
-        
+
         def output = []
         output << (arg1.startsWith('@{var.') ? arg1.drop(arg1.lastIndexOf('.')+1).minus('}') : "'$arg1'")
         output << '.equals'

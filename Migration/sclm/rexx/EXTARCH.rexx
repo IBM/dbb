@@ -1,8 +1,7 @@
 /* REXX */
-/*%STUB CPPLEFPL*/
 /*********************************************************************/
 /*                                                                   */
-/* NAME := EXMTDT                                                    */
+/* NAME := EXTARCH                                                   */
 /*                                                                   */
 /* DESCRIPTIVE NAME := Extract metadata from SCLM project            */
 /*                                                                   */
@@ -80,25 +79,50 @@
   allLangs = ''
   empty    = ''
   exist    = ''
+  scopeflg = ''
+  migrdate = ''
+  copytype = ''
+  vermax = ''
+  selectionCriteria = ''
+  repo = ''
+  lectypes = ''
+  dependtypes = ''
+  defComponent = ''
+  defzProject = ''
 
+  upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  lower = 'abcdefghijklmnopqrstuvwxyz'
   /*-------------------------------------------------*/
   /* Parsing the parameters from the property file   */
   /*-------------------------------------------------*/
   Do i = 1 to props.0
+    next = Strip(props.i)
+    If next = '' | Pos('#',next) = 1 Then
+       Iterate
     Parse Var props.i key '=' value
-    key = strip(Translate(key))
+    key = Translate(key,lower,upper)
     value = strip(value)
     Select
-      When (key = 'PROJ')      Then proj = value
-      When (key = 'GROUP')     Then group = value
-      When (key = 'PROJMEM')   Then projmem = value
-      When (key = 'PROJDEFS')  Then projdefs = value
-      When (key = 'MACLIBS')   Then maclibs = value
-      When (key = 'MIGHLQ')    Then migHlq = value
-      When (key = 'OUTPUTDIR') Then outputDir = value
-      When (key = 'ALLLANGS')  Then allLangs = value
-      When (key = 'EMPTY')     Then empty = value
-      When (key = 'EXIST')     Then exist = value
+      When (key = 'proj')              Then proj = value
+      When (key = 'group')             Then group = value
+      When (key = 'projmem')           Then projmem = value
+      When (key = 'projdefs')          Then projdefs = value
+      When (key = 'maclibs')           Then maclibs = value
+      When (key = 'mighlq')            Then mighlq = value
+      When (key = 'outputdir')         Then outputdir = value
+      When (key = 'alllangs')          Then alllangs = value
+      When (key = 'empty')             Then empty = value
+      When (key = 'exist')             Then exist = value
+      When (key = 'scopeflg')          Then scopeflg = value
+      When (key = 'migrdate')          Then migrdate = value
+      When (key = 'vermax')            Then vermax = value
+      When (key = 'selectioncriteria') Then selectioncriteria = value
+      When (key = 'repo')              Then repo = value
+      When (key = 'copytype')          Then copytype = value
+      When (key = 'lectypes')          Then lectypes = value
+      When (key = 'dependtypes')       Then dependtypes = value
+      When (key = 'defcomponent')      Then defcomponent = value
+      When (key = 'defzproject')       Then defzproject = value
       Otherwise
         Say 'Invalid property - 'key
     End
@@ -141,8 +165,6 @@
     address syscall 'getpwnam (user) pw.'
     outputDir = pw.4
   End
-  upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  lower = 'abcdefghijklmnopqrstuvwxyz'
   proj = Translate(proj,lower,upper)
 
   outputDir = outputDir'/sclmMigration/'proj
@@ -171,7 +193,7 @@
 
   rc = repLine('*' Copies('*',80))
   rc = repLine('*' ' ')
-  rc = repLine('*' 'SCLM MIGRATION TOOL : Part 1 - Started 'Date() Time())
+  rc = repLine('*' 'SCLM MIGRATION TOOL : Part 1A - Started 'Date() Time())
   rc = repLine('*' ' ')
   rc = repLine('*' Copies('*',80))
 
@@ -228,6 +250,8 @@
 
   End
 
+  Call initSCLM
+
   /* First we are going to process the ARCHDEFs                 */
   rc = repLine(' ' ' ')
   rc = repLine('I' 'Processing ARCHDEFs')
@@ -240,6 +264,7 @@
   Call getArchMem
 
   elapsed = Time('E')
+  rc = repLine(' ' ' ')
   rc = repLine('I' 'Processing ARCHDEFs complete in 'elapsed)
 
   /* Process LEC archdefs to generate link decks                */
@@ -248,40 +273,18 @@
   If rc = 0 Then
     Call ProcArch
 
+  Call freeSCLM
+
   elapsed = Time('E')
   rc = repLine('I' 'Generating link decks complete in 'elapsed)
-
-  /* Next we are going to process the member information        */
-  rc = DButilMems()
-  If rc > 4 Then
-    Call ExitRtn(8)
-
-  /* Update member info stem with language definition           */
-  rc = repLine(' ' ' ')
-  rc = repLine('I' 'Processing the members')
-  Call ProcMems
-
-  elapsed = Time('E')
-  rc = repLine('I' 'Processing the members complete in 'elapsed)
 
   /* If we are only going to migrate languages that are         */
   /* assigned to members then get rid of redundant languages    */
 
   j = 0
   Do i = 1 to ll
-    If allLangs = 'false' Then
-    Do
-      If langs.i.dfltsrc <> '' Then
-      Do
-        j = j + 1
-        dfltsrc.j = langs.i':'langs.i.dfltsrc':'langs.i.ext
-      End
-    End
-    Else
-    Do
-      j = j + 1
-      dfltsrc.j = langs.i':'langs.i.dfltsrc':'langs.i.ext
-    End
+    j = j + 1
+    dfltsrc.j = langs.i':'langs.i.dfltsrc':'langs.i.ext
   End
 
   dfltsrc.0 = j
@@ -294,7 +297,7 @@
   rc = repLine(' ' ' ')
   rc = repLine('*' Copies('*',80))
   rc = repLine('*' ' ')
-  rc = repLine('*' 'SCLM MIGRATION TOOL : Part 1 - Finished 'Date() Time())
+  rc = repLine('*' 'SCLM MIGRATION TOOL : Part 1A - Finished 'Date() Time())
   rc = repLine('*' ' ')
   rc = repLine('*' Copies('*',80))
 
@@ -311,9 +314,7 @@ OneLine :
 
   j = 0
   Do i = 1 to isrlexpd.0 While (Pos('FLMAEND',isrlexpd.i) = 0)
-    If Substr(isrlexpd.i,1,1) <> '*' |,
-       Pos('* Begin copied member - ',isrlexpd.i) <> 0 |,
-       Pos('*   End copied member - ',isrlexpd.i) <> 0 Then
+    If Substr(isrlexpd.i,1,1) <> '*' Then
     Do
       If isrlexpd.i <> '' Then
       Do
@@ -336,12 +337,17 @@ OneLine :
       /* Find the last comma. Everthing between the last comma */
       /* followed by blank and the continuation is junk        */
       If Substr(noComment.i,71,1) = ',' Then
-        line = Line || Strip(Substr(noComment.i,1,xx))
+        line = Line || Strip(Substr(noComment.i,1,71))
       Else
       Do
         xx = Lastpos(', ',Substr(noComment.i,1,71))
         If xx = 0 Then
-          line = Line || Strip(Substr(noComment.i,1,71))
+        Do
+          If Substr(noComment.i,71,1) <> ' ' Then
+            line = Line || Strip(Substr(noComment.i,1,71))
+          Else
+            line = Line || Strip(Substr(noComment.i,1,71))' '
+        End
         Else
           line = Line || Strip(Substr(noComment.i,1,xx))
       End
@@ -397,7 +403,10 @@ OneLine :
         Do
           j = j + 1
           /* Make sure there's a blank between first keyword and rest of line */
-          projdefs.j = Substr(delTrans.i,1,8)' 'Substr(delTrans.i,9)
+          If Length(Word(delTrans.i,1)) > 8 Then
+            projdefs.j = Substr(delTrans.i,1,8)' 'Substr(delTrans.i,9)
+          Else
+            projdefs.j = delTrans.i
         End
       End
     End
@@ -405,11 +414,14 @@ OneLine :
     Do
       j = j + 1
       /* Make sure there is a blank between first keyword and rest of line */
-      projdefs.j = Substr(delTrans.i,1,8)' 'Substr(delTrans.i,9)
+      If Length(Word(delTrans.i,1)) > 8 Then
+        projdefs.j = Substr(delTrans.i,1,8)' 'Substr(delTrans.i,9)
+      Else
+        projdefs.j = delTrans.i
     End
   End
   projdefs.0 = j
-  delTrans.  = ''
+  drop delTrans.
   rc = repLine('I' 'Count of lines after redundant translators removed :' j)
 
   projseq = outputDir'/projseq.txt'
@@ -423,7 +435,7 @@ Return
 getLang :
 
   ll = 0
-  langs. = ''
+  Drop langs.
 
   Do langCnt = 1 to projdefs.0
     Select
@@ -479,7 +491,7 @@ getLang :
               If noOfTran > 0 Then
                 langs.ll.ext = 'pli'
               Else
-                langs.ll.ext = 'plincl'
+                langs.ll.ext = 'inc'
             End
             When (langs.ll.languageCode = 'PLX') Then
             Do
@@ -494,6 +506,13 @@ getLang :
                 langs.ll.ext = 'c'
               Else
                 langs.ll.ext = 'h'
+            End
+            When (langs.ll.languageCode = 'REX') Then
+            Do
+              If noOfTran > 0 Then
+                langs.ll.ext = 'rex'
+              Else
+                langs.ll.ext = 'inc'
             End
             When (langs.ll.languageCode = 'LNK') Then langs.ll.ext = 'bnd'
             When (langs.ll.languageCode = 'JOV') Then langs.ll.ext = 'jov'
@@ -716,7 +735,7 @@ TranOpts :
              'TASKLIB INPLIST MBRRC'
 
   workStmt  = projdefs.trancnt
-  trnsStmt. = ''
+  Drop trnsStmt.
   st = 0
 
   processed = 0
@@ -802,10 +821,10 @@ Return
 DButilArch:
 
   "ALLOC F(DUMMY) DUMMY"
-  "ALLOC F(DBMSG) RECFM(V B) LRECL(133) BLKSIZE(15000) SPACE(5 5)",
-          "TRACKS REUSE"
-  "ALLOC F(DBRPT) RECFM(V B) LRECL(133) BLKSIZE(15000) SPACE(5 5)",
-          "TRACKS REUSE"
+  "ALLOC F(DBMSG) RECFM(V B) LRECL(133) BLKSIZE(15000) SPACE(10 50)",
+          "CYLINDERS REUSE"
+  "ALLOC F(DBRPT) RECFM(V B) LRECL(133) BLKSIZE(15000) SPACE(10 50)",
+          "CYLINDERS REUSE"
 
   "FLMCMD DBUTIL,"proj",,"group",,,,,,*,*"||,
                 ",*,*,*,*,ARCHDEF,NO,ACCT,*,,,,NORMAL,NO,NO,," ||,
@@ -834,42 +853,6 @@ DButilArch:
 Return dbutil_rc
 
 /**********************************************************************/
-/* Run DBUTIL report to list every member that is in the 'PROD' group */
-/* and store the data in a stem variable.                             */
-/**********************************************************************/
-DButilMems :
-
-  "ALLOC F(DUMMY) DUMMY"
-  "ALLOC F(DBRPT) RECFM(V B) LRECL(133) BLKSIZE(15000) SPACE(5 5)",
-          "TRACKS REUSE"
-
-  "FLMCMD DBUTIL,"proj",,"group",,,,,,*,*"||,
-                ",*,*,*,*,*,NO,ACCT,*,,,,NORMAL,NO,NO,," ||,
-                "DUMMY,DUMMY,DBRPT" ||,
-                ",@@FLMMBR @@FLMLAN @@FLMTYP @@FLMSTA"
-  dbutil_rc = rc
-
-  If dbutil_rc > 0  Then
-  Do
-    rc = repLine(' ' ' ')
-    rc = repLine('E' 'DBUTIL error, return code ='rc)
-    rc = repLine(' ' ' ')
-    "EXECIO * DISKR DBMSG (STEM dbmsgs. FINIS)"
-    Do i = 1 to dbmsgs.0
-      rc = repLine(' ' dbmsgs.i)
-    End
-  End
-  Else
-    "EXECIO * DISKR DBRPT (STEM dbutil. FINIS)"
-  rc = repLine(' ' ' ')
-  rc = repLine('I' 'DBUTIL returned 'dbutil.0' members')
-
-  "FREE F(DUMMY)"
-  "FREE F(DBRPT)"
-
-Return dbutil_rc
-
-/**********************************************************************/
 /* Process the ARCHDEFs                                               */
 /**********************************************************************/
 
@@ -879,7 +862,9 @@ ProcArch :
   /* First pass to work out what type of ARCHDEFs they are      */
   /* Second pass to process the LEC and CC ARCHDEFs             */
 
-  bndDsn = "'"migHlq".SCLMMIG.BND'"
+  prebndCnt = 0
+
+  bndDsn = "'"migHlq"."proj"."group".VCUR.BND'"
   ListdsiRC = Listdsi(bndDsn)
   Select
     When (ListdsiRC = 0) Then
@@ -906,7 +891,7 @@ ProcArch :
 
   If pl > 0 Then
   Do
-    prebndDsn = "'"migHlq".SCLMMIG.PREBND'"
+    prebndDsn = "'"migHlq"."proj"."group".VCUR.PREBND'"
     ListdsiRC = Listdsi(prebndDsn)
     Select
       When (ListdsiRC = 0) Then
@@ -938,6 +923,7 @@ ProcArch :
     Select
       When (archType = 'LEC') Then
       Do
+        Say 'Processing 'archmem typename archtype
         CCCnt  = 0
         LECcnt = LECcnt + 1
         memCnt = memCnt + 1
@@ -956,6 +942,7 @@ ProcArch :
       End
       When (archType = 'PRELEC') Then
       Do
+        Say 'Processing 'archmem typename archtype
         CCCnt  = 0
         LECcnt = LECcnt + 1
         memCnt = memCnt + 1
@@ -1010,88 +997,19 @@ ProcArch :
   rc = repLine('I' 'Count of pre-link members created : 'prebndCnt)
   Call keyRefXml
 
+  /* Add the ARCHDEF types to the file for later checking */
+  mm = archmems.0
+  Do h = 1 to hl
+    mm = mm + 1
+    archmems.mm = archHL.h
+  End
+  archmems.0 = mm
+
   archfile  = outputDir'/archtype.txt'
   Address syscall "writefile (archfile) 755 archmems."
 
   /* Free up memory   */
-  archmems. = ''
-
-Return
-
-/**********************************************************************/
-/* Process the members account information                            */
-/**********************************************************************/
-
-ProcMems :
-
-  Do m = 1 to dbutil.0
-
-    Parse var dbutil.m sclmmem 9 sclmlang 18 sclmtype 27 status .
-    sclmmem  = Strip(sclmmem)
-    sclmlang = Strip(sclmlang)
-    sclmtype = Strip(sclmtype)
-    status   = Strip(status)
-
-    /* ARCHDEFS already processed so      */
-    /* only care about buildable parts    */
-    If sclmlang = '' | sclmlang = 'ARCHDEF' | status = 'NON-EDIT' Then
-      Iterate
-
-    /* Need to update the language:defaultType:default extension list */
-    Do z = 1 to ll While (sclmlang <> langs.z)
-    End
-    If z > ll Then
-    Do
-      rc = repLine(' ' ' ')
-      rc = repLine('W' sclmmem 'has type of 'sclmtype ||,
-                         ' and language of 'sclmlang'.' ||,
-                         ' But language not found in language stem')
-    End
-    Else
-    Do
-      Select
-        When (langs.z.dfltsrc = '') Then
-          langs.z.dfltsrc = sclmtype
-
-        When (langs.z.dfltsrc <> sclmtype) Then
-        Do
-          rc = repLine(' ' ' ')
-          rc = repLine('W' sclmmem 'has type of 'sclmtype ||,
-                             ' and language of 'sclmlang'.' ||,
-                             ' But default type already set to ' ||,
-                             langs.z.dfltsrc' for this language.')
-          rc = repLine('W' 'Adding the default type and extension anyway,' ||,
-                             ' but default SYSLIBs may be generated ' ||,
-                             ' incorrectly if there is no FLMINCLS.')
-          ll = ll + 1
-          langs.ll = langs.z
-          langs.ll.dfltsrc = sclmtype
-          langs.ll.languageCode = langs.z.languageCode
-          langs.ll.ext = langs.z.ext
-        End
-        Otherwise
-          Nop
-      End
-      sclmext = langs.z.ext
-    End
-
-    /* Need to see if we have this member/type already in member list */
-    Do z = 1 to memCnt,
-           While (sclmmem'.'sclmext||sclmtype <> memInfo.z.name||meminfo.z.type)
-    End
-    If z > memCnt Then
-    Do
-      /* need to get the default file extension for the member */
-      memCnt = memCnt + 1
-      memInfo.memCnt.name     = sclmmem'.'sclmext
-      memInfo.memCnt.type     = sclmtype
-      memInfo.memCnt.memLang  = sclmlang
-      memInfo.memCnt.stmt.0   = 0
-    End
-  End
-
-  /* Free up memory   */
-  dbutil. = ''
+  Drop archmems.
 
 Return
 
@@ -1101,15 +1019,17 @@ Return
 getArchMem:
 
   mm = 0
-  archMems. = ''
+  hl = 0
+  Drop archMems.
+  Drop archHL.
   memCnt = 0
   LECcnt = 0
   GENcnt = 0
   TotCC  = 0
   TotGen = 0
-  memInfo.  = ''
+  Drop memInfo.
   pl = 0
-  preLink.  = ''
+  Drop preLink.
 
   rc = repLine(' ' ' ')
   Do m = 1 to dbutil.0
@@ -1125,8 +1045,21 @@ getArchMem:
     /* Going to store ARCHDEF names and their type   */
     Call readArchdef(1 mem)
 
-    mm = mm + 1
-    archMems.mm = mem||':'||typeName||':'||archType
+    If archType <> 'HL' Then
+    Do
+      mm = mm + 1
+      archMems.mm = mem||':'||typeName||':'||archType
+    End
+    Else
+    Do
+      Do h = 1 to hl While (Pos(typeName,archHL.h) = 0)
+      End
+      If h > hl Then
+      Do
+        hl = hl + 1
+        archHL.hl = ''||':'||typeName||':'||''
+      End
+    End
   End
   archMems.0 = mm
 
@@ -1155,14 +1088,37 @@ readArchdef:
 
   parse arg pass mem
 
-  "FLMCMD DSALLOC,"proj",,"group",P,1,"typeName",ARCHDEF"
+  SERVICE  = "DSALLOC "
+  grp      = left(group,8)
+  typeName = left(typeName,8)
+  hier     = "P"
+  numgrp   = 0
+  ddname   = "ARCHDEF "
+  msgarr   = Copies('00'X,4)
+  parms    = "SERVICE SCLMID GRP HIER NUMGRP TYPENAME DDNAME MSGARR"
+
+  Address linkpgm "FLMLNK "parms
+  If rc > 4 Then
+    say 'DSALLOC failed for 'typeName ddname mem' - 'msgarr
+
   Address ISPEXEC "QBASELIB ARCHDEF ID(ARCHDEF)"
+  x = msg('off')
   "FREE  F(ARCHDEF)"
+  x = msg('on')
   ARCHDEF = Strip(ARCHDEF,,"'")
 
-  "ALLOC F(ARCHDEF) DA('"ARCHDEF"("mem")') SHR"
-  "EXECIO * DISKR ARCHDEF (STEM archdef. FINIS)"
-  "FREE  F(ARCHDEF)"
+  archdef.0 = 0
+  If Sysdsn("'"ARCHDEF"("mem")'") = 'OK' Then
+  Do
+    "ALLOC F(ARCHDEF) DA('"ARCHDEF"("mem")') SHR"
+    "EXECIO * DISKR ARCHDEF (STEM archdef. FINIS)"
+    "FREE  F(ARCHDEF)"
+  End
+  Else
+  Do
+    rc = repLine('W' 'ARCHDEF Member 'mem' from data set 'ARCHDEF ||,
+                     ' was not found. It has been ignored')
+  End
 
   If pass = 1 Then
   Do
@@ -1187,9 +1143,9 @@ readArchdef:
   cc = 0
   aa = 0
   ld = 0
-  includes. = ''
-  cmds.     = ''
-  aliases.  = ''
+  Drop includes.
+  Drop cmds.
+  Drop aliases.
   linkdeck  = ''
   storeType = archType
 
@@ -1287,14 +1243,28 @@ preLec :
     If Substr(archdef.a,1,5) = 'INCL ' Then
     Do
       Parse var archdef.a 'INCL ' memName copytype .
-      "FLMCMD DSALLOC,"proj",,"group",P,1,"copytype",COPY"
+      SERVICE  = "DSALLOC "
+      grp      = left(group,8)
+      copyType = left(copyType,8)
+      hier     = "P"
+      numgrp   = 0
+      ddname   = "COPY    "
+      msgarr   = Copies('00'X,4)
+      parms    = "SERVICE SCLMID GRP HIER NUMGRP COPYTYPE DDNAME MSGARR"
+
+      Address linkpgm "FLMLNK "parms
+      If rc > 4 Then
+        say 'DSALLOC failed for 'copyType ddname' - 'msgarr
+
       Address ISPEXEC "QBASELIB COPY ID(COPY)"
+      x = msg('off')
       "FREE  F(COPY)"
+      x = msg('on')
       COPY = Strip(COPY,,"'")
 
       If sysdsn("'"COPY"("memName")'") = 'MEMBER NOT FOUND' Then
         rc = repLine('W' 'INCL or COPY Member 'memName' from data set 'COPY||,
-                         'was not found. It has been ignored')
+                         ' was not found. It has been ignored')
       Else
       Do
         "ALLOC F(COPY) DA('"COPY"("memName")') SHR"
@@ -1405,7 +1375,24 @@ procStmt:
         If archType = 'CC' | archType = 'GEN' Then
         Do
           /* Need to get the Language definition of the source */
-          "FLMCMD ACCTINFO,"proj",,"group","SourceLib","SourceMbr
+          SERVICE  = "ACCTINFO"
+          grp      = left(group,8)
+          srcLib   = left(SourceLib,8)
+          srcMem   = left(SourceMbr,8)
+          uiTab    = Copies('00'X,8)
+          incTab   = Copies('00'X,8)
+          ccTab    = Copies('00'X,8)
+          adaTab   = Copies('00'X,8)
+          search   = 'SEARCH  '
+          msgarr   = Copies('00'X,4)
+          parms    = "SERVICE SCLMID GRP SRCLIB SRCMEM UITAB INCTAB " ||,
+                     "CCTAB ADATAB SEARCH MSGARR"
+
+          Address linkpgm "FLMLNK "parms
+          If rc > 0 Then
+          Do
+            say 'ACTINFO failed for 'srcLib srcMem' - 'msgarr
+          End
 
           /* Need to get extension for this language */
           Do z = 1 to ll While (zsalang <> langs.z)
@@ -1679,9 +1666,23 @@ procStmt:
         End
         If recursINCL = 0 & archFound = 1 Then
         Do
-          "FLMCMD DSALLOC,"proj",,"group",P,1,"copytype",COPY"
+          SERVICE  = "DSALLOC "
+          grp      = left(group,8)
+          copyType = left(copyType,8)
+          hier     = "P"
+          numgrp   = 0
+          ddname   = "COPY    "
+          msgarr   = Copies('00'X,4)
+          parms    = "SERVICE SCLMID GRP HIER NUMGRP COPYTYPE DDNAME MSGARR"
+
+          Address linkpgm "FLMLNK "parms
+          If rc > 4 Then
+            say 'DSALLOC failed for 'copyType ddname' - 'msgarr
+
           Address ISPEXEC "QBASELIB COPY ID(COPY)"
+          x = msg('off')
           "FREE  F(COPY)"
+          x = msg('on')
           COPY = Strip(COPY,,"'")
 
           If sysdsn("'"COPY"("memName")'") = 'MEMBER NOT FOUND' Then
@@ -1815,12 +1816,12 @@ Return
 
 keyRefXml :
 
-  xml. = ''
+  Drop xml.
   xcnt = 0
 
   Call xmlHeader
   Call xmlKeyRef
-  Call xmlFooter
+  Call xmlFooter ('keyref')
 
   xml.0 = xcnt
   memsfile = outputDir'/keyref.xml'
@@ -1844,7 +1845,7 @@ xmlKeyRef :
   krl = 0
   krk = 0
   krv = 0
-  kref. = ''
+  Drop kref.
   langCnt = 0
 
   Do m = 1 to memCnt
@@ -1863,70 +1864,78 @@ xmlKeyRef :
     Else
       krl = z
 
-    Do k = 1 to memInfo.m.stmt.0
-      krk = kref.krl.stmt.0
+    If Datatype(memInfo.m.stmt.0) = 'NUM' Then
+    Do
+      Do k = 1 to memInfo.m.stmt.0
+        krk = kref.krl.stmt.0
 
-      If memInfo.m.stmt.k = 'LOAD' |,
-         memInfo.m.stmt.k = 'OBJ'  |,
-         memInfo.m.stmt.k = 'LIST' |,
-         memInfo.m.stmt.k = 'LMAP' |,
-         Substr(memInfo.m.stmt.k,1,3) = 'OUT' Then
-      Do
-        statement = memInfo.m.stmt.k
-        Do z = 1 to krk While (statement <> kref.krl.stmt.z)
-        End
-        If z > krk Then
+        If memInfo.m.stmt.k = 'LOAD' |,
+           memInfo.m.stmt.k = 'OBJ'  |,
+           memInfo.m.stmt.k = 'LIST' |,
+           memInfo.m.stmt.k = 'LMAP' |,
+           Substr(memInfo.m.stmt.k,1,3) = 'OUT' Then
         Do
-          krk = krk + 1
-          kref.krl.stmt.krk = statement
-          kref.krl.stmt.krk.nameval.0 = 0
-        End
-        Else
-          krk = z
-
-        Do v = 1 to memInfo.m.stmt.k.nameval.0
-          krv = kref.krl.stmt.krk.nameval.0
-          If memInfo.m.stmt.k.nameval.v.name = 'type' Then
-          Do
-            libType = memInfo.m.stmt.k.nameval.v.val
-            Do z = 1 to krv While (libType <> kref.krl.stmt.krk.nameval.z)
-            End
-            If z > krv Then
-            Do
-              krv = krv + 1
-              kref.krl.stmt.krk.nameval.krv = libType
-            End
+          statement = memInfo.m.stmt.k
+          Do z = 1 to krk While (statement <> kref.krl.stmt.z)
           End
-          If kref.krl.stmt.krk.nameval.0 < krv Then
-            kref.krl.stmt.krk.nameval.0 = krv
+          If z > krk Then
+          Do
+            krk = krk + 1
+            kref.krl.stmt.krk = statement
+            kref.krl.stmt.krk.nameval.0 = 0
+          End
+          Else
+            krk = z
+
+          Do v = 1 to memInfo.m.stmt.k.nameval.0
+            krv = kref.krl.stmt.krk.nameval.0
+            If memInfo.m.stmt.k.nameval.v.name = 'type' Then
+            Do
+              libType = memInfo.m.stmt.k.nameval.v.val
+              Do z = 1 to krv While (libType <> kref.krl.stmt.krk.nameval.z)
+              End
+              If z > krv Then
+              Do
+                krv = krv + 1
+                kref.krl.stmt.krk.nameval.krv = libType
+              End
+            End
+            If kref.krl.stmt.krk.nameval.0 < krv Then
+              kref.krl.stmt.krk.nameval.0 = krv
+          End
         End
+        If kref.krl.stmt.0 < krk Then
+          kref.krl.stmt.0 = krk
       End
-      If kref.krl.stmt.0 < krk Then
-        kref.krl.stmt.0 = krk
+    End
+    Else
+    Do
+      Say 'Problem with Keyref stem for member : 'memInfo.m.name ||,
+          ' type : 'memInfo.m.type' language : 'memInfo.m.memLang
     End
   End
   kref.0 = langCnt
 
-  do m = 1 to kref.0
+  Do m = 1 to kref.0
     xcnt = xcnt + 1
     xml.xcnt = '    <language name="'kref.m'">'
-    do k = 1 to kref.m.stmt.0
-      xcnt = xcnt + 1
-      xml.xcnt = '      <keyword name="'Strip(kref.m.stmt.k) ||,
-                              '" valueCnt="'kref.m.stmt.k.nameval.0'">'
-      do v = 1 to kref.m.stmt.k.nameval.0
+    If Datatype(kref.m.stmt.0) = 'NUM' Then
+    Do
+      Do k = 1 to kref.m.stmt.0
         xcnt = xcnt + 1
-        xml.xcnt = '        <values type="'kref.m.stmt.k.nameval.v'"/>'
-      end
-      xcnt = xcnt + 1
-      xml.xcnt = '      </keyword>'
-    end
+        xml.xcnt = '      <keyword name="'Strip(kref.m.stmt.k) ||,
+                                '" valueCnt="'kref.m.stmt.k.nameval.0'">'
+        Do v = 1 to kref.m.stmt.k.nameval.0
+          xcnt = xcnt + 1
+          xml.xcnt = '        <values type="'kref.m.stmt.k.nameval.v'"/>'
+        End
+        xcnt = xcnt + 1
+        xml.xcnt = '      </keyword>'
+      End
+    End
     xcnt = xcnt + 1
     xml.xcnt = '    </language>'
-  end
-
-  xcnt = xcnt + 1
-  xml.xcnt   = '  </target>'
+  End
 
 Return
 
@@ -1936,12 +1945,12 @@ Return
 
 createXml :
 
-  xml. = ''
+  Drop xml.
   xcnt = 0
 
   Call xmlHeader
   Call xmlMember
-  Call xmlFooter
+/*Call xmlFooter*/
 
   xml.0 = xcnt
   memsfile = outputDir'/members.xml'
@@ -1980,33 +1989,31 @@ xmlMember :
   xcnt = xcnt + 1
   xml.xcnt = '  '
   xcnt = xcnt + 1
-  xml.xcnt = '  <!-- File metadata -->'
-  xcnt = xcnt + 1
-  xml.xcnt = '  <target name="filemetadata" ' ||,
-                       'description="Create file metadata">'
+  xml.xcnt = '  <target name="memberinfo" ' ||,
+                       'description="SCLM Member information">'
 
   Do m = 1 to memCnt
     xcnt = xcnt + 1
     xml.xcnt = '    <member name="'memInfo.m.name'" ' ||,
                            'type="'memInfo.m.type'" ' ||,
                            'language="'memInfo.m.memLang'">'
-    Do k = 1 to memInfo.m.stmt.0
-      xcnt = xcnt + 1
-      xml.xcnt = '      <keyword name="'Strip(memInfo.m.stmt.k)'">'
-      Do v = 1 to memInfo.m.stmt.k.nameval.0
+    If Datatype(memInfo.m.stmt.0) = 'NUM' Then
+    Do
+      Do k = 1 to memInfo.m.stmt.0
         xcnt = xcnt + 1
-        xml.xcnt = '        <values 'memInfo.m.stmt.k.nameval.v.name'=' ||,
-                                    '"'memInfo.m.stmt.k.nameval.v.val'"/>'
+        xml.xcnt = '      <keyword name="'Strip(memInfo.m.stmt.k)'">'
+        Do v = 1 to memInfo.m.stmt.k.nameval.0
+          xcnt = xcnt + 1
+          xml.xcnt = '        <values 'memInfo.m.stmt.k.nameval.v.name'=' ||,
+                                      '"'memInfo.m.stmt.k.nameval.v.val'"/>'
+        End
+        xcnt = xcnt + 1
+        xml.xcnt = '      </keyword>'
       End
-      xcnt = xcnt + 1
-      xml.xcnt = '      </keyword>'
     End
     xcnt = xcnt + 1
     xml.xcnt = '    </member>'
   End
-
-  xcnt = xcnt + 1
-  xml.xcnt   = '  </target>'
 
 Return
 
@@ -2016,15 +2023,65 @@ Return
 /*---------------------------------------------------------------*/
 xmlFooter :
 
+  parse arg xmlType
+
+  xcnt = xcnt + 1
+  xml.xcnt   = '  </target>'
   xcnt = xcnt + 1
   xml.xcnt = '  '
   xcnt = xcnt + 1
-  xml.xcnt = '  <target depends="filemetadata"' ||,
-                     ' description="File Metadata" name="all"/>'
+  If xmlType = 'keyref' Then
+    xml.xcnt = '  <target depends="keyrefinfo"' ||,
+                     ' description="SCLM Keyref information" name="all"/>'
+  Else
+    xml.xcnt = '  <target depends="memberinfo"' ||,
+                     ' description="SCLM Member information" name="all"/>'
   xcnt = xcnt + 1
   xml.xcnt = '</project>'
 
 Return
+
+/*---------------------------------------------------------------*/
+/* Initialize SCLM                                               */
+/*---------------------------------------------------------------*/
+initSCLM :
+
+  SERVICE = "START   "
+  APPLID  = COPIES('00'X,8)
+  Address linkpgm "FLMLNK SERVICE APPLID"
+
+  project = left(translate(proj),8)
+  projdef = left(projmem,8)
+  sclmid  = copies(' ',8)
+  msgline = copies(' ',80)
+
+  SERVICE = "INIT    "
+  Address linkpgm "FLMLNK SERVICE APPLID PROJECT PROJDEF SCLMID MSGLINE"
+
+  If RC > 0 Then
+  Do
+    Say 'SCLM Initialisation failed - 'msgline
+    Exit(8)
+  End
+
+Return
+
+/*---------------------------------------------------------------*/
+/* Free SCLM                                                     */
+/*---------------------------------------------------------------*/
+freeSCLM :
+
+  Address TSO "FREE F(FLMMSGS)"
+
+  SERVICE = "END     "
+  Address linkpgm "FLMLNK SERVICE APPLID MSGLINE"
+
+  If RC > 0 Then
+  Do
+    Say 'SCLM cleanup failed - 'msgline
+  End
+
+return
 
 /*---------------------------------------------------------------*/
 /* Create report lines                                           */

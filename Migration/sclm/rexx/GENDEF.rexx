@@ -1,5 +1,4 @@
 /* REXX */
-/*%STUB CPPLEFPL*/
 /*********************************************************************/
 /*                                                                   */
 /* NAME := GENDEF                                                    */
@@ -27,6 +26,13 @@
     Say 'Exec is running from compiled REXX. Parse SOURCE not supported.'
     Say 'As such the config data set and member must be passed as a parameter.'
     call ExitRtn(8)
+  End
+
+  Select
+    When (thisExec = 'BLZMIG2') Then prevExec = 'Job BLZMIG1'
+    When (thisExec = 'GENDEF')  Then prevExec = 'extrmetadata.sh'
+    Otherwise
+      Nop
   End
 
   If propmem = '' Then
@@ -79,25 +85,50 @@
   allLangs = ''
   empty    = ''
   exist    = ''
+  scopeflg = ''
+  migrdate = ''
+  copytype = ''
+  vermax = ''
+  selectionCriteria = ''
+  repo = ''
+  lectypes = ''
+  dependtypes = ''
+  defComponent = ''
+  defzProject = ''
 
+  upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  lower = 'abcdefghijklmnopqrstuvwxyz'
   /*-------------------------------------------------*/
   /* Parsing the parameters from the property file   */
   /*-------------------------------------------------*/
   Do i = 1 to props.0
+    next = Strip(props.i)
+    If next = '' | Pos('#',next) = 1 Then
+       Iterate
     Parse Var props.i key '=' value
-    key = strip(Translate(key))
+    key = Translate(key,lower,upper)
     value = strip(value)
     Select
-      When (key = 'PROJ')      Then proj = value
-      When (key = 'GROUP')     Then group = value
-      When (key = 'PROJMEM')   Then projmem = value
-      When (key = 'PROJDEFS')  Then projdefs = value
-      When (key = 'MACLIBS')   Then maclibs = value
-      When (key = 'MIGHLQ')    Then migHlq = value
-      When (key = 'OUTPUTDIR') Then outputDir = value
-      When (key = 'ALLLANGS')  Then allLangs = value
-      When (key = 'EMPTY')     Then empty = value
-      When (key = 'EXIST')     Then exist = value
+      When (key = 'proj')              Then proj = value
+      When (key = 'group')             Then group = value
+      When (key = 'projmem')           Then projmem = value
+      When (key = 'projdefs')          Then projdefs = value
+      When (key = 'maclibs')           Then maclibs = value
+      When (key = 'mighlq')            Then mighlq = value
+      When (key = 'outputdir')         Then outputdir = value
+      When (key = 'alllangs')          Then alllangs = value
+      When (key = 'empty')             Then empty = value
+      When (key = 'exist')             Then exist = value
+      When (key = 'scopeflg')          Then scopeflg = value
+      When (key = 'migrdate')          Then migrdate = value
+      When (key = 'vermax')            Then vermax = value
+      When (key = 'selectioncriteria') Then selectioncriteria = value
+      When (key = 'repo')              Then repo = value
+      When (key = 'copytype')          Then copytype = value
+      When (key = 'lectypes')          Then lectypes = value
+      When (key = 'dependtypes')       Then dependtypes = value
+      When (key = 'defcomponent')      Then defcomponent = value
+      When (key = 'defzproject')       Then defzproject = value
       Otherwise
         Say 'Invalid property - 'key
     End
@@ -113,8 +144,6 @@
     address syscall 'getpwnam (user) pw.'
     outputDir = pw.4
   End
-  upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  lower = 'abcdefghijklmnopqrstuvwxyz'
   proj = Translate(proj,lower,upper)
 
   outputDir = outputDir'/sclmMigration/'proj
@@ -139,19 +168,29 @@
     End
   End
 
+  If migHlq   = '' Then
+    migHlq   = Userid()
+
   rc = repLine('*' Copies('*',80))
   rc = repLine('*' ' ')
   rc = repLine('*' 'SCLM MIGRATION TOOL : Part 2 - Started' date() Time())
   rc = repLine('*' ' ')
   rc = repLine('*' Copies('*',80))
 
+  If defzProject = '' Then
+  Do
+    defzProject = proj'-Migration'
+    rc = repLine(' ' ' ')
+    rc = repLine('I' 'Default project defaulted to 'defzProject)
+  End
+
   projfile = outputDir'/projseq.txt'
   Address syscall "readfile (projfile) projdefs."
   If rc <> 0 | projdefs.0 = 0 Then
   Do
     rc = repLine(' ' ' ')
-    rc = repLine('E' 'Project definitions file 'projfile ||,
-                       ' does not exist or is empty. BLZMEMS must be run first')
+    rc = repLine('E' 'Project definitions file 'projfile' does not ' ||,
+                     'exist or is empty. 'prevExec' must be run first')
     migRc = 8
   End
 
@@ -160,8 +199,8 @@
   If rc <> 0 Then
   Do
     rc = repLine(' ' ' ')
-    rc = repLine('E' 'Languages file 'langfile ||,
-                       ' does not exist. BLZMEMS must be run first')
+    rc = repLine('E' 'Languages file 'langfile' does not ' ||,
+                     'exist. 'prevExec' must be run first')
     migRc = 8
   End
 
@@ -170,9 +209,8 @@
   If rc <> 0 | projdefs.0 = 0 Then
   Do
     rc = repLine(' ' ' ')
-    rc = repLine('E' 'ARCHDEF type file 'archfile ||,
-                        ' does not exist or is empty. ' ||,
-                        'BLZMEMS must be run first')
+    rc = repLine('E' 'ARCHDEF type file 'archfile' does not ' ||,
+                     'exist or is empty. 'prevExec' must be run first')
     migRc = 8
   End
 
@@ -182,7 +220,7 @@
   Do
     rc = repLine(' ' ' ')
     rc = repLine('E' 'Keyref file 'kreffile' does not exist. ' ||,
-                       'BLZMEMS must be run first')
+                     prevExec' must be run first')
     Return 8
   End
 
@@ -197,9 +235,11 @@
     langdefs.0 = langexts.0
     Do i = 1 to langexts.0
       parse var langexts.i langdefs.i ':' langdefs.i.dfltsrc ':' langdefs.i.ext
+      langdefs.i.cspdb = ''
       Do j = 1 to types.0 while (langdefs.i.dfltsrc <> types.j)
       End
-      If j > types.0 & langdefs.i.dfltsrc <> '' Then
+      If j > types.0 & langdefs.i.dfltsrc <> '' &,
+         langdefs.i.dfltsrc <> 'BND' Then
       Do
         rc = repLine(' ' ' ')
         rc = repLine('E' 'Invalid source type 'langdefs.i.dfltsrc)
@@ -211,9 +251,9 @@
 
     If rc = 0 Then
     Do
-      projdefs. = ''
-      langexts. = ''
-      archtype. = ''
+      Drop projdefs.
+      Drop langexts.
+      Drop archtype.
 
       /* Process the member metadata                   */
       Call fileMetaData
@@ -222,6 +262,16 @@
       Call genXML
     End
   End
+
+  /* Lets write out the langext in case we changed FLMCSPDB     */
+  Do i = 1 to langdefs.0
+    dfltsrc.i = langdefs.i':'langdefs.i.dfltsrc':'langdefs.i.ext':' ||,
+                langdefs.i.cspdb
+  End
+
+  dfltsrc.0 = langdefs.0
+  extfile  = outputDir'/langext.txt'
+  Address syscall "writefile (extfile) 755 dfltsrc."
 
   rc = repLine(' ' ' ')
   rc = repLine('*' Copies('*',80))
@@ -239,7 +289,7 @@ Exit
 
 Controls :
 
-  types. = ''
+  Drop types.
   ty = 0
 
   /* Need to determine some project control information           */
@@ -343,9 +393,10 @@ DsDefs :
   flmsyslb. = ''
   firstArch = 1
 
+  rc = repLine(' ' ' ')
   rc = repLine(' ' Copies('*',80))
   rc = repLine(' ' ' ')
-  rc = repLine(' ' 'Processing data set definitions')
+  rc = repLine(' ' 'Processing Data Set Definitions')
   rc = repLine(' ' ' ')
   rc = repLine(' ' Copies('*',80))
 
@@ -383,7 +434,7 @@ DsDefs :
           /* we generated in the first migration script             */
           If (archdef = 1 & firstArch = 1) Then
           Do
-            dsname = proj"."topGroup".SCLMMIG.BND"
+            dsname = migHlq"."proj"."topGroup".VCUR.BND"
             firstArch = 0
             Type = 'BND'
           End
@@ -401,6 +452,7 @@ DsDefs :
             Else
               dsname = project'.'topGroup'.'Type
           End
+          dsname = Translate(dsname,upper,lower)
 
           Address ISPEXEC "DSINFO DATASET('"Strip(dsname)"')"
           dsinfoRC = rc
@@ -408,6 +460,9 @@ DsDefs :
           Do
             rc = repLine(' ' ' ')
             rc = repLine('E' 'DSINFO Failed for 'Strip(dsname))
+            rc = repLine('E' 'There was a FLMTYPE macro of type 'Type||,
+                             ' but the data set for this type does ' ||,
+                             'not exist.')
             If exist = 'true' Then
             Do
               rc = repLine('W' 'Flag to not create data set definitions ' ||,
@@ -415,6 +470,24 @@ DsDefs :
                                'Data set definition not created for ' ||,
                                Strip(dsname)'.')
               Iterate
+            End
+            Else
+            Do
+              rc = repLine('W' 'Defaulting data set information to ' ||,
+                               'FB 80 32720 for ' ||,
+                               Strip(dsname)'.')
+              ZDSORG  = 'PO'           /* dsorg     */
+              ZDSRF   = 'FB'           /* recfm     */
+              ZDSLREC = '80'           /* lrecl     */
+              ZDSBLK  = '32720'        /* blksize   */
+              ZDSDSNT = 'LIBRARY'      /* dsnType   */
+              ZDSSPC  = 'CYLINDER'     /* priSpaceU */
+              ZDS1EX  = '10'           /* priSpaceA */
+              ZDS2EX  = '10'           /* secSpaceA */
+              ZDSDIRA = '0'            /* dirBlocks */
+              ZDSDC   = ''             /* dataClass */
+              ZDSMC   = ''             /* mgmtClass */
+              ZDSSC   = ''             /* stgClass  */
             End
           End
 
@@ -671,88 +744,7 @@ DsDefs :
             Else
               dsname = 'TemporaryFile-'ZDSRF||ZDSLREC
 
-          /* Need to see if we have this one already */
-          Do z = 1 to t4 While (dsname <> Typet4.z)
-          End
-          If z > t4 Then
-          Do
-            t4 = t4 + 1
-            Typet4.t4 = Strip(dsname)
-            Typet4.t4.vio = vioUnit
-            If ZDSLREC = '' | ZDSLREC = 0 Then
-              recLen = 80
-            Else
-              recLen = ZDSLREC
-            If recnum = '' Then
-              recnum = 500
-            blocks = (((recnum / ((3120 / reclen) + 1)) + 1) / 16) + 1
-            blocks = Trunc(blocks + 1)
-            tracks = Trunc(blocks/15 + 1)
-
-            If ZDSBLK = '' & ZDSLREC = '' Then
-              ZDSBLK = ''
-            If ZDSBLK <> '' & ZDSLREC <> '' &,
-              Pos('V',ZDSRF) = 0 Then
-            Do
-              /* Validate blockzize is a multiple of record length */
-              If Trunc(ZDSBLK/ZDSLREC) <> ZDSBLK/ZDSLREC Then
-              Do
-                rc = repLine(' ' ' ')
-                rc = repLine('W'    'Temporary data set 'dsname' has '      ||,
-                                    'BLKSIZE 'ZDSBLK' and LRECL 'ZDSLREC' ' ||,
-                                    'LRECL is not a multiple of BLKSIZE. '  ||,
-                                    'Recalculating blocksize')
-                ZDSBLK = ''
-              End
-            End
-            If ZDSBLK = '' & ZDSLREC <> '' Then
-            Do
-              ZDSBLK = recLen
-              If Pos('B',ZDSRF) <> 0 Then
-              Do
-                /* Make it as big as possible */
-                Do While (ZDSBLK < 32760)
-                  ZDSBLK = ZDSBLK + reclen
-                End
-                ZDSBLK = ZDSBLK - reclen
-              End
-              Else
-              Do
-                If Pos('V',ZDSRF) <> 0 Then
-                  ZDSBLK = ZDSBLK + 4
-              End
-            End
-            If ZDSRF = 'U' & ZDSLREC <> '0' Then
-            Do
-              rc = repLine(' ' ' ')
-              rc = repLine('W'    'Temporary data set 'dsname' has '        ||,
-                                  'RECFM 'ZDSRF' and LRECL 'ZDSLREC'.')
-              rc = repLine('W'    'Due to a defect in RTC (472084) it is '  ||,
-                                  'not possible to create this data set '   ||,
-                                  'definition.')
-              rc = repLine('W'    'It will be created with LRECL or 0 and ' ||,
-                                  'blocksize of 6144 and will need to be '  ||,
-                                  'changed in the user interface.')
-              ZDSLREC = '0'
-              ZDSBLK = '6144'
-            End
-            If ZDSRF = 'U' & ZDSBLK = '' Then
-            Do
-              If ZDSLREC = '0' Then
-                ZDSBLK = '6144'
-              Else
-                ZDSBLK = ZDSLREC
-            End
-
-            Call interp_stmt("disp" ZDISP)
-            Call interp_stmt("recfm" ZDSRF)
-            Call interp_stmt("lrecl" ZDSLREC)
-            Call interp_stmt("blksize" ZDSBLK)
-            Call interp_stmt("priSpaceU" "trks")
-            Call interp_stmt("priSpaceA" tracks)
-            Call interp_stmt("secSpaceA" tracks)
-            Call interp_stmt("secSpaceA" tracks)
-          End
+          Call Type4
         End
       End
 
@@ -788,7 +780,7 @@ GetDsinfo :
     Otherwise
     Do
       rc = repLine(' ' ' ')
-      rc = repLine('E' 'Unhandled Space unit or 'ZDSSPC' for ' ||,
+      rc = repLine('E' 'Unhandled Space unit of 'ZDSSPC' for ' ||,
                      'data set : 'dsname)
       Call exitRtn(8)
     End
@@ -835,6 +827,30 @@ Type12 :
   Parse arg Type
 
   stem = 't1'
+
+  /* First lets check if this is used in an EXTEND. If it is  */
+  /* then it will be a type 1. It is possible that a type can */
+  /* contain ARCHDEFs or a type 1 might be used as an output  */
+  /* data set in a FLMALLOC.                                  */
+
+  Do i12 = 1 to projdefs.0
+    Select
+      When (Pos('FLMTYPE',projdefs.i12) <> 0) Then
+      Do
+        Parse var projdefs.i12 testType 'FLMTYPE' . 'EXTEND='testExtend .
+        testType = Strip(testType)
+        testExtend = Strip(testExtend)
+        If testExtend = Type Then
+          Return stem
+      End
+      Otherwise
+        Nop
+    End
+  End
+
+  /* Check if it is used as an output type. Then it is most   */
+  /* likely a type 2.                                         */
+
   Do i12 = 1 to projdefs.0
     Select
       When (Pos('FLMALLOC',projdefs.i12) <> 0) Then
@@ -860,10 +876,10 @@ Type12 :
     End
   End
 
-  /* Lets go see if the type is in the keyref file  */
-  /* A type 2 could just be mentioned in an ARCHDEF */
-  /* Without actually being in an IOTYPE O/P in a   */
-  /* Language Definition.                           */
+  /* Lets go see if the type is in the keyref file. A type 2  */
+  /* could just be mentioned in an ARCHDEF without actually   */
+  /* being in an IOTYPE O/P in a Language Definition.         */
+
   typeNotFound = 1
   Do kr = 1 to keyrefs.0 While (typeNotFound)
     If Pos('<values type=',keyrefs.kr) <> 0 Then
@@ -878,6 +894,96 @@ Type12 :
   End
 
 Return stem
+
+/*---------------------------------------------------------------*/
+/* Determine if dsdef for a type 4 has already been created      */
+/*---------------------------------------------------------------*/
+Type4 :
+
+  /* Need to see if we have this one already */
+  Do z = 1 to t4 While (dsname <> Typet4.z)
+  End
+  If z > t4 Then
+  Do
+    t4 = t4 + 1
+    Typet4.t4 = Strip(dsname)
+    Typet4.t4.vio = vioUnit
+    If ZDSLREC = '' | ZDSLREC = 0 Then
+      recLen = 80
+    Else
+      recLen = ZDSLREC
+    If recnum = '' Then
+      recnum = 500
+    blocks = (((recnum / ((3120 / reclen) + 1)) + 1) / 16) + 1
+    blocks = Trunc(blocks + 1)
+    tracks = Trunc(blocks/15 + 1)
+
+    If ZDSBLK = '' & ZDSLREC = '' Then
+      ZDSBLK = ''
+    If ZDSBLK <> '' & ZDSLREC <> '' &,
+      Pos('V',ZDSRF) = 0 Then
+    Do
+      /* Validate blockzize is a multiple of record length */
+      If Trunc(ZDSBLK/ZDSLREC) <> ZDSBLK/ZDSLREC Then
+      Do
+        rc = repLine(' ' ' ')
+        rc = repLine('W'    'Temporary data set 'dsname' has '      ||,
+                            'BLKSIZE 'ZDSBLK' and LRECL 'ZDSLREC' ' ||,
+                            'LRECL is not a multiple of BLKSIZE. '  ||,
+                            'Recalculating blocksize')
+        ZDSBLK = ''
+      End
+    End
+    If ZDSBLK = '' & ZDSLREC <> '' Then
+    Do
+      ZDSBLK = recLen
+      If Pos('B',ZDSRF) <> 0 Then
+      Do
+        /* Make it as big as possible */
+        Do While (ZDSBLK < 32760)
+          ZDSBLK = ZDSBLK + reclen
+        End
+        ZDSBLK = ZDSBLK - reclen
+      End
+      Else
+      Do
+        If Pos('V',ZDSRF) <> 0 Then
+          ZDSBLK = ZDSBLK + 4
+      End
+    End
+    If ZDSRF = 'U' & ZDSLREC <> '0' Then
+    Do
+      rc = repLine(' ' ' ')
+      rc = repLine('W'    'Temporary data set 'dsname' has '        ||,
+                          'RECFM 'ZDSRF' and LRECL 'ZDSLREC'.')
+      rc = repLine('W'    'Due to a defect in RTC (472084) it is '  ||,
+                          'not possible to create this data set '   ||,
+                          'definition.')
+      rc = repLine('W'    'It will be created with LRECL or 0 and ' ||,
+                          'blocksize of 6144 and will need to be '  ||,
+                          'changed in the user interface.')
+      ZDSLREC = '0'
+      ZDSBLK = '6144'
+    End
+    If ZDSRF = 'U' & ZDSBLK = '' Then
+    Do
+      If ZDSLREC = '0' Then
+        ZDSBLK = '6144'
+      Else
+        ZDSBLK = ZDSLREC
+    End
+
+    Call interp_stmt("disp" ZDISP)
+    Call interp_stmt("recfm" ZDSRF)
+    Call interp_stmt("lrecl" ZDSLREC)
+    Call interp_stmt("blksize" ZDSBLK)
+    Call interp_stmt("priSpaceU" "trks")
+    Call interp_stmt("priSpaceA" tracks)
+    Call interp_stmt("secSpaceA" tracks)
+    Call interp_stmt("secSpaceA" tracks)
+  End
+
+Return
 
 /*---------------------------------------------------------------*/
 /* Get a list of language definitions                            */
@@ -1002,6 +1108,11 @@ Langdefs:
             rc = repLine('E' 'SCLM DB2 bind language definition ' ||,
                                 language 'not created')
             ld = ld - 1
+            /* Need to change the language in the langext file to */
+            /* FLMCSPDB for later processing by zImport           */
+
+            langdefs.ds.cspdb = 'FLMCSPDB'
+
           End
           Else
           Do
@@ -1064,17 +1175,17 @@ inclSet :
           End
           Else
           Do
-            Parse var Rest 'TYPES=(' Types ')' ','
+            Parse var Rest 'TYPES=(' inclTypes ')' ','
 
             fi = fi + 1
             Flmincls.fi = lang
-            types = Translate(types,' ',',')
+            inclTypes = Translate(inclTypes,' ',',')
             /* Need to see if types are set to @@FLMTYP or @@FLMETP) */
             newTypes = ''
-            Do ty = 1 to Words(types)
+            Do ty = 1 to Words(inclTypes)
               Select
-                When (Word(types,ty) = '@@FLMTYP') |,
-                     (Word(types,ty) = '@@FLMCRF') Then
+                When (Word(inclTypes,ty) = '@@FLMTYP') |,
+                     (Word(inclTypes,ty) = '@@FLMCRF') Then
                 Do
                   /* Read default source to get default source for language */
                   Do dt = 1 to langdefs.0
@@ -1094,7 +1205,7 @@ inclSet :
                   rc = repLine('W' 'It is not possible to migrate this. '    ||,
                                 'Default source for type used.')
                 End
-                When (Word(types,ty) = '@@FLMETP') Then
+                When (Word(inclTypes,ty) = '@@FLMETP') Then
                 Do
                   /* Read default source to get default source for language */
                   Do dt = 1 to langdefs.0
@@ -1110,13 +1221,13 @@ inclSet :
                     newTypes = newTypes||' '||Strip(types.tp.Extend)
                 End
                 Otherwise
-                  newTypes = newTypes||' '||Word(types,ty)
+                  newTypes = newTypes||' '||Word(inclTypes,ty)
               End
             End
             If newTypes <> '' Then
-              types = Strip(newTypes)
+              inclTypes = Strip(newTypes)
 
-            Flmincls.fi.typeset = Strip(types)
+            Flmincls.fi.typeset = Strip(inclTypes)
             If Include_Set <> '' then
               Flmincls.fi.InclSet = Strip(Include_Set)
             Else
@@ -1144,7 +1255,7 @@ inclSet :
     /* Then read types table to see if there is an extend     */
     Do tp = 1 to types.0 While (langdefs.i.dfltsrc <> types.tp)
     End
-    If i > types.0 Then
+    If tp > types.0 Then
     Do
       rc = repLine(' ' ' ')
       rc = repLine('W' 'No default include set for 'lang' generated ' ||,
@@ -1154,8 +1265,8 @@ inclSet :
     Do
       fi = fi + 1
       Flmincls.fi = lang
-      types = Strip(types.tp) Strip(types.tp.Extend)
-      Flmincls.fi.typeset = Strip(types)
+      inclTypes = Strip(types.tp) Strip(types.tp.Extend)
+      Flmincls.fi.typeset = Strip(inclTypes)
       Flmincls.fi.inclset = 'RTCDeflt'
     End
   End
@@ -1364,39 +1475,39 @@ langTran :
           If langs.ld.languageCode = 'OTH' Then
           Do
             Select
-              When (Compiler = 'ASMA90')   Then langs.ll.languageCode = 'ASM'
-              When (Compiler = 'IEV90')    Then langs.ll.languageCode = 'ASM'
-              When (Compiler = 'IGYCRCTL') Then langs.ll.languageCode = 'COB'
-              When (Compiler = 'IKFCBL00') Then langs.ll.languageCode = 'COB'
-              When (Compiler = 'IEL0AA')   Then langs.ll.languageCode = 'PLI'
-              When (Compiler = 'IBMZPLI')  Then langs.ll.languageCode = 'PLI'
-              When (Compiler = 'AKEEPLX')  Then langs.ll.languageCode = 'PLX'
-              When (Compiler = 'AKHPLX')   Then langs.ll.languageCode = 'PLX'
-              When (Compiler = 'AKHPLX2')  Then langs.ll.languageCode = 'PLX'
-              When (Compiler = 'AKHTSO')   Then langs.ll.languageCode = 'PLX'
-              When (Compiler = 'PLX390')   Then langs.ll.languageCode = 'PLX'
-              When (Compiler = 'CCNDRVR')  Then langs.ll.languageCode = 'C'
-              When (Compiler = 'CCNED230') Then langs.ll.languageCode = 'C'
-              When (Compiler = 'EDCCOMP')  Then langs.ll.languageCode = 'C'
-              When (Compiler = 'IEWL')     Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'HEWL')     Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'HEWLDRGO') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'HEWLH096') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'HEWLOAD')  Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'HEWLOADR') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWBLDGO') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWBLIMG') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWBLOAD') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWBLODI') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWBODEF') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWLDRGO') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWLOAD')  Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWLOADI') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'IEWLOADR') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'LINKEDIT') Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'LOADER')   Then langs.ll.languageCode = 'LNK'
-              When (Compiler = 'JOVIAL')   Then langs.ll.languageCode = 'JOV'
-              When (Compiler = 'PASCALI')  Then langs.ll.languageCode = 'PAS'
+              When (Compiler = 'ASMA90')   Then langs.ld.languageCode = 'ASM'
+              When (Compiler = 'IEV90')    Then langs.ld.languageCode = 'ASM'
+              When (Compiler = 'IGYCRCTL') Then langs.ld.languageCode = 'COB'
+              When (Compiler = 'IKFCBL00') Then langs.ld.languageCode = 'COB'
+              When (Compiler = 'IEL0AA')   Then langs.ld.languageCode = 'PLI'
+              When (Compiler = 'IBMZPLI')  Then langs.ld.languageCode = 'PLI'
+              When (Compiler = 'AKEEPLX')  Then langs.ld.languageCode = 'PLX'
+              When (Compiler = 'AKHPLX')   Then langs.ld.languageCode = 'PLX'
+              When (Compiler = 'AKHPLX2')  Then langs.ld.languageCode = 'PLX'
+              When (Compiler = 'AKHTSO')   Then langs.ld.languageCode = 'PLX'
+              When (Compiler = 'PLX390')   Then langs.ld.languageCode = 'PLX'
+              When (Compiler = 'CCNDRVR')  Then langs.ld.languageCode = 'C'
+              When (Compiler = 'CCNED230') Then langs.ld.languageCode = 'C'
+              When (Compiler = 'EDCCOMP')  Then langs.ld.languageCode = 'C'
+              When (Compiler = 'IEWL')     Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'HEWL')     Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'HEWLDRGO') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'HEWLH096') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'HEWLOAD')  Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'HEWLOADR') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWBLDGO') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWBLIMG') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWBLOAD') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWBLODI') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWBODEF') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWLDRGO') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWLOAD')  Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWLOADI') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'IEWLOADR') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'LINKEDIT') Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'LOADER')   Then langs.ld.languageCode = 'LNK'
+              When (Compiler = 'JOVIAL')   Then langs.ld.languageCode = 'JOV'
+              When (Compiler = 'PASCALI')  Then langs.ld.languageCode = 'PAS'
               Otherwise
                 Nop
             End
@@ -1528,9 +1639,7 @@ langTran :
             trans.tr.options  = ''
 
           If parmkwd       <> '' then
-          Do
             trans.tr.parmx    = parmkwd
-          End
           Else
             trans.tr.parmx    = ''
 
@@ -1648,7 +1757,7 @@ TranOpts :
              'TASKLIB INPLIST MBRRC'
 
   workStmt  = projdefs.trancnt
-  trnsStmt. = ''
+  Drop trnsStmt.
   st = 0
 
   processed = 0
@@ -1742,7 +1851,9 @@ getAllocs :
 
   Do alloccnt = trancnt to projdefs.0,
                While (Pos('FLMALLOC',projdefs.alloccnt) <> 0 |,
-                      Pos('FLMCPYLB',projdefs.alloccnt) <> 0)
+                      Pos('FLMCPYLB',projdefs.alloccnt) <> 0 |,
+                      Pos('FLMTOPTS',projdefs.alloccnt) <> 0)
+
     ddt = 'DD'
     Select
       When (Pos('FLMALLOC',projdefs.alloccnt) <> 0) Then
@@ -1784,7 +1895,7 @@ getAllocs :
               rc = repLine(' ' ' ')
               rc = repLine('W' 'Translator - 'trans.tr,
                                  'DD - 'trans.tr.ddnum.ddname,
-                                 ' has no KEYREF or DFTLTYP specified. ' ||,
+                                 ' has no KEYREF or DFLTTYP specified. ' ||,
                                  ' Cannot determine data set definition.')
               rc = repLine('W' 'Changing to IOTYPE=W to assume ' ||,
                                  'temporary data set.')
@@ -1897,7 +2008,9 @@ getAllocs :
               dflttyp = Strip(langdefs.dt.dfltsrc) || Substr(dflttyp,p+1)
             End
 
-            condDD. = ''
+            Drop condDD.
+
+            condDD.dsnum.dsn = ''
 
             /* KEYREF in an archdef overrides DFLTTYP. So check table */
             If keyref <> '' Then
@@ -1982,38 +2095,137 @@ getAllocs :
                 rc = repLine(' ' ' ')
                 rc = repLine('E' 'Default type 'trans.tr.ddnum.condCnt.dsdef ||,
                                  ' not found in FLMTYPEs for IOTYPE O or P')
-              End
 
-              If outmem = '@@FLMONM' Then
+                /* We probably have a KEYREF of OUTx but no DFLTTYP is      */
+                /* specified but no KEYREFs were found in the KEYREF table. */
+                /* So we need to treat as a temporary with a message.       */
+
+                rc = repLine('W' 'Changing to IOTYPE=W to assume ' ||,
+                                 'temporary data set.')
+
+                Parse var projdefs.alloccnt . 'RECFM='ZDSRF ',' .
+                Parse var projdefs.alloccnt . 'LRECL='ZDSLREC ',' .
+                parse var projdefs.alloccnt . 'RECNUM='recnum ',' .
+                parse var projdefs.alloccnt . 'BLKSIZE='ZDSBLK ',' .
+
+                If ZDSBLK = 0 Then ZDSBLK = ''
+
+
+                /* get rid of extra rubbish */
+                Parse var ZDSRF ZDSRF .
+                Parse var ZDSLREC ZDSLREC .
+                Parse var recnum recnum .
+                Parse var ZDSBLK ZDSBLK .
+
+                If ZDSLREC = '' Then
+                  dsname = 'TemporaryFile'
+                Else
+                  dsname = 'TemporaryFile-'ZDSRF||ZDSLREC
+
+                Call Type4
+
+                trans.tr.ddnum.dsnum.dsdef = Strip(dsname)
+                trans.tr.ddnum.dsnum.output = ''
+                trans.tr.ddnum.dsnum.outputName = ''
+                trans.tr.ddnum.dsnum.keep = ''
+                trans.tr.ddnum.dsnum.publish = ''
+                trans.tr.ddnum.dsnum.member = ''
+                trans.tr.ddnum.dsnum.pattern = ''
+                trans.tr.ddnum.dsnum.instream = ''
+                trans.tr.ddnum.dsnum.hfsopts = ''
+                trans.tr.ddnum.DSNcnt = dsnum
+              End
+              Else
               Do
-                /* There may be multiples used based on different keyrefs */
-                If keyref <> '' & Substr(keyref,1,3) = 'OUT' Then
+
+                /* Need to check the DCB SCLM is using for the output  */
+                /* If it is different to the DCB of the DSDEF (type 2) */
+                /* Then we need to craete a new Type 2 with this DCB   */
+                Do ty = 1 to t2 While(trans.tr.ddnum.condCnt.dsdef <> typet2.ty)
+                End
+                If trans.tr.ddnum.condCnt.dsdef = typet2.ty Then
                 Do
-                  /* Keyref has to be a OUTx type */
-                  Parse var keyref 'OUT'knum
-                  outname = 'OUTNAME'Strip(knum)
-                  trans.tr.ddnum.condCnt.outputName = outname
-                  rc = repLine(' ' ' ')
-                  rc = repLine('I' 'Translator - 'trans.tr,
+                  Parse var projdefs.alloccnt . 'RECFM='ZDSRF ',' .
+                  Parse var projdefs.alloccnt . 'LRECL='ZDSLREC ',' .
+
+                  /* Get rid of extra rubbish */
+                  Parse var ZDSRF ZDSRF .
+                  Parse var ZDSLREC ZDSLREC .
+                  If ZDSRF   = '' Then ZDSRF   = Strip(Typet2.ty.recfm)
+                  If ZDSLREC = '' Then ZDSLREC = Strip(Typet2.ty.lrecl)
+
+                  If (Strip(Typet2.ty.recfm) <> ZDSRF |,
+                      Strip(Typet2.ty.lrecl) <> ZDSLREC) Then
+                  Do
+                    newType = Typet2.ty'.'ZDSRF||ZDSLREC
+                    Do tz = 1 to t2 While(newType <> typet2.tz)
+                    End
+                    If tz > t2 Then
+                    Do
+                      t2 = t2 + 1
+                      Typet2.t2           = newType
+                      Typet2.t2.dsnType   = Typet2.ty.dsnType
+                      Typet2.t2.dirBlocks = Typet2.ty.dirBlocks
+                      Typet2.t2.dataClass = Typet2.ty.dataClass
+                      Typet2.t2.mgmtClass = Typet2.ty.mgmtClass
+                      Typet2.t2.stgClass  = Typet2.ty.stgClass
+                      Typet2.t2.priSpaceU = Typet2.ty.priSpaceU
+                      Typet2.t2.priSpaceA = Typet2.ty.priSpaceA
+                      Typet2.t2.secSpaceA = Typet2.ty.secSpaceA
+                      Typet2.t2.recfm     = ZDSRF
+                      Typet2.t2.lrecl     = ZDSLREC
+                      Select
+                        When (ZDSLREC < 320) Then
+                          Typet2.t2.blksize   = ZDSLREC*100
+                        When (ZDSLREC < 3200) Then
+                          Typet2.t2.blksize   = ZDSLREC*10
+                        Otherwise
+                          Typet2.t2.blksize   = ZDSLREC
+                      End
+                    End
+                    trans.tr.ddnum.condCnt.dsdef = newType
+
+                    rc = repLine('W' 'Translator - 'trans.tr,
+                                       ' : DD - 'trans.tr.ddnum.ddname)
+                    rc = repLine('W' 'SCLM Temporary data set RECFM/'    ||,
+                                       'LRECL is different to physical ' ||,
+                                       'data set. Creating a new data '  ||,
+                                       'set definition called 'newType)
+                  End
+
+                End
+
+                If outmem = '@@FLMONM' Then
+                Do
+                  /* There may be multiples used based on different keyrefs */
+                  If keyref <> '' & Substr(keyref,1,3) = 'OUT' Then
+                  Do
+                    /* Keyref has to be a OUTx type */
+                    Parse var keyref 'OUT'knum
+                    outname = 'OUTNAME'Strip(knum)
+                    trans.tr.ddnum.condCnt.outputName = outname
+                    rc = repLine(' ' ' ')
+                    rc = repLine('I' 'Translator - 'trans.tr,
                                      'DD - 'trans.tr.ddnum.ddname,
                                      ' uses SCLM metavariable @@FLMONM for ' ||,
                                      ' Output Member name.' ||,
                                      ' Converting to translator variable '  ||,
                                      ' of "'outname'".')
+                  End
                 End
-              End
-              Else
-                trans.tr.ddnum.condCnt.outputName = ''
+                Else
+                  trans.tr.ddnum.condCnt.outputName = ''
 
-              trans.tr.ddnum.condCnt.output = 'true'
-              trans.tr.ddnum.condCnt.keep = ''
-              trans.tr.ddnum.condCnt.publish = ''
-              trans.tr.ddnum.condCnt.member = 'true'
-              trans.tr.ddnum.condCnt.pattern = Strip(dfltmem)
-              trans.tr.ddnum.condCnt.instream = ''
-              trans.tr.ddnum.condCnt.hfsopts = ''
-              /* Todo - Need to have some DFTLMEM processing here */
-              trans.tr.ddnum.DSNcnt = dsnum
+                trans.tr.ddnum.condCnt.output = 'true'
+                trans.tr.ddnum.condCnt.keep = ''
+                trans.tr.ddnum.condCnt.publish = ''
+                trans.tr.ddnum.condCnt.member = 'true'
+                trans.tr.ddnum.condCnt.pattern = Strip(dfltmem)
+                trans.tr.ddnum.condCnt.instream = ''
+                trans.tr.ddnum.condCnt.hfsopts = ''
+                /* Todo - Need to have some DFTLMEM processing here */
+                trans.tr.ddnum.DSNcnt = dsnum
+              End
             End
           End
           When (iotype = 'S') Then
@@ -2232,7 +2444,9 @@ getAllocs :
             rc = repLine('I' 'IOTYPE=U found for translater - ' trans.tr ||,
                                ' : DD - 'ddn'. Looking for previous DD')
             /* DD from previous step */
-            Do prevTran = firstTran to tr - 1
+            ddNotFound = 1
+
+            Do prevTran = tr-1 to firstTran by - 1 While (ddNotFound)
               Do prevDD = 1 to trans.prevTran.DDcnt
                 If trans.prevTran.prevDD.ddname = ddn Then
                 Do
@@ -2271,6 +2485,7 @@ getAllocs :
                                          trans.prevTran.prevDD.1.instream
                   End
                   trans.tr.ddnum.DSNcnt = dsnum
+                  ddNotFound = 0
                 End
               End
             End
@@ -2442,7 +2657,8 @@ getAllocs :
         Do
           Do j = 1 to lecCnt While (trans.tr.ddnum.dsnum.dsdef <> lecSys.j)
           End
-          If j > lecCnt Then
+          If j > lecCnt &,
+             Pos('TemporaryFile',trans.tr.ddnum.dsnum.dsdef) = 0 Then
           Do
             /* Not found so add to list */
             lecCnt = lecCnt + 1
@@ -2472,7 +2688,7 @@ Return
 binderSyslib:
 
   /* We should have what we need in the Keyrefs xml */
-  Do kr = 1 to keyrefs.0 While (typeNotFound)
+  Do kr = 1 to keyrefs.0
     If Pos('<keyword name=',keyrefs.kr) <> 0 Then
     Do
       Parse var keyrefs.kr '<keyword name="'keyWord'" valueCnt' .
@@ -2910,7 +3126,7 @@ checkDup:
   sameName = 0
 
   Do dup = 1 to tr - 1 While (noDup = 1)
-    If trans.dup = trans.tr Then
+    If Translate(trans.dup) = Translate(trans.tr) Then
       sameName = 1
 
     If trans.dup.dsdef = trans.tr.dsdef Then
@@ -3078,8 +3294,10 @@ Return name
 /*---------------------------------------------------------------*/
 genXML :
 
-  xml. = ''
+  Drop xml.
   xcnt = 0
+
+  Call doiefbr14  /* Create a do nothing translator just in case */
 
   Call xmlHeader
   Call xmlDsdef
@@ -3106,7 +3324,7 @@ xmlHeader :
   xml.6  = '    Use, duplication or disclosure restricted by GSA ADP Schedule'
   xml.7  = '    Contract with IBM Corp.'
   xml.8  = ' -->'
-  xml.9  = '<project name="SCLM-Migration" default="all" ' ||,
+  xml.9  = '<project name="'defzProject'" default="all" ' ||,
            'xmlns:ld="antlib:com.ibm.team.enterprise.zos.' ||,
            'systemdefinition.toolkit">'
   xml.10 = '  <description>SCLM Migration system definition XML</description>'
@@ -3310,26 +3528,30 @@ xmlTrans :
     If trans.i.ddNameList <> '' Then
       ddNames = 'ddnamelist="'trans.i.ddNameList'" '
 
+    Parse var trans.i.parmx 'PARM' parmNum
+    trans.i.parmx = 'PARMX'parmNum
+    /* NOTE : If there is no PARMX then we set the variable to 'PARMX' */
+
     linkedit = ''
     If trans.i.binder <> '' Then
     Do
       linkedit = 'linkedit="'trans.i.binder'" '
       defaultOptions = ''
       Select
-        When (trans.i.options <> '' & trans.i.parmx <> '') Then
+        When (trans.i.options <> '' & trans.i.parmx <> 'PARMX') Then
         Do
           trans.i.options = chkmem1(trans.i.options)
           trans.i.parmx   = chkmem1(trans.i.parmx)
           defaultOptions = 'defaultOptions="'trans.i.options',' ||,
                           'SSI(@{ssi_info}),&amp;'trans.i.parmx'" '
         End
-        When (trans.i.options <> '' & trans.i.parmx = '') Then
+        When (trans.i.options <> '' & trans.i.parmx = 'PARMX') Then
         Do
           trans.i.options = chkmem1(trans.i.options)
           defaultOptions = 'defaultOptions="'trans.i.options',' ||,
                           'SSI(@{ssi_info})" '
         End
-        When (trans.i.options = '' & trans.i.parmx <> '') Then
+        When (trans.i.options = '' & trans.i.parmx <> 'PARMX') Then
         Do
           trans.i.parmx   = chkmem1(trans.i.parmx)
           defaultOptions = 'defaultOptions="&amp;'trans.i.parmx ||,
@@ -3343,19 +3565,19 @@ xmlTrans :
     Do
       defaultOptions = ''
       Select
-        When (trans.i.options <> '' & trans.i.parmx <> '') Then
+        When (trans.i.options <> '' & trans.i.parmx <> 'PARMX') Then
         Do
           trans.i.options = chkmem1(trans.i.options)
           trans.i.parmx   = chkmem1(trans.i.parmx)
           defaultOptions = 'defaultOptions="'trans.i.options',' ||,
                                           '&amp;'trans.i.parmx'" '
         End
-        When (trans.i.options <> '' & trans.i.parmx = '') Then
+        When (trans.i.options <> '' & trans.i.parmx = 'PARMX') Then
         Do
           trans.i.options = chkmem1(trans.i.options)
           defaultOptions = 'defaultOptions="'trans.i.options'" '
         End
-        When (trans.i.options = '' & trans.i.parmx <> '') Then
+        When (trans.i.options = '' & trans.i.parmx <> 'PARMX') Then
         Do
           trans.i.parmx   = chkmem1(trans.i.parmx)
           defaultOptions = 'defaultOptions="&amp;'trans.i.parmx'" '
@@ -3421,9 +3643,9 @@ xmlTrans :
     /* Normal DDs     */
     doConcat = 'DD'
     varcnt = 0
-    var. = ''
+    Drop var.
     ddvcnt = 0
-    ddVar. = ''
+    Drop ddVar.
     Do j = 1 to trans.i.DDcnt
       If trans.i.j.ddtype = doConcat &,
          trans.i.j.ddname <> 'Not Applicable' Then
@@ -3529,7 +3751,7 @@ xmlTrans :
 
     /* Create a translator variable for parmx if it exists */
     If trans.i.callMethod = '0' &,
-       trans.i.parmx <> '' Then
+       trans.i.parmx <> 'PARMX' Then
     Do
       xcnt = xcnt + 1
       xml.xcnt = '    <ld:variable name="'trans.i.parmx'" '||,
@@ -3581,110 +3803,169 @@ xmlLangs :
   xml.xcnt = '  <target name="langdefs" ' ||,
                        'description="Create language definitions">'
 
+  /* Loop through one to take a punt at the copybook languages        */
   Do i = 1 to ld
-    DTL = 0
-    Select
-      When (langs.i.languageCode = 'ASM' |,
-            langs.i.languageCode = 'COB' |,
-            langs.i.languageCode = 'PLI' |,
-            langs.i.languageCode = 'C')  Then
-      Do
-        scanner = 'com.ibm.teamz.metadata.scanner.default'
-      End
-      When (langs.i.languageCode = 'REX' |,
-            langs.i.languageCode = 'PAS')  Then
-      Do
-        langs.i.languageCode = 'OTH'
-        scanner = 'com.ibm.teamz.metadata.scanner.default'
-      End
-      When (langs.i.languageCode = 'DTL') Then
-      Do
-        langs.i.languageCode = 'OTH'
-        DTL = 1
-        scanner = 'com.ibm.teamz.scanner.dtlscanner.id'
-      End
-      Otherwise
-        scanner = 'com.ibm.team.enterprise.scanner.registration.scanner'
-    End
-
-    /* Need to change translator numbers to names */
-    tranWords = ''
     tranNumbers = Translate(langs.i.translators,' ',',')
-    Do j = 1 to Words(tranNumbers)
-      tr = Word(tranNumbers,j)
-      tranWords = tranWords || '${resource.def.prefix}'trans.tr ||,
-                               '${resource.def.suffix},'
-    End
-    tranWords = Strip(tranWords,T,',')
-
-    /* Need to add stepnames. As translators will probably have   */
-    /* some conditional processing and a translator might be      */
-    /* used by multiple language definitions, we need to use      */
-    /* the translator number in the stepname, and name every step */
-    stepNames = ''
+    If (Words(tranNumbers) = 0 | Word(tranNumbers,1) = tr) &,
+        langs.i.languageCode <> 'LNK' Then
+      Call DoLangsXML
+  End
+  /* Loop through a 2nd time to take a punt at the other languages    */
+  Do i = 1 to ld
     tranNumbers = Translate(langs.i.translators,' ',',')
-    Do j = 1 to Words(tranNumbers)
-      tr = Word(tranNumbers,j)
-      stepNames = stepNames || 'Tran'tr','
-    End
-    stepNames = 'stepNames="'Strip(stepNames,T,',')'" '
-
-    xcnt = xcnt + 1
-    xml.xcnt = '    <ld:langdef ' ||,
-                   'name="${resource.def.prefix}'langs.i ||,
-                   '${resource.def.suffix}" ' ||,
-                   'translators="'tranWords'" ' ||,
-                   stepNames ||,
-                   'defaultExtension="" ' ||,
-                   'languageCode="'langs.i.languageCode'" ' ||,
-                   'defaultscanner="false">'
-
-    If DTL Then
-    Do
-      xcnt = xcnt + 1
-      xml.xcnt = '      <ld:dependencytype name="DTLINC"/>'
-    End
-    Else
-    Do
-      depTran = ''
-      depCnt  = 0
-      Do j = 1 to Words(tranNumbers)
-        tr = Word(tranNumbers,j)
-        Do k = 1 to ns While (tr <> noSyslib.k)
-        End
-        If k > ns Then
-        Do
-          /* Not found so add to list */
-          depCnt = depCnt + 1
-          depTran = depTran || '${resource.def.prefix}'trans.tr ||,
-                               '${resource.def.suffix},'
-        End
-      End
-
-      If depCnt = Words(tranNumbers) Then
-        depTran = ''
-      Else
-      Do
-        depTran = Strip(depTran,T,',')
-        depTran = 'translators="'deptran'" '
-      End
-
-      xcnt = xcnt + 1
-      xml.xcnt = '      <ld:dependencytype name="COPY" 'depTran'/>'
-      xcnt = xcnt + 1
-      xml.xcnt = '      <ld:dependencytype name="SQL INCLUDE" 'depTran'/>'
-      xcnt = xcnt + 1
-      xml.xcnt = '      <ld:dependencytype name="MACRO" 'depTran'/>'
-    End
-    xcnt = xcnt + 1
-    xml.xcnt = '      <ld:scanner name="'scanner'"/>'
-
-    xcnt = xcnt + 1
-    xml.xcnt = '    </ld:langdef>'
+    If (Words(tranNumbers) <> 0 & Word(tranNumbers,1) <> tr) &,
+        langs.i.languageCode = 'OTH' Then
+      Call DoLangsXML
+  End
+  /* Loop through a 3rd time to take a punt at the ASM languages      */
+  Do i = 1 to ld
+    tranNumbers = Translate(langs.i.translators,' ',',')
+    If (Words(tranNumbers) <> 0 & Word(tranNumbers,1) <> tr) &,
+        langs.i.languageCode = 'ASM' Then
+      Call DoLangsXML
+  End
+  /* Loop through a 4th time to take a punt at the compiler languages */
+  Do i = 1 to ld
+    tranNumbers = Translate(langs.i.translators,' ',',')
+    If (Words(tranNumbers) <> 0 & Word(tranNumbers,1) <> tr) &,
+       (langs.i.languageCode <> 'LNK' & langs.i.languageCode <> 'ASM') Then
+      Call DoLangsXML
+  End
+  /* Loop through a 5th time to take a punt at the binder languages   */
+  Do i = 1 to ld
+    tranNumbers = Translate(langs.i.translators,' ',',')
+    If langs.i.languageCode = 'LNK' Then
+      Call DoLangsXML
   End
 
   xcnt = xcnt + 1
   xml.xcnt   = '  </target>'
+
+Return
+
+/*---------------------------------------------------------------*/
+/* XML Language Definitions - build XML                          */
+/*---------------------------------------------------------------*/
+DoLangsXML :
+
+  DTL = 0
+  Select
+    When (langs.i.languageCode = 'ASM' |,
+          langs.i.languageCode = 'COB' |,
+          langs.i.languageCode = 'PLI' |,
+          langs.i.languageCode = 'C')  Then
+    Do
+      scanner = 'com.ibm.teamz.metadata.scanner.default'
+    End
+    When (langs.i.languageCode = 'REX' |,
+          langs.i.languageCode = 'PAS')  Then
+    Do
+      langs.i.languageCode = 'OTH'
+      scanner = 'com.ibm.teamz.metadata.scanner.default'
+    End
+    When (langs.i.languageCode = 'DTL') Then
+    Do
+      langs.i.languageCode = 'OTH'
+      DTL = 1
+      scanner = 'com.ibm.teamz.scanner.dtlscanner.id'
+    End
+    Otherwise
+      scanner = 'com.ibm.team.enterprise.scanner.registration.scanner'
+  End
+
+  /* Need to change translator numbers to names */
+  tranWords = ''
+  tranNumbers = Translate(langs.i.translators,' ',',')
+  Do j = 1 to Words(tranNumbers)
+    tn = Word(tranNumbers,j)
+    tranWords = tranWords || '${resource.def.prefix}'trans.tn ||,
+                             '${resource.def.suffix},'
+  End
+
+  iefbr14 = 0
+  /* If no translators add an IEFBR14 */
+  If Words(tranNumbers) = 0 Then
+  Do
+
+    iefbr14 = 1
+    langs.i.translators  = tr
+    langs.i.languageCode = 'OTH'
+    tranWords = tranWords || '${resource.def.prefix}'trans.tr ||,
+                             '${resource.def.suffix},'
+  End
+
+  tranWords = Strip(tranWords,T,',')
+
+  /* Need to add stepnames. As translators will probably have   */
+  /* some conditional processing and a translator might be      */
+  /* used by multiple language definitions, we need to use      */
+  /* the translator number in the stepname, and name every step */
+  stepNames = ''
+  tranNumbers = Translate(langs.i.translators,' ',',')
+  Do j = 1 to Words(tranNumbers)
+    tn = Word(tranNumbers,j)
+    stepNames = stepNames || 'Tran'tn','
+  End
+  stepNames = 'stepNames="'Strip(stepNames,T,',')'" '
+
+  xcnt = xcnt + 1
+  xml.xcnt = '    <ld:langdef ' ||,
+                 'name="${resource.def.prefix}'langs.i ||,
+                 '${resource.def.suffix}" ' ||,
+                 'translators="'tranWords'" ' ||,
+                 stepNames ||,
+                 'defaultExtension="" ' ||,
+                 'languageCode="'langs.i.languageCode'" ' ||,
+                 'defaultscanner="false">'
+
+  If DTL Then
+  Do
+    xcnt = xcnt + 1
+    xml.xcnt = '      <ld:dependencytype name="DTLINC"/>'
+  End
+  Else
+  Do
+    depTran = ''
+    depCnt  = 0
+    Do j = 1 to Words(tranNumbers)
+      tn = Word(tranNumbers,j)
+      Do k = 1 to ns While (tn <> noSyslib.k)
+      End
+      If k > ns Then
+      Do
+        /* Not found so add to list */
+        depCnt = depCnt + 1
+        depTran = depTran || '${resource.def.prefix}'trans.tn ||,
+                             '${resource.def.suffix},'
+      End
+    End
+
+    If depCnt = Words(tranNumbers) Then
+      depTran = ''
+    Else
+    Do
+      depTran = Strip(depTran,T,',')
+      depTran = 'translators="'deptran'" '
+    End
+
+    xcnt = xcnt + 1
+    xml.xcnt = '      <ld:dependencytype name="COPY" 'depTran'/>'
+    xcnt = xcnt + 1
+    xml.xcnt = '      <ld:dependencytype name="SQL INCLUDE" 'depTran'/>'
+    xcnt = xcnt + 1
+    xml.xcnt = '      <ld:dependencytype name="MACRO" 'depTran'/>'
+  End
+  xcnt = xcnt + 1
+  xml.xcnt = '      <ld:scanner name="'scanner'"/>'
+  If iefbr14 Then
+  Do
+    xcnt = xcnt + 1
+    xml.xcnt = '      <ld:scopedProperty ' ||,
+                      'name="team.enterprise.build.noBuildmap" value="true"/>'
+  End
+
+  xcnt = xcnt + 1
+  xml.xcnt = '    </ld:langdef>'
 
 Return
 
@@ -3719,7 +4000,7 @@ fileMetaData :
   If migRc = 0 Then
   Do
 
-    xml. = ''
+    Drop xml.
     xcnt = 0
 
     Call xmlMetaHead
@@ -3748,7 +4029,7 @@ xmlMetaHead :
   xml.6  = '    Use, duplication or disclosure restricted by GSA ADP Schedule'
   xml.7  = '    Contract with IBM Corp.'
   xml.8  = ' -->'
-  xml.9  = '<project name="SCLM-Migration" default="all" ' ||,
+  xml.9  = '<project name="'defzProject'" default="all" ' ||,
            'xmlns:ld="antlib:com.ibm.team.enterprise.zos.' ||,
            'systemdefinition.toolkit">'
   xml.10 = '  <description>SCLM Migration system definition XML</description>'
@@ -3774,7 +4055,7 @@ xmlMetaFold:
   xcnt = xcnt + 1
   xml.xcnt = '    <!-- zFolder metadata -->'
   xcnt = xcnt + 1
-  xml.xcnt = '    <ld:resolvemetadata projectRoot="../SCLM-Migration">'
+  xml.xcnt = '    <ld:resolvemetadata projectRoot="../'defzProject'">'
 
   Do i = 1 to t1
     xcnt = xcnt + 1
@@ -3784,6 +4065,7 @@ xmlMetaFold:
   End
 
   xcnt = xcnt + 1
+  xml.xcnt = ''
 
 Return
 
@@ -3798,8 +4080,29 @@ xmlMetaLang:
   Do i = 1 to member.0
     If Pos('<member name=',member.i) <> 0 Then
     Do
-      Parse var member.i '<member name="'membname'"' . 'language="'lang'">'
+
+      Parse var member.i '<member name="'membname'"' . ,
+                         'type="'type'"' . 'language="'lang'">'
+
       Parse var membname membname'.'extension
+
+      Do ll = 1 to ld While (lang <> langs.ll)
+      End
+      If ll > ld Then
+      Do
+        rc = repLine(' ' ' ')
+        rc = repLine('E' 'Language Definition - 'lang' for member '  ||,
+                         membname' was not found. Skipping processing ' ||,
+                         'for member 'membname'.'extension)
+        Iterate
+      End
+
+      /* Going to check if the user has changed the ext in the langexts file */
+      Do j = 1 to langdefs.0
+        If langdefs.j  = lang & langdefs.j.dfltsrc = type Then
+          extension = langdefs.j.ext
+      End
+
       xcnt = xcnt + 1
       xml.xcnt = '      <ld:langdefrule match=".*/'membname'\.'extension'$" '||,
                    'languageDefinition="${resource.def.prefix}'lang ||,
@@ -3820,7 +4123,7 @@ xmlMetaFile:
   xcnt = xcnt + 1
   xml.xcnt = '    <!-- File override metadata -->'
   xcnt = xcnt + 1
-  xml.xcnt = '    <ld:filemetadata projectRoot="../SCLM-Migration">'
+  xml.xcnt = '    <ld:filemetadata projectRoot="../'defzProject'">'
 
   Do i = 1 to member.0
     If Pos('<member name=',member.i) <> 0 Then
@@ -3830,7 +4133,7 @@ xmlMetaFile:
 
       Do ll = 1 to ld While (lang <> langs.ll)
       End
-      If lang <> langs.ll Then
+      If ll > ld Then
       Do
         rc = repLine(' ' ' ')
         rc = repLine('E' 'Language Definition - 'lang' for member '  ||,
@@ -3838,6 +4141,7 @@ xmlMetaFile:
                          'for member 'membname'.'extension)
         Iterate
       End
+
       i = i + 1
       Do i = i to member.0,
                  While (Pos('<member name=',member.i) = 0 &,
@@ -3899,7 +4203,7 @@ xmlMetaFile:
             When (Substr(keyWord,1,4) = 'PARM') Then
             Do
               /* In SCLM the PARMx keyword is appended after the PARM  */
-              /* In teh migration we have created a separate PARMx     */
+              /* In the migration we have created a separate PARMx     */
               /* variable to maintain similarity to SCLM.              */
               i = i + 1
               Do i = i to member.0,
@@ -3918,7 +4222,7 @@ xmlMetaFile:
                     Do
                       Parse var keyWord 'PARM' parmNum
                       keyWord = 'PARMX'parmNum
-                      trans.tt.parmx = keyWord
+      /*              trans.tt.parmx = keyWord */
                       stepName = 'Tran'tt
                       xcnt = xcnt + 1
                       xml.xcnt = '      <ld:filemetadatarule ' ||,
@@ -4051,6 +4355,35 @@ xmlMetaFoot :
           ' description="full build" name="all"/>'
   xcnt = xcnt + 1
   xml.xcnt = '</project>'
+
+Return
+
+/*---------------------------------------------------------------*/
+/* Add IEFBR14 dsdef and translator                              */
+/*---------------------------------------------------------------*/
+
+doiefbr14:
+
+  Do ty = 1 to t3 While('IEFBR14' <> typet3.ty)
+  End
+  If ty > t3 Then
+  Do
+    t3 = t3 + 1
+    Typet3.t3 = '(IEFBR14)'
+
+    tr = tr + 1
+    trans.tr = 'Do nothing translator'
+    trans.tr.callMethod = '0'
+    trans.tr.dsdef = Typet3.t3
+    trans.tr.commandMember = ''
+    trans.tr.maxRc   = '0'
+    trans.tr.porder  = ''
+    trans.tr.options = ''
+    trans.tr.parmx   = ''
+    trans.tr.parm    = ''
+    trans.tr.binder  = ''
+    trans.tr.DDcnt = 0
+  End
 
 Return
 
