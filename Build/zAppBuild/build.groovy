@@ -289,7 +289,7 @@ def populateBuildProperties(String[] args) {
 	if (opts.pf) props.'dbb.RepositoryClient.passwordFile' = opts.pf
 	
 	// set IDz/ZOD user build options
-	if (opts.err) props.errPrefix = opts.err
+	if (opts.e) props.errPrefix = opts.e
 	if (opts.u) props.userBuild = 'true'
 	if (opts.t) props.team = opts.t
 	

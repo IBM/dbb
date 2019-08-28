@@ -111,7 +111,7 @@ def createCobolParms(String buildFile, LogicalFile logicalFile) {
 	def parms = props.getFileProperty('cobol_compileParms', buildFile) ?: ""
 	def cics = props.getFileProperty('cobol_compileCICSParms', buildFile) ?: ""
 	def sql = props.getFileProperty('cobol_compileSQLParms', buildFile) ?: ""
-	def errPrefix = props.getFileProperty('cobol_compileErrorPrefixParms', buildFile) ?: ""
+	def errPrefixOptions = props.getFileProperty('cobol_compileErrorPrefixParms', buildFile) ?: ""
 	
 	
 	if (buildUtils.isCICS(logicalFile))
@@ -124,8 +124,8 @@ def createCobolParms(String buildFile, LogicalFile logicalFile) {
 	if (isMQ && isMQ.toBoolean())
 		compile.dd(new DDStatement().dsn(props.SCSQCOBC).options("shr"))
 
-	if (errPrefix)
-		parameters = "$parms,errPrefix"
+	if (props.errPrefix)
+		parms = "$parms,$errPrefixOptions"
 
 	// add debug options
 	if (props.debug)  {
