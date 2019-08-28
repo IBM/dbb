@@ -13,6 +13,7 @@ For instructions on how to contribute new samples and bug fixes, please read the
 Sample | Description
 --- | ---
 [Automation/idManagement](Automation/idManagement) | Create and delete ids on a z/OS system.
+[Automation/Merge](Automation/Merge) | A set of three samples to demonstrate how to use the Z Open Automation Utilities (ZOAU) to merge two datasets using shell commands, Java APIs and Python APIs.
 [Build/BuildReport](Build/BuildReport) | Sample showing how to extend the BuildReport to provide additional functionality
 [Build/HelloWorld](Build/HelloWorld) | The HelloWorld sample provides simple source file types and the Groovy build scripts to compile them
 [Build/IDE](Build/IDE) | A collection of 3 samples from PLI, COBOL, and ASM created by the IDz/ZOD team with instructions to run them on IDz/ZOD.
@@ -25,6 +26,7 @@ Sample | Description
 [Migration/mappingExtension](Migration/mappingExtension) | Sample showing how to extend the DBB Migration tool script to detect possible round-trip encoding problems when importing and loading to HFS.
 [Migration/sclm](Migration/sclm) | This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
 [Snippets/InteractiveGateway](Snippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
+[Snippets/PropertyMappings](Snippets/PropertyMappings) | Example showing how to use the new PropertyMappings class to perform aggregate functions on DBB BuildProperties.
 [Snippets/zUnitTestCase](Snippets/zUnitTestCase) | Example showing how to use the JCLExec command added in DBB v1.0.1
 [Utilities/BuildManager](Utilities/BuildManager) | Background process for queueing and managing build scripts without additional JVM start-up overhead.
 [Utilities/BuildReportPruner](Utilities/BuildReportPruner) | Utility scripts demonstating rule based BuildReport pruning and preserving.
