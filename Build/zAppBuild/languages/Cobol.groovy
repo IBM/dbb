@@ -79,12 +79,15 @@ sortedList.each { buildFile ->
 			
 	}
 	
-	if (bindFlag && logicalFile.isSQL() && props.RUN_DB2_BIND && props.RUN_DB2_BIND.toBoolean() ) {
+	//perform Db2 Bind only on User Build and perfromBindPackage property
+	if (props.userBuild && bindFlag && logicalFile.isSQL() && props.bind_performBindPackage && props.bind_performBindPackage.toBoolean() ) {
 		int bindMaxRC = props.getFileProperty('bind_maxRC', buildFile).toInteger()
-		def owner = ( props.userBuild || ! props.OWNER ) ? System.getProperty("user.name") : props.OWNER
-		
-		def (bindRc, bindLogFile) = bindUtils.bindPackage(buildFile, props.cobol_dbrmPDS, props.buildOutDir, props.CONFDIR, 
-				props.SUBSYS, props.COLLID, owner, props.QUAL, props.verbose && props.verbose.toBoolean());
+
+		// if no  owner is set, use the user.name as package owner 
+		def owner = ( !props.bind_packageOwner ) ? System.getProperty("user.name") : props.bind_packageOwner
+	
+		def (bindRc, bindLogFile) = bindUtils.bindPackage(buildFile, props.cobol_dbrmPDS, props.buildOutDir, props.bind_runIspfConfDir, 
+				props.bind_db2Location, props.bind_collectionID, owner, props.bind_qualifier, props.verbose && props.verbose.toBoolean());
 		if ( bindRc > bindMaxRC) {
 			String errorMsg = "*! The bind package return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_maxRC)"
 			println(errorMsg)
@@ -157,7 +160,7 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 		compile.dd(new DDStatement().name("SYSUT$num").options(props.cobol_tempOptions))
 	}
 	
-	// Write SYSLIN to temporary dataset if performing link edit
+	// Write SYSLIN to temporary dataset if performing link edit or to physical dataset
 	String doLinkEdit = props.getFileProperty('cobol_linkEdit', buildFile)
 	String linkEditStream = props.getFileProperty('cobol_linkEditStream', buildFile)
 	String linkDebugExit = props.getFileProperty('cobol_linkDebugExit', buildFile)

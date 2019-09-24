@@ -33,7 +33,6 @@ def bindPackage(String file, String dbrmHLQ, String workDir, String confDir, Str
    DSN SYSTEM(&SUBSYS)                                       
    BIND PACKAGE(&COLLID)    +                                
         MEMBER(&MEMBER)     +
-        LIBRARY('&LIB')     +                                
         OWNER(&OWNER)       +                                
         QUALIFIER(&QUAL)    +                                
         ACTION(REPLACE)     +                                
