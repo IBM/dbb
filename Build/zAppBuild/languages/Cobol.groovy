@@ -123,10 +123,6 @@ def createCobolParms(String buildFile, LogicalFile logicalFile) {
 	if (buildUtils.isSQL(logicalFile))
 		parms = "$parms,$sql"
 	
-    String isMQ = props.getFileProperty('cobol_isMQ', buildFile)
-	if (isMQ && isMQ.toBoolean())
-		compile.dd(new DDStatement().dsn(props.SCSQCOBC).options("shr"))
-
 	if (props.errPrefix)
 		parms = "$parms,$errPrefixOptions"
 		
@@ -180,6 +176,9 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 		compile.dd(new DDStatement().dsn(props.cobol_BMS_PDS).options("shr"))
 	if (buildUtils.isCICS(logicalFile))
 		compile.dd(new DDStatement().dsn(props.SDFHCOB).options("shr"))
+	String isMQ = props.getFileProperty('cobol_isMQ', buildFile)
+	if (isMQ && isMQ.toBoolean())
+		compile.dd(new DDStatement().dsn(props.SCSQCOBC).options("shr"))
 
 	// add a tasklib to the compile command with optional CICS, DB2, and IDz concatenations
 	String compilerVer = props.getFileProperty('cobol_compilerVersion', buildFile)
