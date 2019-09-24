@@ -112,7 +112,7 @@ def createCobolParms(String buildFile, LogicalFile logicalFile) {
 	def cics = props.getFileProperty('cobol_compileCICSParms', buildFile) ?: ""
 	def sql = props.getFileProperty('cobol_compileSQLParms', buildFile) ?: ""
 	def errPrefixOptions = props.getFileProperty('cobol_compileErrorPrefixParms', buildFile) ?: ""
-	
+	def compileDebugParms = props.getFileProperty('cobol_compileDebugParms', buildFile)
 	
 	if (buildUtils.isCICS(logicalFile))
 		parms = "$parms,$cics"
@@ -126,10 +126,9 @@ def createCobolParms(String buildFile, LogicalFile logicalFile) {
 
 	if (props.errPrefix)
 		parms = "$parms,$errPrefixOptions"
-
+		
 	// add debug options
 	if (props.debug)  {
-		def compileDebugParms = props.getFileProperty('cobol_compileDebugParms', buildFile)
 		parms = "$parms,$compileDebugParms"
 	}
 		
@@ -161,12 +160,15 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 	// Write SYSLIN to temporary dataset if performing link edit
 	String doLinkEdit = props.getFileProperty('cobol_linkEdit', buildFile)
 	String linkEditStream = props.getFileProperty('cobol_linkEditStream', buildFile)
-	if (linkEditStream == null && doLinkEdit && doLinkEdit.toBoolean()) {
+	String linkDebugExit = props.getFileProperty('cobol_linkDebugExit', buildFile)
+	
+	if ( (linkEditStream && doLinkEdit && doLinkEdit.toBoolean()) || (props.debug && linkDebugExit!= null && doLinkEdit)) {
+		compile.dd(new DDStatement().name("SYSLIN").dsn("${props.cobol_objPDS}($member)").options('shr').output(true))
+	}
+	else {
 		compile.dd(new DDStatement().name("SYSLIN").dsn("&&TEMPOBJ").options(props.cobol_tempOptions).pass(true))
 	}
-	else
-		compile.dd(new DDStatement().name("SYSLIN").dsn("${props.cobol_objPDS}($member)").options('shr').output(true))
-		
+	
 	// add a syslib to the compile command with optional bms output copybook and CICS concatenation
 	compile.dd(new DDStatement().name("SYSLIB").dsn(props.cobol_cpyPDS).options("shr"))
 	if (props.bms_cpyPDS)
@@ -211,40 +213,56 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 	String parms = props.getFileProperty('cobol_linkEditParms', buildFile)
 	String linker = props.getFileProperty('cobol_linkEditor', buildFile)
 	String linkEditStream = props.getFileProperty('cobol_linkEditStream', buildFile)
+	String linkDebugExit = props.getFileProperty('cobol_linkDebugExit', buildFile)
 	
-	// Create the link stream if needed
-	if ( linkEditStream != null ) {
+	// define the MVSExec command to link edit the program
+	MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
+	
+// Create a pysical link card
+	if ( (linkEditStream) || (props.debug && linkDebugExit!= null)) {
 		def lnkFile = new File("${props.buildOutDir}/linkCard.lnk")
 		if (lnkFile.exists())
 			lnkFile.delete()
 
-		lnkFile << "  " + linkEditStream.replace("\\n","\n").replace('${member}',member)
+		if 	(linkEditStream)
+			lnkFile << "  " + linkEditStream.replace("\\n","\n").replace('@{member}',member)
+		else
+			lnkFile << "  " + linkDebugExit.replace("\\n","\n").replace('@{member}',member)
+
 		if (props.verbose)
 			println("Copying ${props.buildOutDir}/linkCard.lnk to ${props.linkedit_srcPDS}($member)")
 		new CopyToPDS().file(lnkFile).dataset(props.linkedit_srcPDS).member(member).execute()
+		// Alloc SYSLIN
+		linkedit.dd(new DDStatement().name("SYSLIN").dsn("${props.linkedit_srcPDS}($member)").options("shr"))
+		// add the obj DD
+		linkedit.dd(new DDStatement().name("OBJECT").dsn("${props.cobol_objPDS}($member)").options('shr'))
 
+		//	} else if (props.debug && linkDebugExit!= null){
+		//		//instream SYSLIN, requires DDName list
+		//		String records = "  " + linkDebugExit.replace("\\n","\n").replace('@{member}',member)
+		//		linkedit.dd(new DDStatement().name("SYSLIN").instreamData(records))
+	} else { // no debug && no link card
+		// Use &&TEMP from Compile
 	}
-	
-	// define the MVSExec command to link edit the program
-	MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
 	
 	// add DD statements to the linkedit command
 	linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${props.cobol_loadPDS}($member)").options('shr').output(true).deployType('LOAD'))
 	linkedit.dd(new DDStatement().name("SYSPRINT").options(props.cobol_printTempOptions))
 	linkedit.dd(new DDStatement().name("SYSUT1").options(props.cobol_tempOptions))
 	
-	// add the link source code
-	if ( linkEditStream != null ) {
-		linkedit.dd(new DDStatement().name("SYSLIN").dsn("${props.linkedit_srcPDS}($member)").options("shr"))
-	}
-	
 	// add RESLIB if needed
 	if ( props.RESLIB ) {
 		linkedit.dd(new DDStatement().name("RESLIB").dsn(props.RESLIB).options("shr"))
 	}
+	
 	// add a syslib to the compile command with optional CICS concatenation
 	linkedit.dd(new DDStatement().name("SYSLIB").dsn(props.cobol_objPDS).options("shr"))
 	linkedit.dd(new DDStatement().dsn(props.SCEELKED).options("shr"))
+	
+	// Add Debug Dataset to find the debug exit to SYSLIB
+	if (props.debug)
+		linkedit.dd(new DDStatement().dsn(props.SEQAMOD).options("shr"))
+	
     if (buildUtils.isCICS(logicalFile))
 		linkedit.dd(new DDStatement().dsn(props.SDFHLOAD).options("shr"))
 		
