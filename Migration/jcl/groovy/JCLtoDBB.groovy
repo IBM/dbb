@@ -7,11 +7,13 @@
  * requires us to generate the scriptMappings.txt that has the same language
  * definition names matching with what in DBB.xml file.   
  */
-import groovy.xml.*
+@groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
+import groovy.util.*
 import groovy.transform.*
+import groovy.time.*
+import groovy.xml.*
 import java.nio.file.*
 import java.nio.file.attribute.*
-import com.ibm.dbb.*
 
 //******************************************************************************
 //* Retrieves DBB environments
@@ -27,17 +29,9 @@ dbbConf = System.getenv("DBB_CONF")?:EnvVars.getConf()
 //******************************************************************************
 //* Parses and validates the input arguments
 //******************************************************************************
-def headerMsg = 'Convert JCL to DBB XML'
-cli = new CliBuilder(usage: 'JCLtoDBBXml  dataset member', header: headerMsg, stopAtNonOption: false)
-cli.h(longOpt:'help', 'Prints this message')
-cli.c(longOpt:'config', args:1, argName:'config file', optionalArg:false, 'Configuration file: default is conf/jclmig.config')
-
-def parameters = cli.parse(args)
-if (!parameters || parameters.h || parameters.arguments().size() < 2)
-{
-	cli.usage()
-	System.exit(2)
-}
+def headerMsg = 'Convert JCL to DBB'
+ 
+def parameters = parseArgs(args)
 
 @SourceURI
 		URI sourceUri
@@ -46,8 +40,16 @@ Path scriptLocation = Paths.get(sourceUri).parent
 //******************************************************************************
 //* Parses the JCL migration config file
 //******************************************************************************
-def configFileName = (parameters.c && !parameters.c.isEmpty())? parameters.c: '../conf/jclmig.config'
-def configFile = scriptLocation.resolve(configFileName).toFile()
+//if (!parameters.c.startsWith('/'))
+//	parameters.c = '../'parameters.c
+	
+def configFileName = parameters.c
+
+if (!configFileName) {
+	configFileName = '../conf/jclmig.config'	
+}
+
+def configFile     = scriptLocation.resolve(configFileName).toFile()
 if (!configFile.exists())
 {
 	println "File $configFile does not exist. Need to specify a valid JCL migration config file"
@@ -63,21 +65,45 @@ config.load(configFile.newDataInputStream())
 //******************************************************************************
 //* Parses and validates the input arguments
 //******************************************************************************
-def dataset = parameters.arguments()[0]
-def member = parameters.arguments()[1]
+def dataset = parameters.d
+def member  = parameters.m
 
 //******************************************************************************
 //* Define workDir and outputDir for process output
 //******************************************************************************
-def proj = config.proj
-def workDir = new File(config.outputRoot ?: System.getProperty('user.home'))
-def outputDir = new File("$workDir/jclMigration/${proj.toLowerCase()}")
+def proj      = parameters.p
+def outputDir = parameters.o
+
+if (!outputDir) {
+	outputDir = 'jclMigration'
+}
+
+def workDir        = new File(System.getProperty('user.home'))
+outputDir          = new File("$workDir/$outputDir/${proj.toLowerCase()}")
 outputDir.mkdirs()
-def stdout = new File(outputDir, "stdout.log")
-def stderr = new File(outputDir, "stderr.log")
-def tempHlq = (config.tempHlq?:"whoami".execute().text).trim() + ".JCLMIG"
+def stdout         = new File(outputDir, "stdout.log")
+def stderr         = new File(outputDir, "stderr.log")
+def tempHlq        = (config.tempHlq?:"whoami".execute().text).trim() + ".JCLMIG"
 def restrictedPgms = ['IKJEFT01','IKJEFT1A','IKJEFT1B','IRXJCL','IOEAGFMT']
 restrictedPgms.addAll((config.restrictedPgms?config.restrictedPgms.split(","):[]))
+def procLibs       = []
+procLibs.addAll((config.procLibs?config.procLibs.split(","):[]))
+
+def ddFile = outputDir.path + '/DD:JCLLIB'
+
+boolean fileSuccessfullyDeleted =  new File(ddFile).delete()
+println 'DD file deleted = ' + fileSuccessfullyDeleted
+
+File ddFileOut = new File(ddFile) //.withWriter('IBM-1047')
+def fileText = ''
+
+procLibs.each {
+	it       = it.trim()
+	fileText = fileText + it.padRight(79) + '\n'
+}
+
+
+ddFileOut.text = fileText
 
 // define the BPXWDYN options for allocated temporary datasets
 tempCreateOptions = (config.tempDataSetOptions?:"cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new").trim()
@@ -105,11 +131,11 @@ proc.waitForOrKill(1000)
 //* Parses the JCL parser output file
 //******************************************************************************
 def parserOutputFile = new File(outputDir, 'DD:ATTRBOUT')
-def dbbXmlFile = new File(outputDir, 'dbb.xml')
+def dbbXmlFile       = new File(outputDir, 'dbb.xml')
 dbbXmlFile.exists() ? dbbXmlFile.delete() : false
 
 def content = parserOutputFile.text
-project = new XmlSlurper().parseText(content)
+project     = new XmlSlurper().parseText(content)
 
 def rc = project.file.jcl.returnCode.text().toInteger()
 if ( rc != 0 )
@@ -229,6 +255,171 @@ def xml = {
 XmlUtil.serialize( xmlBuilder.bind(xml), dbbXmlFile.newWriter())
 
 println "Successfully generated $dbbXmlFile"
+
+ //******************************************************************************
+ //* Parses the JCL migration config file
+ //******************************************************************************
+ def saveJCLOutputs = (parameters.s && parameters.s.toBoolean())?true:false
+ def genExecVars    = (parameters.g && parameters.g.toBoolean())?true:false
+ 
+ println "Process XML file: $dbbXmlFile"
+ 
+ def outputFiles = []
+ 
+ //********************************************************************************
+ //* Parse the input XML file
+ //********************************************************************************
+ def buildXml = new XmlParser().parse(dbbXmlFile.newReader())
+ 
+ //********************************************************************************
+ //* Create a shared Binding to pass to children scripts
+ //********************************************************************************
+ @Field def sharedData = new Binding()
+ sharedData.setVariable('buildXml', buildXml)
+ sharedData.setVariable('dbbXmlFile', dbbXmlFile)
+ sharedData.setVariable('outputDir', outputDir)
+ sharedData.setVariable('saveJCLOutputs', saveJCLOutputs)
+ sharedData.setVariable('genExecVars', genExecVars)
+ 
+ //********************************************************************************
+ //* Convert <properties>
+ //********************************************************************************
+ buildXml.propertyFiles.propertyFile.each { propertyFile ->
+			 
+	 if (propertyFile.@name)
+	 {
+		 def fileName = propertyFile.@name
+		 def fileDesc = propertyFile.@description
+		 def file = new File(outputDir, "${fileName}.properties")
+		 !file.exists()?:file.delete()
+ 
+		 if (fileDesc)
+			 file << "#$fileDesc" << '\n'
+ 
+		 propertyFile.property.each { property ->
+			 def name = property.@name
+			 def value = property.@value
+			 def pattern = property.@pattern
+			 def description = property.@description
+ 
+			 if (description)
+				 file << "# $description" << '\n'
+			 file << "$name = $value"
+			 if (pattern)
+				 file << " :: $pattern"
+			 file << '\n\n'
+		 }
+		 
+		 outputFiles << file
+	 }
+ }
+ 
+ 
+ //********************************************************************************
+ //* Generate build shell script to invoke the main build file
+ //********************************************************************************
+ def buildScriptName = convertToJavaIdentifier(buildXml.@name)
+ def buildShellScriptFile = new File(outputDir, "${buildScriptName}.sh")
+ !buildShellScriptFile.exists()?:buildShellScriptFile.delete()
+ buildShellScriptFile << "#!/bin/sh" << '\n\n'
+ buildShellScriptFile << "# Check that DBB_HOME is set" << '\n'
+ buildShellScriptFile << "if [[ -z \"\${DBB_HOME}\" ]]; then" << '\n'
+ buildShellScriptFile << "  echo \"Need to specified the required environment variable 'DBB_HOME'\"" << '\n'
+ buildShellScriptFile << "  exit 8" << '\n'
+ buildShellScriptFile << "fi" << '\n\n'
+ buildShellScriptFile << '# $DBB_HOME/bin/groovyz automatically sets the env variables and classpath required for DBB' << '\n'
+ buildXml.scripts.script.each { script ->
+	 def scriptName = convertToJavaIdentifier(script.@name)
+	 buildShellScriptFile << 'CMD=\"$DBB_HOME/bin/groovyz ' << "${scriptName}.groovy\"" << '\n\n'
+	 buildShellScriptFile << '$CMD' << '\n'
+ }
+ Files.setPosixFilePermissions(Paths.get("$buildShellScriptFile"), PosixFilePermissions.fromString("rwxrwxr-x"));
+ 
+ outputFiles << buildShellScriptFile
+ 
+ //********************************************************************************
+ //* Convert <scripts>
+ //********************************************************************************
+ def SCRIPT_CONVERTER_NAMES = ['DBBScriptTemplateConverter']
+ def scriptConverters = [:]
+ 
+ def scriptTemplateFile = scriptLocation.resolve('../templates/SCRIPT.template').toFile()
+ 
+ buildXml.scripts.script.each { script ->
+	 def scriptName = convertToJavaIdentifier(script.@name)
+	 def scriptFile = new File(outputDir, "${scriptName}.groovy")
+	 !scriptFile.exists()?:scriptFile.delete()
+	 
+	 sharedData.setVariable('scriptXml', script)
+			 
+	 scriptTemplateFile.eachLine { line ->
+		 line = convertLine(line, SCRIPT_CONVERTER_NAMES, scriptConverters, scriptLocation)
+		 scriptFile << line << '\n'
+	 }
+	 
+	 scriptConverters.clear()
+	 
+	 outputFiles << scriptFile
+ }
+ 
+ println "There are ${outputFiles.size()} files generated in directory $outputDir:"
+ outputFiles.toSorted().collect { it.name }.each {
+	 println "   $it"
+ }
+ 
+ //********************************************************************************
+ //* Load a script and pass in the shared Binding data
+ //********************************************************************************
+ def loadConverter(String converterName, Path scriptLocation)
+ {
+	 def shell = new GroovyShell(sharedData)
+	 shell.parse(scriptLocation.resolve("${converterName}.groovy").toFile())
+ }
+ 
+ def convertLine(def line, def converterNames, def converters, scriptLocation)
+ {
+	 //* Find a matched converter in the line from a list of supported converters
+	 def matchedConverterName = converterNames.find { name ->
+		 line.indexOf('${' + name + '.') > -1
+	 }
+	 
+	 //* If the line contains a matched converter then process
+	 //* the line by calling the converter's method
+	 if (matchedConverterName)
+	 {
+		 int matchedIndex = line.indexOf('${' + matchedConverterName + '.')
+		 if (matchedIndex > -1)
+		 {
+			 //* We assume the format is something like ${Converter.method()}
+			 int endMatchedIndex = line.indexOf('}', matchedIndex)
+			 def temp = line.substring(matchedIndex, endMatchedIndex+1)
+			 def segments = temp.split('[\\$\\{\\.\\(\\)\\}]')
+			 def matchedSegments = segments.findAll {
+				 it.trim().length() > 0
+			 }
+ 
+			 if (matchedSegments.size() == 2)
+			 {
+				 def converterName = matchedSegments[0]
+				 def methodName = matchedSegments[1]
+				 
+				 def converter = converters.get(converterName)
+				 if (converter == null)
+				 {
+					 converter = loadConverter(converterName, scriptLocation)
+					 if (converter.getMetaClass().respondsTo(converter, 'init'))
+						 converter.init()
+					 converters."$converterName" = converter
+				 }
+ 
+				 def replacement = converter."$methodName"()
+				 line = replacement ? line.replace('${' + converterName + '.' + methodName + "()}", replacement) : ""
+			 }
+		 }
+	 }
+	 
+	 line
+ }
 
 return
 
@@ -491,4 +682,50 @@ def processUnitOption( value )
 		}
 	}
 	options.join(' ')
+}
+
+/*
+ * Utility method to convert an executor name into
+ * a valid Java/Groovy method name.
+ */
+def convertToJavaIdentifier(text)
+{
+	def newText = ''
+	text.getChars().eachWithIndex { ch, index ->
+		boolean isValid = (index == 0 ? Character.isJavaIdentifierStart(ch) : Character.isJavaIdentifierPart(ch))
+		newText += (isValid ? ch : '_')
+	}
+	newText
+}
+
+
+//
+//   Parse the command line arguments
+//
+def parseArgs(String[] args) {
+	String usage = 'JCLtoDBB.groovy [options]'
+	
+	def cli = new CliBuilder(usage:usage)
+		  cli.c(longOpt: 'configFile',    args:1, argName: 'configFile',                    optionalArg:true,  'Path to the JCL migration configuration file.  If specified, path is considered absolute if it begins with a slash else it is relative path from the migration tool bin directory.  Default is ../conf/jclmig.config.')
+		  cli.d(longOpt: 'dataset',       args:1, argName: 'MVS dataset',                   optionalArg:false, 'Dataset containing JCL to be migrated')
+		  cli.g(longOpt: 'genExecVars',   args:1, argName: 'Generate executable variables', optionalArg:true,  'Specify true to generate executable variables')
+		  cli.h(longOpt: 'help',                                                                               'Show usage information')
+		  cli.m(longOpt: 'member',        args:1, argName: 'JCL member',                    optionalArg:false, 'JCL member being migrated')
+		  cli.o(longOpt: 'outputDir',     args:1, argName: 'output directory',              optionalArg:true,  'Directory in the HFS where all files will be written. If specified, path is considered absolute if it begins with a slash else it is relative path from the users home directory.  Default is jclMigration.')
+		  cli.p(longOpt: 'project',       args:1, argName: 'JCL project',                   optionalArg:false, 'JCL project to be migrated')
+		  cli.s(longOpt: 'saveOutputs',   args:1, argName: 'save JCLExec outputs',          optionalArg:true,  'Specify true to generated code to save outputs from a JCLExec')
+
+    cli.width = 150  
+	
+	def opts = cli.parse(args)
+	if (!opts) {
+		System.exit(1)
+	}
+	
+	// if help option used, print usage and exit
+	if (opts.help) {
+		cli.usage()
+		System.exit(0)
+	}
+	return opts
 }
