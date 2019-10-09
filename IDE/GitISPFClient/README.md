@@ -28,6 +28,49 @@ The purpose of this GitHub repository is to provide an ISPF interface that inter
 
 You must have Rocket Git installed in USS on the z/OS system you plan to use. The minimum version required is 2.14.4. You can install Rocket Git using SMP/E as part of IBM z Open Development or you can go to www.rocketSoftware/git for instructions on getting Rocket Git. . You need Rocket Git to run git commands on z/OS. 
 
+### Clone GitHub project containing Git ISPF Client code
+
+We have a chicken and egg situation. We want to use the Git ISPF client to clone repositories, but we have to clone a repository first before we can bring the Git ISPF Client code up. If you are reading this you are already at https://github.com/IBM/dbb. So you will need to do a command line clone to get the code.
+
+* Update your .profile to have the required Rocket setup
+
+    There are a number of variables that need to be set up and exported before you can use Git in USS. These can be set up in your .profile file, for example: 
+
+    export JAVA_HOME=/usr/lpp/java/J8.0_64                          
+    export DBB_HOME=/var/dbbTEST/usr/lpp/IBM/dbb_1.0.5              
+                                                                
+    export GIT_SHELL=/var/rocket/bin/bash                           
+    export GIT_EXEC_PATH=/var/rocket/libexec/git-core               
+    export GIT_TEMPLATE_DIR=/var/rocket/share/git-core/templates    
+                                                                
+    export PATH=$PATH:$JAVA_HOME/bin:/var/rocket/bin                
+    export MANPATH=$MANPATH:/var/rocket/man                         
+    export PERL5LIB=$PERL5LIB:/var/rocket/lib/perl5                 
+                                                                
+    export _BPXK_AUTOCVT=ON                                         
+    export _CEE_RUNOPTS="FILETAG(AUTOCVT,AUTOTAG) POSIX(ON)"        
+    export _TAG_REDIR_ERR=txt                                       
+    export _TAG_REDIR_IN=txt                                        
+    export _TAG_REDIR_OUT=txt                                       
+
+* Create an SSK key pair to be able to Clone
+
+    This is covered in more detail here, https://forum.rocketsoftware.com/t/using-git-for-z-os-with-github/654, but in a nutshell do the following:
+
+    * Logon in to Putty or OMVS
+    * Issue command:
+        ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -C "yourid@yourdomain.com" -P ""
+        Where yourid@yourdomain is the userid you use to log into the public Github.
+    * Download generated key to your PC from ~/.ssh/id_rsa.pub in USS
+
+* In Github go to Settings --> **SSH and GPG Keys** and click the **New SSH Key** button.
+* Open your downloaded id_rsa.pub file and cut the contents, then paste them in the provided box in Github. Click the **Add SSH key** button.
+* In Gitub in the IBM/dbb repository, open the **Clone or Download** button and click **Use SSH** and cut the SSH location, which should be **git@github.com:IBM/dbb.git**
+* Go back to Putty/OMVS and clone the repo by typing the following clone command:
+    git clone git@github.com:IBM/dbb.git /u/userid/Test/git1
+    Where /u/userid/Test/git1 is the location where you will clone the repository to.
+* The clone should work and the directory should be populated with the DBB sample code.
+
 ### Copy USS files to PDS
 
 In the clone location there is a directory called `IDE/GitISPFClient/sbgzsamp`. There is a file there called `bgzgit.jcl`. This JCL member will allocate a set of PDS libraries and copy the files from the clone location. Make a copy of this JCL member in a data set on z/OS. Tailor as per the instuctions in the job and submit the Job. The job should finish with a return code of 0 and have populated the specified libraries. 
