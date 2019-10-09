@@ -26,7 +26,7 @@ The purpose of this GitHub repository is to provide an ISPF interface that inter
 
 ### Prerequisites
 
-You must have Rocket Git installed in USS on the z/OS system you plan to use. You can install Rocket Git using SMP/E as part of IBM z Open Development or you can go to www.rocketSoftware/git for instructions on getting Rocket Git. . You need Rocket Git to run git commands on z/OS. 
+You must have Rocket Git installed in USS on the z/OS system you plan to use. The minimum version required is 2.14.4. You can install Rocket Git using SMP/E as part of IBM z Open Development or you can go to www.rocketSoftware/git for instructions on getting Rocket Git. . You need Rocket Git to run git commands on z/OS. 
 
 ### Copy USS files to PDS
 
@@ -52,7 +52,7 @@ There are several methods for starting the ISPF Git client.
 Start the ISPF Git client dialog using the BGZGIT REXX executable code. You can run the executable code in several ways:
 
 * From the TSO command processor panel:
-    * On the TSO command processor panel, enter **EX '<hlq>.SBGZEXEC(BGZ)'**
+    * On the TSO command processor panel, enter **EX '<hlq>.SBGZEXEC(BGZGIT)'**
 * Added to an ISPF menu:
     * Set &ZSEL to **'CMD(EX <hlq>.SBGZEXEC(BGZGIT)) NOCHECK'**. NOCHECK supports the entry of concatenated commands through the direct option (trail). On the calling panel, also specify **&ZTRAIL=.TRAIL**.
 * Added as a command in the SYSPROC concatenation:
