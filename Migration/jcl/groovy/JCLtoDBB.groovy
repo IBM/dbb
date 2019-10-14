@@ -14,6 +14,7 @@ import groovy.time.*
 import groovy.xml.*
 import java.nio.file.*
 import java.nio.file.attribute.*
+import com.ibm.dbb.*
 
 //******************************************************************************
 //* Retrieves DBB environments
@@ -707,12 +708,12 @@ def parseArgs(String[] args) {
 	
 	def cli = new CliBuilder(usage:usage)
 		  cli.c(longOpt: 'configFile',    args:1, argName: 'configFile',                    optionalArg:true,  'Path to the JCL migration configuration file.  If specified, path is considered absolute if it begins with a slash else it is relative path from the migration tool bin directory.  Default is ../conf/jclmig.config.')
-		  cli.d(longOpt: 'dataset',       args:1, argName: 'MVS dataset',                   optionalArg:false, 'Dataset containing JCL to be migrated')
+		  cli.d(longOpt: 'dataset',       args:1, argName: 'MVS dataset',                   optionalArg:false, 'Dataset containing JCL to be migrated (Required)')
 		  cli.g(longOpt: 'genExecVars',   args:1, argName: 'Generate executable variables', optionalArg:true,  'Specify true to generate executable variables')
 		  cli.h(longOpt: 'help',                                                                               'Show usage information')
-		  cli.m(longOpt: 'member',        args:1, argName: 'JCL member',                    optionalArg:false, 'JCL member being migrated')
+		  cli.m(longOpt: 'member',        args:1, argName: 'JCL member',                    optionalArg:false, 'JCL member being migrated (Required)')
 		  cli.o(longOpt: 'outputDir',     args:1, argName: 'output directory',              optionalArg:true,  'Directory in the HFS where all files will be written. If specified, path is considered absolute if it begins with a slash else it is relative path from the users home directory.  Default is jclMigration.')
-		  cli.p(longOpt: 'project',       args:1, argName: 'JCL project',                   optionalArg:false, 'JCL project to be migrated')
+		  cli.p(longOpt: 'project',       args:1, argName: 'JCL project',                   optionalArg:false, 'JCL project to be migrated (Required)')
 		  cli.s(longOpt: 'saveOutputs',   args:1, argName: 'save JCLExec outputs',          optionalArg:true,  'Specify true to generated code to save outputs from a JCLExec')
 
     cli.width = 150  
@@ -724,6 +725,11 @@ def parseArgs(String[] args) {
 	
 	// if help option used, print usage and exit
 	if (opts.help) {
+		cli.usage()
+		System.exit(0)
+	}
+	if (!opts.p || !opts.d || !opts.m)
+	{
 		cli.usage()
 		System.exit(0)
 	}
