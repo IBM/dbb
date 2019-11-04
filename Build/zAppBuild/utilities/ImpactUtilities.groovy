@@ -127,8 +127,16 @@ def calculateChangedFiles(BuildResult lastBuildResult) {
 			if (props.verbose) println "*! Skipping directory $dir because baseline or current hash does not exist.  baseline : $baseline current : $current"
 		}
 		else if (gitUtils.isGitDir(dir)) {
-			if (props.verbose) "** Diffing baseline $baseline -> current $current"
-			(changed, deleted) = gitUtils.getChangedFiles(dir, baseline, current )
+			if (props.verbose) println "** Diffing baseline $baseline -> current $current"
+			def _changed = []
+			(_changed, deleted) = gitUtils.getChangedFiles(dir, baseline, current )
+			List<PathMatcher> excludeMatchers = createExcludePatterns()
+			// make sure file is not an excluded file
+			_changed.each { file ->
+				if ( !matches(file, excludeMatchers)) {
+					changed.add(file)
+				}
+			}
 		}
 		else {
 			if (props.verbose) println "*! Directory $dir not a local Git repository. Skipping."
@@ -191,7 +199,7 @@ def updateCollection(changedFiles, deletedFiles, RepositoryClient repositoryClie
 	changedFiles.each { file -> 
 		
 		// make sure file is not an excluded file
-		if (!matches(file, excludeMatchers)) {
+		if ( new File("${props.workspace}/${file}").exists() && !matches(file, excludeMatchers)) {
 			// files in a collection are stored as relative paths from a source directory
 			if (props.verbose) println "*** Scanning file $file (${props.workspace}/${file})"
 			def logicalFile = scanner.scan(file, props.workspace)
@@ -313,14 +321,14 @@ def createExcludePatterns() {
 
 
 def matches(String file, List<PathMatcher> pathMatchers) {
-	pathMatchers.each { matcher ->
+	def result = pathMatchers.any { matcher ->
 		Path path = FileSystems.getDefault().getPath(file);
 		if ( matcher.matches(path) )
 		{
 			return true
 		}
 	}
-	return false
+	return result
 }
 
 

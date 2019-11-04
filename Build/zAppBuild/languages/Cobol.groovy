@@ -198,7 +198,8 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 	if (props.errPrefix) {
 		compile.dd(new DDStatement().name("SYSADATA").options("DUMMY"))
 		// SYSXMLSD.XML prefix is mandatory for IDZ/ZOD to populate remote error list
-		compile.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.cobol_compileErrorFeedbackXmlOptions))
+		new CreatePDS().dataset("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.cobol_compileErrorFeedbackXmlOptions).create()
+		compile.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options("mod keep"))
 	}
 		
 	// add a copy command to the compile command to copy the SYSPRINT from the temporary dataset to an HFS log file
@@ -220,7 +221,7 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 	// define the MVSExec command to link edit the program
 	MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
 	
-// Create a pysical link card
+	// Create a pysical link card
 	if ( (linkEditStream) || (props.debug && linkDebugExit!= null)) {
 		def lnkFile = new File("${props.buildOutDir}/linkCard.lnk")
 		if (lnkFile.exists())
@@ -262,7 +263,7 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 	linkedit.dd(new DDStatement().dsn(props.SCEELKED).options("shr"))
 	
 	// Add Debug Dataset to find the debug exit to SYSLIB
-	if (props.debug)
+	if (props.debug && props.SEQAMOD)
 		linkedit.dd(new DDStatement().dsn(props.SEQAMOD).options("shr"))
 	
     if (buildUtils.isCICS(logicalFile))

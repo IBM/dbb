@@ -94,7 +94,12 @@ sortedList.each { buildFile ->
  * createCompileCommand - creates a MVSExec command for compiling the BMS Map (buildFile)
  */
 def createAssemblerCommand(String buildFile, String member, File logFile) {
+	def errPrefixOptions = props.getFileProperty('assembler_compileErrorPrefixParms', buildFile) ?: ""
+	
 	String parameters = props.getFileProperty('assembler_pgmParms', buildFile)
+	
+	if (props.errPrefix)
+		parameters = "$parameters,$errPrefixOptions"
 	
 	// define the MVSExec command to compile the BMS map
 	MVSExec assembler = new MVSExec().file(buildFile).pgm(props.assembler_pgm).parm(parameters)
@@ -127,7 +132,8 @@ def createAssemblerCommand(String buildFile, String member, File logFile) {
 	// add IDz User Build Error Feedback DDs
 	if (props.errPrefix) {
 		assembler.dd(new DDStatement().name("SYSADATA").options("DUMMY"))
-		assembler.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options('mod keep'))
+		new CreatePDS().dataset("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.assembler_compileErrorFeedbackXmlOptions).create()
+		assembler.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options("mod keep"))
 	}
 		
 	// add a copy command to the compile command to copy the SYSPRINT from the temporary dataset to an HFS log file

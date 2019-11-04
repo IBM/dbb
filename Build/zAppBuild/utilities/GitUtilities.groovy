@@ -4,8 +4,6 @@ import com.ibm.dbb.dependency.*
 import com.ibm.dbb.build.*
 import groovy.transform.*
 
-@Field int timeout = 60000 // 1 minute
-
 /*
  * Tests if directory is in a local git repository
  *

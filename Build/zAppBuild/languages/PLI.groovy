@@ -91,7 +91,7 @@ sortedList.each { buildFile ->
 	 def parms = props.getFileProperty('pli_compileParms', buildFile) ?: ""
 	 def cics = props.getFileProperty('pli_compileCICSParms', buildFile) ?: ""
 	 def sql = props.getFileProperty('pli_compileSQLParms', buildFile) ?: ""
-	 def errPrefix = props.getFileProperty('pli_compileErrorPrefixParms', buildFile) ?: ""
+	 def errPrefixOptions = props.getFileProperty('pli_compileErrorPrefixParms', buildFile) ?: ""
 	 
 	 
 	 if (buildUtils.isCICS(logicalFile))
@@ -100,8 +100,8 @@ sortedList.each { buildFile ->
 	 if (buildUtils.isSQL(logicalFile))
 		 parms = "$parms,$sql"
 		 
-	 if (errPrefix)
-		 parameters = "$parms,errPrefix"
+	if (props.errPrefix)
+		parms = "$parms,$errPrefixOptions"		
 		 
 	 if (parms.startsWith(','))
 		 parms = parms.drop(1)
@@ -162,7 +162,9 @@ sortedList.each { buildFile ->
 	 // add IDz User Build Error Feedback DDs
 	 if (props.errPrefix) {
 		 compile.dd(new DDStatement().name("SYSADATA").options("DUMMY"))
-		 compile.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options('mod keep'))
+		// SYSXMLSD.XML prefix is mandatory for IDZ/ZOD to populate remote error list
+		new CreatePDS().dataset("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.pli_compileErrorFeedbackXmlOptions).create()
+		compile.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options("mod keep"))
 	 }
 		 
 	 // add a copy command to the compile command to copy the SYSPRINT from the temporary dataset to an HFS log file
@@ -186,7 +188,7 @@ sortedList.each { buildFile ->
 		 if (lnkFile.exists())
 			 lnkFile.delete()
  
-		 lnkFile << "  " + linkEditStream.replace("\\n","\n").replace('${member}',member)
+		 lnkFile << "  " + linkEditStream.replace("\\n","\n").replace('@{member}',member)
 		 if (props.verbose)
 			 println("Copying ${props.buildOutDir}/linkCard.lnk to ${props.linkedit_srcPDS}($member)")
 		 new CopyToPDS().file(lnkFile).dataset(props.linkedit_srcPDS).member(member).execute()
