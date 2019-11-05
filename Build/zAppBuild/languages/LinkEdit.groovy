@@ -22,10 +22,10 @@ List<String> sortedList = buildUtils.sortBuildList(argMap.buildList, 'linkedit_f
 // iterate through build list
 sortedList.each { buildFile ->
 	println "*** Building file $buildFile"
-	
+
 	// copy build file to input data set
 	buildUtils.copySourceFiles(buildFile, props.linkedit_srcPDS, null, null)
-	
+
 	// create mvs commands
 	String rules = props.getFileProperty('linkedit_resolutionRules', buildFile)
 	DependencyResolver dependencyResolver = buildUtils.createDependencyResolver(buildFile, rules)
@@ -35,14 +35,14 @@ sortedList.each { buildFile ->
 	if (logFile.exists())
 		logFile.delete()
 	MVSExec linkEdit = createLinkEditCommand(buildFile, logicalFile, member, logFile)
-	
+
 	// execute mvs commands in a mvs job
 	MVSJob job = new MVSJob()
 	job.start()
-	
+
 	rc = linkEdit.execute()
 	maxRC = props.getFileProperty('linkedit_maxRC', buildFile).toInteger()
-		
+
 	if (rc > maxRC) {
 		String errorMsg = "*! The link edit return code ($rc) for $buildFile exceeded the maximum return code allowed ($maxRC)"
 		println(errorMsg)
@@ -50,12 +50,14 @@ sortedList.each { buildFile ->
 		buildUtils.updateBuildResult(errorMsg:errorMsg,logs:["${member}.log":logFile],client:getRepositoryClient())
 	}
 	else {
-		// only scan the load module if load module scanning turned on for file
-		String scanLoadModule = props.getFileProperty('linkedit_scanLoadModule', buildFile)
-		if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient())
-			impactUtils.saveStaticLinkDependencies(buildFile, props.linkedit_loadPDS, logicalFile, repositoryClient)
+		if(!props.userBuild){
+			// only scan the load module if load module scanning turned on for file
+			String scanLoadModule = props.getFileProperty('linkedit_scanLoadModule', buildFile)
+			if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient())
+				impactUtils.saveStaticLinkDependencies(buildFile, props.linkedit_loadPDS, logicalFile, repositoryClient)
+		}
 	}
-	
+
 	job.stop()
 }
 
@@ -72,16 +74,16 @@ sortedList.each { buildFile ->
 def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String member, File logFile) {
 	String parms = props.getFileProperty('linkEdit_parms', buildFile)
 	String linker = props.getFileProperty('linkedit_linkEditor', buildFile)
-	
+
 	// define the MVSExec command to link edit the program
 	MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
-	
+
 	// add DD statements to the linkedit command
 	linkedit.dd(new DDStatement().name("SYSLIN").dsn("${props.linkedit_srcPDS}($member)").options("shr").report(true))
 	linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${props.linkedit_loadPDS}($member)").options('shr').output(true).deployType('LOAD'))
 	linkedit.dd(new DDStatement().name("SYSPRINT").options(props.linkedit_tempOptions))
 	linkedit.dd(new DDStatement().name("SYSUT1").options(props.linkedit_tempOptions))
-	
+
 	// add a syslib to the compile command with optional CICS concatenation
 	linkedit.dd(new DDStatement().name("SYSLIB").dsn(props.linkedit_objPDS).options("shr"))
 	linkedit.dd(new DDStatement().dsn(props.SCEELKED).options("shr"))
@@ -89,7 +91,7 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 
 	// add a copy command to the linkedit command to append the SYSPRINT from the temporary dataset to the HFS log file
 	linkedit.copy(new CopyToHFS().ddName("SYSPRINT").file(logFile).hfsEncoding(props.logEncoding))
-	
+
 	return linkedit
 }
 
@@ -97,7 +99,7 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 def getRepositoryClient() {
 	if (!repositoryClient && props."dbb.RepositoryClient.url")
 		repositoryClient = new RepositoryClient().forceSSLTrusted(true)
-	
+
 	return repositoryClient
 }
 

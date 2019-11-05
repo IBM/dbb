@@ -68,10 +68,12 @@ sortedList.each { buildFile ->
 			}
 			else {
 				// only scan the load module if load module scanning turned on for file
-				String scanLoadModule = props.getFileProperty('assembler_scanLoadModule', buildFile)
-				if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient()) {
-					String assembler_loadPDS = props.getFileProperty('assembler_loadPDS', buildFile)
-					impactUtils.saveStaticLinkDependencies(buildFile, assembler_loadPDS, logicalFile, repositoryClient)
+				if(!props.userBuild){
+					String scanLoadModule = props.getFileProperty('assembler_scanLoadModule', buildFile)
+					if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient()) {
+						String assembler_loadPDS = props.getFileProperty('assembler_loadPDS', buildFile)
+						impactUtils.saveStaticLinkDependencies(buildFile, assembler_loadPDS, logicalFile, repositoryClient)
+					}
 				}
 			}
 		}
@@ -132,8 +134,8 @@ def createAssemblerCommand(String buildFile, String member, File logFile) {
 	// add IDz User Build Error Feedback DDs
 	if (props.errPrefix) {
 		assembler.dd(new DDStatement().name("SYSADATA").options("DUMMY"))
-		new CreatePDS().dataset("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.assembler_compileErrorFeedbackXmlOptions).create()
-		assembler.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options("mod keep"))
+		// SYSXMLSD.XML suffix is mandatory for IDZ/ZOD to populate remote error list
+		assembler.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.assembler_compileErrorFeedbackXmlOptions))
 	}
 		
 	// add a copy command to the compile command to copy the SYSPRINT from the temporary dataset to an HFS log file
@@ -179,5 +181,4 @@ def getRepositoryClient() {
 	
 	return repositoryClient
 }
-
 

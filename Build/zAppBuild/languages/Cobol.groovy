@@ -70,13 +70,14 @@ sortedList.each { buildFile ->
 				buildUtils.updateBuildResult(errorMsg:errorMsg,logs:["${member}.log":logFile],client:getRepositoryClient())
 			}
 			else {
-				// only scan the load module if load module scanning turned on for file
-				String scanLoadModule = props.getFileProperty('cobol_scanLoadModule', buildFile)
-				if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient())
-					impactUtils.saveStaticLinkDependencies(buildFile, props.linkedit_loadPDS, logicalFile, repositoryClient)
+				if(!props.userBuild){
+					// only scan the load module if load module scanning turned on for file
+					String scanLoadModule = props.getFileProperty('cobol_scanLoadModule', buildFile)
+					if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient())
+						impactUtils.saveStaticLinkDependencies(buildFile, props.linkedit_loadPDS, logicalFile, repositoryClient)
+				}
 			}
-		}
-			
+	   	}	
 	}
 	
 	//perform Db2 Bind only on User Build and perfromBindPackage property
@@ -197,9 +198,8 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 	// add IDz User Build Error Feedback DDs
 	if (props.errPrefix) {
 		compile.dd(new DDStatement().name("SYSADATA").options("DUMMY"))
-		// SYSXMLSD.XML prefix is mandatory for IDZ/ZOD to populate remote error list
-		new CreatePDS().dataset("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.cobol_compileErrorFeedbackXmlOptions).create()
-		compile.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options("mod keep"))
+		// SYSXMLSD.XML suffix is mandatory for IDZ/ZOD to populate remote error list
+		compile.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.cobol_compileErrorFeedbackXmlOptions))
 	}
 		
 	// add a copy command to the compile command to copy the SYSPRINT from the temporary dataset to an HFS log file
