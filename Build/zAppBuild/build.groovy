@@ -176,6 +176,9 @@ options:
 	cli.wrkDir(longOpt:'workDir', args:1, 'Absolute path to the build output root directory for user build')
 	cli.t(longOpt:'team', args:1, argName:'hlq', 'Team build hlq for user build syslib concatenations')
 
+	// debug option
+	cli.d(longOpt:'debug', 'Flag to indicate a build for debugging')
+	
 	// utility options
 	cli.help(longOpt:'help', 'Prints this message')
 	
@@ -281,6 +284,9 @@ def populateBuildProperties(String[] args) {
 	if (opts.id) props.id = opts.id
 	if (opts.pw) props.pw = opts.pw
 	if (opts.pf) props.pf = opts.pf
+	
+	// set debug flag
+	if(opts.d) props.debug = 'true' 
 	
 	// set DBB configuration properties
 	if (opts.url) props.'dbb.RepositoryClient.url' = opts.url

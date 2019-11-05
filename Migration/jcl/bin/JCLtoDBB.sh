@@ -2,8 +2,8 @@
 
 ##############################################################################################
 #
-# This script calls the JCLtoDBBXml.groovy script to parse the JCL and generate DBB XML
-# to represent the steps, programs, and datasets used in the JCL.
+# This script calls the JCLtoDBB.groovy script to parse the JCL and generate DBB groovy
+# scripts representing the JCL.
 # 
 ##############################################################################################
 scriptDir=$(dirname $0)
@@ -13,7 +13,7 @@ if [[ -z "${DBB_HOME}" ]]; then
 fi
 NLSPATH=$DBB_HOME/lib/dmhmsg.cat:$NLSPATH
 
-CMD="$DBB_HOME/bin/groovyz $scriptDir/../groovy/JCLtoDBBXml.groovy $@"
+CMD="$DBB_HOME/bin/groovyz $scriptDir/../groovy/JCLtoDBB.groovy $@"
 
 $CMD
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi

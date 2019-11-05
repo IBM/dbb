@@ -36,7 +36,9 @@ def parseArgs(String[] cliArgs, String usage) {
 def loadProperties(OptionAccessor opts) {
 	// check to see if there is a ./build.properties to load
 	def properties = BuildProperties.getInstance()
-	def buildPropFile = new File("${getScriptDir()}/build.yaml")
+	// One may also use YAML files as an alternative to properties files (DBB 1.0.6 and later):
+	//     def buildPropFile = new File("${getScriptDir()}/build.yaml")
+	def buildPropFile = new File("${getScriptDir()}/build.properties")
 	if (buildPropFile.exists())
    		BuildProperties.load(buildPropFile)
 
@@ -79,7 +81,9 @@ def loadProperties(OptionAccessor opts) {
 	// load datasets.properties containing system specific PDS names used by Mortgage Application build
 	properties.load(new File("${getScriptDir()}/datasets.properties"))
 	// load file.properties containing file specific properties like script mappings and CICS/DB2 content flags
-	properties.load(new File("${getScriptDir()}/file.yaml")) 
+	// One may also use YAML files as an alternative to properties files (DBB 1.0.6 and later):
+	//     properties.load(new File("${getScriptDir()}/file.yaml")) 
+	properties.load(new File("${getScriptDir()}/file.properties")) 
 	// load bind.properties containing DB2 BIND PACKAGE parameters used by Mortgage Application build
 	properties.load(new File("${getScriptDir()}/bind.properties"))    
 	// load bindlinkEditScanner.properties containing Link Edit scanning options used by Mortgage Application build

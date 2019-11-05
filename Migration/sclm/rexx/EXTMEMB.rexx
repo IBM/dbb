@@ -381,11 +381,16 @@ ProcMems :
           rc = repLine('W' 'Adding the default type and extension anyway,' ||,
                              ' but default SYSLIBs may be generated ' ||,
                              ' incorrectly if there is no FLMINCLS.')
-          ll = ll + 1
-          langs.ll = langs.z
-          langs.ll.dfltsrc = sclmtype
-          langs.ll.languageCode = langs.z.languageCode
-          langs.ll.ext = langs.z.ext
+          /* Only add it if it doesn't exist already */
+          Do w = 1 to ll While (sclmlang||sclmtype <> langs.w||langs.w.dfltsrc)
+          End
+          If w > ll Then
+          Do
+            ll = ll + 1
+            langs.ll = langs.z
+            langs.ll.dfltsrc = sclmtype
+            langs.ll.ext = langs.z.ext
+          End
         End
         Otherwise
           Nop

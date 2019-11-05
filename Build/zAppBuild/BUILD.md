@@ -64,6 +64,8 @@ build options:
  -r,--reset               Deletes the application's dependency collections 
                           and build result group from the DBB repository
  -v,--verbose             Flag to turn on script trace
+ -d,--debug               Flag to build modules for debugging with
+                          IBM Debug for z/OS
  -l,--logEncoding <arg>   Encoding of output logs. Default is EBCDIC 
 
 web application credentials

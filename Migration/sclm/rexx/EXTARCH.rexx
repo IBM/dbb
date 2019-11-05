@@ -826,7 +826,7 @@ DButilArch:
   "ALLOC F(DBRPT) RECFM(V B) LRECL(133) BLKSIZE(15000) SPACE(10 50)",
           "CYLINDERS REUSE"
 
-  "FLMCMD DBUTIL,"proj",,"group",,,,,,*,*"||,
+  "FLMCMD DBUTIL,"proj","projmem","group",,,,,,*,*"||,
                 ",*,*,*,*,ARCHDEF,NO,ACCT,*,,,,NORMAL,NO,NO,," ||,
                 "DBMSG,DUMMY,DBRPT" ||,
                 ",@@FLMMBR @@FLMLAN @@FLMTYP"
@@ -971,6 +971,7 @@ ProcArch :
       Do
         If isProcessed = '' Then
         Do
+          Say 'Processing 'archmem typename archtype
           CCCnt  = 0
           GENcnt = GENcnt + 1
           memCnt = memCnt + 1
@@ -1034,10 +1035,11 @@ getArchMem:
   rc = repLine(' ' ' ')
   Do m = 1 to dbutil.0
 
-    Parse var dbutil.m mem 9 lang 18 typeName 27 .
+    Parse var dbutil.m mem 9 lang 18 typeName 27 grpName 36 .
     mem      = Strip(mem)
     lang     = Strip(lang)
     typeName = Strip(typeName)
+    grpName  = Strip(grpName)
 
     If lang = '' Then Iterate
 
@@ -1099,9 +1101,23 @@ readArchdef:
 
   Address linkpgm "FLMLNK "parms
   If rc > 4 Then
-    say 'DSALLOC failed for 'typeName ddname mem' - 'msgarr
+  Do
+    say 'DSALLOC failed for 'typeName ddname mem
+    Say '*** msg Stuff ***'
+    Call Extract_Array('msgarr' msgarr)
+    Do I = 1 to arrayline.0
+       say array_name':'arrayline.i
+    End
+  End
 
   Address ISPEXEC "QBASELIB ARCHDEF ID(ARCHDEF)"
+  If rc <> 0 Then
+  Do
+    /* Failure in allocating hierarchy so need to make message */
+    /* more useful. Take a punt at the data set name           */
+    ARCHDEF = "'"Translate(proj)"."group"."Strip(typeName)"'"
+  End
+
   x = msg('off')
   "FREE  F(ARCHDEF)"
   x = msg('on')
@@ -2082,6 +2098,106 @@ freeSCLM :
   End
 
 return
+
+/*---------------------------------------------------------------*/
+/* Extract SCLM message array                                    */
+/*---------------------------------------------------------------*/
+
+Extract_Array:
+   Arg array_name ptr_loc
+
+   arrayline.0 = 0
+   arrayline.  = ''
+
+   /* For FLMLNK the messages are returned in storage pointed to by */
+   /* an address as opposed to being allocated by FLMMSGS.          */
+
+   Select
+      When (array_name = 'ACTARR') Then
+      Do
+         hex_array = C2X(ptr_loc)
+         stgret = STORAGE(hex_array,248)
+         arrayline.1 = stgret
+         arrayline.0 = 1
+      End
+      When (array_name = 'STAARR') Then
+      Do
+         hex_array = C2X(ptr_loc)
+         stgret = STORAGE(hex_array,40)
+         /* get counts */
+         total_lines       = STORAGE(hex_array,4)
+/*       num = x2d(total_lines) */
+/*       Say 'x2d:'num */
+         num = c2d(total_lines)
+         Say 'c2d:'num
+         hex_array = d2x(x2D(hex_array) + 4)
+         comment_lines     = STORAGE(hex_array,4)
+         hex_array = d2x(x2D(hex_array) + 4)
+         non_comment_lines = STORAGE(hex_array,4)
+         hex_array = d2x(x2D(hex_array) + 4)
+         blank_lines       = STORAGE(hex_array,4)
+         hex_array = d2x(x2D(hex_array) + 4)
+         prolog_lines      = STORAGE(hex_array,4)
+         hex_array = d2x(x2D(hex_array) + 4)
+         total_stmts       = STORAGE(hex_array,4)
+         hex_array = d2x(x2D(hex_array) + 4)
+         comment_stmts     = STORAGE(hex_array,4)
+         hex_array = d2x(x2D(hex_array) + 4)
+         control_stmts     = STORAGE(hex_array,4)
+         assignment_stmts  = STORAGE(hex_array,4)
+         non_comment_stmts = STORAGE(hex_array,4)
+
+         arrayline.1 = stgret
+         arrayline.0 = 1
+      End
+      When (array_name = 'INFARR') Then
+      Do
+         hex_array = C2X(ptr_loc)
+         stgret = STORAGE(hex_array,228)
+         Record_Type = substr(stgret,1,4)
+         Do I = 1 by 1 While (Record_Type <> 'END ')
+            Select
+               When (Record_Type = 'INCL') Then
+                  arrayline.I = Substr(stgret,1,12)
+               When (Record_Type = 'INCS') Then
+                  arrayline.I = Substr(stgret,1,20)
+               When (Record_Type = 'CODE') Then
+                  arrayline.I = Substr(stgret,1,26)
+               When (Record_Type = 'COMP') Then
+                  arrayline.I = Substr(stgret,1,12)
+               When (Record_Type = 'EXTD') Then
+                  arrayline.I = Substr(stgret,1,77)
+               When (Record_Type = 'USER') Then
+                  arrayline.I = Substr(stgret,1,132)
+               Otherwise
+               Do
+                  arrayline.I = Record_Type' Invalid'
+                  Leave
+               End
+            End
+            hex_array = d2x(x2D(hex_array) + 228)
+            stgret = STORAGE(hex_array,228)
+            Record_Type = substr(stgret,1,4)
+         End
+         arrayline.I = Substr(stgret,1,4)
+         arrayline.0 = I
+      End
+      When (array_name = 'MSGARR') Then
+      Do
+         hex_array = C2X(ptr_loc)
+         stgret = STORAGE(hex_array,80)
+         Do I = 1 by 1 While (strip(stgret) <> 'END' & strip(stgret) <> '' )
+            arrayline.I = stgret
+            hex_array = d2x(x2D(hex_array) + 80)
+            stgret = STORAGE(hex_array,80)
+         End
+         arrayline.0 = I - 1
+      End
+      Otherwise
+         NOP
+   End
+
+Return
 
 /*---------------------------------------------------------------*/
 /* Create report lines                                           */

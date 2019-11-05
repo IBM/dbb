@@ -221,7 +221,6 @@ def convertToBpxwdynOptions(dsdef)
         options << dsTypeOptions[dsdef.@dsType.toInteger()]
     options <<  "recfm(${dsdef.@recordFormat.text().isEmpty() ? 'F,B' : dsdef.@recordFormat.toString().toUpperCase().findAll { ch -> ch in validRecfm }.join(',')})"
     options << "lrecl(${dsdef.@recordLength.text().isEmpty() ? 80 : dsdef.@recordLength.toInteger()})"
-    options << "blksize(${dsdef.@blockSize.text().isEmpty() ? 80 : dsdef.@blockSize.toInteger()})"
     if (!dsdef.@storageClass.text().isEmpty())
         options << "STORCLAS(${dsdef.@storageClass.toString()})"
     if (!dsdef.@managementClass.text().isEmpty())

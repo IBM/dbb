@@ -70,21 +70,25 @@ sortedList.each { buildFile ->
 				buildUtils.updateBuildResult(errorMsg:errorMsg,logs:["${member}.log":logFile],client:getRepositoryClient())
 			}
 			else {
-				// only scan the load module if load module scanning turned on for file
-				String scanLoadModule = props.getFileProperty('cobol_scanLoadModule', buildFile)
-				if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient())
-					impactUtils.saveStaticLinkDependencies(buildFile, props.linkedit_loadPDS, logicalFile, repositoryClient)
+				if(!props.userBuild){
+					// only scan the load module if load module scanning turned on for file
+					String scanLoadModule = props.getFileProperty('cobol_scanLoadModule', buildFile)
+					if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient())
+						impactUtils.saveStaticLinkDependencies(buildFile, props.linkedit_loadPDS, logicalFile, repositoryClient)
+				}
 			}
-		}
-			
+	   	}	
 	}
 	
-	if (bindFlag && logicalFile.isSQL() && props.RUN_DB2_BIND && props.RUN_DB2_BIND.toBoolean() ) {
+	//perform Db2 Bind only on User Build and perfromBindPackage property
+	if (props.userBuild && bindFlag && logicalFile.isSQL() && props.bind_performBindPackage && props.bind_performBindPackage.toBoolean() ) {
 		int bindMaxRC = props.getFileProperty('bind_maxRC', buildFile).toInteger()
-		def owner = ( props.userBuild || ! props.OWNER ) ? System.getProperty("user.name") : props.OWNER
-		
-		def (bindRc, bindLogFile) = bindUtils.bindPackage(buildFile, props.cobol_dbrmPDS, props.buildOutDir, props.CONFDIR, 
-				props.SUBSYS, props.COLLID, owner, props.QUAL, props.verbose && props.verbose.toBoolean());
+
+		// if no  owner is set, use the user.name as package owner 
+		def owner = ( !props.bind_packageOwner ) ? System.getProperty("user.name") : props.bind_packageOwner
+	
+		def (bindRc, bindLogFile) = bindUtils.bindPackage(buildFile, props.cobol_dbrmPDS, props.buildOutDir, props.bind_runIspfConfDir, 
+				props.bind_db2Location, props.bind_collectionID, owner, props.bind_qualifier, props.verbose && props.verbose.toBoolean());
 		if ( bindRc > bindMaxRC) {
 			String errorMsg = "*! The bind package return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_maxRC)"
 			println(errorMsg)
@@ -112,7 +116,7 @@ def createCobolParms(String buildFile, LogicalFile logicalFile) {
 	def cics = props.getFileProperty('cobol_compileCICSParms', buildFile) ?: ""
 	def sql = props.getFileProperty('cobol_compileSQLParms', buildFile) ?: ""
 	def errPrefixOptions = props.getFileProperty('cobol_compileErrorPrefixParms', buildFile) ?: ""
-	
+	def compileDebugParms = props.getFileProperty('cobol_compileDebugParms', buildFile)
 	
 	if (buildUtils.isCICS(logicalFile))
 		parms = "$parms,$cics"
@@ -120,16 +124,11 @@ def createCobolParms(String buildFile, LogicalFile logicalFile) {
 	if (buildUtils.isSQL(logicalFile))
 		parms = "$parms,$sql"
 	
-    String isMQ = props.getFileProperty('cobol_isMQ', buildFile)
-	if (isMQ && isMQ.toBoolean())
-		compile.dd(new DDStatement().dsn(props.SCSQCOBC).options("shr"))
-
 	if (props.errPrefix)
 		parms = "$parms,$errPrefixOptions"
-
+		
 	// add debug options
 	if (props.debug)  {
-		def compileDebugParms = props.getFileProperty('cobol_compileDebugParms', buildFile)
 		parms = "$parms,$compileDebugParms"
 	}
 		
@@ -158,15 +157,18 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 		compile.dd(new DDStatement().name("SYSUT$num").options(props.cobol_tempOptions))
 	}
 	
-	// Write SYSLIN to temporary dataset if performing link edit
+	// Write SYSLIN to temporary dataset if performing link edit or to physical dataset
 	String doLinkEdit = props.getFileProperty('cobol_linkEdit', buildFile)
 	String linkEditStream = props.getFileProperty('cobol_linkEditStream', buildFile)
-	if (linkEditStream == null && doLinkEdit && doLinkEdit.toBoolean()) {
+	String linkDebugExit = props.getFileProperty('cobol_linkDebugExit', buildFile)
+	
+	if ( (linkEditStream && doLinkEdit && doLinkEdit.toBoolean()) || (props.debug && linkDebugExit!= null && doLinkEdit)) {
+		compile.dd(new DDStatement().name("SYSLIN").dsn("${props.cobol_objPDS}($member)").options('shr').output(true))
+	}
+	else {
 		compile.dd(new DDStatement().name("SYSLIN").dsn("&&TEMPOBJ").options(props.cobol_tempOptions).pass(true))
 	}
-	else
-		compile.dd(new DDStatement().name("SYSLIN").dsn("${props.cobol_objPDS}($member)").options('shr').output(true))
-		
+	
 	// add a syslib to the compile command with optional bms output copybook and CICS concatenation
 	compile.dd(new DDStatement().name("SYSLIB").dsn(props.cobol_cpyPDS).options("shr"))
 	if (props.bms_cpyPDS)
@@ -175,6 +177,9 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 		compile.dd(new DDStatement().dsn(props.cobol_BMS_PDS).options("shr"))
 	if (buildUtils.isCICS(logicalFile))
 		compile.dd(new DDStatement().dsn(props.SDFHCOB).options("shr"))
+	String isMQ = props.getFileProperty('cobol_isMQ', buildFile)
+	if (isMQ && isMQ.toBoolean())
+		compile.dd(new DDStatement().dsn(props.SCSQCOBC).options("shr"))
 
 	// add a tasklib to the compile command with optional CICS, DB2, and IDz concatenations
 	String compilerVer = props.getFileProperty('cobol_compilerVersion', buildFile)
@@ -193,7 +198,8 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 	// add IDz User Build Error Feedback DDs
 	if (props.errPrefix) {
 		compile.dd(new DDStatement().name("SYSADATA").options("DUMMY"))
-		compile.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options('mod keep'))
+		// SYSXMLSD.XML suffix is mandatory for IDZ/ZOD to populate remote error list
+		compile.dd(new DDStatement().name("SYSXMLSD").dsn("${props.hlq}.${props.errPrefix}.SYSXMLSD.XML").options(props.cobol_compileErrorFeedbackXmlOptions))
 	}
 		
 	// add a copy command to the compile command to copy the SYSPRINT from the temporary dataset to an HFS log file
@@ -210,40 +216,56 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 	String parms = props.getFileProperty('cobol_linkEditParms', buildFile)
 	String linker = props.getFileProperty('cobol_linkEditor', buildFile)
 	String linkEditStream = props.getFileProperty('cobol_linkEditStream', buildFile)
+	String linkDebugExit = props.getFileProperty('cobol_linkDebugExit', buildFile)
 	
-	// Create the link stream if needed
-	if ( linkEditStream != null ) {
+	// define the MVSExec command to link edit the program
+	MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
+	
+	// Create a pysical link card
+	if ( (linkEditStream) || (props.debug && linkDebugExit!= null)) {
 		def lnkFile = new File("${props.buildOutDir}/linkCard.lnk")
 		if (lnkFile.exists())
 			lnkFile.delete()
 
-		lnkFile << "  " + linkEditStream.replace("\\n","\n").replace('${member}',member)
+		if 	(linkEditStream)
+			lnkFile << "  " + linkEditStream.replace("\\n","\n").replace('@{member}',member)
+		else
+			lnkFile << "  " + linkDebugExit.replace("\\n","\n").replace('@{member}',member)
+
 		if (props.verbose)
 			println("Copying ${props.buildOutDir}/linkCard.lnk to ${props.linkedit_srcPDS}($member)")
 		new CopyToPDS().file(lnkFile).dataset(props.linkedit_srcPDS).member(member).execute()
+		// Alloc SYSLIN
+		linkedit.dd(new DDStatement().name("SYSLIN").dsn("${props.linkedit_srcPDS}($member)").options("shr"))
+		// add the obj DD
+		linkedit.dd(new DDStatement().name("OBJECT").dsn("${props.cobol_objPDS}($member)").options('shr'))
 
+		//	} else if (props.debug && linkDebugExit!= null){
+		//		//instream SYSLIN, requires DDName list
+		//		String records = "  " + linkDebugExit.replace("\\n","\n").replace('@{member}',member)
+		//		linkedit.dd(new DDStatement().name("SYSLIN").instreamData(records))
+	} else { // no debug && no link card
+		// Use &&TEMP from Compile
 	}
-	
-	// define the MVSExec command to link edit the program
-	MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
 	
 	// add DD statements to the linkedit command
 	linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${props.cobol_loadPDS}($member)").options('shr').output(true).deployType('LOAD'))
 	linkedit.dd(new DDStatement().name("SYSPRINT").options(props.cobol_printTempOptions))
 	linkedit.dd(new DDStatement().name("SYSUT1").options(props.cobol_tempOptions))
 	
-	// add the link source code
-	if ( linkEditStream != null ) {
-		linkedit.dd(new DDStatement().name("SYSLIN").dsn("${props.linkedit_srcPDS}($member)").options("shr"))
-	}
-	
 	// add RESLIB if needed
 	if ( props.RESLIB ) {
 		linkedit.dd(new DDStatement().name("RESLIB").dsn(props.RESLIB).options("shr"))
 	}
+	
 	// add a syslib to the compile command with optional CICS concatenation
 	linkedit.dd(new DDStatement().name("SYSLIB").dsn(props.cobol_objPDS).options("shr"))
 	linkedit.dd(new DDStatement().dsn(props.SCEELKED).options("shr"))
+	
+	// Add Debug Dataset to find the debug exit to SYSLIB
+	if (props.debug && props.SEQAMOD)
+		linkedit.dd(new DDStatement().dsn(props.SEQAMOD).options("shr"))
+	
     if (buildUtils.isCICS(logicalFile))
 		linkedit.dd(new DDStatement().dsn(props.SDFHLOAD).options("shr"))
 		
