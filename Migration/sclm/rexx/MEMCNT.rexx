@@ -571,10 +571,13 @@ Write_Member:
     copyerr.ce = LEFT(mem,10)||LEFT(sclmdsn,27)||migrdsn
   End
 
-  /* test */
-  migrStmt.0 = 1
-  migrStmt.1 = mighlq"."Translate(proj)"."group".VCUR."type"("mem") "lang
-  Address syscall "writefile (migrFile) 755 migrStmt. 1"
+  /* Only write members.txt line if language is not ARCHDEF */
+  If lang <> 'ARCHDEF' Then
+  Do
+    migrStmt.0 = 1
+    migrStmt.1 = mighlq"."Translate(proj)"."group".VCUR."type"("mem") "lang
+    Address syscall "writefile (migrFile) 755 migrStmt. 1"
+  End
 
   "LMCLOSE DATAID("migrid")"
   "LMFREE DATAID("migrid")"

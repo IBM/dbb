@@ -247,7 +247,7 @@ def outputMigrateAndCommitScript(def currentVersion, def datasets, def langs)
      {
          if (datasets.size() > 0) {
          datasets.each { dataset ->
-             (proj,group,type) = dataset.trim().split("\\.")
+             (proj,group,currentVersion,type) = dataset.trim().split("\\.")
              def ext = fileExtMap["$type"]
              if (ext)
                  migrationScriptFile << '$DBB_HOME/migration/bin/migrate.sh -r $repo ' << '-o $outputFile' << " -m MappingRule[hlq:${tempHlq}.${proj}.${group}.${currentVersion},toLower:true,extension:$ext] $type" << '\n'

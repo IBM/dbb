@@ -2140,7 +2140,7 @@ getAllocs :
 
                 /* Need to check the DCB SCLM is using for the output  */
                 /* If it is different to the DCB of the DSDEF (type 2) */
-                /* Then we need to craete a new Type 2 with this DCB   */
+                /* Then we need to create a new Type 2 with this DCB   */
                 Do ty = 1 to t2 While(trans.tr.ddnum.condCnt.dsdef <> typet2.ty)
                 End
                 If trans.tr.ddnum.condCnt.dsdef = typet2.ty Then
@@ -3828,7 +3828,8 @@ xmlLangs :
   Do i = 1 to ld
     tranNumbers = Translate(langs.i.translators,' ',',')
     If (Words(tranNumbers) <> 0 & Word(tranNumbers,1) <> tr) &,
-       (langs.i.languageCode <> 'LNK' & langs.i.languageCode <> 'ASM') Then
+       (langs.i.languageCode <> 'LNK' & langs.i.languageCode <> 'ASM' &,
+        langs.i.languageCode <> 'OTH') Then
       Call DoLangsXML
   End
   /* Loop through a 5th time to take a punt at the binder languages   */
