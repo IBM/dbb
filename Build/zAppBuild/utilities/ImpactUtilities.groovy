@@ -19,10 +19,10 @@ def createImpactBuildList(RepositoryClient repositoryClient) {
 	// local variables
 	Set<String> changedFiles = new HashSet<String>()
 	Set<String> deletedFiles = new HashSet<String>()
-	
+
 	// get the last build result to get the baseline hashes
 	def lastBuildResult = repositoryClient.getLastBuildResult(props.applicationBuildGroup, BuildResult.COMPLETE, BuildResult.CLEAN)
-	
+
 	// calculate changed files
 	if (lastBuildResult) {
 		(changedFiles, deletedFiles) = calculateChangedFiles(lastBuildResult)
@@ -45,7 +45,7 @@ def createImpactBuildList(RepositoryClient repositoryClient) {
 		changedFiles = buildUtils.createFullBuildList()
 	}
 
-	
+
 	// scan files and update source collection for impact analysis
 	updateCollection(changedFiles, deletedFiles, repositoryClient)
 
@@ -58,11 +58,11 @@ def createImpactBuildList(RepositoryClient repositoryClient) {
 			buildSet.add(changedFile)
 			if (props.verbose) println "** Found build script mapping for $changedFile. Adding to build list"
 		}
-		
+
 		// perform impact analysis on changed file
 		if (props.verbose) println "** Performing impact analysis on changed file $changedFile"
 		ImpactResolver impactResolver = createImpactResolver(changedFile, props.impactResolutionRules, repositoryClient)
-			
+
 		def impacts = impactResolver.resolve()
 		impacts.each { impact ->
 			def impactFile = impact.getFile()
@@ -72,9 +72,9 @@ def createImpactBuildList(RepositoryClient repositoryClient) {
 				buildSet.add(impactFile)
 				if (props.verbose) println "** $impactFile is impacted by changed file $changedFile. Adding to build list."
 			}
-		 }
+		}
 	}
-	
+
 	return buildSet
 }
 
@@ -85,12 +85,12 @@ def calculateChangedFiles(BuildResult lastBuildResult) {
 	Map<String,String> baselineHashes = new HashMap<String,String>()
 	Set<String> changedFiles = new HashSet<String>()
 	Set<String> deletedFiles = new HashSet<String>()
-	
+
 	// create a list of source directories to search
 	List<String> directories = []
 	if (props.applicationSrcDirs)
 		directories.addAll(props.applicationSrcDirs.split(','))
-		
+
 	// get the current Git hash for all build directories
 	directories.each { dir ->
 		dir = buildUtils.getAbsolutePath(dir)
@@ -141,14 +141,14 @@ def calculateChangedFiles(BuildResult lastBuildResult) {
 		else {
 			if (props.verbose) println "*! Directory $dir not a local Git repository. Skipping."
 		}
-		
+
 		if (props.verbose) println "*** Changed files for directory $dir:"
 		changed.each { file ->
 			file = fixFilePath(file, dir)
 			changedFiles << file
 			if (props.verbose) println "*** $file"
 		}
-			
+
 		if (props.verbose) println "*** Deleted files for directory $dir:"
 		deleted.each { file ->
 			file = fixFilePath(file, dir)
@@ -157,21 +157,21 @@ def calculateChangedFiles(BuildResult lastBuildResult) {
 		}
 	}
 
-	return [changedFiles,deletedFiles]
+	return [changedFiles, deletedFiles]
 }
 
 def createImpactResolver(String changedFile, String rules, RepositoryClient repositoryClient) {
 	if (props.verbose) println "*** Creating impact resolver for $changedFile with $rules rules"
-	
+
 	// create an impact resolver for the changed file
 	ImpactResolver resolver = new ImpactResolver().file(changedFile)
-	                                              .collection(props.applicationCollectionName)
-	                                              .collection(props.applicationOutputsCollectionName)
-												  .repositoryClient(repositoryClient)
-    // add resolution rules
-    if (rules)
-       resolver.setResolutionRules(buildUtils.parseResolutionRules(rules))
-	   
+			.collection(props.applicationCollectionName)
+			.collection(props.applicationOutputsCollectionName)
+			.repositoryClient(repositoryClient)
+	// add resolution rules
+	if (rules)
+		resolver.setResolutionRules(buildUtils.parseResolutionRules(rules))
+
 	return resolver
 }
 
@@ -180,33 +180,33 @@ def updateCollection(changedFiles, deletedFiles, RepositoryClient repositoryClie
 		if (props.verbose) println "** Unable to update collections. No repository client."
 		return
 	}
-	
+
 	if (props.verbose) println "** Updating collection ${props.applicationCollectionName}"
 	def scanner = new DependencyScanner()
 	List<LogicalFile> logicalFiles = new ArrayList<LogicalFile>()
 	List<PathMatcher> excludeMatchers = createExcludePatterns()
-	
-	verifyCollections(repositoryClient) 
-	
+
+	verifyCollections(repositoryClient)
+
 	// remove deleted files from collection
 	deletedFiles.each { file ->
 		// files in a collection are stored as relative paths from a source directory
 		if (props.verbose) println "*** Deleting logical file for $file"
 		repositoryClient.deleteLogicalFile(props.applicationCollectionName, buildUtils.relativizePath(file))
 	}
-	
+
 	// scan changed files
-	changedFiles.each { file -> 
-		
+	changedFiles.each { file ->
+
 		// make sure file is not an excluded file
 		if ( new File("${props.workspace}/${file}").exists() && !matches(file, excludeMatchers)) {
 			// files in a collection are stored as relative paths from a source directory
 			if (props.verbose) println "*** Scanning file $file (${props.workspace}/${file})"
 			def logicalFile = scanner.scan(file, props.workspace)
-			
+
 			if (props.verbose) println "*** Logical file for $file =\n$logicalFile"
 			logicalFiles.add(logicalFile)
-			
+
 			// save logical files in batches of 500 to avoid running out of heap space
 			if (logicalFiles.size() == 500) {
 				if (props.verbose)
@@ -217,10 +217,10 @@ def updateCollection(changedFiles, deletedFiles, RepositoryClient repositoryClie
 			}
 		}
 	}
-			
+
 	// save logical files
 	if (props.verbose)
-			println "** Storing ${logicalFiles.size()} logical files in repository collection '$props.applicationCollectionName'"
+		println "** Storing ${logicalFiles.size()} logical files in repository collection '$props.applicationCollectionName'"
 	repositoryClient.saveLogicalFiles(props.applicationCollectionName, logicalFiles);
 	if (props.verbose) println(repositoryClient.getLastStatus())
 }
@@ -235,10 +235,10 @@ def saveStaticLinkDependencies(String buildFile, String loadPDS, LogicalFile log
 		if (props.verbose) println "*** Scanning load module for $buildFile"
 		LogicalFile scannerLogicalFile = scanner.scan(buildUtils.relativizePath(buildFile), loadPDS)
 		if (props.verbose) println "*** Logical file = \n$scannerLogicalFile"
-		
+
 		// overwrite original logicalDependencies with load module dependencies
 		logicalFile.setLogicalDependencies(scannerLogicalFile.getLogicalDependencies())
-		
+
 		// Store logical file and indirect dependencies to the outputs collection
 		repositoryClient.saveLogicalFile("${props.applicationOutputsCollectionName}", logicalFile );
 	}
@@ -254,10 +254,10 @@ def verifyCollections(RepositoryClient repositoryClient) {
 		if (props.verbose) println "** Unable to verify collections. No repository client."
 		return
 	}
-		
+
 	String mainCollectionName = "${props.application}-${props.mainBuildBranch}"
 	String mainOutputsCollectionName = "${props.application}-${props.mainBuildBranch}-outputs"
-	
+
 	// check source collection
 	if (!repositoryClient.collectionExists(props.applicationCollectionName)) {
 		if (props.topicBranchBuild) {
@@ -275,7 +275,7 @@ def verifyCollections(RepositoryClient repositoryClient) {
 			if (props.verbose) println "** Created collection ${props.applicationCollectionName}"
 		}
 	}
-	
+
 	// check outputs collection
 	if (!repositoryClient.collectionExists(props.applicationOutputsCollectionName)) {
 		if (props.topicBranchBuild) {
@@ -293,15 +293,18 @@ def verifyCollections(RepositoryClient repositoryClient) {
 			if (props.verbose) println "** Created collection ${props.applicationOutputsCollectionName}"
 		}
 	}
-	
+
 }
 
 def fixFilePath(String file, String dir) {
-	String dirName = new File(dir).getName()
-	if (file.startsWith(dirName))
-		return file
-	else
-		return "$dirName/$file" as String
+	//resolve file name
+	def fixedFileName = buildUtils.relativizePath(dir) + ( file.indexOf ("/") >= 0 ? file.substring(file.lastIndexOf("/")) : file )
+	if ( new File("${props.workspace}/${fixedFileName}").exists()){
+		if(props.verbose) println "## fixFile Path: $fixedFileName"
+		return fixedFileName;
+	}
+	return null
+
 }
 
 def createExcludePatterns() {
@@ -314,8 +317,8 @@ def createExcludePatterns() {
 			pathMatchers.add(matcher)
 		}
 	}
-		
-	
+
+
 	return pathMatchers
 }
 
