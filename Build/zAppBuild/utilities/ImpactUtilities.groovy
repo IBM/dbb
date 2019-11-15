@@ -144,14 +144,16 @@ def calculateChangedFiles(BuildResult lastBuildResult) {
 
 		if (props.verbose) println "*** Changed files for directory $dir:"
 		changed.each { file ->
-			file = fixFilePath(file, dir)
-			changedFiles << file
-			if (props.verbose) println "*** $file"
+			file = fixFilePath(file, dir, true)
+			if ( file != null ) {
+				changedFiles << file
+				if (props.verbose) println "*** $file"
+			}
 		}
-
+			
 		if (props.verbose) println "*** Deleted files for directory $dir:"
 		deleted.each { file ->
-			file = fixFilePath(file, dir)
+			file = fixFilePath(file, dir, false)
 			deletedFiles << file
 			if (props.verbose) println "*** $file"
 		}
@@ -296,15 +298,11 @@ def verifyCollections(RepositoryClient repositoryClient) {
 
 }
 
-def fixFilePath(String file, String dir) {
-	//resolve file name
+def fixFilePath(String file, String dir, boolean mustExist ) {
 	def fixedFileName = buildUtils.relativizePath(dir) + ( file.indexOf ("/") >= 0 ? file.substring(file.lastIndexOf("/")) : file )
-	if ( new File("${props.workspace}/${fixedFileName}").exists()){
-		if(props.verbose) println "## fixFile Path: $fixedFileName"
+	if ( new File("${props.workspace}/${fixedFileName}").exists())
 		return fixedFileName;
-	}
-	return null
-
+	return mustExist ? null : "${props.workspace}/${fixedFileName}"
 }
 
 def createExcludePatterns() {
