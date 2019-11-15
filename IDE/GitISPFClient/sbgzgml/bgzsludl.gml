@@ -19,7 +19,7 @@
   "&amp;bgzDITYP - <hp>&amp;bgzFLNAM &RB43;</hp>">
 <:-- SIZE LIMIT: none -->
 <:ENTITY selfld_01_text "DIRLIST Action">
-<:ENTITY selfld_04_text "Git Repository Action">
+<:ENTITY selfld_04_text "Git/DBB Repository Action">
 
 <:-- SIZE LIMIT: none -->
 <:ENTITY selfld_02_text "Dir ----------">
@@ -46,6 +46,8 @@
 <:ENTITY choice_15_text "Git Commit and Push">
 <:ENTITY choice_16_text "Git Pull  ">
 <:ENTITY choice_17_text "Git Command Prompt ">
+<:ENTITY choice_18_text "DBB User Build ">
+<:ENTITY choice_19_text "View last DBB build log ">
 
 <:ENTITY panel_width "76">
 <:-- End of translatable panel text section                          -->

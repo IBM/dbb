@@ -53,6 +53,10 @@ IF (&bgzEUTF = 'FALSE' | &bgzDEFE = 'U') &bgzDUTF = 'FALSE'
      <choice><ps var=bgzSEL value=15>&choice_15_text;</ps>
      <choice><ps var=bgzSEL value=16>&choice_16_text;</ps>
      <choice><ps var=bgzSEL value=17>&choice_17_text;</ps>
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=18>&choice_18_text;</ps>
+     <choice unavail=bgzdefe unavailmat=U>
+             <ps var=bgzSEL value=19>&choice_19_text;</ps>
  </selfld>
 </region>
 <divider>

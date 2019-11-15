@@ -41,16 +41,25 @@
 
   Address ISPEXEC
 
-  JAVA_HOME   = '/usr/lpp/java/J8.0_64'
-  Rocket_HOME = '/var/rocket'
-  DBB_HOME    = '/var/dbb103'
-  ICONV_HOME  = '/bin/iconv'
+  JAVA_HOME    = '/usr/lpp/java/J8.0_64'
+  Rocket_HOME  = '/var/rocket'
+  Bash_HOME    = '/var/rocket'
+  Gitcore_HOME = '/var/rocket'
+  Man_HOME     = '/var/rocket'
+  Perl5_HOME   = '/var/rocket'
+  DBB_HOME     = '/var/dbb103'
+  ICONV_HOME   = '/bin/iconv'
 
   BGZJAVAH = JAVA_HOME
   BGZROCKH = Rocket_HOME
+  BGZBASH  = Bash_HOME
+  BGZCGIT  = Gitcore_HOME
+  BGZMAN   = Man_HOME
+  BGZPERL5 = Perl5_HOME
   BGZDBBH  = DBB_HOME
   BGZICONV = ICONV_HOME
 
-  'VPUT (BGZJAVAH,BGZROCKH,BGZDBBH,BGZICONV) SHARED'
+  'VPUT (BGZJAVAH,BGZROCKH,BGZBASH,BGZCGIT,BGZMAN,BGZPERL5) SHARED'
+  'VPUT (BGZDBBH,BGZICONV) SHARED'
 
 Exit

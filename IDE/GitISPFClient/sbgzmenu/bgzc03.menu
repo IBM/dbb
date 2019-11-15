@@ -13,6 +13,12 @@ BGZC035 'Unix File delete        ' .TYPE=NOTIFY .HELP=* .ALARM=NO
 'The Unix file has been deleted'
 BGZC036 'Unix File rename        ' .TYPE=NOTIFY .HELP=* .ALARM=NO
 'The Unix file has been renamed'
+BGZC037 .TYPE=NOTIFY .HELP=* .ALARM=NO
+'DBB Console'
+BGZC038 .TYPE=NOTIFY .HELP=* .ALARM=NO
+'Git Messages'
+BGZC039 'DBB build log not found' .TYPE=WARNING .HELP=* .ALARM=YES
+'No DBB build log exists for this file'
 /* COPYRIGHT IBM CORP 2019 */
 /* ISPDTLC Release: 7.3.  Level: PID                                  */
-/* z/OS 02.03.00.  Created - Date: 14 May 2019, Time: 09:35           */
+/* z/OS 02.03.00.  Created - Date: 23 Sep 2019, Time: 06:02           */

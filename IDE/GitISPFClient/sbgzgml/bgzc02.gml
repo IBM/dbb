@@ -30,7 +30,7 @@ Codes E (Edit), EA (Edit ASCII), EU (Edit UTF-8),
       V (View), VA (View ASCII), VU (View UTF-8),
       B (Browse), D (Delete) R (Rename),
 ST (Status), AD (Add), CO (Commit), PS (Push), CP (Commit & Push), PL (Pull),
-and CM (Command Prompt) allowed
+CM (Command Prompt) UB (DBB user build) and UL (View DBB log) allowed
 
 <MSG SUFFIX=5  MSGTYPE=Warning ALARM=YES HELP=*
      SMSG="Edit/View failed">
@@ -41,7 +41,7 @@ and CM (Command Prompt) allowed
 Codes E (Edit), EA (Edit ASCII), V (View), VA (View ASCII), B (Browse),
 D (Delete, R (Rename),
 ST (Status), AD (Add), CO (Commit), PS (Push), CP (Commit & Push), PL (Pull),
-and CM (Command Prompt) allowed
+CM (Command Prompt) UB (DBB user build) and UL (View DBB log) allowed
 
 <MSG SUFFIX=7  MSGTYPE=Info ALARM=NO HELP=*>
 File

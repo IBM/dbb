@@ -22,6 +22,7 @@
 /*********************************************************************/
 
   Parse Arg gitcmd shellcmd
+  Address ISPEXEC
 
   /* Create hex variables for attribute bytes */
   x01='01'x
@@ -37,6 +38,18 @@
   /* the output rather than poping on the git message panel.   */
   /* Output will be returned in a temporary ISPF table.        */
   noPop = 'branch stage'
+
+  /* Set the panel title depending on the command   */
+  /* gitcmd = dbbub --> panel title : DBB Console   */
+  /* any git command --> panel title : Git Messages */
+  If gitcmd = 'dbbub' Then
+  Do
+    'GETMSG MSG(BGZC037) LONGMSG(BGZTITLE)'
+  End
+  Else
+  Do
+    'GETMSG MSG(BGZC038) LONGMSG(BGZTITLE)'
+  End
 
   filler   = ' '
   call runShell
