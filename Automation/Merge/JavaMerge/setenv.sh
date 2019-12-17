@@ -11,7 +11,10 @@
 # Set up the environment
 # NOTE: Before running this script, you need to have modified this file to match your z/OS system
 #
-export ZOAUTIL_DIR=/usr/lpp/IBM/zoa
+if [ -z ${ZOAUTIL_DIR} ]; then
+   export ZOAUTIL_DIR=/usr/lpp/IBM/zoautil
+fi
+
 export PATH=${ZOAUTIL_DIR}/bin:$PATH
 export JAVA_HOME=/usr/lpp/java/J8.0_64               # Root directory for Java 64-bit
 export CLASSPATH=${ZOAUTIL_DIR}/lib/*:.
