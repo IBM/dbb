@@ -150,7 +150,7 @@ def calculateChangedFiles(BuildResult lastBuildResult) {
 				if (props.verbose) println "*** $file"
 			}
 		}
-			
+
 		if (props.verbose) println "*** Deleted files for directory $dir:"
 		deleted.each { file ->
 			file = fixFilePath(file, dir, false)
@@ -204,10 +204,23 @@ def updateCollection(changedFiles, deletedFiles, RepositoryClient repositoryClie
 		if ( new File("${props.workspace}/${file}").exists() && !matches(file, excludeMatchers)) {
 			// files in a collection are stored as relative paths from a source directory
 			if (props.verbose) println "*** Scanning file $file (${props.workspace}/${file})"
-			def logicalFile = scanner.scan(file, props.workspace)
-
-			if (props.verbose) println "*** Logical file for $file =\n$logicalFile"
-			logicalFiles.add(logicalFile)
+			try {
+				def logicalFile = scanner.scan(file, props.workspace)
+				if (props.verbose) println "*** Logical file for $file =\n$logicalFile"
+				logicalFiles.add(logicalFile)
+			} catch (Exception e) {
+				
+				String warningMsg = "***** Scanning failed for file $file (${props.workspace}/${file})"
+				buildUtils.updateBuildResult(warningMsg:warningMsg,client:getRepositoryClient())
+				println(warningMsg)
+				e.printStackTrace()
+				
+				// terminate when continueOnScanFailure is not set to true
+				if(!(props.continueOnScanFailure == 'true')){
+					println "***** continueOnScan Failure set to false. Build terminates."
+					System.exit(1)
+				}
+			}
 
 			// save logical files in batches of 500 to avoid running out of heap space
 			if (logicalFiles.size() == 500) {

@@ -145,7 +145,7 @@ def sortBuildList(List<String> buildList, String rankPropertyName) {
  * updateBuildResult - used by language scripts to update the build result after a build step
  */
 def updateBuildResult(Map args) {
-	// args : errorMsg, logs[logName:logFile], client:repoClient
+	// args : errorMsg / warningMsg, logs[logName:logFile], client:repoClient
 	
 	if (args.client) {
 		def buildResult = args.client.getBuildResult(props.applicationBuildGroup, props.applicationBuildLabel)
@@ -158,6 +158,13 @@ def updateBuildResult(Map args) {
 		if (args.errorMsg) {
 			buildResult.setStatus(buildResult.ERROR)
 			buildResult.addProperty("error", args.errorMsg)
+
+		}
+		
+		// add warning message, but keep result status
+		if (args.warningMsg) {
+			// buildResult.setStatus(buildResult.WARNING)
+			buildResult.addProperty("warning", args.warningMsg)
 
 		}
 		
