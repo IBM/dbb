@@ -33,6 +33,7 @@ Property | Description | Overridable
 assembler_fileBuildRank | Default Assemble program build rank. Used to sort Assembler build file sub-list. Leave empty. | true
 assembler_pgmParms | Default Assembler parameters. | true
 assembler_linkEditParms | Default parameters for the link edit step. | true
+assembler_compileErrorPrefixParms | Default parameters to support remote error feedback in user build scenarios | true
 assembler_linkEdit | Flag indicating to execute the link edit step to produce a load module for the source file.  If false then a object deck will be created instead for later linking. | true
 assembler_maxRC | Default Assembler maximum RC allowed. | true
 assembler_linkEditMaxRC | Default link edit maximum RC allowed. | true
@@ -97,3 +98,59 @@ pli_linkEditParms | Default link edit parameters. | true
 pli_linkEdit | Flag indicating to execute the link edit step to produce a load module for the source file.  If false then a object deck will be created instead for later linking. | true
 plil_scanLoadModule | Flag indicating to scan the load module for link dependencies and store in the application's outputs collection. | true
 
+### bind.properties
+Application properties used by zAppBuild/language/COBOL.groovy
+
+Property | Description | Overridable
+--- | --- | ---
+bind_performBindPackage | Default variable to perform DB2 bind as part of a DBB User Build (default value:false) | true
+bind_runIspfConfDir | |
+bind_db2Location | The name of the DB2 subsystem | true
+bind_collectionID | The DB2 collection (Package) name | true
+bind_packageOwner | The owner of the package, if left empty the use executing the command will be used | true
+bind_qualifier | The value of the implicit qualifier | true
+bind_maxRC | Default bind maximum RC allowed. | true
+
+### MFS.properties
+Application properties used by zAppBuild/language/MFS.groovy
+
+Property | Description | Overridable
+--- | --- | ---
+mfs_fileBuildRank | Default MFS program build rank. Used to sort MFS build file sub-list. Leave empty. | true
+mfs_phase1MaxRC | Default MFS Phase 1 maximum RC allowed. | true
+mfs_phase2MaxRC | Default MFS Phase 2 maximum RC allowed. | true
+mfs_phase1Parms | Default parameters for the phase 1 step. | true
+mfs_phase2Parms | Default parameters for the phase 2 step. | true
+
+### DBDgen.properties
+Application properties used by zAppBuild/language/DBDgen.groovy
+
+Property | Description | Overridable
+--- | --- | ---
+dbdgen_fileBuildRank | Default build program build rank. Used to sort DBDgen build file sub-list. Leave empty. | true
+dbdgen_pgmParms | Default DBDgen parameters. | true
+dbdgen_linkEditParms | Default parameters for the link edit step. | true
+dbdgen_compileErrorPrefixParms | Default parameters to support remote error feedback in user build scenarios | true
+dbdgen_assemblerMaxRC | Default link edit maximum RC allowed. | true
+dbdgen_linkEditMaxRC | Default link edit maximum RC allowed. | true
+
+### PSBgen.properties
+Application properties used by zAppBuild/language/PSBgen.groovy
+
+Property | Description | Overridable
+--- | --- | ---
+psbgen_fileBuildRank | Default build program build rank. Used to sort DBDgen build file sub-list. Leave empty. | true
+psbgen_pgmParms | Default PSBgen parameters. | true
+psbgen_linkEditParms | Default parameters for the link edit step. | true
+psbgen_compileErrorPrefixParms | Default parameters to support remote error feedback in user build scenarios | true
+psbgen_runACBgen | Parameter if ACBgen should be executed right after PSBgen (default: true) | true
+psbgen_assemblerMaxRC | Default link edit maximum RC allowed. | true
+psbgen_linkEditMaxRC | Default link edit maximum RC allowed. | true
+
+### ACBgen.properties
+Application properties used by zAppBuild/language/ACBgen.groovy
+
+Property | Description | Overridable
+--- | --- | ---
+acbgen_pgmParms | Default ACBgen parameters. | true
+acbgen_pgmMaxRC | Default ACBgen maximum RC allowed. | true

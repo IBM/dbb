@@ -61,6 +61,7 @@ assembler_srcOptions | BPXWDYN creation options for creating 'source' type data 
 assembler_loadDatasets | Comma separated list of 'load module' type data sets
 assembler_loadOptions | BPXWDYN creation options for 'load module' type data sets
 assembler_tempOptions | BPXWDYN creation options for temporary data sets
+assembler_compileErrorFeedbackXmlOptions | BPXWDYN creation options for SYSXMLSD data set
 assembler_pgm | MVS program name of the high level assembler
 assembler_linkEditor | MVS program name of the link editor
 dbb.DependencyScanner.languageHint | DBB configuration property used by the dependency scanner to disambiguate a source file's language
@@ -98,6 +99,7 @@ cobol_srcOptions | BPXWDYN creation options for creating 'source' type data sets
 cobol_loadDatasets | Comma separated list of 'load module' type data sets
 cobol_loadOptions | BPXWDYN creation options for 'load module' type data sets
 cobol_tempOptions | BPXWDYN creation options for temporary data sets
+cobol_compileErrorFeedbackXmlOptions | BPXWDYN creation options for SYSXMLSD data set
 cobol_compiler | MVS program name of the COBOL compiler
 cobol_linkEditor | MVS program name of the link editor
 dbb.DependencyScanner.languageHint | DBB configuration property used by the dependency scanner to disambiguate a source file's language
@@ -136,5 +138,78 @@ pli_srcOptions | BPXWDYN creation options for creating 'source' type data sets
 pli_loadDatasets | Comma separated list of 'load module' type data sets
 pli_loadOptions | BPXWDYN creation options for 'load module' type data sets
 pli_tempOptions | BPXWDYN creation options for temporary data sets
+pli_compileErrorFeedbackXmlOptions | BPXWDYN creation options for SYSXMLSD data set
 pli_listOptions | BPXWDYN creation options for LIST data sets
 dbb.DependencyScanner.languageHint | DBB configuration property used by the dependency scanner to disambiguate a source file's language
+
+### MFS.properties
+Build properties used by zAppBuild/language/MFS.groovy
+
+Property | Description 
+--- | --- 
+mfs_requiredBuildProperties | Comma separated list of required build properties for language/MFS.groovy
+mfs_srcPDS | Dataset to move mfs source files to from USS
+mfs_tformatPDS | Dataset to create format set from phase 2 step
+mfs_srcDatasets | Comma separated list of 'source' type data sets
+mfs_srcOptions | BPXWDYN creation options for creating 'source' type data sets
+mfs_loadDatasets | Comma separated list of 'load module' type data sets
+mfs_loadOptions | BPXWDYN creation options for 'load module' type data sets
+mfs_tempOptions | BPXWDYN creation options for temporary data sets
+mfs_phase1processor | MVS program name of MFSgen utility phase 1
+mfs_phase2processor | MVS program name of MFSgen utility phase 2
+mfs_deployType | deploy Type of format set
+
+### DBDgen.properties
+Build properties used by zAppBuild/language/DBDgen.groovy
+
+Property | Description 
+--- | --- 
+dbdgen_requiredBuildProperties | Comma separated list of required build properties for language/DBDgen.groovy
+dbdgen_srcPDS | Dataset to move assembler source files to from USS
+dbdgen_objPDS | Dataset to create object decks in from Assembler step
+dbdgen_loadPDS | Dataset to create load modules in from link edit step
+dbdgen_srcDatasets | Comma separated list of 'source' type data sets
+dbdgen_srcOptions | BPXWDYN creation options for creating 'source' type data sets
+dbdgen_loadDatasets | Comma separated list of 'load module' type data sets
+dbdgen_loadOptions | BPXWDYN creation options for 'load module' type data sets
+dbdgen_tempOptions | BPXWDYN creation options for temporary data sets
+dbdgen_compileErrorFeedbackXmlOptions | BPXWDYN creation options for SYSXMLSD data set
+dbdgen_pgm | MVS program name of the high level assembler
+dbdgen_linkEditor | MVS program name of the link editor
+dbdgen_deployType | Deploy Type of build outputs
+dbb.DependencyScanner.languageHint | DBB configuration property used by the dependency scanner to disambiguate a source file's language
+
+### PSBgen.properties
+Build properties used by zAppBuild/language/PSBgen.groovy
+
+Property | Description 
+--- | --- 
+psbgen_requiredBuildProperties | Comma separated list of required build properties for language/PSBgen.groovy
+psbgen_srcPDS | Dataset to move assembler source files to from USS
+psbgen_objPDS | Dataset to create object decks in from Assembler step
+psbgen_loadPDS | Dataset to create load modules in from link edit step
+psbgen_srcDatasets | Comma separated list of 'source' type data sets
+psbgen_srcOptions | BPXWDYN creation options for creating 'source' type data sets
+psbgen_loadDatasets | Comma separated list of 'load module' type data sets
+psbgen_loadOptions | BPXWDYN creation options for 'load module' type data sets
+psbgen_tempOptions | BPXWDYN creation options for temporary data sets
+psbgen_compileErrorFeedbackXmlOptions | BPXWDYN creation options for SYSXMLSD data set
+psbgen_pgm | MVS program name of the high level assembler
+psbgen_linkEditor | MVS program name of the link editor
+psbgen_deployType | Deploy Type of build outputs
+dbb.DependencyScanner.languageHint | DBB configuration property used by the dependency scanner to disambiguate a source file's language
+
+### ACBgen.properties
+Build properties used by zAppBuild/language/PSBgen.groovy; ACBgen is part of the PSBgen process
+
+Property | Description 
+--- | --- 
+acbgen_requiredBuildProperties | Comma separated list of required build properties for language/PSBgen.groovy
+acbgen_psbPDS | Dataset to of PSBgen output
+acbgen_dbdPDS | Dataset to of DBDgen output
+acbgen_loadPDS | Dataset to create acbgen modules
+acbgen_loadDatasets | Comma separated list of 'load module' type data sets
+acbgen_loadOptions | BPXWDYN creation options for 'load module' type data sets
+acbgen_tempOptions | BPXWDYN creation options for temporary data sets
+acbgen_pgm | MVS program name of the acbgen pgm
+acbgen_deployType | Deploy Type of build outputs
