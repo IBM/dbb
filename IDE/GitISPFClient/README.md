@@ -138,8 +138,17 @@ VU      | View file (UTF-8)
 B       | Browse file
 D       | Delete file
 R       | Rename file
+UB      | DBB User Build
+UL      | View last DBB build log
 
-To create a new file enter S <filename> on the command line. Make sure you give the filename an extension that matches an entry in your .gitattributes file. This way, when the file is added to staging it will automatically be tagged with the correct CCSID. 
+To create a new file enter S <filename> on the command line. Make sure you give the filename an extension that matches an entry in your .gitattributes file. This way, when the file is added to staging it will automatically be tagged with the correct CCSID.
+    
+The User Build option is works with a cloned repository that has a DBB build structure containing groovy scripts for build. The structure expected will be as follows in the z/OS Unix directory :
+
+ **clone working directory/Build/Application/folder/filename**
+
+To request a DBB User Build through ISPF Git interface, enter **UB** (User Build) next to the file you want to build.
+On the DBB User Build panel, you will have to specify the build sctript to use (an existing DBB groovy build script that use IBM Dependency Based Build), and the build destination HLQ where you want to have your file built.
     
 ### Issuing Git commands against a repository
 Most Git commands work against the repository. You can enter the Git commands from any line command entry field. Again, enter a **/** to see the options available, or use the fast path Git commands which are:
