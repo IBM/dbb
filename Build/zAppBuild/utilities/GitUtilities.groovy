@@ -115,6 +115,47 @@ def getCurrentGitHash(String gitDir) {
 }
 
 /*
+ * Returns the current Git hash for this file path
+ *
+ * @param  String gitDir  		Local Git repository directory
+ * @param  String filePath		filePath relative to gitDir
+ * @return String gitHash       The current Git hash
+ */
+def getFileCurrentGitHash(String gitDir, String filePath) {
+	String cmd = "git -C $gitDir rev-list -1 HEAD " + filePath
+	StringBuffer gitHash = new StringBuffer()
+	StringBuffer gitError = new StringBuffer()
+	
+	Process process = cmd.execute()
+	process.waitForProcessOutput(gitHash, gitError)
+	if (gitError) {
+		print("*! Error executing Git command: $cmd error: $gitError")
+	}
+	return gitHash.toString().trim()
+}
+
+/*
+ * Returns the current Git url
+ *
+ * @param  String gitDir  		Local Git repository directory
+ * @return String gitUrl       The current Git url
+ */
+def getCurrentGitUrl(String gitDir) {
+	String cmd = "git -C $gitDir config --get remote.origin.url"
+	StringBuffer gitUrl = new StringBuffer()
+	StringBuffer gitError = new StringBuffer()
+	
+	Process process = cmd.execute()
+	process.waitForProcessOutput(gitUrl, gitError)
+	
+	if (gitError) {
+		print("*! Error executing Git command: $cmd error: $gitError")
+	}
+	return gitUrl.toString().trim()
+}
+
+
+/*
  * Returns the lst previous Git commit hash
  * 
  * @param String gitDir       Local Git repository directory
@@ -173,5 +214,43 @@ def getChangedFiles(String gitDir, String baseHash, String currentHash) {
 	return [changedFiles, deletedFiles]
 }
 
-
+def getCurrentChangedFiles(String gitDir, String currentHash, String verbose) {
+	if (verbose) println "** Running git command: git -C $gitDir show --pretty=format: --name-status $currentHash"
+	String cmd = "git -C $gitDir show --pretty=format: --name-status $currentHash"	
+	def gitDiff = new StringBuffer()
+	def gitError = new StringBuffer()
+	def changedFiles = []
+	def deletedFiles = []
+	
+	Process process = cmd.execute()
+	process.waitForProcessOutput(gitDiff, gitError)
+	
+	// handle command error
+	if (gitError.size() > 0) {
+		println("*! Error executing Git command: $cmd error: $gitError")
+		println ("*! Attempting to parse unstable git command for changed files...")
+	}
+	
+	for (line in gitDiff.toString().split("\n")) {
+		if (verbose) println "** Git command line: $line"
+		// process files from git diff
+		try {
+			action = line.split()[0]
+			file = line.split()[1]
+			// handle deleted files
+			if (action == "D") {
+				deletedFiles.add(file)
+			}
+			// handle changed files
+			else {
+				changedFiles.add(file)
+			}
+		}
+		catch (Exception e) {
+			// no changes or unhandled format
+		}
+	}
+	
+	return [changedFiles, deletedFiles]
+}
 

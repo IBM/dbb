@@ -13,7 +13,7 @@ Build properties for Partition Data Sets (PDS) used by zAppBuild language build 
 Property | Description 
 --- | --- 
 MACLIB | z/OS macro library. Example: SYS1.MACLIB
-SCEEMAC | Assmebler macro library. Example: CEE.SCEEMAC
+SCEEMAC | Assembler macro library. Example: CEE.SCEEMAC
 SCEELKED | LE (Language Environment) load library. Example: CEE.SCEELKED
 SASMMOD1 | High Level Assembler (HLASM) load library. Example: ASM.SASMMOD1
 SIGYCOMP_V4 | Cobol Compiler Data Set for version 4.x.x. Example: COBOL.V4R1M0.SIGYCOMP

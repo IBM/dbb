@@ -298,3 +298,16 @@ def relativizePath(String path) {
 		relPath = relPath.take(relPath.length()-1)
 	return relPath
 }
+
+/*
+ * relativizeFolderPath - converts a path to a relative path from folder
+ */
+def relativizeFolderPath(String folder, String path) {
+	String fullPath = getAbsolutePath(path) 
+	String fullFolderPath = folder
+	if (!folder.startsWith('/'))
+		fullFolderPath = getAbsolutePath(folder)
+	if (fullPath.startsWith(fullFolderPath))
+		return fullPath.substring(fullFolderPath.length()+1)
+	return path
+}

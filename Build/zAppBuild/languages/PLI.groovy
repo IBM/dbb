@@ -201,7 +201,10 @@ def createLinkEditCommand(String buildFile, LogicalFile logicalFile, String memb
 	MVSExec linkedit = new MVSExec().file(buildFile).pgm(linker).parm(parms)
 
 	// add DD statements to the linkedit command
-	linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${props.pli_loadPDS}($member)").options('shr').output(true).deployType('LOAD'))
+	String linkedit_deployType = props.getFileProperty('linkedit_deployType', buildFile)
+	if ( linkedit_deployType == null )
+		linkedit_deployType = 'LOAD'
+	linkedit.dd(new DDStatement().name("SYSLMOD").dsn("${props.pli_loadPDS}($member)").options('shr').output(true).deployType(linkedit_deployType))
 	linkedit.dd(new DDStatement().name("SYSPRINT").options(props.pli_tempOptions))
 	linkedit.dd(new DDStatement().name("SYSUT1").options(props.pli_tempOptions))
 

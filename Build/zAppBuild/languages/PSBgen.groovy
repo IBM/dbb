@@ -62,7 +62,7 @@ sortedList.each { buildFile ->
 		}
 
 		else{
-			if (props.psbgen_runACBgen){ // only run acbgen, if set to true in PSBgen.properties
+			if (props.psbgen_runACBgen && props.psbgen_runACBgen.toBoolean()){ // only run acbgen, if set to true in PSBgen.properties
 				rc = acbgenCommand.execute()
 				maxRC = props.getFileProperty('acbgen_pgmMaxRC', buildFile).toInteger()
 
