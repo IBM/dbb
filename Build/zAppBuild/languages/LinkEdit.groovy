@@ -42,7 +42,8 @@ sortedList.each { buildFile ->
 
 	rc = linkEdit.execute()
 	maxRC = props.getFileProperty('linkedit_maxRC', buildFile).toInteger()
-
+	boolean bindFlag = true	
+	
 	if (rc > maxRC) {
 		String errorMsg = "*! The link edit return code ($rc) for $buildFile exceeded the maximum return code allowed ($maxRC)"
 		println(errorMsg)
@@ -55,6 +56,20 @@ sortedList.each { buildFile ->
 			String scanLoadModule = props.getFileProperty('linkedit_scanLoadModule', buildFile)
 			if (scanLoadModule && scanLoadModule.toBoolean() && getRepositoryClient())
 				impactUtils.saveStaticLinkDependencies(buildFile, props.linkedit_loadPDS, logicalFile, repositoryClient)
+		}
+	}
+
+	if (props.userBuild && bindFlag && props.bind_performBindPlan && props.bind_performBindPlan.toBoolean() ) {
+		int bindMaxRC = props.getFileProperty('bind_maxRC', buildFile).toInteger()
+		def owner = ( props.userBuild || ! props.bind_planOwner ) ? System.getProperty("user.name") : props.bind_planOwner
+		
+		def (bindRc, bindLogFile) = bindUtils.bindPlan(buildFile, props.buildOutDir, props.bind_runIspfConfDir, 
+				props.bind_db2Location, props.bind_collectionID, owner, props.bind_qualifier, props.verbose && props.verbose.toBoolean());
+		if ( bindRc > bindMaxRC) {
+			String errorMsg = "*! The bind plan return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_maxRC)"
+			println(errorMsg)
+			props.error = "true"
+			buildUtils.updateBuildResult(errorMsg:errorMsg,logs:["${member}_plan.log":bindLogFile],client:getRepositoryClient())
 		}
 	}
 
