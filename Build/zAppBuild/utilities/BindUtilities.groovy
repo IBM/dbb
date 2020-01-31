@@ -12,62 +12,40 @@ bind(args)
 
 def bindPackage(String file, String dbrmHLQ, String workDir, String confDir, String SUBSYS, String COLLID, String OWNER, String QUAL, boolean verbose) {
 	// define local properties
-	def dbrmPDS = "${dbrmHLQ}"
-	def clistPDS = "${dbrmHLQ}.CLIST"
-	def cmdscpDS = "${dbrmHLQ}.ISPFGWY.EXEC"
 	def member = CopyToPDS.createMemberName(file)
 	def logFile = new File("${workDir}/${member}_bind.log")
-	def srcOptions = "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library) msg(1)"
-
-
 	println("*** Binding $file")
 
-
-	// create BIND CLIST if necessary
-	def clist = new File("${workDir}/bind.clist")
-	if (clist.exists()) {
-		clist.delete()
-	}
-	
-	clist << """PROC 6 SUBSYS COLLID MEMBER LIB OWNER QUAL                       
-   DSN SYSTEM(&SUBSYS)                                       
-   BIND PACKAGE(&COLLID)    +                                
-        MEMBER(&MEMBER)     +
-        OWNER(&OWNER)       +                                
-        QUALIFIER(&QUAL)    +                                
-        ACTION(REPLACE)     +                                
-        ISOLATION(CS)                                        
-   END                                                       
-EXIT CODE(&LASTCC)
+	String jobstmts = """
+//DBBBND JOB 'DBB-PKGBIND',REGION=0M,MSGLEVEL=1,MSGCLASS=1,     
+//  CLASS=1,SCHENV=DB2@${SUBSYS},LINES=(10000,WARNING)      
+//******************************************************************* 
+//* DESCRIPTION: BIND DB2 PACKAGE                                   * 
+//******************************************************************* 
+//STEP10  EXEC DSNTSOP,RC=16                                          
+//DBRMLIB DD DSN=${dbrmHLQ},DISP=(SHR,KEEP,KEEP)   
+//SYSTSIN DD *                                                        
+	DSN SYSTEM(${SUBSYS})   
+	   BIND PACKAGE(${COLLID})    +                                
+       MEMBER(${member})     +
+       OWNER(${OWNER})       +                                
+       QUALIFIER(${QUAL})    +                                
+       ACTION(REPLACE)     +                                
+       ISOLATION(CS)                                        
+  END                                                       
 """
 
-	// create CLIST PDS if necessary
-	new CreatePDS().dataset(clistPDS).options(srcOptions).create()
-
-	// copy CLIST to PDS
-	if ( verbose )
-		println("*** Copying ${workDir}/bind.clist to $clistPDS(BIND)")
-	new CopyToPDS().file(clist).dataset(clistPDS).member("BIND").execute()
-
-	// bind the build file
-	if ( verbose )
-		println("*** Executing CLIST to bind program $file")
-
-	// define TSOExec to run the bind clist
-	def bind = new TSOExec().file(file)
-			.command("exec '$clistPDS(BIND)'")
-			.options("'${SUBSYS} ${COLLID} $member $dbrmPDS ${OWNER} ${QUAL}'")
-			.logFile(logFile)
-			.confDir(confDir)
-			.keepCommandScript(true)
-	bind.dd(new DDStatement().name("CMDSCP").dsn(cmdscpDS).options("shr"))
-
-	// execute the bind clist
-	def rc = bind.execute()
+	def exec = new JCLExec()
+	int jrc = exec.text(jobstmts).confDir(confDir).execute()
+	int rc = exec.maxRC.split("CC")[1].toInteger() 
+	
+	println "***Bind Job ${exec.submittedJobId} completed with $rc "
+	String ddName = "SYSTSPRT"
+	exec.saveOutput(ddName, logFile)  
 	
 	return [rc,"${workDir}/${member}_bind.log"]
 
-}
+ }
 
 //Parse the command line and bind
 def bind(String[] cliArgs)
@@ -105,6 +83,96 @@ def bind(String[] cliArgs)
 		String errorMsg = "*! The bind return code ($rc) for $opts.f exceeded the maximum return code allowed ($maxRC)\n** See: $logFile"
 		println(errorMsg)
 		System.exit(1)
+	}
+	if ( rc <= maxRC ) {
+		String errorMsg = "*! Bind was successful with a return code ($rc). See: $logFile"
+		println(errorMsg)
+		System.exit(0)
+	}
+}
+
+
+def bindPlan(String file, String workDir, String confDir, String SUBSYS, String COLLID, String OWNER, String QUAL, boolean verbose) {
+	// define local properties
+	def member = CopyToPDS.createMemberName(file)
+	def logFile = new File("${workDir}/${member}_plan.log")
+	println("*** Binding $file")
+
+	String jobstmts = """
+//DBBPLN JOB 'DBB-PLNBIND',REGION=0M,MSGLEVEL=1,MSGCLASS=1,     
+//  CLASS=1,SCHENV=DB2@${SUBSYS},LINES=(10000,WARNING)      
+//******************************************************************* 
+//* DESCRIPTION: BIND DB2 PLAN                                   * 
+//******************************************************************* 
+//STEP10  EXEC DSNTSOP,RC=16                                          
+//SYSTSIN DD *                                                        
+	DSN SYSTEM(${SUBSYS})   
+	BIND PLAN (${member})           +
+    OWNER(${OWNER})                 +
+    PKLIST (*.${COLLID}.*)          +
+    ACTION (REPLACE)                +
+    VALIDATE(BIND)                  +
+    ISOLATION(CS)                   +
+    RELEASE (COMMIT)                +
+    CURRENTDATA(NO)                 +
+    EXPLAIN (YES)                   +
+    RETAIN
+END
+                                                    
+"""
+
+	def exec = new JCLExec()
+	int jrc = exec.text(jobstmts).confDir(confDir).execute()
+	int rc = exec.maxRC.split("CC")[1].toInteger() 
+	println "***Bind Job ${exec.submittedJobId} completed with $rc "
+	String ddName = "SYSTSPRT"
+	exec.saveOutput(ddName, logFile)  
+	
+	return [rc,"${workDir}/${member}_plan.log"]
+
+ }
+
+//Parse the command line and bind
+// dbrm not required for plan
+def bindP(String[] cliArgs)
+{
+	def cli = new CliBuilder(usage: "BindUtilities.groovy [options]", header: '', stopAtNonOption: false)
+	cli.f(longOpt:'file', args:1, required:true, 'The build file name.')
+	cli.w(longOpt:'workDir', args:1, required:true, 'Absolute path to the working directory')
+	cli.c(longOpt:'confDir', args:1, required:true, 'Absolute path to runIspf.sh folder')
+	
+	cli.s(longOpt:'subSys', args:1, required:true, 'The name of the DB2 subsystem')
+	cli.p(longOpt:'collId', args:1, required:true, 'Specify the DB2 collection (Package)')
+	cli.o(longOpt:'owner', args:1, required:true, 'The owner of the package')
+	cli.q(longOpt:'qual', args:1, required:true, 'The value of the implicit qualifier')
+	cli.m(longOpt:'maxRc', args:1, 'The maximun return value')
+	
+	cli.v(longOpt:'verbose', 'Flag to turn on script trace')
+	
+	def opts = cli.parse(cliArgs)
+	
+	// if opt parse fail exit.
+	if (! opts) {
+		System.exit(1)
+	}
+	
+	if (opts.help)
+	{
+		cli.usage()
+		System.exit(0)
+	}
+	
+	def maxRC = opts.m ? opts.m.toInteger() : 0
+	def (rc, logFile) = bindPlan(opts.f, opts.w, opts.c, opts.s, opts.p, opts.o, opts.q, opts.v)
+	if ( rc > maxRC ) {
+		String errorMsg = "*! The bind return code ($rc) for $opts.f exceeded the maximum return code allowed ($maxRC)\n** See: $logFile"
+		println(errorMsg)
+		System.exit(1)
+	}
+	if ( rc <= maxRC ) {
+		String errorMsg = "*! Bind was successful with a return code ($rc). See: $logFile"
+		println(errorMsg)
+		System.exit(0)
 	}
 }
 
