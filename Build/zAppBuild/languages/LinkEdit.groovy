@@ -46,6 +46,7 @@ sortedList.each { buildFile ->
 	boolean bindFlag = true	
 	
 	if (rc > maxRC) {
+		bindFlag = false
 		String errorMsg = "*! The link edit return code ($rc) for $buildFile exceeded the maximum return code allowed ($maxRC)"
 		println(errorMsg)
 		props.error = "true"
@@ -61,7 +62,7 @@ sortedList.each { buildFile ->
 	}
 
 	if (props.userBuild && bindFlag && props.bind_performBindPlan && props.bind_performBindPlan.toBoolean() ) {
-		int bindMaxRC = props.getFileProperty('bind_maxRC', buildFile).toInteger()
+		int bindMaxRC = props.getFileProperty('bind_planMaxRC', buildFile).toInteger()
 		def owner = ( props.userBuild || ! props.bind_planOwner ) ? System.getProperty("user.name") : props.bind_planOwner
 		
 		def (bindRc, bindLogFile) = bindUtils.bindPlan(buildFile, props.buildOutDir, props.bind_runIspfConfDir, 
