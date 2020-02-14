@@ -82,7 +82,7 @@ sortedList.each { buildFile ->
 	
 	//perform Db2 Bind only on User Build and perfromBindPackage property
 	if (props.userBuild && bindFlag && logicalFile.isSQL() && props.bind_performBindPackage && props.bind_performBindPackage.toBoolean() ) {
-		int bindMaxRC = props.getFileProperty('bind_maxRC', buildFile).toInteger()
+		int bindMaxRC = props.getFileProperty('bind_packageMaxRC', buildFile).toInteger()
 
 		// if no  owner is set, use the user.name as package owner 
 		def owner = ( !props.bind_packageOwner ) ? System.getProperty("user.name") : props.bind_packageOwner
@@ -90,7 +90,7 @@ sortedList.each { buildFile ->
 		def (bindRc, bindLogFile) = bindUtils.bindPackage(buildFile, props.cobol_dbrmPDS, props.buildOutDir, props.bind_runIspfConfDir, 
 				props.bind_db2Location, props.bind_collectionID, owner, props.bind_qualifier, props.verbose && props.verbose.toBoolean());
 		if ( bindRc > bindMaxRC) {
-			String errorMsg = "*! The bind package return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_maxRC)"
+			String errorMsg = "*! The bind package return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_packageMaxRC)"
 			println(errorMsg)
 			props.error = "true"
 			buildUtils.updateBuildResult(errorMsg:errorMsg,logs:["${member}_bind.log":bindLogFile],client:getRepositoryClient())
