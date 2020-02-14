@@ -21,27 +21,41 @@ def bindPackage(String file, String dbrmHLQ, String workDir, String confDir, Str
 //  CLASS=1,SCHENV=DB2@${SUBSYS},LINES=(10000,WARNING)      
 //******************************************************************* 
 //* DESCRIPTION: BIND DB2 PACKAGE                                   * 
-//******************************************************************* 
-//STEP10  EXEC DSNTSOP,RC=16                                          
-//DBRMLIB DD DSN=${dbrmHLQ},DISP=(SHR,KEEP,KEEP)   
-//SYSTSIN DD *                                                        
+//JOBLIB   DD  DISP=SHR,
+//             DSN=DB2A.DSNEXIT
+//         DD  DISP=SHR,
+//             DSN=DB2A.DSNLOAD
+//*******************************************
+//* PKGBIND
+//* Step bind packages
+//*******************************************
+//**BEGIN
+//PKGBIND EXEC PGM=IKJEFT01,DYNAMNBR=20,COND=(4,LT)
+//SYSTSPRT DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSUDUMP DD  SYSOUT=*
+//SYSIN    DD  DUMMY
+//SYSTSIN  DD  *
 	DSN SYSTEM(${SUBSYS})   
 	   BIND PACKAGE(${COLLID})    +                                
        MEMBER(${member})     +
        OWNER(${OWNER})       +                                
        QUALIFIER(${QUAL})    +                                
-       ACTION(REPLACE)     +                                
+       ACTION(REPLACE)     +   
+       LIBRARY('${dbrmHLQ}')
        ISOLATION(CS)                                        
   END                                                       
 """
 
 	def exec = new JCLExec()
 	int jrc = exec.text(jobstmts).confDir(confDir).execute()
-	int rc = exec.maxRC.split("CC")[1].toInteger() 
-	
-	println "***Bind Job ${exec.submittedJobId} completed with $rc "
-	String ddName = "SYSTSPRT"
-	exec.saveOutput(ddName, logFile)  
+	int rc = 16
+	def jobRc= exec.maxRC
+	if (jobRc.find('CC')){
+		rc = jobRc.split("CC")[1].toInteger()
+	}
+	println "*** Bind Job ${exec.submittedJobId} completed with $jobRc"
+	exec.saveOutput(logFile)
 	
 	return [rc,"${workDir}/${member}_bind.log"]
 
@@ -103,9 +117,21 @@ def bindPlan(String file, String workDir, String confDir, String SUBSYS, String 
 //  CLASS=1,SCHENV=DB2@${SUBSYS},LINES=(10000,WARNING)      
 //******************************************************************* 
 //* DESCRIPTION: BIND DB2 PLAN                                   * 
-//******************************************************************* 
-//STEP10  EXEC DSNTSOP,RC=16                                          
-//SYSTSIN DD *                                                        
+//JOBLIB   DD  DISP=SHR,
+//             DSN=DB2A.DSNEXIT
+//         DD  DISP=SHR,
+//             DSN=DB2A.DSNLOAD
+//*******************************************
+//* PKGBIND
+//* Step bind packages
+//*******************************************
+//**BEGIN
+//PKGBIND EXEC PGM=IKJEFT01,DYNAMNBR=20,COND=(4,LT)
+//SYSTSPRT DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSUDUMP DD  SYSOUT=*
+//SYSIN    DD  DUMMY
+//SYSTSIN  DD  *                                                       
 	DSN SYSTEM(${SUBSYS})   
 	BIND PLAN (${member})           +
     OWNER(${OWNER})                 +
@@ -123,10 +149,13 @@ END
 
 	def exec = new JCLExec()
 	int jrc = exec.text(jobstmts).confDir(confDir).execute()
-	int rc = exec.maxRC.split("CC")[1].toInteger() 
-	println "***Bind Job ${exec.submittedJobId} completed with $rc "
-	String ddName = "SYSTSPRT"
-	exec.saveOutput(ddName, logFile)  
+	int rc = 16
+	def jobRc= exec.maxRC
+	if (jobRc.find('CC')){
+		rc = jobRc.split("CC")[1].toInteger()
+	}
+	println "*** Bind Job ${exec.submittedJobId} completed with $jobRc"
+	exec.saveOutput(logFile)
 	
 	return [rc,"${workDir}/${member}_plan.log"]
 
