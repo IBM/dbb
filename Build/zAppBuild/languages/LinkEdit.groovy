@@ -68,7 +68,7 @@ sortedList.each { buildFile ->
 		def (bindRc, bindLogFile) = bindUtils.bindPlan(buildFile, props.buildOutDir, props.bind_runIspfConfDir, 
 				props.bind_db2Location, props.bind_collectionID, owner, props.bind_qualifier, props.verbose && props.verbose.toBoolean());
 		if ( bindRc > bindMaxRC) {
-			String errorMsg = "*! The bind plan return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_maxRC)"
+			String errorMsg = "*! The bind plan return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_planMaxRC)"
 			println(errorMsg)
 			props.error = "true"
 			buildUtils.updateBuildResult(errorMsg:errorMsg,logs:["${member}_plan.log":bindLogFile],client:getRepositoryClient())
