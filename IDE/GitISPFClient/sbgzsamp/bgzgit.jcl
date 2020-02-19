@@ -173,6 +173,8 @@
        '#hlqual.SBGZPENU(BGZSLREP)' BIN LC SUFFIX
  OGETX '#clonePath/GitISPFClient/sbgzpenu/bgzsludl.penu' +
        '#hlqual.SBGZPENU(BGZSLUDL)' BIN LC SUFFIX
+ OGETX '#clonePath/GitISPFClient/sbgzpenu/bgzcfclo.penu' +
+       '#hlqual.SBGZPENU(BGZCFCLO)' BIN LC SUFFIX
  OGETX '#clonePath/GitISPFClient/sbgztlib/bgzkeys.gmlkey' +
        '#hlqual.SBGZTLIB(BGZKEYS)' BIN LC SUFFIX
 /*

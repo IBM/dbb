@@ -69,25 +69,38 @@ runShell :
 
   If pos(gitcmd,noPOP) = 0 Then
   Do
-    Call BuildDYN
-    curline  = 1
-    "ISPEXEC ADDPOP"
-    panel = 'BGZMSG'
-    DispRc = DispPanel()
-    Do while (DispRc = 0)
-      Call Scroll
+    If gitcmd = 'dbbub' Then
+    Do
+      BGZEMIX = 'NO'
+      'VGET (ZDBCS) SHARED'
+      If ZDBCS = 'YES' THEN BGZEMIX = 'YES'
+      "CONTROL ERRORS RETURN"
+      "VIEW File(BGZFLOG) MIXED("BGZEMIX")"
+      If rc > 0 Then
+        Say ZERRLM
+      "CONTROL ERRORS CANCEL"
+    End
+    Else
+    Do
       Call BuildDYN
+      curline  = 1
+      "ISPEXEC ADDPOP"
       panel = 'BGZMSG'
       DispRc = DispPanel()
+      Do while (DispRc = 0)
+        Call Scroll
+  /*    Call BuildDYN */
+        panel = 'BGZMSG'
+        DispRc = DispPanel()
+      End
+      "ISPEXEC REMPOP"
     End
-    "ISPEXEC REMPOP"
   End
 
 Return sh_rc
 
 /* --------------------------------------------- */
-/* Procedure to build the dependency options     */
-/* dynamic area                                  */
+/* Procedure to build the messages dynamic area  */
 /* --------------------------------------------- */
 BuildDYN:
 
@@ -99,14 +112,19 @@ BuildDYN:
   Do i = 1 to gitLine.0
     x = length(gitLine.i)
     If x < 70 Then
+    Do
       dyndata  = dyndata||fit2line(gitLine.i)
+      maxlines = maxlines + 1
+    End
     Else
     Do
+      /* I thing we may need a loop to break the line */
+      /* looks like it breaks line in 2 only          */
       lastBlank = LastPos(' ',Substr(gitLine.i,1,70))
       dyndata  = dyndata||fit2line(Substr(gitLine.i,1,lastBlank))
       dyndata  = dyndata||fit2line(x04||Substr(gitLine.i,lastBlank+1))
+      maxlines = maxlines + 2
     End
-    maxlines = maxlines + 1
   End
 
 Return
@@ -116,6 +134,7 @@ Return
 /* the dependency options panel                  */
 /* --------------------------------------------- */
 DispPanel:
+
 
   BGZdyn = substr(dyndata,1+(curline-1)*70) /* set dynamic variable */
   "ISPEXEC DISPLAY PANEL("panel")"
@@ -413,5 +432,12 @@ ReadOutput :
       Nop
   End
   gitLine.0 = k
+
+  If gitcmd = 'dbbub' Then
+  Do
+    'VGET (BGZFLOG) SHARED'
+    confile  = BGZFLOG
+    Address syscall "writefile (confile) 755 gitline."
+  End
 
 Return
