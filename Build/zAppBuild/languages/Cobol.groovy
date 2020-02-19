@@ -162,11 +162,12 @@ def createCompileCommand(String buildFile, LogicalFile logicalFile, String membe
 	String linkEditStream = props.getFileProperty('cobol_linkEditStream', buildFile)
 	String linkDebugExit = props.getFileProperty('cobol_linkDebugExit', buildFile)
 	
-	if ( (linkEditStream && doLinkEdit && doLinkEdit.toBoolean()) || (props.debug && linkDebugExit!= null && doLinkEdit)) {
+	if (props.debug && linkDebugExit && doLinkEdit.toBoolean()){
 		compile.dd(new DDStatement().name("SYSLIN").dsn("${props.cobol_objPDS}($member)").options('shr').output(true))
-	}
-	else {
+	} else if (linkEditStream.isEmpty()  && doLinkEdit && doLinkEdit.toBoolean()) {
 		compile.dd(new DDStatement().name("SYSLIN").dsn("&&TEMPOBJ").options(props.cobol_tempOptions).pass(true))
+	} else {
+		compile.dd(new DDStatement().name("SYSLIN").dsn("${props.cobol_objPDS}($member)").options('shr').output(true))
 	}
 	
 	// add a syslib to the compile command with optional bms output copybook and CICS concatenation
