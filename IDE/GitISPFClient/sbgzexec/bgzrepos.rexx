@@ -88,16 +88,71 @@
          End
        End
 
-       /* Git Clone operation  */
+       /* Need to check if BGZUSDIR/reponame already exists */
+       ToClone = 1
+       /* Capture master folder of cloned repository toto of toto.git */
+       x = lastPos('/',BGZNREPO)
+       repoName = Substr(BGZNREPO,x+1)
+       y = lastPos('.git',repoName)
+       repoName = Substr(repoName,1,y-1)
+       BGZUSDIR = BGZNDIR'/'repoName
+       Address SYSCALL 'readdir 'BGZUSDIR' ls. lsst.'
+       /* working directory already exist  */
+       If ls.0 /= 0 Then
+       Do
+         'ADDPOP'
+         'DISPLAY PANEL(BGZCFCLO)'
+           TB_RC = RC
+           'VGET (ZVERB)'
+           /* Reconnect or Raplace clone */
+           If TB_RC <> 8 & ZVERB <> 'CANCEL' Then
+           Do
+             /* Only reconnect the git repo in BGZCLONE table */
+             If BGZRECON = 1 Then
+               ToClone = 0
+
+             If BGZRECON = 2 Then
+             Do
+               /* Remove Working Directory           */
+               Call bpxwunix 'rm -R' '"'BGZUSDIR'"',,list.,stderr.
+               /* Check USS directory no more exist */
+               Address SYSCALL 'readdir 'BGZUSDIR' ls. lsst.'
+               If ls.0 = 0 Then
+               Do
+                 ToClone = 1
+                 Git_rc = 0
+               End
+               Else
+               Do
+                 /* Error message on romove directory */
+                 'SETMSG MSG(BGZC032)'
+               End
+             End
+           End
+           /* PF3 : do nothing           */
+           Else
+           Do
+             ToClone = 0
+             Git_rc = 1
+           End
+
+           'REMPOP'
+
+       End
+
        Git_rc = 0
-       'VGET BGZENVIR SHARED'
-       shellcmd = ''
-       shellcmd = shellcmd || BGZENVIR
+       If ToClone = 1 Then
+       Do
+         /* Git Clone operation  */
+         'VGET BGZENVIR SHARED'
+         shellcmd = ''
+         shellcmd = shellcmd || BGZENVIR
 
-       shellcmd=shellcmd || 'cd' BGZNDIR';'||,
-              'git clone' BGZNREPO
+         shellcmd=shellcmd || 'cd' BGZNDIR';'||,
+                'git clone' BGZNREPO
 
-       Git_rc = BGZCMD('clone' shellcmd)
+         Git_rc = BGZCMD('clone' shellcmd)
+       End
        If Git_rc = 0 Then
        Do
          /* Create BGZCLONE row for the cloned repository  */

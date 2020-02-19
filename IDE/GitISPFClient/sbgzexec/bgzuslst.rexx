@@ -487,6 +487,8 @@ DISPUSS:
           RC = 8
       End
 
+      /* Reset BGZPATH for next bpxwunix cd command  */
+      BGZPATH = '"'BGZUSSDR'"'
       /* Refresh list to display correct Git Status  */
       If TB_RC <> 8 & ZVERB <> 'CANCEL' Then
       Do

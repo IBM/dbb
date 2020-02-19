@@ -1,0 +1,37 @@
+<copyr>             COPYRIGHT IBM CORP 2020
+<varclass name=vcrep  type='char 48'>
+<varclass name=vcdir  type='char 48'>
+<varlist>
+<vardcl name=bgzrepos varclass=vcrep>
+<vardcl name=bgzusdir varclass=vcdir>
+</varlist>
+<panel name=BGZCFCLO width=76 depth=24 keylist=bgzsabx applid=bgz
+             help=bgzA0099>&panel_title
+<area>
+  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzrepos_prompt;
+  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out
+         pmtfmt=none>&bgzusdir_prompt;
+   <grphdr>&group_header_1;
+   <info width=*>
+     <p compact indent=2>&panel_instruct_1;
+     <divider>
+     </divider>
+     <p compact indent=2>&panel_instruct_2;
+     <divider>
+     </divider>
+   </info>
+   <region dir=horiz align=no>
+   <region dir=vert indent=2>
+   <selfld name=BGZRECON selwidth=58 init=no autotab=no listtype=radio
+          choicecols=1 choicedepth=2 pmtloc=above
+          entwidth=1 pmtwidth=**>&action_prompt;
+      <choice><ps var=BGZRECON value=1>&reconnect_prompt</ps>
+      <choice><ps var=BGZRECON value=2>&replace_prompt</ps>
+     </selfld>
+   </region>
+   </region>
+
+</area>
+</panel>
+<:--              COPYRIGHT IBM CORP 2020       -->
