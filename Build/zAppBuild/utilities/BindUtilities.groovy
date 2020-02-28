@@ -10,21 +10,19 @@ import groovy.transform.*
 
 bind(args)
 
-def bindPackage(String file, String dbrmHLQ, String workDir, String confDir, String SUBSYS, String COLLID, String OWNER, String QUAL, boolean verbose) {
+def bindPackage(String file, String dbrmHLQ, String workDir, String confDir, String SUBSYS, String COLLID, String OWNER, String QUAL, String jobCardSuffix, String SDSNEXIT, String SDSNLOAD, boolean verbose) {
 	// define local properties
 	def member = CopyToPDS.createMemberName(file)
 	def logFile = new File("${workDir}/${member}_bind.log")
 	println("*** Binding $file")
 
-	String jobstmts = """
-//DBBBND JOB 'DBB-PKGBIND',REGION=0M,MSGLEVEL=1,MSGCLASS=1,     
-//  CLASS=1,SCHENV=DB2@${SUBSYS},LINES=(10000,WARNING)      
+String jobstmts = "//DBBBND JOB 'DBB-PKGBIND'," + jobCardSuffix.replace("//","\n//") + """     
 //******************************************************************* 
 //* DESCRIPTION: BIND DB2 PACKAGE                                   * 
 //JOBLIB   DD  DISP=SHR,
-//             DSN=DB2A.DSNEXIT
+//             DSN=${SDSNEXIT}
 //         DD  DISP=SHR,
-//             DSN=DB2A.DSNLOAD
+//             DSN=${SDSNLOAD}
 //*******************************************
 //* PKGBIND
 //* Step bind packages
@@ -42,7 +40,7 @@ def bindPackage(String file, String dbrmHLQ, String workDir, String confDir, Str
        OWNER(${OWNER})       +                                
        QUALIFIER(${QUAL})    +                                
        ACTION(REPLACE)     +   
-       LIBRARY('${dbrmHLQ}')
+       LIBRARY('${dbrmHLQ}') + 
        ISOLATION(CS)                                        
   END                                                       
 """
@@ -106,21 +104,19 @@ def bind(String[] cliArgs)
 }
 
 
-def bindPlan(String file, String workDir, String confDir, String SUBSYS, String COLLID, String OWNER, String QUAL, boolean verbose) {
+def bindPlan(String file, String workDir, String confDir, String SUBSYS, String COLLID, String OWNER, String QUAL, String SDSNEXIT, String SDSNLOAD, boolean verbose) {
 	// define local properties
 	def member = CopyToPDS.createMemberName(file)
 	def logFile = new File("${workDir}/${member}_plan.log")
 	println("*** Binding $file")
 
-	String jobstmts = """
-//DBBPLN JOB 'DBB-PLNBIND',REGION=0M,MSGLEVEL=1,MSGCLASS=1,     
-//  CLASS=1,SCHENV=DB2@${SUBSYS},LINES=(10000,WARNING)      
+	String jobstmts = "//DBBPLN JOB 'DBB-PLNBIND'," + jobCardSuffix.replace("//","\n//") + """ 
 //******************************************************************* 
 //* DESCRIPTION: BIND DB2 PLAN                                   * 
 //JOBLIB   DD  DISP=SHR,
-//             DSN=DB2A.DSNEXIT
+//             DSN=${SDSNEXIT}
 //         DD  DISP=SHR,
-//             DSN=DB2A.DSNLOAD
+//             DSN=${SDSNLOAD}
 //*******************************************
 //* PKGBIND
 //* Step bind packages
