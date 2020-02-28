@@ -66,7 +66,7 @@ sortedList.each { buildFile ->
 		def owner = ( props.userBuild || ! props.bind_planOwner ) ? System.getProperty("user.name") : props.bind_planOwner
 		
 		def (bindRc, bindLogFile) = bindUtils.bindPlan(buildFile, props.buildOutDir, props.bind_runIspfConfDir, 
-				props.bind_db2Location, props.bind_collectionID, owner, props.bind_qualifier, props.verbose && props.verbose.toBoolean());
+				props.bind_db2Location, props.bind_collectionID, owner, props.bind_qualifier, props.bind_jobCardSuffix, props.SDSNEXIT, props.SDSNLOAD, props.verbose && props.verbose.toBoolean());
 		if ( bindRc > bindMaxRC) {
 			String errorMsg = "*! The bind plan return code ($bindRc) for $buildFile exceeded the maximum return code allowed ($props.bind_planMaxRC)"
 			println(errorMsg)
