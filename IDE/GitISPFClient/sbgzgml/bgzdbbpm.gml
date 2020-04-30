@@ -18,8 +18,8 @@
 <:-- SIZE LIMIT: none -->
 <:ENTITY insfld_01_text "Submit DBB user build">
 <:ENTITY panel_instruct_1 space
-     'Enter new parameter name to create or<hp>"/"</hp>against existing
-parameter for options'>
+     'Enter new parameter name to create or<hp>"e"</hp>to edit, <hp>"d"</hp>
+to delete'>
 
 <:-- panel fields prompt text follows                               -->
 <:ENTITY bgzscript_prompt "Build Script">

@@ -17,6 +17,11 @@
            <scrfld displen=256>
    <divider>
    </divider>
+   <dtafld datavar=bgzblsan
+         entwidth=46 caps=off required=yes usage=in>&sandbox_prompt;
+           <scrfld displen=256>
+   <divider>
+   </divider>
    <dtafld datavar=bgzblwrk
          entwidth=46 caps=off required=yes usage=in>&logfile_prompt;
            <scrfld displen=256>
@@ -27,11 +32,6 @@
            <scrfld displen=256>
    <divider type=text format=start>&dsn_no_quotes;</divider>
    <divider></divider>
-   <dtafld datavar=bgzblsan
-         entwidth=46 caps=off usage=out>&sandbox_prompt;
-           <scrfld displen=256>
-   <divider>
-   </divider>
   </dtacol>
   <dtacol pmtwidth=31 vardcl=no>
    <dtafld datavar=bgzbllog

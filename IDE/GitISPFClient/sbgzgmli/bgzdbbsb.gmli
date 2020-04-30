@@ -6,7 +6,7 @@
   <dtacol pmtwidth=10 vardcl=no>
     <dtafld datavar=bgzprnme usage=in required=yes entwidth=52>&name_prompt;
       <scrfld displen=1024 indvar=bgzpind fldspos=same>
-    <dtafld datavar=bgzprval usage=in required=yes entwidth=52>&value_prompt;
+    <dtafld datavar=bgzprval usage=in required=no entwidth=52>&value_prompt;
       <scrfld displen=1024 indvar=bgzvind fldspos=same>
   </dtacol>
 </area>

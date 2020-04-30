@@ -25,41 +25,46 @@
 /* ----- -------- -------------------------------------------------- */
 /* XH    03/09/19 Initial version                                    */
 /*                                                                   */
+/* MDalb 04/17/20 Enhancements to support zAppBuild                  */
+/*                                                                   */
 /*********************************************************************/
-
    Parse Arg BGZUSREP BGZUSLOC BGZUSSDR BGZUSFIL
-
    /* Need to create a permanent ISPF table to store dbb user build options */
    Address ISPEXEC
+/* 'TBERASE BGZDBBUB'
+   'TBERASE BGZPROPS' */
    'TBOPEN BGZDBBUB'
    /* If it didn't exist yet, create it. */
    If RC = 8 Then
    Do
      'TBCREATE BGZDBBUB',
-     'KEYS(BGZUSREP,BGZUSLOC) NAMES(BGZBLSCR,BGZBLSAN,BGZBLWRK,BGZBLHLQ) WRITE'
+     'KEYS(BGZUSREP,BGZUSLOC)',
+     'NAMES(BGZBLSCR,BGZBLSAN,BGZBLWRK,BGZBLHLQ,BGZBLLOG) WRITE'
    End
-
    'VGET (BGZJAVAH,BGZDBBH) SHARED'
-
    groovyz = BGZDBBH'/bin/groovyz'
+   x = lastPos('/',BGZUSLOC)
+   sandbox = Substr(BGZUSLOC,1,x-1)
+   appname = Substr(BGZUSLOC,x+1)
+   fullPath = BGZUSSDR'/'BGZUSFIL
+   relativePathIndex = Pos(appname, fullpath)
+   relativePath = Substr(fullpath, relativePathIndex)
+/* SAY 'Sandbox' sandbox
+   SAY 'Appname' appname
+   SAY 'Fullpath' fullpath
+   SAY 'RelativePath' relativePath
    x = lastPos('/',BGZUSSDR)
    appname = Substr(BGZUSSDR,1,x-1)
    builddir  = appname'/build'
-   script  = builddir'/build.sh'
-
-   BGZBLSCR = script
+   script  = builddir'/build.sh'     */
+/* 'TBVCLEAR BGZDBBUB' */
+   BGZBLSCR = ''
+   BGZBLSAN = sandbox
+   BGZBLWRK = ''
+   BGZBLHLQ = ''
    BGZBLLOG = '/'
-
    'TBGET BGZDBBUB'
    GetDBB_RC = RC
-   If GetDBB_RC /=0 Then
-   Do
-     BGZBLSAN = BGZUSLOC
-     BGZBLWRK = ''
-     BGZBLHLQ = ''
-     BGZBLLOG = ''
-   End
-
    DoDBBub = 0
    Do Until DoDBBub <> 0
      DoDBBub = 1
@@ -72,13 +77,6 @@
        DoDBBub = -1
        'REMPOP'
      End
-
- /*  If Verify(BGZBLSCR,'/') = 1 Then
-     Do
-       'SETMSG MSG(BGZC015)'
-        DoDBBub = -1
-     End */
-
      If DoDBBub <> -1 Then
      Do
        /* DBB user build options */
@@ -86,52 +84,48 @@
        sandbox = BGZBLSAN
        workdir = BGZBLWRK
        hlq     = BGZBLHLQ
-       /* Need to construct build file from  */
-       /* DBB structure : Build/application/folder/file  */
- /*    y = lastPos('Build/',BGZUSSDR)
-       l = length(BGZUSSDR)
-       z = y - 1
-       l = l - z */
-       /*== construct --userBuild folder from everything after working dir
-            in full Path  ==*/
-       y = length(BGZUSLOC)
-       l = length(BGZUSSDR)
-       z = y + 1
-       y = y + 2
-       l = l - z
-       bldfold = Substr(BGZUSSDR,y,l)
-       BGZFILE = bldfold'/'BGZUSFIL
-
+       BGZFILE = relativePath
        shellcmd  = ''
-
-       shellcmd  = shellcmd || 'cd' builddir';'
+       shellcmd  = shellcmd || 'cd' sandbox';'
        shellcmd  = shellcmd || 'export JAVA_HOME='BGZJAVAH';'
-       shellcmd=shellcmd ||  script
-
+       shellcmd  = shellcmd ||  groovyz script
        /* Enter pressed without command S - navigate to Script Parameters */
        If BGZCMD = '' Then
        Do
          /* BGZPROPS table to be displayed on Script Parameters panel */
-         'TBCREATE BGZPROPS',
+         'TBOPEN BGZPROPS'
+         /* If it didn't exist yet, create it. */
+         If RC = 8 Then
+         Do
+           'TBCREATE BGZPROPS',
+           'KEYS(BGZUSREP,BGZUSLOC,BGZPROW)',
+           'NAMES(BGZPNAME,BGZPVAL,BGZPMCMD) WRITE'
+         End
+/*       'TBCREATE BGZPROPS',
            'KEYS(BGZPROW) NAMES(BGZPNAME,BGZPVAL,BGZPMCMD)',
-           'REPLACE NOWRITE'
+           'REPLACE NOWRITE' */
+         'TBGET BGZPROPS'
          'TBSORT BGZPROPS FIELDS(BGZPROW)'
+         'TBTOP BGZPROPS'
          BGZPROW = '000001'
+         'TBDELETE BGZPROPS'
          BGZPNAME = '--sourceDir'
          BGZPVAL  = sandbox
          BGZPMCMD = ''
          'TBADD BGZPROPS ORDER'
-         BGZPROW = BGZPROW + 1
+         BGZPROW = '000002'
+         'TBDELETE BGZPROPS'
          BGZPNAME = '--workDir'
          BGZPVAL  = workdir
          BGZPMCMD = ''
          'TBADD BGZPROPS ORDER'
-         BGZPROW = BGZPROW + 1
+         BGZPROW = '000003'
+         'TBDELETE BGZPROPS'
          BGZPNAME = '--hlq'
          BGZPVAL  = hlq
          BGZPMCMD = ''
          'TBADD BGZPROPS ORDER'
-
+         'TBBOTTOM BGZPROPS'
          nbparm = BGZPROW
          DoReq = 0
          PRPROW = '000001'
@@ -147,7 +141,6 @@
              DoReq = -1
              Leave
            End
-
            If ZTDSELS = 0 Then
              PRPROW = ZTDTOP
            Do While ZTDSELS > 0
@@ -158,11 +151,10 @@
              Else
                'TBDISPL BGZPROPS'
            End
-
            If ZVERB <> ' ' Then
              Iterate
-
-           If BGZNPNAM <> '' & BGZNPVAL <> '' Then
+/*         If BGZNPNAM <> '' & BGZNPVAL <> '' Then */
+           If BGZNPNAM <> '' Then
            Do
                nbparm = nbparm + 1
                BGZPROW = nbparm
@@ -184,12 +176,19 @@
                'TBSKIP BGZPROPS'
              End
              shellcmd=shellcmd || ' --userBuild' BGZFILE
-
+             'TBTOP BGZPROPS'
+             BGZPROW = '000001'
+             'TBDELETE BGZPROPS'
+             BGZPROW = '000002'
+             'TBDELETE BGZPROPS'
+             BGZPROW = '000003'
+             'TBDELETE BGZPROPS'
              If GetDBB_RC = 0 Then
                'TBMOD BGZDBBUB'
              Else
                'TBADD BGZDBBUB'
-
+             BGZFLOG = BGZBLWRK'/dbbub.log'
+             'VPUT (BGZFLOG) SHARED'
              DBB_rc = BGZCMD('dbbub' shellcmd)
              BGZCMD = ''
              Iterate
@@ -197,26 +196,23 @@
            'TBTOP BGZPROPS'
            'TBSKIP BGZPROPS POSITION(TEMPROW)'
            Do While RC = 0
-             If BGZPMCMD = '/' Then
-             Do
-               PRPROW = TEMPROW
-               BGZPMCMD = GetPMCMD(BGZBLSCR)
-             End
-
+/*           If BGZPMCMD = '/' Then          */
+/*           Do                              */
+/*             PRPROW = TEMPROW              */
+/*             BGZPMCMD = GetPMCMD(BGZBLSCR) */
+/*           End                             */
              Select
                When BGZPMCMD = 'D' Then
                Do
                  PRPROW = TEMPROW
                  'TBDELETE BGZPROPS'
                End
-
                When BGZPMCMD = 'E' Then
                Do
                  PRPROW = TEMPROW
                  'CONTROL DISPLAY SAVE'
                  oldprnme = BGZPNAME
                  'ADDPOP'
-
                  BGZPRNME = BGZPNAME
                  BGZPRVAL = BGZPVAL
                  'DISPLAY PANEL(BGZDBBSC)'
@@ -240,7 +236,6 @@
                  'REMPOP'
                  'CONTROL DISPLAY RESTORE'
                End
-
                Otherwise NOP
              End /* Select; */
 
@@ -253,9 +248,8 @@
              'TBSKIP BGZPROPS POSITION(TEMPROW)'
            End
          End
-         'TBEND BGZPROPS'
+         'TBCLOSE BGZPROPS'
        End
-
        /* S command on BGZDBBUB panel  */
        If BGZCMD = 'S' Then
        Do
@@ -264,18 +258,15 @@
          shellcmd=shellcmd || ' --workDir' workdir
          shellcmd=shellcmd || ' --hlq' hlq
          shellcmd=shellcmd || ' --userBuild' BGZFILE
-
          If GetDBB_RC = 0 Then
            'TBMOD BGZDBBUB'
          Else
            'TBADD BGZDBBUB'
-
          BGZFLOG = BGZBLWRK'/dbbub.log'
          'VPUT (BGZFLOG) SHARED'
          DBB_rc = BGZCMD('dbbub' shellcmd)
          BGZCMD = ''
        End
-
        'REMPOP'
        /* View build output on completion  */
        If BGZBLLOG = '/' & DoReq = 1 Then
@@ -302,9 +293,7 @@
      End
    End
    'TBCLOSE BGZDBBUB'
-
 Return DBB_rc
-
 GetPMCMD: PROCEDURE
   Parse Arg BGZBLSCR
   'ADDPOP'
