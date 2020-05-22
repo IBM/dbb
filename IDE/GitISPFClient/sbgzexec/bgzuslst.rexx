@@ -422,9 +422,57 @@ DISPUSS:
             Call BGZCOMMP (BGZUSREP BGZUSSDR)
           End
 
+          When BGZUSCMD = 'UB' Then
+          Do
+            /* Call BGZDBBUB rexx for DBB user build */
+            Call BGZDBBUB (BGZUSREP BGZUSLOC BGZUSSDR BGZUSFIL)
+          End
+
+          When BGZUSCMD = 'UL' Then
+          Do
+            /* Get BGZDBBUB */
+            'TBOPEN BGZDBBUB'
+            TB_RC = RC
+            If TB_RC = 0 Then
+            Do
+              GetDBB_RC = TB_RC
+              'TBGET BGZDBBUB'
+              GetDBB_RC = RC
+            End
+            If GetDBB_RC = 0 Then
+            Do
+              x = Lastpos('.',BGZUSFIL)
+              filename = Substr(BGZUSFIL,1,x-1)
+              UPPERCASE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+              lowercase = 'abcdefghijklmnopqrstuvwxyz'
+              input= filename
+              input_upper = translate(input, uppercase, lowercase)
+              filename = input_upper
+              BGZUSLOG = filename'.log'
+              BGZFLOG = BGZBLWRK'/'BGZUSLOG
+              BGZEMIX = 'NO'
+              'VGET (ZDBCS) SHARED'
+              If ZDBCS = 'YES' THEN BGZEMIX = 'YES'
+              "BROWSE File(BGZFLOG) MIXED("BGZEMIX")"
+              If RC = 20 Then
+                'SETMSG MSG(BGZC039)'
+            End
+            Else
+            Do
+              /* Error warning no DBB build log exists for this file  */
+              'SETMSG MSG(BGZC039)'
+            End
+            If TB_RC = 0 Then
+              'TBCLOSE BGZDBBUB'
+
+            BGZUSCMD = ' '
+            'TBMOD 'TabName' ORDER'
+          End
+
           Otherwise
             NOP
         End
+
         If ZVERB <> 'CANCEL' Then
         Do
           'TBGET 'TabName
@@ -439,6 +487,8 @@ DISPUSS:
           RC = 8
       End
 
+      /* Reset BGZPATH for next bpxwunix cd command  */
+      BGZPATH = '"'BGZUSSDR'"'
       /* Refresh list to display correct Git Status  */
       If TB_RC <> 8 & ZVERB <> 'CANCEL' Then
       Do
@@ -805,6 +855,10 @@ GetUDCMD: PROCEDURE
       Cmd = 'PL'
     When BGZSEL = '17' Then
       Cmd = 'CM'
+    When BGZSEL = '18' Then
+      Cmd = 'UB'
+    When BGZSEL = '19' Then
+      Cmd = 'UL'
     Otherwise
       Cmd = ''
   End

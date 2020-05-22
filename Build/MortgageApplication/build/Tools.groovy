@@ -8,7 +8,7 @@ import groovy.transform.Field
 
 def parseArgs(String[] cliArgs, String usage) {
 	def cli = new CliBuilder(usage: usage)
-	cli.s(longOpt:'sourceDir', args:1, argName:'dir', 'Absolute path to source directory') 
+	cli.s(longOpt:'sourceDir', args:1, argName:'dir', 'Absolute path to source directory')
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the build output directory')
 	cli.b(longOpt:'buildHash', args:1, argName:'hash', 'Git commit hash for the build')
 	cli.q(longOpt:'hlq', args:1, argName:'hlq', 'High level qualifier for partition data sets')
@@ -28,9 +28,9 @@ def parseArgs(String[] cliArgs, String usage) {
 	if (opts.h) { // if help option used, print usage and exit
 	 	cli.usage()
 		System.exit(0)
-	}                
+	}
 
-    return opts                          
+    return opts
 }
 
 def loadProperties(OptionAccessor opts) {
@@ -53,7 +53,7 @@ def loadProperties(OptionAccessor opts) {
 	if (opts.E) properties.errPrefix = opts.E
 	if (opts.u) properties.userBuild = "true"
 	
-	// override new default properties 
+	// override new default properties
 	if (opts.r) properties.'dbb.RepositoryClient.url' = opts.r
 	if (opts.i) properties.'dbb.RepositoryClient.userId' = opts.i
 	if (opts.p) properties.'dbb.RepositoryClient.password' = opts.p
@@ -82,14 +82,14 @@ def loadProperties(OptionAccessor opts) {
 	properties.load(new File("${getScriptDir()}/datasets.properties"))
 	// load file.properties containing file specific properties like script mappings and CICS/DB2 content flags
 	// One may also use YAML files as an alternative to properties files (DBB 1.0.6 and later):
-	//     properties.load(new File("${getScriptDir()}/file.yaml")) 
-	properties.load(new File("${getScriptDir()}/file.properties")) 
+	//     properties.load(new File("${getScriptDir()}/file.yaml"))
+	properties.load(new File("${getScriptDir()}/file.properties"))
 	// load bind.properties containing DB2 BIND PACKAGE parameters used by Mortgage Application build
-	properties.load(new File("${getScriptDir()}/bind.properties"))    
+	properties.load(new File("${getScriptDir()}/bind.properties"))
 	// load bindlinkEditScanner.properties containing Link Edit scanning options used by Mortgage Application build
 	properties.load(new File("${getScriptDir()}/linkEditScanner.properties"))
 
-	return properties                                 
+	return properties
 }
 
 def validateRequiredOpts(OptionAccessor opts) {
@@ -124,7 +124,7 @@ def validateRequiredProperties(List<String> props) {
 def getBuildList(List<String> args) {
     def properties = BuildProperties.getInstance()
     def files = []
-    
+
 	// Set the buildFile or buildList property
 	if (args) {
 		def buildFile = args[0]
@@ -137,7 +137,7 @@ def getBuildList(List<String> args) {
 	    else {
 			properties.buildFile = buildFile
 	    }
-	}    
+	}
 
 	// check to see if a build file was passed in
 	if (properties.buildFile) {
@@ -145,10 +145,10 @@ def getBuildList(List<String> args) {
 		files = [properties.buildFile]
 	}
 	// else check to see if a build list file was passed in
-	else if (properties.buildListFile) { 
+	else if (properties.buildListFile) {
 		println("** Building files listed in $properties.buildListFile")
 	    files = new File(properties.buildListFile) as List<String>
-	}   
+	}
 	
 	return files
 }
@@ -156,7 +156,7 @@ def getBuildList(List<String> args) {
 def createDatasets() {
     def properties = BuildProperties.getInstance()
 	def srcOptions = "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library) msg(1)"
-	def loadOptions = "cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library) msg(1)" 
+	def loadOptions = "cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library) msg(1)"
 	def srcDatasets = ["COBOL", "COPYBOOK", "OBJ", "BMS", "DBRM", "LINK", "MFS"]
 	def loadDatasets = ["LOAD", "TFORMAT"]
 
@@ -188,7 +188,7 @@ def initializeBuildArtifacts() {
         def repo = getDefaultRepositoryClient()
         properties.buildGroup = "${properties.collection}" as String
         properties.buildLabel = "build.${properties.startTime}" as String
-        def buildResult = repo.createBuildResult(properties.buildGroup, properties.buildLabel) 
+        def buildResult = repo.createBuildResult(properties.buildGroup, properties.buildLabel)
         buildResult.setState(buildResult.PROCESSING)
         if (properties.buildHash)
             buildResult.setProperty("buildHash", properties.buildHash)
@@ -202,7 +202,7 @@ def getBuildResult() {
     def buildResult = null
     if (!properties.userBuild) {
         def repo = getDefaultRepositoryClient()
-        buildResult = repo.getBuildResult(properties.buildGroup, properties.buildLabel)           
+        buildResult = repo.getBuildResult(properties.buildGroup, properties.buildLabel)
     }
     return buildResult
 }
@@ -220,11 +220,11 @@ def generateBuildReport() {
 	// create build report html file
 	def htmlTemplate = null  // Use default HTML template.
 	def css = null       // Use default theme.
-	def renderScript = null  // Use default rendering.                       
+	def renderScript = null  // Use default rendering.
 	def transformer = HtmlTransformer.getInstance()
-	transformer.transform(jsonOutputFile, htmlTemplate, css, renderScript, htmlOutputFile, buildReportEncoding)   
+	transformer.transform(jsonOutputFile, htmlTemplate, css, renderScript, htmlOutputFile, buildReportEncoding)
 	
-	return [ jsonOutputFile, htmlOutputFile ]                      
+	return [ jsonOutputFile, htmlOutputFile ]
 }
 
 def getDefaultDependencyResolver(String file) {
@@ -242,22 +242,54 @@ def getDefaultDependencyResolver(String file) {
     return resolver
 }
 
+def getUserBuildDependencyResolver(String file, String relativePath) {
+    def properties = BuildProperties.getInstance()
+    def path = ""
+    if (properties.sourceDir.endsWith("Build")) {
+        if (relativePath.endsWith("Build//Build")) {
+            path = new DependencyPath().sourceDir(properties.sourceDir).directory("Build/MortgageApplication/copybook")
+        }
+        else {
+  	    path = new DependencyPath().sourceDir(properties.sourceDir).directory("MortgageApplication/copybook")
+        }
+    }
+    else {
+        if (relativePath.endsWith("Build")) {
+	    path = new DependencyPath().sourceDir(properties.sourceDir).directory("Build/MortgageApplication/copybook")
+        }
+        else {
+	    path = new DependencyPath().sourceDir(properties.sourceDir).directory("MortgageApplication/copybook")
+        }
+    }
+    def rule = new ResolutionRule().library("SYSLIB").path(path)
+    def resolver = new DependencyResolver().sourceDir(properties.sourceDir).file(file).rule(rule)
+
+    if (properties.userBuild)
+    	resolver.setScanner(new DependencyScanner())
+    else {
+        path.setCollection(properties.collection)
+        resolver.setCollection(properties.collection)
+        resolver.setRepositoryClient(getDefaultRepositoryClient())
+    }
+    return resolver
+}
+
 def getDefaultImpactResolver(String file) {
 	def properties = BuildProperties.getInstance()
 	
 	// Add rule to assocuate changes to copybooks with the need to recompile programs that reference them.
    	def cpypath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("Build/MortgageApplication/copybook")
    	def cpyrule = new ResolutionRule().library("SYSLIB").path(cpypath)
-	   
+	
 	// Add rule to associate changes to BMS maps with need to recompile programs that use the generated copybook.
    	def bmspath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("Build/MortgageApplication/bms")
    	def bmsrule = new ResolutionRule().library("SYSLIB").path(bmspath)
-	   
+	
 	// Add rule to associate changes to COBOL source with the need to linkedit .lnk files that reference them.
    	def cobpath = new DependencyPath().collection(properties.collection).sourceDir(properties.sourceDir).directory("Build/MortgageApplication/cobol")
    	def coblnkrule = new ResolutionRule().category("LINK").path(cobpath)
 	def cobrule = new ResolutionRule().category("COB").path(cobpath)
-	   
+	
    	def resolver = new ImpactResolver().repositoryClient(getDefaultRepositoryClient())
 	   .collection(properties.collection)
 	   .collection("${properties.collection}_outputs")  // Name must agree with outputs collection used in LinkEdit.groovy and CobolCompile.groovy
@@ -288,8 +320,8 @@ def updateBuildResult(Map args) {
 			if (args.log != null)
 				buildResult.addAttachment("${member}.log", new FileInputStream(args.log))
 		}
-		buildResult.save()   
-	}                                      
+		buildResult.save()
+	}
 }
 
 def finalizeBuildResult(Map args) {
@@ -300,12 +332,12 @@ def finalizeBuildResult(Map args) {
 		buildResult.setBuildReportData(new FileInputStream(args.jsonReport))
 		buildResult.setProperty("filesProcessed", String.valueOf(args.filesProcessed))
 		buildResult.setState(buildResult.COMPLETE)
-		buildResult.save() 
+		buildResult.save()
 	}
 }
 def getCurrentGitHash() {
 	def properties = BuildProperties.getInstance()
-		   
+		
 	def cmd = "git -C ${properties.sourceDir} rev-parse HEAD"
 	def git_hash = new StringBuffer()
 	def git_error = new StringBuffer()

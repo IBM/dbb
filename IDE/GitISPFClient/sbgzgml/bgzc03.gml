@@ -38,5 +38,15 @@ The Unix file has been deleted
      SMSG="Unix File rename        ">
 The Unix file has been renamed
 
+<MSG SUFFIX=7  MSGTYPE=Info ALARM=NO HELP=*>
+DBB Console
+
+<MSG SUFFIX=8  MSGTYPE=Info ALARM=NO HELP=*>
+Git Messages
+
+<MSG SUFFIX=9 MSGTYPE=WARNING ALARM=YES HELP=*
+     SMSG="DBB build log not found">
+No DBB build log exists for this file
+
 </MSGMBR>
 <:--              COPYRIGHT IBM CORP 2019       -->

@@ -18,12 +18,11 @@ Sample | Description
 [Build/HelloWorld](Build/HelloWorld) | The HelloWorld sample provides simple source file types and the Groovy build scripts to compile them
 [Build/IDE](Build/IDE) | A collection of 3 samples from PLI, COBOL, and ASM created by the IDz/ZOD team with instructions to run them on IDz/ZOD.
 [Build/MortgageApplication](Build/MortgageApplication) | Sample application demonstrating many of the  build functions provided by DBB.
-[Build/MortgageApplicationV2](Build/MortgageApplicationV2) | Contains two updated versions of the MortgageApplication sample (single repository and shared across multiple repositories) designed to be built by [zAppBuild](Build/zAppBuild)
+Build/MortgageApplicationV2 | MortgageApplicationV2 has been moved to the new zAppBuild repository at https://github.com/IBM/dbb-zappbuild.
 [Build/MultiThreadMVSJob](Build/MultiThreadMVSJob) | Sample showing how to modilfy a compilation script to run in a multi-thread environment.
 [Build/PublishLoadModules](Build/PublishLoadModules) | Sample demonstrating how to publish load modules to Artifactory after a successful build.
-[Build/zAppBuild](Build/zAppBuild) | zAppBuild is a generic build solution for building z/OS applications using Apache Groovy build scripts and IBM Dependency Based Build (DBB) APIs. 
+Build/zAppBuild | zAppBuild has been moved to its own stand alone repository at https://github.com/IBM/dbb-zappbuild. 
 [IDE/GitISPFClient](IDE/GitISPFClient) | An ISPF interface that interacts with a Git repository to allow cloning, staging, checking in, pushing and pulling as well as other git commands.
-[Migration/mappingExtension](Migration/mappingExtension) | Sample showing how to extend the DBB Migration tool script to detect possible round-trip encoding problems when importing and loading to HFS.
 [Migration/sclm](Migration/sclm) | This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
 [Snippets/InteractiveGateway](Snippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
 [Snippets/PropertyMappings](Snippets/PropertyMappings) | Example showing how to use the new PropertyMappings class to perform aggregate functions on DBB BuildProperties.

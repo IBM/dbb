@@ -34,7 +34,7 @@
 
   /* Set the location for Java, Rocket and DBB */
   Call BGZCONF
-  'VGET (BGZJAVAH,BGZROCKH,BGZDBBH) SHARED'
+  'VGET (BGZJAVAH,BGZROCKH,BGZBASH,BGZCGIT,BGZMAN,BGZPERL5,BGZDBBH) SHARED'
 
   If substr(ZENVIR,6,3) >= '7.1' Then
      BGZEUTF = 'TRUE'
@@ -44,12 +44,12 @@
 
   gitenv.1  = 'export JAVA_HOME='BGZJAVAH
   gitenv.2  = 'export DBB_HOME='BGZDBBH
-  gitenv.3  = 'export GIT_SHELL='BGZROCKH'/bin/bash'
-  gitenv.4  = 'export GIT_EXEC_PATH='BGZROCKH'/libexec/git-core'
-  gitenv.5  = 'export GIT_TEMPLATE_DIR='BGZROCKH'/share/git-core/templates'
+  gitenv.3  = 'export GIT_SHELL='BGZBASH'/bin/bash'
+  gitenv.4  = 'export GIT_EXEC_PATH='BGZCGIT'/libexec/git-core'
+  gitenv.5  = 'export GIT_TEMPLATE_DIR='BGZCGIT'/share/git-core/templates'
   gitenv.6  = 'export PATH=$PATH:$JAVA_HOME/bin:'BGZROCKH'/bin'
-  gitenv.7  = 'export MANPATH=$MANPATH:'BGZROCKH'/man'
-  gitenv.8  = 'export PERL5LIB=$PERL5LIB:'BGZROCKH'/lib/perl5'
+  gitenv.7  = 'export MANPATH=$MANPATH:'BGZMAN'/man'
+  gitenv.8  = 'export PERL5LIB=$PERL5LIB:'BGZPERL5'/lib/perl5'
   gitenv.9  = 'export _BPXK_AUTOCVT=ON'
   gitenv.10 = 'export _CEE_RUNOPTS="FILETAG(AUTOCVT,AUTOTAG) POSIX(ON)"'
   gitenv.11 = 'export _TAG_REDIR_ERR=txt'

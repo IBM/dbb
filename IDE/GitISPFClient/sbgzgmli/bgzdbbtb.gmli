@@ -1,0 +1,52 @@
+<copyr>             COPYRIGHT IBM CORP 2019
+<varclass name=vcfil  type='char 40'>
+<varlist>
+<vardcl name=bgzusfil varclass=vcfil>
+</varlist>
+<panel name=BGZDBBUB keylist=BGZSABx applid=BGZ depth=21 width=77 help=BGZA0012
+        wintitle='&window_title;'>
+<area>
+    <dtafld datavar=bgzusfil usage=out pmtfmt=none pmtwidth=*
+                             entwidth=40>&usfil_prompt;
+            <scrfld displen=256>
+</area>
+<area depth=1 extend=on>
+  <dtacol pmtwidth=24 vardcl=no>
+   <dtafld datavar=bgzblscr
+         entwidth=46 caps=off required=yes usage=in>&script_prompt;
+           <scrfld displen=256>
+   <divider>
+   </divider>
+   <dtafld datavar=bgzblsan
+         entwidth=46 caps=off required=yes usage=in>&sandbox_prompt;
+           <scrfld displen=256>
+   <divider>
+   </divider>
+   <dtafld datavar=bgzblwrk
+         entwidth=46 caps=off required=yes usage=in>&logfile_prompt;
+           <scrfld displen=256>
+   <divider>
+   </divider>
+   <dtafld datavar=bgzblhlq
+         entwidth=46 caps=off required=yes usage=in>&hlq_prompt;
+           <scrfld displen=256>
+   <divider type=text format=start>&dsn_no_quotes;</divider>
+   <divider></divider>
+  </dtacol>
+  <dtacol pmtwidth=31 vardcl=no>
+   <dtafld datavar=bgzbllog
+         entwidth=1 caps=off required=no usage=in>&viewlog_prompt;
+  </dtacol>
+   <grphdr>&group_header_1;
+   <info width=*>
+     <p compact indent=2>&panel_instruct_1;
+     <p compact indent=2>&panel_instruct_2;
+     <p compact indent=2>&panel_instruct_3;
+   </info>
+ </area>
+ <cmdarea name=bgzcmd caps=on>
+ <source type=proc>
+   IF (&BGZBLHLQ NE &Z) VER(&BGZBLHLQ,DSNAME)
+ </source>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->

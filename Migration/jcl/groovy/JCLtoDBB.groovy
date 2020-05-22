@@ -70,7 +70,7 @@ def dataset = parameters.d
 def member  = parameters.m
 
 //******************************************************************************
-//* Define workDir and outputDir for process output
+//* Define outputDir for process output
 //******************************************************************************
 def proj      = parameters.p
 def outputDir = parameters.o
@@ -78,9 +78,12 @@ def outputDir = parameters.o
 if (!outputDir) {
 	outputDir = 'jclMigration'
 }
-
-def workDir        = new File(System.getProperty('user.home'))
-outputDir          = new File("$workDir/$outputDir/${proj.toLowerCase()}")
+if (!outputDir.startsWith('/'))
+{
+	homeDir = new File(System.getProperty('user.home'))
+	outputDir = "$homeDir/$outputDir"
+}
+outputDir          = new File("$outputDir/${proj.toLowerCase()}")
 outputDir.mkdirs()
 def stdout         = new File(outputDir, "stdout.log")
 def stderr         = new File(outputDir, "stderr.log")

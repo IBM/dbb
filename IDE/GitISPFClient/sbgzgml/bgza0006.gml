@@ -56,6 +56,8 @@ list:
      <DD>Request a Git pull command for the cloned repository
      <DT>CM
      <DD>Enter any Git command for the selected repository
+     <DT>UB
+     <DD>Request a DBB user build of this file
 </DL>
 <P>
 To create a new file, enter <HP>S FILENAME</HP> on the

@@ -155,6 +155,7 @@ members.each {
 
     if (it ==~ /.*\.V\d\..*/) {
         (version, dataset, member, lang) = parseLine(it)
+
         if (newFilesAdded && currentVersion != version)
         {
             if (!currentVersion.isEmpty())
@@ -279,6 +280,6 @@ def parseLine(def line)
     def tokens = lessHlq.tokenize(".")
     def version = tokens.get(2)
     def lessVersion = lessHlq.minus(~/V\d+\./)
-    (dataset,member) = lessVersion.split("[\\(\\)]")
+    (dataset,member) = lessHlq.split("[\\(\\)]")
     return [version, dataset, member, lang]
 }

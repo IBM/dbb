@@ -43,11 +43,11 @@ IF (&bgzUSTYP = 'Dir ')
 IF (&bgzUSTYP NE 'Dir ')
  IF (&bgzEUTF = 'TRUE')
   VER(&bgzUSCMD,LIST,E,EA,EU,V,VA,VU,B,D,R,
-                     ST,AD,CO,PS,CP,PL,CM,/,MSG=bgzC024)
+                     ST,AD,CO,PS,CP,PL,CM,UB,UL,/,MSG=bgzC024)
 IF (&bgzUSTYP NE 'Dir ')
  IF (&bgzEUTF = 'FALSE')
   VER (&bgzUSCMD,LIST,E,EA,V,VA,B,D,R,
-                      ST,AD,CO,PS,CP,PL,CM,/,MSG=bgzC026)
+                      ST,AD,CO,PS,CP,PL,CM,UB,UL,/,MSG=bgzC026)
 </source>
 </panel>
 <:--              COPYRIGHT IBM CORP 2019       -->

@@ -5,7 +5,7 @@ import com.ibm.dbb.build.*
 
 // receive passed arguments
 def file = argMap.file
-println("* Building $file using ${this.class.getName()}.groovy script")
+println("** Building $file using ${this.class.getName()}.groovy script")
 
 // define local properties
 def properties = BuildProperties.getInstance()
@@ -24,13 +24,37 @@ def tools = loadScript(new File("Tools.groovy"))
 def tempCreateOptions = "cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new"
 def tempPrintCreateOptions = "cyl space(5,5) unit(vio) blksize(133) lrecl(133) recfm(f,b) new"
 
-// copy program to PDS 
+// copy program to PDS
 println("Copying ${properties.sourceDir}/$file to $cobolPDS($member)")
 new CopyToPDS().file(new File("${properties.sourceDir}/$file")).dataset(cobolPDS).member(member).execute()
+def parentDir = ""
+if (properties.sourceDir.endsWith("Build")) {
+    parentDir = properties.sourceDir
+}
+else {
+    parentDir = properties.sourceDir + "/Build"
+}
+def parentFolder = new File("$parentDir")
+def relativePath = ""
+// Check to see if Build folder actually exist under the source directory
+if (!parentFolder.exists()) {
+    relativePath = properties.sourceDir
+}
+else {
+    def buildDir2 = parentDir + "/Build"
+    def buildDir2Folder = new File("$buildDir2")
+    if (buildDir2Folder.exists()) {
+        relativePath = buildDir2
+    }
+    else {
+        relativePath = parentDir
+    }
+}
 
 //resolve program dependencies and copy to PDS
 println("Resolving dependencies for file $file and copying to $copybookPDS")
-def resolver = tools.getDefaultDependencyResolver(file)
+//def resolver = tools.getDefaultDependencyResolver(file)
+def resolver = tools.getUserBuildDependencyResolver(file, relativePath)
 def deps = resolver.resolve()
 new CopyToPDS().dependencies(deps).dataset(copybookPDS).execute()
 
@@ -42,7 +66,7 @@ def logicalFile = resolver.getLogicalFile()
 def compileParms = "LIB"
 if (logicalFile.isCICS()) {
     compileParms = "$compileParms,DYNAM,CICS"
-}   
+}
 if (logicalFile.isSQL()) {
     compileParms = "$compileParms,SQL"
 }
@@ -96,7 +120,7 @@ if (logicalFile.isSQL()) {
     compile.dd(new DDStatement().dsn(properties.SDSNLOAD).options("shr"))
 }
 if (properties.SFELLOAD) {
-    compile.dd(new DDStatement().dsn(properties.SFELLOAD).options("shr"))  
+    compile.dd(new DDStatement().dsn(properties.SFELLOAD).options("shr"))
 }
 
 // add optional DBRMLIB if build file contains DB2 code
@@ -116,7 +140,7 @@ compile.copy(new CopyToHFS().ddName("SYSPRINT").file(logFile).hfsEncoding(proper
 
 // define the MVSExec command to link edit the program
 def linkedit = new MVSExec().file(file).pgm("IEWBLINK").parm("MAP,RENT,COMPAT(PM5)")
-	                    
+	
 // add DD statements to the linkedit command
 linkedit.dd(new DDStatement().name("SYSLMOD").dsn("$loadPDS($member)").options("shr").output(true).deployType("LOAD"))
 linkedit.dd(new DDStatement().name("SYSPRINT").options(tempCreateOptions))
@@ -166,7 +190,7 @@ if (rc <= 4) {
 		// Store logical file and indirect dependencies to the outputs collection
 		repositoryClient.saveLogicalFile( outputs_collection, logicalFile );
 	}
-}    
+}
 
 job.stop()
 

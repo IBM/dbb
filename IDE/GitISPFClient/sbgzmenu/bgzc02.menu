@@ -7,14 +7,15 @@ BGZC023 'Invalid UNIX file type' .TYPE=WARNING .HELP=* .ALARM=YES
 BGZC024 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
 'Codes E (Edit), EA (Edit ASCII), EU (Edit UTF-8), V (View), VA (View ASCII),' +
 ' VU (View UTF-8), B (Browse), D (Delete) R (Rename), ST (Status), AD (Add), ' +
-'CO (Commit), PS (Push), CP (Commit & Push), PL (Pull), and CM (Command Promp' +
-'t) allowed'
+'CO (Commit), PS (Push), CP (Commit & Push), PL (Pull), CM (Command Prompt) U' +
+'B (DBB user build) and UL (View DBB log) allowed'
 BGZC025 'Edit/View failed' .TYPE=WARNING .HELP=* .ALARM=YES
 '&BGZLNGER.'
 BGZC026 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
 'Codes E (Edit), EA (Edit ASCII), V (View), VA (View ASCII), B (Browse), D (D' +
 'elete, R (Rename), ST (Status), AD (Add), CO (Commit), PS (Push), CP (Commit' +
-' & Push), PL (Pull), and CM (Command Prompt) allowed'
+' & Push), PL (Pull), CM (Command Prompt) UB (DBB user build) and UL (View DB' +
+'B log) allowed'
 BGZC027 .TYPE=NOTIFY .HELP=* .ALARM=NO
 'File'
 BGZC028 .TYPE=NOTIFY .HELP=* .ALARM=NO
@@ -24,4 +25,4 @@ BGZC029 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
 'ush), PL (Pull), and CM (Command Prompt) allowed'
 /* COPYRIGHT IBM CORP 2019 */
 /* ISPDTLC Release: 7.3.  Level: PID                                  */
-/* z/OS 02.03.00.  Created - Date: 16 May 2019, Time: 03:00           */
+/* z/OS 02.03.00.  Created - Date: 23 Sep 2019, Time: 07:53           */
