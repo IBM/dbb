@@ -24,7 +24,6 @@
 /* Who   When     What                                               */
 /* ----- -------- -------------------------------------------------- */
 /* XH    04/02/19 Initial version                                    */
-/* XH    26/06/19 Work on git remote add origin                      */
 /*                                                                   */
 /*********************************************************************/
 
@@ -39,6 +38,7 @@
    End
 
    'TBSORT BGZCLONE FIELDS(BGZREPOS)'
+   'VGET (BGZICONV) SHARED'
 
    /* panel BGZinit to enter a working directory */
    BGZGIT  = ''
@@ -120,41 +120,39 @@
              return
            end
            fd = retval
-           tag = '03338000'x
-           "f_settag (fd) tag"
-           lf = '0A'x
-           txt = '# line endings'
-           rec = BGZCNVRT('IBM-1047' 'UTF-8' txt) || lf
-           'write' fd 'rec' length(rec)
+           txt = '# line endings' || esc_n
+           'write' fd 'txt' length(txt)
            if retval=-1 then
              say 'record not written, error codes' errno errnojr
-
-           txt = '* text eol=lf'
-           rec = BGZCNVRT('IBM-1047' 'UTF-8' txt) || lf
-           'write' fd 'rec' length(rec)
+           txt = '* text eol=lf' || esc_n
+           'write' fd 'txt' length(txt)
            if retval=-1 then
               say 'record not written, error codes' errno errnojr
-
-           txt = ' '
-           rec = BGZCNVRT('IBM-1047' 'UTF-8' txt) || lf
-           'write' fd 'rec' length(rec)
+           txt = ' ' || esc_n
+           'write' fd 'txt' length(txt)
            if retval=-1 then
              say 'record not written, error codes' errno errnojr
-
            txt = '# This is an example of a file encoding definition. ' ||,
-             'You need one of these for each different file extension'
-           rec = BGZCNVRT('IBM-1047' 'UTF-8' txt) || lf
-           'write' fd 'rec' length(rec)
+             'You need one of these for each different file extension' ||,
+             esc_n
+           'write' fd 'txt' length(txt)
            if retval=-1 then
               say 'record not written, error codes' errno errnojr
 
            txt = '*.cbl zos-working-tree-encoding=ibm-1047 ' ||,
-                 'git-encoding=utf-8'
-           rec = BGZCNVRT('IBM-1047' 'UTF-8' txt) || lf
-           'write' fd 'rec' length(rec)
+                 'git-encoding=utf-8' || esc_n
+           'write' fd 'txt' length(txt)
            if retval=-1 then
               say 'record not written, error codes' errno errnojr
            'close' fd
+           tempPath = path || '.temp'
+           iconvcommand = 'cat' path '|' ||,
+                     BGZICONV '-f IBM-1047 -t UTF-8 >' ||,
+                     tempPath '&& mv' tempPath path
+           call bpxwunix iconvcommand
+           tagchmodcommand = 'chtag -c UTF-8' path ||,
+                     ' && chmod 755 ' path
+           call bpxwunix tagchmodcommand
          End
        End
      End
