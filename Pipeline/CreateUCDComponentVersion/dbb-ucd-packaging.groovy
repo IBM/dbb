@@ -7,7 +7,7 @@ import groovy.xml.MarkupBuilder
 /**
  * This script creates a version in UrbanCode Deploy based on the build result.
  *
- * usage: ucd-packaging.groovy [options]
+ * usage: dbb-ucd-packaging.groovy [options]
  *
  * options:
  *  -b,--buztool <file>           Absolute path to UrbanCode Deploy buztool.sh script
