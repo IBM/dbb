@@ -66,30 +66,19 @@ def dependencies = buildReport.getRecords().findAll{it.getType()==DefaultRecordF
 
 // parse build report to find the build outputs to be deployed.
 println("** Find deployable outputs in the build report ")
-// the following example finds all the build output with deployType set
-//def executes= buildReport.getRecords().findAll{
-//	it.getType()==DefaultRecordFactory.TYPE_EXECUTE &&
-//			!it.getOutputs().findAll{
-//			o -> o.deployType != null
-//			}.isEmpty()
-//}
 
 // the following example finds all the build outputs with and without deployType
-def executes= buildReport.getRecords().findAll{
-	it.getType()==DefaultRecordFactory.TYPE_EXECUTE
-}
-
-
-// the following example finds all the build output in *.LOAD data set
 //def executes= buildReport.getRecords().findAll{
-//	it.getType()==DefaultRecordFactory.TYPE_EXECUTE &&
-//			!it.getOutputs().findAll{ o ->
-//				def (ds,member) = getDatasetName(o.dataset)
-//				return ds.endsWith(".LOAD")
-//			}.isEmpty()
+//	it.getType()==DefaultRecordFactory.TYPE_EXECUTE
 //}
 
-
+// the following example finds all the build outputs with a deployType
+def executes= buildReport.getRecords().findAll{
+	it.getType()==DefaultRecordFactory.TYPE_EXECUTE &&
+	!it.getOutputs().findAll{ o ->
+		o.deployType != null
+	}.isEmpty()
+}
 
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
 
