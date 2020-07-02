@@ -9,3 +9,8 @@ These sample utility scripts are supplied to address issues when running Jenkins
 
 Use the `git-jenkins.sh` script by overriding the Git tool location with this script in the Node Properties of the remote agent configuration.
 
+`git-jenkins2.sh` - Resolves encoding issues with the git client plugin v3.0 onwards.
+1. Enables to use credentials managed in Jenkins to handle HTTP(s) connections to the git provider
+2. Enables to use a SSH passphrase managed in Jenkins for connections to the git provider.
+
+Use the git-jenkins2.sh script by overriding the Git tool location with this script in the Node Properties of the remote agent configuration.
