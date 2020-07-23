@@ -2,7 +2,7 @@
 
 This sample groovy script let you embed the IDZ Code Review Application, also known as IDZ Software Analyzer, into your CI/CD pipeline. It requires that the IDZ code analysis tool is installed via FMID HAKGxxx. Please see the documentation at https://www.ibm.com/support/knowledgecenter/SSQ2R2_14.2.0/com.ibm.rsar.analysis.codereview.cobol.doc/topics/cac_zosbatch_overview.html
 
-This sample groovy script
+This sample groovy `RunCodeReview.groogy` script
 - extracts information about the processed source code (Record Type TYPE_COPY_TO_PDS) from the DBB BuildReport.json
 - assembles and runs a JCL to invoke IDZ Code Review in Batch
 
@@ -14,13 +14,12 @@ This sample groovy script
 - Generates an JCLExec for invoking the IDZ Code Review application
 - Stores the IDZ Code review reports ```CodeReviewCSV.csv```, ```CodeReviewJUNIT.xml```  as well as the JCL spool in the workdir.
 
-Example invocations:
-Invoke RunCodeReview passing the work directory, which stores the BuildReport.json. The property file ```codereview.properties``` is retrieved from the default location, which is the location of the RunCodeReview.groovy
+### Example invocations:
+Invoke RunCodeReview.groovy passing the work directory, which stores the BuildReport.json. The property file ```codereview.properties``` is retrieved from the default location, which is the location of the RunCodeReview.groovy
 ```
 $DBB_HOME/bin/groovyz RunCodeReview.groovy --workDir /var/dbb/buildworkspace/zAppBuild/work
 ```
-
-Invoke RunCodeReview passing the work directory, which stores the BuildReport.json. The property file ```codereview.properties``` is retrieved from the default location, which is the location of the RunCodeReview.groovy
+Invoke RunCodeReview passing the work directory, which stores the BuildReport.json. The property file ```codereview.properties``` is defined via the commandline argument --properties
 ```
 $DBB_HOME/bin/groovyz RunCodeReview.groovy --workDir /var/dbb/buildworkspace/zAppBuild/work --properties /var/dbb/integrations/codereview.properties
 ```
@@ -44,5 +43,4 @@ $DBB_HOME/bin/groovyz RunCodeReview.groovy --workDir /var/dbb/buildworkspace/zAp
 
 ## Property file codereview.properties settings
 
-Please review the descriptions provided for the variables within the codereview.properties file
-
+Please review the descriptions provided for the variables within the codereview.properties file and adjust them according to your environment.
