@@ -29,16 +29,16 @@ $DBB_HOME/bin/groovyz RunCodeReview.groovy --workDir /var/dbb/buildworkspace/zAp
  
   usage: RunCodeReview.groovy --workDir <path-to-dbb-buildreport> [options]
  
-  options:
-   -w,--workDir <dir>       Absolute path to the DBB build output directory
-   -l,--logEncoding	        (Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8
-   -props,--properties      (Optional) Absolute path to the codereview.properties file
-   -p,--preview	            (Optional) Preview JCL, do not submit it
-   -h,--help                (Optional) Prints this message
+    options:
+      -w,--workDir <dir>      Absolute path to the DBB build output directory
+      -l,--logEncoding        (Optional) Defines the Encoding for output files (JCL spool, reports),  default UTF-8
+      -props,--properties     (Optional) Absolute path to the codereview.properties file
+      -p,--preview            (Optional) Preview JCL, do not submit it
+      -h,--help               (Optional) Prints this message
    
-  requires:
-  	codeview.properties file - externalizes the JCL jobcard, RuleFile and Mappings.
-  	If --properties is not provided via cli, the script looks for it at the location of the script itself 
+    requires:
+  	  codeview.properties file - externalizes the JCL jobcard, RuleFile and Mappings.
+  	  If --properties is not provided via cli, the script looks for it at the location of the script itself 
 ```
 
 ## Property file codereview.properties settings

@@ -15,20 +15,19 @@ import java.nio.file.Path
  * 
  * usage: RunCodeReview.groovy --workDir <path-to-dbb-buildreport> [options]
  *
- * options:
- *  -w,--workDir <dir>          Absolute path to the DBB build output directory
- *  -l,--logEncoding			(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8
- *  -props,--properties			(Optional) Absolute path to the codereview.properties file
- *  -p,--preview				(Optional) Preview JCL, do not submit it
- *  -h,--help                   (Optional) Prints this message
+ * 	options:
+ *  	-w,--workDir <dir>			Absolute path to the DBB build output directory
+ *  	-l,--logEncoding			(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8
+ *  	-props,--properties			(Optional) Absolute path to the codereview.properties file
+ *  	-p,--preview				(Optional) Preview JCL, do not submit it
+ *  	-h,--help					(Optional) Prints this message
  *  
- * requires:
- * 	codeview.properties file - externalizes the JCL jobcard, RuleFile and Mappings.
- * 	If --properties not provided via cli, the script looks for it at the location of the script itself 
+ * 	requires:
+ * 		codeview.properties file - externalizes the JCL jobcard, RuleFile and Mappings.
+ * 		If --properties not provided via cli, the script looks for it at the location of the script itself 
  *  
  */
 
-// start create version
 def properties = parseInput(args)
 def startTime = new Date()
 properties.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
@@ -101,8 +100,7 @@ else {
 	// This evals the number of items in the ARRAY! Dont get confused with the returnCode itself
 	if ( jobRcStringArray.length > 1 ){
 		// Ok, the string can be splitted because it contains the keyword CC : Splitting by CC the second record contains the actual RC
-		rc = codeRev.maxRC.split("CC")[1].toInteger()
-
+		rc = jobRcStringArray[1].toInteger()
 		// manage processing the RC, up to your logic. You might want to flag the build as failed.
 		if (rc <= 2){
 			println   "***  Job ${codeRev.submittedJobId} completed with RC=$rc "}
@@ -114,6 +112,7 @@ else {
 	else {
 		// We don't see the CC, assume an failure
 		println   "***  Job ${codeRev.submittedJobId} failed with ${codeRev.maxRC}"
+		System.exit(1)
 	}
 
 	println "   Saving spool output to ${properties.workDir}"
@@ -203,8 +202,7 @@ def parseInput(String[] cliArgs){
 	// Instance of DBB Build Properties
 	def properties = BuildProperties.getInstance()
 
-	// Load from config file
-
+	// Identify config file
 	if (opts.props){ // if property file is supplied via cli
 		buildPropFile = new File(opts.props)
 
@@ -212,30 +210,28 @@ def parseInput(String[] cliArgs){
 		def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 		buildPropFile = new File("$scriptDir/codereview.properties")
 	}
-
+	// Import properties from config file
 	if (buildPropFile.exists()){
 		properties.buildPropFile = buildPropFile.getAbsolutePath()
 		properties.load(buildPropFile)
-
-		// Necessary definitions expected in the codereview.properties file
-		//		properties.codereview_jobcard
-		//		properties.codereview_crRulesFile
-		//		properties.codereview_includedFiles
-		//		properties.codereview_languageMapping
-
 	}else{
 		println "!! codereview.properties not found. Existing."
 		System.exit(1)
 	}
 
-	// set command line arguments
+	// Set command line arguments
 	if (opts.w) properties.workDir = opts.w
 	properties.logEncoding = (opts.l) ? opts.l : "UTF-8"
 	properties.preview = (opts.p) ? 'true' : 'false'
 
-	// validate required properties
+	// Validate required properties
 	try {
-		assert properties.workDir: "Missing property build work directory"
+		assert properties.workDir: "Missing commandline property - workDir - build work directory"
+		assert properties.codereview_jobcard: "Missing property in properties file - codereview_jobcard - jobcard"
+		assert properties.codereview_crRulesFile: "Missing property in properties file - codereview_crRulesFile - code review rules file"
+		assert properties.codereview_includedFiles: "Missing property in properties file - codereview_includedFiles - included files filter"
+		assert properties.codereview_includedIncludeFiles: "Missing property in properties file - codereview_includedIncludeFiles - reference to syslib datasets"
+		assert properties.codereview_languageMapping: "Missing property in properties file - codereview_languageMapping - languge mapping for LIST DD instream"
 	} catch (AssertionError e) {
 		cli.usage()
 		throw e
