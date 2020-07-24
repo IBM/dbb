@@ -231,7 +231,6 @@ def parseInput(String[] cliArgs){
 		assert properties.codereview_crRulesFile: "Missing property in properties file - codereview_crRulesFile - code review rules file"
 		assert properties.codereview_includedFiles: "Missing property in properties file - codereview_includedFiles - included files filter"
 		assert properties.codereview_includedIncludeFiles: "Missing property in properties file - codereview_includedIncludeFiles - reference to syslib datasets"
-		assert properties.codereview_languageMapping: "Missing property in properties file - codereview_languageMapping - languge mapping for LIST DD instream"
 	} catch (AssertionError e) {
 		cli.usage()
 		throw e
