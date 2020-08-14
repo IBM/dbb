@@ -1,3 +1,5 @@
+@groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
+
 import com.ibm.dbb.repository.*
 import com.ibm.dbb.dependency.*
 import com.ibm.dbb.build.*
@@ -69,70 +71,79 @@ def includes= buildReport.getRecords().findAll{
 
 println("** Found source code processed in the build report.")
 sources.each {		println(" ${it.getSource()} ,  ${it.getDestination()}")	}
-println("** Founds include files processed in the build report to extract SYSLIB.")
+println("** Found include files processed in the build report to extract SYSLIB.")
 
-// List to collect the Copybook libraries for the Steplib
-List steplib = new ArrayList<String>()
-includes.each {
-	println(" ${it.getSource()} ,  ${it.getDestination()}")
-	steplib.add(it.getDestination().take(it.getDestination().indexOf("(")))
+if (sources.size == 0){
+	println("!! No source files found in the build report. Skipping Code Review.")
 }
-steplib = steplib.toUnique()
+else
+{
 
-println("** Create JCL Stream for IDZ Code Review")
-String jobcard = properties.codereview_jobcard.replace("\\n", "\n")
-JCLExec codeRev=createCodeReviewExec(jobcard, properties.codereview_crRulesFile, sources, steplib)
+	// List to collect the Copybook libraries for the Steplib
+	List steplib = new ArrayList<String>()
+	includes.each {
+		println(" ${it.getSource()} ,  ${it.getDestination()}")
+		steplib.add(it.getDestination().take(it.getDestination().indexOf("(")))
+	}
+	steplib = steplib.toUnique()
 
-if (properties.preview.toBoolean()){
-	println "** Preview only."
-}
-else {
+	println("** Create JCL Stream for IDZ Code Review")
+	String jobcard = properties.codereview_jobcard.replace("\\n", "\n")
+	JCLExec codeRev=createCodeReviewExec(jobcard, properties.codereview_crRulesFile, sources, steplib)
 
-	// Execute jclExec
-	println "** Execute IDZ Code Review Application via JCL."
-	codeRev.execute()
-	// Get Job information
-	println "   Job '${codeRev.getSubmittedJobId()}' ended with maxRC = ${codeRev.maxRC}"
 
-	// Splitting the String into a StringArray using CC as the seperator
-	def jobRcStringArray = codeRev.maxRC.split("CC")
 
-	// This evals the number of items in the ARRAY! Dont get confused with the returnCode itself
-	if ( jobRcStringArray.length > 1 ){
-		// Ok, the string can be splitted because it contains the keyword CC : Splitting by CC the second record contains the actual RC
-		rc = jobRcStringArray[1].toInteger()
-		// manage processing the RC, up to your logic. You might want to flag the build as failed.
-		if (rc <= 2){
-			println   "***  Job ${codeRev.submittedJobId} completed with RC=$rc "}
-		else{
-			println   "***  Job ${codeRev.submittedJobId} failed with RC=$rc "
-			System.exit(1)
-		}
+	if (properties.preview.toBoolean()){
+		println "** Preview only."
 	}
 	else {
-		// We don't see the CC, assume an failure
-		println   "***  Job ${codeRev.submittedJobId} failed with ${codeRev.maxRC}"
-		System.exit(1)
+
+		// Execute jclExec
+		println "** Execute IDZ Code Review Application via JCL."
+		codeRev.execute()
+		// Get Job information
+		println "   Job '${codeRev.getSubmittedJobId()}' ended with maxRC = ${codeRev.maxRC}"
+
+		// Splitting the String into a StringArray using CC as the seperator
+		def jobRcStringArray = codeRev.maxRC.split("CC")
+
+		// This evals the number of items in the ARRAY! Dont get confused with the returnCode itself
+		if ( jobRcStringArray.length > 1 ){
+			// Ok, the string can be splitted because it contains the keyword CC : Splitting by CC the second record contains the actual RC
+			rc = jobRcStringArray[1].toInteger()
+			// manage processing the RC, up to your logic. You might want to flag the build as failed.
+			if (rc <= 2){
+				println   "***  Job ${codeRev.submittedJobId} completed with RC=$rc "}
+			else{
+				println   "***  Job ${codeRev.submittedJobId} failed with RC=$rc "
+				System.exit(1)
+			}
+		}
+		else {
+			// We don't see the CC, assume an failure
+			println   "***  Job ${codeRev.submittedJobId} failed with ${codeRev.maxRC}"
+			System.exit(1)
+		}
+
+		println "   Saving spool output to ${properties.workDir}"
+		def logFile = new File("${properties.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
+		codeRev.saveOutput(logFile, properties.logEncoding)
+
+		codeRev.getAllDDNames().each({ ddName ->
+			if (ddName == 'XML') {
+				def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
+				codeRev.saveOutput(ddName, file, properties.logEncoding)
+			}
+			if (ddName == 'JUNIT') {
+				def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
+				codeRev.saveOutput(ddName, file, properties.logEncoding)
+			}
+			if (ddName == 'CSV') {
+				def file = new File("${properties.workDir}/CodeReview${ddName}.csv")
+				codeRev.saveOutput(ddName, file, properties.logEncoding)
+			}
+		})
 	}
-
-	println "   Saving spool output to ${properties.workDir}"
-	def logFile = new File("${properties.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
-	codeRev.saveOutput(logFile, properties.logEncoding)
-
-	codeRev.getAllDDNames().each({ ddName ->
-		if (ddName == 'XML') {
-			def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
-			codeRev.saveOutput(ddName, file, properties.logEncoding)
-		}
-		if (ddName == 'JUNIT') {
-			def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
-			codeRev.saveOutput(ddName, file, properties.logEncoding)
-		}
-		if (ddName == 'CSV') {
-			def file = new File("${properties.workDir}/CodeReview${ddName}.csv")
-			codeRev.saveOutput(ddName, file, properties.logEncoding)
-		}
-	})
 
 }
 
@@ -152,10 +163,10 @@ def createCodeReviewExec(String jobcard, String ruleFile, List memberList,List s
 //*
 //AKGCREV EXEC PROC=AKGCR
 """
-steplib.eachWithIndex {it, index -> 
-	if (index == 0 ) jcl+="//SYSLIB   DD DISP=SHR,DSN=${it} \n"
-	else jcl+="//         DD DISP=SHR,DSN=${it} \n"}
-jcl +="""//RULES  DD PATH='$ruleFile'
+	steplib.eachWithIndex {it, index ->
+		if (index == 0 ) jcl+="//SYSLIB   DD DISP=SHR,DSN=${it} \n"
+		else jcl+="//         DD DISP=SHR,DSN=${it} \n"}
+	jcl +="""//RULES  DD PATH='$ruleFile'
 //LIST   DD * 
 """
 	def languageMapping = new PropertyMappings("codereview_languageMapping")
@@ -207,7 +218,7 @@ def parseInput(String[] cliArgs){
 		buildPropFile = new File(opts.props)
 
 	} else { // looking at the default location
-		def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
+		def scriptDir = getScriptDir()
 		buildPropFile = new File("$scriptDir/codereview.properties")
 	}
 	// Import properties from config file
