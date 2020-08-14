@@ -74,7 +74,7 @@ sources.each {		println(" ${it.getSource()} ,  ${it.getDestination()}")	}
 println("** Found include files processed in the build report to extract SYSLIB.")
 
 if (sources.size == 0){
-	println("!! No source files found in the build report. Skipping Code Review.")
+	println("!! No source files found in the build report to process. Skipping Code Review.")
 }
 else
 {
