@@ -91,7 +91,7 @@ def xml = new MarkupBuilder(writer)
 xml.manifest(type:"MANIFEST_SHIPLIST"){
 	//top level property will be added as version properties
 	//requires UCD v6.2.6 and above
-	property(name : buildResult.getGroup() + "-dbbbuildResultUrl", value : buildResult.getUrl())
+	property(name : buildResult.getGroup() + "-buildResultUrl", value : buildResult.getUrl())
 	//iterate through the outputs and add container and resource elements
 	executes.each{ execute ->
 		execute.getOutputs().each{ output ->
