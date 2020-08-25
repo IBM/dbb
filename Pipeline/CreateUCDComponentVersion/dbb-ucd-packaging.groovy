@@ -34,8 +34,13 @@ import groovy.xml.MarkupBuilder
  *
  * Version 2 - 2020-06
  *  Added option to define UCD component version name (optional)
- *  Option -ar now optional; renamed to --artifactRepository, now supporting both Artifactory + UCD Codestation
+ *  Option -ar now optional; renamed to --artifactRepository, 
+ *   now supporting both external artifact repository (Artifactory/Nexus) + UCD Codestation
  *  Added preview option to skip buztool.sh execution
+ *
+ * Version 3 - 2020-08
+ *  Fix ucd component version property for buildResultUrl
+ *  Added support for build outputs declared in a CopyToPDS Build Record (JCL, REXX, Shared copybooks, etc.)
  *
  */
 
@@ -74,7 +79,7 @@ println("** Find deployable outputs in the build report ")
 
 // the following example finds all the build outputs with a deployType
 def executes= buildReport.getRecords().findAll{
-	it.getType()==DefaultRecordFactory.TYPE_EXECUTE &&
+	(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
 	!it.getOutputs().findAll{ o ->
 		o.deployType != null
 	}.isEmpty()
@@ -100,7 +105,10 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 				resource(name:member, type:"PDSMember", deployType:output.deployType){
 					// add any custom properties needed
 					property(name:"buildcommand", value:execute.getCommand())
-					property(name:"buildoptions", value:execute.getOptions())
+					// Only TYPE_EXECUTE Records carry options
+					if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:execute.getOptions())
+					// Sample to add additional properties. Here: adding db2 properties for a DBRM 
+					//   which where added to the build report through a basic PropertiesRecord. 
 					if (output.deployType.equals("DBRM")){
 						propertyRecord = buildReport.getRecords().findAll{
 							it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==execute.getFile()
