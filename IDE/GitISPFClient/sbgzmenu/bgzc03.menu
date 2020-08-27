@@ -1,3 +1,6 @@
+BGZC030 'Specify user & password' .TYPE=WARNING .HELP=* .ALARM=YES
+'User name must be specified in preferences and password must be entered when' +
+' specify password is selected in preferences.'
 BGZC031 .TYPE=WARNING .HELP=* .ALARM=YES
 'SMSG="Invalid select code ">Codes CB (Change working branch), PB (Push branc' +
 'h on github), DB (Delete local branch) and JU (Jump to working directory) al' +
@@ -20,5 +23,5 @@ BGZC038 .TYPE=NOTIFY .HELP=* .ALARM=NO
 BGZC039 'DBB build log not found' .TYPE=WARNING .HELP=* .ALARM=YES
 'No DBB build log exists for this file'
 /* COPYRIGHT IBM CORP 2019 */
-/* ISPDTLC Release: 7.3.  Level: PID                                  */
-/* z/OS 02.03.00.  Created - Date: 23 Sep 2019, Time: 06:02           */
+/* ISPDTLC Release: 7.4.  Level: PID                                  */
+/* z/OS 02.04.00.  Created - Date: 20 Aug 2020, Time: 05:59           */

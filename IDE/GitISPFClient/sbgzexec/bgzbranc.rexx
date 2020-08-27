@@ -101,6 +101,11 @@
 
        If Git_rc = 0 Then
        Do
+
+         BGZBRANC = BGZNBRAN
+         BGZNEWBR = 'Y'
+         'VPUT (BGZBRANC) PROFILE'
+         'VPUT (BGZNEWBR) PROFILE'
          BGZLINE = BGZNBRAN
          'TBADD BGZTEMP ORDER'
          'TBCLOSE BGZTEMP'
@@ -155,10 +160,13 @@
            shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,
                   'git checkout ' ||'"'Branch'"'
            Git_rc = BGZCMD('checkout' shellcmd)
+
            If Git_rc= 0 Then
            Do
              BGZBRANC = Branch
+             BGZNEWBR = 'N'
              'VPUT (BGZBRANC) PROFILE'
+             'VPUT (BGZNEWBR) PROFILE'
              Rebuild = 1
              ReturnBranch = -1
            End
