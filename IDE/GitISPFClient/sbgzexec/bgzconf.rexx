@@ -49,7 +49,7 @@
   Perl5_HOME   = '/var/rocket'
   DBB_HOME     = '/var/dbb103'
   ICONV_HOME   = '/bin/iconv'
-  CAINFO       = 'export GIT_SSL_CAINFO=/u/dohertl/Test/cacert.pem'
+  CAINFO       = 'export GIT_SSL_CAINFO=/var/rocket/cacert.pem'
 
   BGZJAVAH = JAVA_HOME
   BGZROCKH = Rocket_HOME
