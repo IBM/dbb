@@ -12,6 +12,9 @@
 
 <MSGMBR NAME=bgzC02>
 
+<MSG SUFFIX=0 MSGTYPE=Warning ALARM=YES HELP=*>
+Specify Userid/Password
+
 <MSG SUFFIX=1 MSGTYPE=WARNING ALARM=YES HELP=*
      SMSG="Invalid command ">
 Only S, L, LOC, LOCATE, REF, or REFRESH commands allowed

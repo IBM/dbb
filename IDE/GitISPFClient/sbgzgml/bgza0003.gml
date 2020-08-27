@@ -20,6 +20,8 @@ include:
    <DD>user.email used for Git commands
    <DT>Git user.name
    <DD>user name used for Git commands
+   <DT>Specify Userid/Password
+   <DD>Specify userid and password for HTTPS authentication
    <DT>Suppress .files on USS list
    <DD>To not display .files on working directory list (default is Yes)
 </DL>
