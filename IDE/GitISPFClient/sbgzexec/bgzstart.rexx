@@ -35,6 +35,7 @@
   /* Set the location for Java, Rocket and DBB */
   Call BGZCONF
   'VGET (BGZJAVAH,BGZROCKH,BGZBASH,BGZCGIT,BGZMAN,BGZPERL5,BGZDBBH) SHARED'
+  'VGET (BGZCAINF) SHARED'
 
   If substr(ZENVIR,6,3) >= '7.1' Then
      BGZEUTF = 'TRUE'
@@ -56,7 +57,19 @@
   gitenv.12 = 'export _TAG_REDIR_IN=txt'
   gitenv.13 = 'export _TAG_REDIR_OUT=txt'
 
-  gitenv.0  = 13
+  /*get home directory */
+  sh_rc = bpxwunix('pwd',,stdout.,stderr.)
+  home_dir=stdout.1
+  gitenv.14 = 'export HOME='home_dir
+
+  /* Optional parms */
+  o = 14
+  If BGZCAINF /= '' Then
+  Do
+    o = o + 1
+    gitenv.o = 'export GIT_SSL_CAINFO='BGZCAINF
+  End
+  gitenv.0 = o
 
   BGZENVIR = ''
   Do i = 1 to gitenv.0

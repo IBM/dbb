@@ -12,6 +12,11 @@
 
 <MSGMBR NAME=bgzC03>
 
+<MSG SUFFIX=0 MSGTYPE=Warning ALARM=YES HELP=*
+     SMSG="Specify user & password">
+User name must be specified in preferences and password must be entered
+when specify password is selected in preferences.
+
 <MSG SUFFIX=1 MSGTYPE=WARNING ALARM=YES HELP=*>
      SMSG="Invalid select code     ">
 Codes CB (Change working branch), PB (Push branch on github),

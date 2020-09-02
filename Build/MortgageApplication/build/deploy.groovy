@@ -44,8 +44,8 @@ def dependencies = buildReport.getRecords().findAll{it.getType()==DefaultRecordF
 println("** Find deployable outputs in the build report ")
 // the following example finds all the build output with deployType set
 def executes= buildReport.getRecords().findAll{
-	it.getType()==DefaultRecordFactory.TYPE_EXECUTE && 
-	!it.getOutputs().findAll{ o -> 
+    (it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS)  && 
+        !it.getOutputs().findAll{ o -> 
 		o.deployType != null
 	}.isEmpty()
 } 
@@ -69,7 +69,7 @@ def xml = new MarkupBuilder(writer)
 xml.manifest(type:"MANIFEST_SHIPLIST"){
 	//top level property will be added as version properties
         //requires UCD v6.2.6 and above
-	property(name : buildResult.getGroup() + "-" + buildResult.getLabel(), value : buildResult.getUrl())
+	property(name : buildResult.getGroup() + "-buildResultUrl", value : buildResult.getUrl())
 	//iterate through the outputs and add container and resource elements
 	executes.each{ execute -> 
  		execute.getOutputs().each{ output -> 
@@ -78,7 +78,8 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 				resource(name:member, type:"PDSMember", deployType:output.deployType){
 					// add any custom properties needed 
 					property(name:"buildcommand", value:execute.getCommand())
-					property(name:"buildoptions", value:execute.getOptions())
+					if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE)
+					   property(name:"buildoptions", value:execute.getOptions())
 					// add source information
 					inputs(url : ""){
 						input(name : execute.getFile(), compileType : "Main")
