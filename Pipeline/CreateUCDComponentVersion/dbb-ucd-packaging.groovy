@@ -3,6 +3,7 @@ import com.ibm.dbb.dependency.*
 import com.ibm.dbb.build.report.*
 import com.ibm.dbb.build.report.records.*
 import groovy.time.*
+import com.ibm.dbb.build.VersionInfo
 import groovy.xml.MarkupBuilder
 /**
  * This script creates a version in UrbanCode Deploy based on the build result.
@@ -41,6 +42,7 @@ import groovy.xml.MarkupBuilder
  * Version 3 - 2020-08
  *  Fix ucd component version property for buildResultUrl
  *  Added support for build outputs declared in a CopyToPDS Build Record (JCL, REXX, Shared copybooks, etc.)
+ *    Keep backward compatibility with older toolkits
  *
  */
 
@@ -77,12 +79,18 @@ println("** Find deployable outputs in the build report ")
 //	it.getType()==DefaultRecordFactory.TYPE_EXECUTE
 //}
 
-// the following example finds all the build outputs with a deployType
+// Print warning, that extraction of COPY_TO_PDS records are not supported with older versions of the dbb toolkit. 
+dbbVersion = new VersionInfo().getVersion()
+println "   ! Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Identified DBB Toolkit version $dbbVersion. Extracting build records for TYPE_COPY_TO_PDS will be skipped."
+
+// finds all the build outputs with a deployType
 def executes= buildReport.getRecords().findAll{
-	(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
-	!it.getOutputs().findAll{ o ->
-		o.deployType != null
-	}.isEmpty()
+	try {
+		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
+				!it.getOutputs().findAll{ o ->
+					o.deployType != null
+				}.isEmpty()
+	} catch (Exception e){}	
 }
 
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
