@@ -12,7 +12,7 @@
 *.rex zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.rexx zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.txt zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
-*.groovy zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.groovy zos-working-tree-encoding=utf-8 git-encoding=utf-8
 *.sh zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.properties zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.asm zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
