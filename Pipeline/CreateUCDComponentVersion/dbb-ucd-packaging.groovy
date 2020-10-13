@@ -190,9 +190,13 @@ if (!properties.preview.toBoolean()){
 
 	
 	println("** Create version by running UCD buztool")
-	def p = cmd.execute();
-	p.waitFor();
-	println(p.text);
+	
+	StringBuffer response = new StringBuffer()
+	StringBuffer error = new StringBuffer()
+	
+	def p = cmd.execute()
+	p.waitForProcessOutput(response, error)
+	println(response.toString())
 
 	def rc = p.exitValue();
 	if(rc==0){
@@ -203,6 +207,7 @@ if (!properties.preview.toBoolean()){
 			println "   $k -> $v"
 		}
 	}else{
+		println("*! Error executing buztool\n" +error.toString())
 		System.exit(rc)
 	}
 }
