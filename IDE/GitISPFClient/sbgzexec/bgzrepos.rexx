@@ -144,7 +144,7 @@
            Do e = 1 to stdout.0
              Say stdout.e
            End
-           Return
+           Iterate
          End
        End
 
@@ -252,6 +252,20 @@
 
            Git_rc = BGZCMD('clone' shellcmd)
          End
+       End
+       If Git_rc > 0 Then
+       Do
+         /* Clone may have created the repo but with errors */
+         /* In this case we need to create the BGZCLONE row */
+         x = lastPos('/',BGZNREPO)
+         repoName = Substr(BGZNREPO,x+1)
+         y = lastPos('.git',repoName)
+         repoName = Substr(repoName,1,y-1)
+         BGZUSDIR = BGZNDIR'/'repoName
+         Say BGZUSDIR
+         Address syscall 'lstat (BGZUSDIR) ls.'
+         If ls.0 > 0 Then
+           Git_rc = 0
        End
        If Git_rc = 0 Then
        Do
