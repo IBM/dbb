@@ -57,7 +57,7 @@ properties.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
 println("** Create version start at $properties.startTime")
 println("** Properties at startup:")
 properties.each{k,v->
-    println "   $k -> $v"
+	println "   $k -> $v"
 }
 
 // read build report data
@@ -65,8 +65,8 @@ println("** Read build report data from $properties.workDir/BuildReport.json")
 def jsonOutputFile = new File("${properties.workDir}/BuildReport.json")
 
 if(!jsonOutputFile.exists()){
-    println("** Build report data at $properties.workDir/BuildReport.json not found")
-    System.exit()
+	println("** Build report data at $properties.workDir/BuildReport.json not found")
+	System.exit()
 }
 
 def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
@@ -80,7 +80,7 @@ println("** Find deployable outputs in the build report ")
 
 // the following example finds all the build outputs with and without deployType
 //def executes= buildReport.getRecords().findAll{
-//    it.getType()==DefaultRecordFactory.TYPE_EXECUTE
+//	it.getType()==DefaultRecordFactory.TYPE_EXECUTE
 //}
 
 // Print warning, that extraction of COPY_TO_PDS records are not supported with older versions of the dbb toolkit. 
@@ -89,12 +89,12 @@ println "   ! Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.
 
 // finds all the build outputs with a deployType
 def executes= buildReport.getRecords().findAll{
-    try {
-        (it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
-                !it.getOutputs().findAll{ o ->
-                    o.deployType != null
-                }.isEmpty()
-    } catch (Exception e){}    
+	try {
+		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
+				!it.getOutputs().findAll{ o ->
+					o.deployType != null
+				}.isEmpty()
+	} catch (Exception e){}	
 }
 
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
@@ -106,50 +106,50 @@ def writer = new StringWriter()
 writer.write("<?xml version=\"1.0\" encoding=\"CP037\"?>\n");
 def xml = new MarkupBuilder(writer)
 xml.manifest(type:"MANIFEST_SHIPLIST"){
-    //top level property will be added as version properties
-    //requires UCD v6.2.6 and above
-    property(name : buildResult.getGroup() + "-buildResultUrl", value : buildResult.getUrl())
-    //iterate through the outputs and add container and resource elements
-    executes.each{ execute ->
-        execute.getOutputs().each{ output ->
-            def (ds,member) = getDatasetName(output.dataset)
-            container(name:ds, type:"PDS"){
-                resource(name:member, type:"PDSMember", deployType:output.deployType){
-                    // add any custom properties needed
-                    property(name:"buildcommand", value:execute.getCommand())
-                    // Only TYPE_EXECUTE Records carry options
-                    if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:execute.getOptions())
-                    // Sample to add additional properties. Here: adding db2 properties for a DBRM 
-                    //   which where added to the build report through a basic PropertiesRecord. 
-                    if (output.deployType.equals("DBRM")){
-                        propertyRecord = buildReport.getRecords().findAll{
-                            it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==execute.getFile()
-                        }
-                        propertyRecord.each { propertyRec ->
-                            // Iterate Properties
-                            (propertyRec.getProperties()).each {
-                                property(name:"$it.key", value:it.value)
+	//top level property will be added as version properties
+	//requires UCD v6.2.6 and above
+	property(name : buildResult.getGroup() + "-buildResultUrl", value : buildResult.getUrl())
+	//iterate through the outputs and add container and resource elements
+	executes.each{ execute ->
+		execute.getOutputs().each{ output ->
+			def (ds,member) = getDatasetName(output.dataset)
+			container(name:ds, type:"PDS"){
+				resource(name:member, type:"PDSMember", deployType:output.deployType){
+					// add any custom properties needed
+					property(name:"buildcommand", value:execute.getCommand())
+					// Only TYPE_EXECUTE Records carry options
+					if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:execute.getOptions())
+					// Sample to add additional properties. Here: adding db2 properties for a DBRM 
+					//   which where added to the build report through a basic PropertiesRecord. 
+					if (output.deployType.equals("DBRM")){
+						propertyRecord = buildReport.getRecords().findAll{
+							it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==execute.getFile()
+						}
+						propertyRecord.each { propertyRec ->
+							// Iterate Properties
+							(propertyRec.getProperties()).each {
+								property(name:"$it.key", value:it.value)
 
-                            }
-                        }
-                    }
+							}
+						}
+					}
 
-                    // add source information
-                    inputs(url : ""){
-                        input(name : execute.getFile(), compileType : "Main")
-                        dependencies.each{
-                            if(it.getId() == execute.getFile()){
-                                it.getAllDependencies().each{
-                                    def displayName = it.getFile()? it.getFile() : it.getLname()
-                                    input(name : displayName, compileType : it.getCategory())
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+					// add source information
+					inputs(url : ""){
+						input(name : execute.getFile(), compileType : "Main")
+						dependencies.each{
+							if(it.getId() == execute.getFile()){
+								it.getAllDependencies().each{
+									def displayName = it.getFile()? it.getFile() : it.getLname()
+									input(name : displayName, compileType : it.getCategory())
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
 println("** Write ship list file to  $properties.workDir/shiplist.xml")
 def shiplistFile = new File("${properties.workDir}/shiplist.xml")
@@ -161,33 +161,33 @@ shiplistFile.text = writer
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_runtools_uss.html
 
 def cmd = [
-    properties.buztoolPath,
-    "createzosversion",
-    "-c",
-    properties.component,
-    "-s",
-    "$properties.workDir/shiplist.xml",
-    //requires UCD v6.2.6 and above
-    "-o",
-    "${properties.workDir}/buztool.output"
+	properties.buztoolPath,
+	"createzosversion",
+	"-c",
+	properties.component,
+	"-s",
+	"$properties.workDir/shiplist.xml",
+	//requires UCD v6.2.6 and above
+	"-o",
+	"${properties.workDir}/buztool.output"
 
 ]
 // set artifactRepository option if specified
 if (properties.artifactRepositorySettings) {
-    cmd << "-ar"
-    cmd << properties.artifactRepositorySettings
+	cmd << "-ar"
+	cmd << properties.artifactRepositorySettings
 }
 
 // set propertyFile option if specified
 if (properties.propertyFileSettings) {
-    cmd << "-prop"
-    cmd << properties.propertyFileSettings
+	cmd << "-prop"
+	cmd << properties.propertyFileSettings
 }
 
 //set component version name if specified
 if(properties.versionName){
-    cmd << "-v"
-    cmd <<  properties.versionName
+	cmd << "-v"
+	cmd <<  properties.versionName
 }
 
 def cmdStr = "";
@@ -198,28 +198,28 @@ println cmdStr
 // execute command, if no preview is set
 if (!properties.preview.toBoolean()){
 
-    
-    println("** Create version by running UCD buztool")
-    
-    StringBuffer response = new StringBuffer()
-    StringBuffer error = new StringBuffer()
-    
-    def p = cmd.execute()
-    p.waitForProcessOutput(response, error)
-    println(response.toString())
+	
+	println("** Create version by running UCD buztool")
+	
+	StringBuffer response = new StringBuffer()
+	StringBuffer error = new StringBuffer()
+	
+	def p = cmd.execute()
+	p.waitForProcessOutput(response, error)
+	println(response.toString())
 
-    def rc = p.exitValue();
-    if(rc==0){
-        println("** buztool output properties")
-        def outputProp = new Properties()
-        new File("${properties.workDir}/buztool.output").withInputStream { outputProp.load(it) }
-        outputProp.each{k,v->
-            println "   $k -> $v"
-        }
-    }else{
-        println("*! Error executing buztool\n" +error.toString())
-        System.exit(rc)
-    }
+	def rc = p.exitValue();
+	if(rc==0){
+		println("** buztool output properties")
+		def outputProp = new Properties()
+		new File("${properties.workDir}/buztool.output").withInputStream { outputProp.load(it) }
+		outputProp.each{k,v->
+			println "   $k -> $v"
+		}
+	}else{
+		println("*! Error executing buztool\n" +error.toString())
+		System.exit(rc)
+	}
 }
 
 /**
@@ -228,59 +228,58 @@ if (!properties.preview.toBoolean()){
  * @return e.g. (BLD.LOAD, PGM1)
  */
 def getDatasetName(String fullname){
-    def ds,member;
-    def elements =  fullname.split("[\\(\\)]");
-    ds = elements[0];
-    member = elements.size()>1? elements[1] : "";
-    return [ds, member];
+	def ds,member;
+	def elements =  fullname.split("[\\(\\)]");
+	ds = elements[0];
+	member = elements.size()>1? elements[1] : "";
+	return [ds, member];
 }
 
 def parseInput(String[] cliArgs){
-    def cli = new CliBuilder(usage: "deploy.groovy [options]")
-    cli.b(longOpt:'buztool', args:1, argName:'file', 'Absolute path to UrbanCode Deploy buztool.sh script')
-    cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
-    cli.c(longOpt:'component', args:1, argName:'name', 'Name of the UCD component to create version in')
-    cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file')
-    cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option')
-    cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
-    cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
-    cli.h(longOpt:'help', 'Prints this message')
-    def opts = cli.parse(cliArgs)
-    if (opts.h) { // if help option used, print usage and exit
-        cli.usage()
-        System.exit(0)
-    }
+	def cli = new CliBuilder(usage: "deploy.groovy [options]")
+	cli.b(longOpt:'buztool', args:1, argName:'file', 'Absolute path to UrbanCode Deploy buztool.sh script')
+	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
+	cli.c(longOpt:'component', args:1, argName:'name', 'Name of the UCD component to create version in')
+	cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file')
+	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option')
+	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
+	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
+	cli.h(longOpt:'help', 'Prints this message')
+	def opts = cli.parse(cliArgs)
+	if (opts.h) { // if help option used, print usage and exit
+		cli.usage()
+		System.exit(0)
+	}
 
-    def properties = new Properties()
+	def properties = new Properties()
 
-    // load workDir from ./build.properties if it exists
-    def buildProperties = new Properties()
-    def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
-    def buildPropFile = new File("$scriptDir/build.properties")
-    if (buildPropFile.exists()){
-        buildPropFile.withInputStream { buildProperties.load(it) }
-        if (buildProperties.workDir != null)
-            properties.workDir = buildProperties.workDir
-    }
+	// load workDir from ./build.properties if it exists
+	def buildProperties = new Properties()
+	def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
+	def buildPropFile = new File("$scriptDir/build.properties")
+	if (buildPropFile.exists()){
+		buildPropFile.withInputStream { buildProperties.load(it) }
+		if (buildProperties.workDir != null)
+			properties.workDir = buildProperties.workDir
+	}
 
-    // set command line arguments
-    if (opts.w) properties.workDir = opts.w
-    if (opts.b) properties.buztoolPath = opts.b
-    if (opts.c) properties.component = opts.c
-    if (opts.ar) properties.artifactRepositorySettings = opts.ar
-    if (opts.prop) properties.propertyFileSettings = opts.prop
-    
-    if (opts.v) properties.versionName = opts.v
-    properties.preview = (opts.p) ? 'true' : 'false'
+	// set command line arguments
+	if (opts.w) properties.workDir = opts.w
+	if (opts.b) properties.buztoolPath = opts.b
+	if (opts.c) properties.component = opts.c
+	if (opts.ar) properties.artifactRepositorySettings = opts.ar
+	if (opts.prop) properties.propertyFileSettings = opts.prop
+	if (opts.v) properties.versionName = opts.v
+	properties.preview = (opts.p) ? 'true' : 'false'
 
-    // validate required properties
-    try {
-        assert properties.buztoolPath : "Missing property buztool script path"
-        assert properties.workDir: "Missing property build work directory"
-        assert properties.component: "Missing property UCD component"
-    } catch (AssertionError e) {
-        cli.usage()
-        throw e
-    }
-    return properties
+	// validate required properties
+	try {
+		assert properties.buztoolPath : "Missing property buztool script path"
+		assert properties.workDir: "Missing property build work directory"
+		assert properties.component: "Missing property UCD component"
+	} catch (AssertionError e) {
+		cli.usage()
+		throw e
+	}
+	return properties
 }
