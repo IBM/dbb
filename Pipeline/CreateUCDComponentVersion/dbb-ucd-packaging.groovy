@@ -92,12 +92,17 @@ def executes= buildReport.getRecords().findAll{
 	try {
 		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
 				!it.getOutputs().findAll{ o ->
-					o.deployType != null
+					o.deployType != null && o.deployType != 'ZUNIT-TESTCASE'
 				}.isEmpty()
 	} catch (Exception e){}	
 }
 
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+
+if ( executes.size() == 0 ) {
+	println("** No items to deploy. Skipping ship list generation.")
+	System.exit(0)
+}
 
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
