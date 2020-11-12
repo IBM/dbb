@@ -16,8 +16,9 @@ import groovy.xml.MarkupBuilder
  *  -c,--component <name>         Name of the UCD component to create version in
  *  -v,--versionName <name>       Name of the UCD component version name (Optional)
  *  -h,--help                     Prints this message
- *  -ar,--artifactRepository	  Absolute path to Artifact Respository Server connection file (Optional)
- *  -p,--preview				  Preview, not executing buztool.sh
+ *  -ar,--artifactRepository      Absolute path to Artifact Respository Server connection file (Optional)
+ *  -prop,--propertyFile          Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
+ *  -p,--preview                  Preview, not executing buztool.sh
  *
  * notes:
  *   This script uses ship list specification and buztool parameters which are
@@ -44,6 +45,9 @@ import groovy.xml.MarkupBuilder
  *  Added support for build outputs declared in a CopyToPDS Build Record (JCL, REXX, Shared copybooks, etc.)
  *    Keep backward compatibility with older toolkits
  *
+ * Version 4 - 2020-11
+ *  Take into account new properties for Artifact Respository Server connection.
+ *
  */
 
 // start create version
@@ -62,7 +66,7 @@ def jsonOutputFile = new File("${properties.workDir}/BuildReport.json")
 
 if(!jsonOutputFile.exists()){
 	println("** Build report data at $properties.workDir/BuildReport.json not found")
-	System.exit()
+	System.exit(1)
 }
 
 def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
@@ -88,12 +92,17 @@ def executes= buildReport.getRecords().findAll{
 	try {
 		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
 				!it.getOutputs().findAll{ o ->
-					o.deployType != null
+					o.deployType != null && o.deployType != 'ZUNIT-TESTCASE'
 				}.isEmpty()
 	} catch (Exception e){}	
 }
 
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+
+if ( executes.size() == 0 ) {
+	println("** No items to deploy. Skipping ship list generation.")
+	System.exit(0)
+}
 
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
@@ -168,10 +177,16 @@ def cmd = [
 	"${properties.workDir}/buztool.output"
 
 ]
-// set aritifactRepository option if specified
+// set artifactRepository option if specified
 if (properties.artifactRepositorySettings) {
 	cmd << "-ar"
 	cmd << properties.artifactRepositorySettings
+}
+
+// set propertyFile option if specified
+if (properties.propertyFileSettings) {
+	cmd << "-prop"
+	cmd << properties.propertyFileSettings
 }
 
 //set component version name if specified
@@ -231,6 +246,7 @@ def parseInput(String[] cliArgs){
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
 	cli.c(longOpt:'component', args:1, argName:'name', 'Name of the UCD component to create version in')
 	cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file')
+	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
 	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
 	cli.h(longOpt:'help', 'Prints this message')
@@ -257,6 +273,7 @@ def parseInput(String[] cliArgs){
 	if (opts.b) properties.buztoolPath = opts.b
 	if (opts.c) properties.component = opts.c
 	if (opts.ar) properties.artifactRepositorySettings = opts.ar
+	if (opts.prop) properties.propertyFileSettings = opts.prop
 	if (opts.v) properties.versionName = opts.v
 	properties.preview = (opts.p) ? 'true' : 'false'
 

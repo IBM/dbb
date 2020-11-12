@@ -34,6 +34,8 @@ required options:
 optional options:
  -ar,--artifactRepository <arg>     Absolute path to Artifact Respository Server
                                     Server connection file
+ -prop,--propertyFile               Absolute path to property file. 
+                                    From UCD v7.1.x and greater it replace the -ar option.
  -v,--versionName <arg>             Name of the UCD component version
  -p,--preview                       Preview mode generate shiplist, but do
                                     not run buztool.sh
