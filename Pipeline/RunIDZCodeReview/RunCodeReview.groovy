@@ -45,7 +45,7 @@ def jsonOutputFile = new File("${properties.workDir}/BuildReport.json")
 
 if(!jsonOutputFile.exists()){
 	println("** Build report data at $properties.workDir/BuildReport.json not found")
-	System.exit()
+	System.exit(1)
 }
 
 def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
