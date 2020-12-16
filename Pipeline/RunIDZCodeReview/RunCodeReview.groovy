@@ -14,7 +14,7 @@ import java.nio.file.Path
 
 /**
  * This script invokes IDz CodeReview application via JCL based on the provided BuildReport.json
- * 
+ *
  * usage: RunCodeReview.groovy --workDir <path-to-dbb-buildreport> [options]
  *
  * 	options:
@@ -23,11 +23,11 @@ import java.nio.file.Path
  *  	-props,--properties			(Optional) Absolute path to the codereview.properties file
  *  	-p,--preview				(Optional) Preview JCL, do not submit it
  *  	-h,--help					(Optional) Prints this message
- *  
+ *
  * 	requires:
  * 		codeview.properties file - externalizes the JCL jobcard, RuleFile and Mappings.
- * 		If --properties not provided via cli, the script looks for it at the location of the script itself 
- *  
+ * 		If --properties not provided via cli, the script looks for it at the location of the script itself
+ *
  */
 
 def properties = parseInput(args)
@@ -89,7 +89,7 @@ else
 
 	println("** Create JCL Stream for IDZ Code Review")
 	String jobcard = properties.codereview_jobcard.replace("\\n", "\n")
-	JCLExec codeRev=createCodeReviewExec(jobcard, properties.codereview_crRulesFile, sources, steplib)
+	JCLExec codeRev=createCodeReviewExec(jobcard, properties.codereview_crRulesFile, properties.codereview_ccrRulesFile, sources, steplib)
 
 
 
@@ -132,15 +132,15 @@ else
 		codeRev.getAllDDNames().each({ ddName ->
 			if (ddName == 'XML') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
-				codeRev.saveOutput(ddName, file, properties.logEncoding)
+				codeRev.saveOutput(ddName, file, properties.logEncoding/*, true*/)
 			}
 			if (ddName == 'JUNIT') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
-				codeRev.saveOutput(ddName, file, properties.logEncoding)
+				codeRev.saveOutput(ddName, file, properties.logEncoding/*, true*/)
 			}
 			if (ddName == 'CSV') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.csv")
-				codeRev.saveOutput(ddName, file, properties.logEncoding)
+				codeRev.saveOutput(ddName, file, properties.logEncoding/*, true*/)
 			}
 		})
 	}
@@ -153,7 +153,7 @@ else
  * CodeReviewExec - creates a JCLExec command for CodeReview
  * TODO: Externalize SYSLIB
  */
-def createCodeReviewExec(String jobcard, String ruleFile, List memberList,List steplib) {
+def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile, List memberList,List steplib) {
 	// Execute JCL from a String value in the script
 	def jcl = jobcard
 	jcl += """\
@@ -166,8 +166,13 @@ def createCodeReviewExec(String jobcard, String ruleFile, List memberList,List s
 	steplib.eachWithIndex {it, index ->
 		if (index == 0 ) jcl+="//SYSLIB   DD DISP=SHR,DSN=${it} \n"
 		else jcl+="//         DD DISP=SHR,DSN=${it} \n"}
+	if ( customRuleFile  ) {
+		jcl +="""//CUSTRULE  DD PATH='$customRuleFile'
+"""
+	}
+
 	jcl +="""//RULES  DD PATH='$ruleFile'
-//LIST   DD * 
+//LIST   DD *
 """
 	def languageMapping = new PropertyMappings("codereview_languageMapping")
 	memberList.each{
@@ -250,7 +255,7 @@ def parseInput(String[] cliArgs){
 }
 
 /**
- * 
+ *
  */
 def createIncludePatterns(String includedFiles) {
 	List<PathMatcher> pathMatchers = new ArrayList<PathMatcher>()
@@ -266,7 +271,7 @@ def createIncludePatterns(String includedFiles) {
 }
 
 /**
- * 
+ *
  */
 def matches(String file, List<PathMatcher> pathMatchers) {
 	def result = pathMatchers.any { matcher ->
