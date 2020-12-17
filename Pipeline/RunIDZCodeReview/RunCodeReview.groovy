@@ -154,7 +154,7 @@ def saveJobOutput ( JCLExec codeRev, String ddName, File file, String logEncodin
 	try {
 		codeRev.saveOutput(ddName, file, logEncoding, true)
 	} catch ( Exception ex ) {
-		println "*? Warning the output file $file\n*? will have an extra space at the beginning of each line. Updating DBB to the latest PTF is highly recommended."
+		println "*? Warning the output file $file\n*? will have an extra space at the beginning of each line.\n*? Updating DBB to the latest PTF with ASA control characters API for JCLExec is highly recommended."
 		codeRev.saveOutput(ddName, file, logEncoding)
 	}
 }
