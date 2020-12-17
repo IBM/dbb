@@ -14,7 +14,7 @@ import java.nio.file.Path
 
 /**
  * This script invokes IDz CodeReview application via JCL based on the provided BuildReport.json
- * 
+ *
  * usage: RunCodeReview.groovy --workDir <path-to-dbb-buildreport> [options]
  *
  * 	options:
@@ -23,11 +23,11 @@ import java.nio.file.Path
  *  	-props,--properties			(Optional) Absolute path to the codereview.properties file
  *  	-p,--preview				(Optional) Preview JCL, do not submit it
  *  	-h,--help					(Optional) Prints this message
- *  
+ *
  * 	requires:
  * 		codeview.properties file - externalizes the JCL jobcard, RuleFile and Mappings.
- * 		If --properties not provided via cli, the script looks for it at the location of the script itself 
- *  
+ * 		If --properties not provided via cli, the script looks for it at the location of the script itself
+ *
  */
 
 def properties = parseInput(args)
@@ -45,7 +45,7 @@ def jsonOutputFile = new File("${properties.workDir}/BuildReport.json")
 
 if(!jsonOutputFile.exists()){
 	println("** Build report data at $properties.workDir/BuildReport.json not found")
-	System.exit()
+	System.exit(1)
 }
 
 def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
@@ -89,7 +89,7 @@ else
 
 	println("** Create JCL Stream for IDZ Code Review")
 	String jobcard = properties.codereview_jobcard.replace("\\n", "\n")
-	JCLExec codeRev=createCodeReviewExec(jobcard, properties.codereview_crRulesFile, sources, steplib)
+	JCLExec codeRev=createCodeReviewExec(jobcard, properties.codereview_crRulesFile, properties.codereview_ccrRulesFile, sources, steplib)
 
 
 
@@ -125,35 +125,45 @@ else
 			System.exit(1)
 		}
 
-		println "   Saving spool output to ${properties.workDir}"
+		println "** Saving spool output to ${properties.workDir}"
 		def logFile = new File("${properties.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
 		codeRev.saveOutput(logFile, properties.logEncoding)
 
 		codeRev.getAllDDNames().each({ ddName ->
 			if (ddName == 'XML') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
-				codeRev.saveOutput(ddName, file, properties.logEncoding)
+				saveJobOutput(codeRev, ddName, file, properties.logEncoding)
 			}
 			if (ddName == 'JUNIT') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
-				codeRev.saveOutput(ddName, file, properties.logEncoding)
+				saveJobOutput(codeRev, ddName, file, properties.logEncoding)
 			}
 			if (ddName == 'CSV') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.csv")
-				codeRev.saveOutput(ddName, file, properties.logEncoding)
+				saveJobOutput(codeRev, ddName, file, properties.logEncoding)
 			}
 		})
 	}
 
 }
 
-
+/*
+ * Ensures backward compatibility
+ */
+def saveJobOutput ( JCLExec codeRev, String ddName, File file, String logEncoding) {
+	try {
+		codeRev.saveOutput(ddName, file, logEncoding, true)
+	} catch ( Exception ex ) {
+		println "*? Warning the output file $file\n*? will have an extra space at the beginning of each line.\n*? Updating DBB to the latest PTF with ASA control characters API for JCLExec is highly recommended."
+		codeRev.saveOutput(ddName, file, logEncoding)
+	}
+}
 
 /*
  * CodeReviewExec - creates a JCLExec command for CodeReview
  * TODO: Externalize SYSLIB
  */
-def createCodeReviewExec(String jobcard, String ruleFile, List memberList,List steplib) {
+def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile, List memberList,List steplib) {
 	// Execute JCL from a String value in the script
 	def jcl = jobcard
 	jcl += """\
@@ -166,9 +176,18 @@ def createCodeReviewExec(String jobcard, String ruleFile, List memberList,List s
 	steplib.eachWithIndex {it, index ->
 		if (index == 0 ) jcl+="//SYSLIB   DD DISP=SHR,DSN=${it} \n"
 		else jcl+="//         DD DISP=SHR,DSN=${it} \n"}
-	jcl +="""//RULES  DD PATH='$ruleFile'
-//LIST   DD * 
-"""
+	if ( customRuleFile  ) {
+		def lines = formatJCLPath("//CUSTRULE  DD PATH='$customRuleFile'")
+		lines.each{
+			jcl += it + "\n"
+		}
+	}
+	def lines = formatJCLPath("//RULES  DD PATH='$ruleFile'")
+	lines.each{
+		jcl += it + "\n"
+	}
+	
+	jcl += "//LIST   DD *\n"
 	def languageMapping = new PropertyMappings("codereview_languageMapping")
 	memberList.each{
 		hfsFile = CopyToPDS.createMemberName(it.getSource().getName())
@@ -200,6 +219,8 @@ def parseInput(String[] cliArgs){
 	def cli = new CliBuilder(usage: "RunCodeReview.groovy --workDir <path-to-dbb-buildreport> [options]", header: "Command Line Options:")
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB directory containing the BuildReport.json')
 	cli.props(longOpt:'properties', args:1, '(Optional) Absolute path to the codereview.properties file. If not provided, will look for it at the location of this script.')
+	cli.cr(longOpt:'crRulesFile', args:1, '(Optional) Absolute path of the rules file. If not provided, will look for it in the codereview.properties file.')
+	cli.ccr(longOpt:'ccrRulesFile', args:1, '(Optional) Absolute path of the custom rules file. If not provided, will look for it in the codereview.properties file.')
 	cli.l(longOpt:'logEncoding', args:1, '(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8')
 	cli.p(longOpt:'preview', '(Optional) Preview JCL for CR, do not submit it')
 	cli.h(longOpt:'help', '(Optional) Prints this message.')
@@ -234,6 +255,12 @@ def parseInput(String[] cliArgs){
 	if (opts.w) properties.workDir = opts.w
 	properties.logEncoding = (opts.l) ? opts.l : "UTF-8"
 	properties.preview = (opts.p) ? 'true' : 'false'
+	
+	if ( opts.cr )
+		properties.codereview_crRulesFile = opts.cr
+		
+	if ( opts.ccr )
+		properties.codereview_ccrRulesFile = opts.ccr
 
 	// Validate required properties
 	try {
@@ -250,7 +277,7 @@ def parseInput(String[] cliArgs){
 }
 
 /**
- * 
+ *
  */
 def createIncludePatterns(String includedFiles) {
 	List<PathMatcher> pathMatchers = new ArrayList<PathMatcher>()
@@ -266,7 +293,7 @@ def createIncludePatterns(String includedFiles) {
 }
 
 /**
- * 
+ *
  */
 def matches(String file, List<PathMatcher> pathMatchers) {
 	def result = pathMatchers.any { matcher ->
@@ -278,3 +305,30 @@ def matches(String file, List<PathMatcher> pathMatchers) {
 	}
 	return result
 }
+
+def formatJCLPath(String line)
+{
+	int len = line.length();
+	List<String> result = new ArrayList<String>();
+	int offset= 0;
+	int i = 0;
+	int j = 0;
+	while (i < len)
+	{
+		if ( offset == 71 ) {
+			result.add(line.substring(j,i));
+			j=i;
+			offset=16;
+		} else {
+			offset++;
+		}
+		i++;
+	}
+	if ( j < i )
+		result.add(line.substring(j,i));
+	for ( i=1; i < result.size(); i++ ) {
+		result.set(i, "//             " + result.get(i));
+	}
+	return result;
+}
+
