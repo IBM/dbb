@@ -125,29 +125,39 @@ else
 			System.exit(1)
 		}
 
-		println "   Saving spool output to ${properties.workDir}"
+		println "** Saving spool output to ${properties.workDir}"
 		def logFile = new File("${properties.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
 		codeRev.saveOutput(logFile, properties.logEncoding)
 
 		codeRev.getAllDDNames().each({ ddName ->
 			if (ddName == 'XML') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
-				codeRev.saveOutput(ddName, file, properties.logEncoding/*, true*/)
+				saveJobOutput(codeRev, ddName, file, properties.logEncoding)
 			}
 			if (ddName == 'JUNIT') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.xml")
-				codeRev.saveOutput(ddName, file, properties.logEncoding/*, true*/)
+				saveJobOutput(codeRev, ddName, file, properties.logEncoding)
 			}
 			if (ddName == 'CSV') {
 				def file = new File("${properties.workDir}/CodeReview${ddName}.csv")
-				codeRev.saveOutput(ddName, file, properties.logEncoding/*, true*/)
+				saveJobOutput(codeRev, ddName, file, properties.logEncoding)
 			}
 		})
 	}
 
 }
 
-
+/*
+ * Ensures backward compatibility
+ */
+def saveJobOutput ( JCLExec codeRev, String ddName, File file, String logEncoding) {
+	try {
+		codeRev.saveOutput(ddName, file, logEncoding, true)
+	} catch ( Exception ex ) {
+		println "*? Warning the output file $file\n*? will have an extra space at the beginning of each line. Updating DBB to the latest PTF is highly recommended."
+		codeRev.saveOutput(ddName, file, logEncoding)
+	}
+}
 
 /*
  * CodeReviewExec - creates a JCLExec command for CodeReview
@@ -167,13 +177,17 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 		if (index == 0 ) jcl+="//SYSLIB   DD DISP=SHR,DSN=${it} \n"
 		else jcl+="//         DD DISP=SHR,DSN=${it} \n"}
 	if ( customRuleFile  ) {
-		jcl +="""//CUSTRULE  DD PATH='$customRuleFile'
-"""
+		def lines = formatJCLPath("//CUSTRULE  DD PATH='$customRuleFile'")
+		lines.each{
+			jcl += it + "\n"
+		}
 	}
-
-	jcl +="""//RULES  DD PATH='$ruleFile'
-//LIST   DD *
-"""
+	def lines = formatJCLPath("//RULES  DD PATH='$ruleFile'")
+	lines.each{
+		jcl += it + "\n"
+	}
+	
+	jcl += "//LIST   DD *\n"
 	def languageMapping = new PropertyMappings("codereview_languageMapping")
 	memberList.each{
 		hfsFile = CopyToPDS.createMemberName(it.getSource().getName())
@@ -291,3 +305,30 @@ def matches(String file, List<PathMatcher> pathMatchers) {
 	}
 	return result
 }
+
+def formatJCLPath(String line)
+{
+	int len = line.length();
+	List<String> result = new ArrayList<String>();
+	int offset= 0;
+	int i = 0;
+	int j = 0;
+	while (i < len)
+	{
+		if ( offset == 71 ) {
+			result.add(line.substring(j,i));
+			j=i;
+			offset=16;
+		} else {
+			offset++;
+		}
+		i++;
+	}
+	if ( j < i )
+		result.add(line.substring(j,i));
+	for ( i=1; i < result.size(); i++ ) {
+		result.set(i, "//             " + result.get(i));
+	}
+	return result;
+}
+
