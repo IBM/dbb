@@ -205,6 +205,8 @@ def parseInput(String[] cliArgs){
 	def cli = new CliBuilder(usage: "RunCodeReview.groovy --workDir <path-to-dbb-buildreport> [options]", header: "Command Line Options:")
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB directory containing the BuildReport.json')
 	cli.props(longOpt:'properties', args:1, '(Optional) Absolute path to the codereview.properties file. If not provided, will look for it at the location of this script.')
+	cli.cr(longOpt:'crRulesFile', args:1, '(Optional) Absolute path of the rules file. If not provided, will look for it in the codereview.properties file.')
+	cli.ccr(longOpt:'ccrRulesFile', args:1, '(Optional) Absolute path of the custom rules file. If not provided, will look for it in the codereview.properties file.')
 	cli.l(longOpt:'logEncoding', args:1, '(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8')
 	cli.p(longOpt:'preview', '(Optional) Preview JCL for CR, do not submit it')
 	cli.h(longOpt:'help', '(Optional) Prints this message.')
@@ -239,6 +241,12 @@ def parseInput(String[] cliArgs){
 	if (opts.w) properties.workDir = opts.w
 	properties.logEncoding = (opts.l) ? opts.l : "UTF-8"
 	properties.preview = (opts.p) ? 'true' : 'false'
+	
+	if ( opts.cr )
+		properties.codereview_crRulesFile = opts.cr
+		
+	if ( opts.ccr )
+		properties.codereview_ccrRulesFile = opts.ccr
 
 	// Validate required properties
 	try {

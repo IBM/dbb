@@ -31,6 +31,8 @@ $DBB_HOME/bin/groovyz RunCodeReview.groovy --workDir /var/dbb/buildworkspace/zAp
  
     options:
       -w,--workDir <dir>      Absolute path to the DBB build output directory
+      -cr,--crRulesFile       (Optional) Absolute path of the rules file. If not provided, will look for it in the codereview.properties file
+      -ccr, --ccrRulesFile    (Optional) Absolute path of the custom rules file. If not provided, will look for it in the codereview.properties file
       -l,--logEncoding        (Optional) Defines the Encoding for output files (JCL spool, reports),  default UTF-8
       -props,--properties     (Optional) Absolute path to the codereview.properties file
       -p,--preview            (Optional) Preview JCL, do not submit it
