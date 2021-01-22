@@ -8,7 +8,7 @@ This script checks that the DBB toolkit API has been installed correctly on USS 
 
 To run this script issue the following command on the command line:
 ```
- /usr/lpp/IBM/dbb/bin/groovyz br14.groovy
+ /usr/lpp/IBM/dbb/bin/groovyz toolkitValidation.groovy
 ```
 
 The output from this script will look similar to the following:
