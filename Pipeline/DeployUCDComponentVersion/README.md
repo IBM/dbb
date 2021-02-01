@@ -19,7 +19,7 @@ required options:
  -a,--application <application>                 The UCD application name
  -p,--applicationProcess <application process>  The UCD application process name
  -e,--environment <environment>                 The UCD application environment name
- -d,--deployVersions <versions to deploy>       The versions to deploy in the format "Comp1:latest\\nComp2:latest"
+ -d,--deployVersions <versions to deploy>       The versions to deploy in the format "Comp1:latest\nComp2:latest"
  -k,--disableSSLVerify'                         Disable SSL verification
  -v,--verbose                                   Flag to turn on script trace
  ```
