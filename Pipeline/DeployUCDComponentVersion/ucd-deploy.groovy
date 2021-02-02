@@ -34,6 +34,10 @@ import org.apache.http.client.CredentialsProvider
 import org.apache.http.auth.AuthScope
 
 // Very basic script to perform UCD application process deployment
+enum Status {
+	PENDING, EXECUTING, SUCCEEDED, FAULTED
+}
+
 @Field int timeout = 60000
 @Field requestConfig = RequestConfig.custom()
 				.setConnectionRequestTimeout(timeout)
@@ -70,7 +74,7 @@ def getHttpClient(boolean disableSSLVerify) {
 
 
  def deploy ( String url, String user, String password, String application,
-			 String applicationProcess, String environment, String deployVersions, boolean disableSSLVerify, boolean verbose) {
+			 String applicationProcess, String environment, String deployVersions, String timeout, boolean disableSSLVerify, boolean verbose) {
 	
 	println "**  Deploying component versions: $deployVersions"
 	println "*** Starting deployment process '$applicationProcess' of application '$application' in environment '$environment'"
@@ -119,32 +123,63 @@ def getHttpClient(boolean disableSSLVerify) {
 	request.setEntity(entity)
 	def response = httpClient.execute(request,clientContext)
 	def statusCode = response.getStatusLine().getStatusCode()
-	println "*** Status Code: $statusCode"
+	if ( verbose)
+		println "*** Status Code: $statusCode"
 	def responseString = EntityUtils.toString(response.getEntity())
 	if ( statusCode != 200 ) {
 		rc = 1
 		println("*** Deployment failed:\n")
 		println "$responseString"
 	} else {
-		Thread.sleep( 1000 )
-		JsonSlurper slurper = new groovy.json.JsonSlurper()
+		def Status deployStatus = Status.PENDING
+		def before = System.currentTimeMillis()
+		def after = before
+		def timeoutMilliseconds = Long.parseLong(timeout)
+		def retryPeriodMilliseconds = 5000
+		def JsonSlurper slurper = new groovy.json.JsonSlurper()
 		def json = slurper.parseText("$responseString")
 		def requestId = json["requestId"]
-		def requestUrl = "$url/#applicationProcessRequest/$requestId" 
-		println "*** Follow Process Request: $requestUrl"
-		request = new HttpGet("$url/cli/applicationProcessRequest/$requestId")
-		response = httpClient.execute(request,clientContext)
-		statusCode = response.getStatusLine().getStatusCode()
-		responseString = EntityUtils.toString(response.getEntity())
-		json = slurper.parseText("$responseString")
-		while (statusCode == 200 
-			&& ( json["state"] == "EXECUTING" || json["state"] == "INITIALIZED" ) ) {
-			print "."
+		def requestUrl = "$url/#applicationProcessRequest/$requestId"
+		print "*** Follow Process Request: $requestUrl "
+		request = new HttpGet("$url/cli/applicationProcessRequest/requestStatus?request=$requestId")
+		retry:
+		while ([Status.PENDING, Status.EXECUTING].contains(deployStatus) && after - before <= timeoutMilliseconds && statusCode == 200) {
+			after = System.currentTimeMillis()
 			response = httpClient.execute(request,clientContext)
 			statusCode = response.getStatusLine().getStatusCode()
 			responseString = EntityUtils.toString(response.getEntity())
 			json = slurper.parseText("$responseString")
-			Thread.sleep( 1000 )
+			if ( verbose ) {
+				println "*** Status Code: $statusCode"
+				println "*** Current status: " + json["status"]
+				println "*** $json"
+			}
+			switch (json["status"]) {
+				case "PENDING":
+					deployStatus = Status.PENDING
+					break
+				case "EXECUTING":
+					deployStatus = Status.EXECUTING
+					break
+				case "CLOSED":
+					switch (json["result"]) {
+						case "SUCCEEDED":
+							deployStatus = Status.SUCCEEDED
+							break retry
+						case "FAULTED":
+							deployStatus = Status.FAULTED
+							rc=1
+							break retry
+						default:
+							rc=1
+							break retry
+					}
+				default:
+					rc=1
+					break retry
+			}
+			print "."
+			sleep(retryPeriodMilliseconds)
 		}
 		println "\n*** The deployment result is " + json["result"] + ". See the UrbanCode Deploy deployment logs for details."
 		if ( statusCode != 200 ||  json["result"] != "SUCCEEDED" ) {
@@ -168,6 +203,7 @@ def run(String[] cliArgs)
 	cli.p(longOpt:'applicationProcess', args:1, required:true,'The UCD application process name')
 	cli.e(longOpt:'environment', args:1, required:true, 'The UCD application environment name')
 	cli.d(longOpt:'deployVersions', args:1, required:true, 'The versions to deploy in the format "Comp1:latest\\nComp2:latest"')
+	cli.t(longOpt:'deployTimeout', args:1, 'The deployment timeout in seconds (default 300s)')
 	cli.k(longOpt:'disableSSLVerify', 'Disable SSL verification')
 	cli.v(longOpt:'verbose', 'Flag to turn on script trace')
 	
@@ -184,7 +220,7 @@ def run(String[] cliArgs)
 		System.exit(0)
 	}
 	
-	def rc = deploy (opts.u, opts.U, opts.P, opts.a, opts.p, opts.e, opts.d, opts.k, opts.v)
+	def rc = deploy (opts.u, opts.U, opts.P, opts.a, opts.p, opts.e, opts.d, opts.t ? opts.t : "300000", opts.k, opts.v)
 	
 	if  ( rc != 0 ) {
 		System.exit(1)
