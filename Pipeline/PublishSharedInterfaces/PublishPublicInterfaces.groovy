@@ -17,6 +17,7 @@ import java.nio.file.*;
  *  -w, --workDir <dir>           Absolute path to the DBB build output directory
  *  -tHfs, --targetHfsDirectory	  Path to Shared Git repo
  *  -a, --application			  Application Name 
+ *  -v, --verbose                 Enable verbose tracing
  *  -h, --help                    Prints this message
  *
  */

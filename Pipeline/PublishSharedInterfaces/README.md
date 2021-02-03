@@ -1,9 +1,9 @@
-# Sample Script to Publish Interfaces to Git Repository for Shared Interfaces  
+# Sample Script to publish shared interfaces to a central Git Repository
 
 In our publication about managing the build scope across multiple repositories ([Managing the build scope in IBM DBB builds with IBM zAppBuild](https://www.ibm.com/support/pages/node/6381788)), a scenario is described, which publishes shared interfaces to a central Git repository.
 
 These sample scripts are intended to provide guidance how-to implement this strategy. Overview of provided scripts:
-- ```PublicCopy.groovy``` is a new language script for [zAppBuild](https://github.com/IBM/dbb-zappbuild) to identify shared copybooks in the DBB BuildReport.json
+- ```PublicCopybook.groovy``` is a new language script for [zAppBuild](https://github.com/IBM/dbb-zappbuild) to identify shared copybooks in the DBB BuildReport.json. It can also be used to build a language script for PLI includes or ASM macros.
 - ```PublishPublicInterfaces.groovy``` is a build post-processing script, which 
   - parses the *BuildReport.json* in the supplied working dir and extracts the entries of **PublicCopy** with deploy type _PublicCopy_
   - Copies the modified files to the location of the Git repository for the shared interfaces 
@@ -11,17 +11,17 @@ These sample scripts are intended to provide guidance how-to implement this stra
 
 ## Sample Setup
 
-### Identify shared copybooks with ```PublicCopy.groovy``` in the DBB BuildReport.json with zAppBuild
+### Identify shared copybooks with ```PublicCopybook.groovy``` in the DBB BuildReport.json with zAppBuild
 
-Add the PublicCopy.groovy to your set of language scripts in zAppBuild and make the necessary configurations, e.q.
+Add the PublicCopybook.groovy to your set of language scripts in zAppBuild and make the necessary configurations, e.q.
 - In appliction.properties add the language script to the `buildOrder` so that it will be processed
 ```
 # Comma separated list of the build script processing order
-buildOrder=BMS.groovy,Cobol.groovy,LinkEdit.groovy,PublicCopy.groovy
+buildOrder=BMS.groovy,Cobol.groovy,LinkEdit.groovy,PublicCopybook.groovy
 ```
 - In file.properties, assign the public copybooks to new language script
 ```
-dbb.scriptMapping = PublicCopy.groovy :: **/copybooks_public/*.cpy
+dbb.scriptMapping = PublicCopybook.groovy :: **/copybooks_public/*.cpy
 ```
 With the above setup, public copybooks are added to the BuildReport.json leveraging the `deployType=PublicCopy`:
 
@@ -45,12 +45,13 @@ required options:
 * usage: PublishPublicInterfaces.groovy [options]
 
 options:
- -w,    --workDir <dir>           Absolute path to the directory containing DBB build
- -tHfs, --targetHfsDirectory	  Path to Shared Git repo
- -a,    --application			  Application Name 
+ -w,    --workDir <dir>             Absolute path to the directory containing DBB build
+ -tHfs, --targetHfsDirectory        Path to Shared Git repo
+ -v,    --verbose                   Enable verbose tracing
+ -a,    --application               Application Name 
 
 utility options
- -h, --help                    Prints this message
+ -h, --help                         Prints this message
 
  ```
 
