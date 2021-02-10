@@ -4,12 +4,11 @@ In our publication about managing the build scope across multiple repositories (
 
 These sample scripts are intended to provide guidance how-to implement this strategy. Overview of provided scripts:
 - ```PublicCopybook.groovy``` is a new language script for [zAppBuild](https://github.com/IBM/dbb-zappbuild) to identify shared copybooks in the DBB BuildReport.json. It can also be used to build a language script for PLI includes or ASM macros.
-- ```PublishPublicInterfaces.groovy``` is a build post-processing script, which 
+- ```PublishPublicInterfaces.groovy``` is a post-build script, which 
   - parses the *BuildReport.json* in the supplied working dir and extracts the entries of **PublicCopy** with deploy type _PublicCopy_
-  - Copies the modified files to the location of the Git repository for the shared interfaces 
-  - Creates a new Commit in the Shared repo with a commit message containing the commit of the application repository for traceability. 
+  - copies the modified files to the location of the Git repository for the shared interfaces 
+  - creates a new Commit in the Shared repo with a commit message containing the commit of the application repository for traceability. 
 
-## Sample Setup
 
 ### Identify shared copybooks with ```PublicCopybook.groovy``` in the DBB BuildReport.json with zAppBuild
 
@@ -57,7 +56,7 @@ utility options
 
 ## Comments / Limitations
 - While this script can be integrated in several pipeline jobs, a locking mechanism has been included to pause the script to avoid collisions
-- Jenkins requires the permission to push the repository back to the central git provider. E.q. Jenkins does not provide any post-action to push to another repo.
-- As outlined in the paper, different strategies can be applied for the branching strategy of the shared git repository. This is not yet taken into consideration for this implementatiion.
+- Jenkins requires the permission to push the repository back to the central git provider. Jenkins does not provide any post-action to push to another repo.
+- As outlined in the paper, different strategies can be applied for the branching strategy of the shared git repository - what represents production, what is currently in development. This is not yet taken into consideration for this implementation.
 
 
