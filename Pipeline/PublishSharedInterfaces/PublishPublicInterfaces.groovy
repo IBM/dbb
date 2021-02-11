@@ -33,9 +33,9 @@ import java.nio.file.*;
 def startTime = new Date()
 properties.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
 println("** PublicPublicCopy start at $properties.startTime")
-println("** Properties at startup:")
+if (properties.verbose) println("** Properties at startup:")
 properties.each{k,v->
-	println "   $k -> $v"
+	if (properties.verbose) println "   $k -> $v"
 }
 
 // vars
@@ -47,7 +47,7 @@ def jsonOutputFile = new File("${properties.workDir}/BuildReport.json")
 
 if(!jsonOutputFile.exists()){
 	println("** Build report data at $properties.workDir/BuildReport.json not found")
-	System.exit()
+	System.exit(1)
 }
 
 def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
@@ -161,7 +161,7 @@ def processCmd(def cmd){
 	process.waitForProcessOutput(cmdResponse, cmdError)
 	if (cmdError) {
 		println("*? Error executing cmd. command: $cmd error: $cmdError")
-		System.exit(0)
+		System.exit(1)
 	}
 	else if (cmdResponse) {
 		if (properties.verbose) println("** Command response: " + cmdResponse.toString())
