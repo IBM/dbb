@@ -14,6 +14,16 @@ Once development is completed and the topic branch is merged back into the main 
 ```
 $DBBHOME/bin/groovyz WebAppCleanUp.groovy --groups Application-TopicBranch --collections Application-TopicBranch,Application-TopicBranch-outputs
 ```
+output:
+```
+Creating repository client for https://localhost:9443/dbb/
+** Deleting build groups: [Application-TopicBranch]
+* Deleting build group 'Application-TopicBranch' -> Status = HTTP/1.1 200 OK
+** Deleting collections: [Application-TopicBranch, Application-TopicBranch-outputs]
+* Deleting collection 'Application-TopicBranch' -> Status = HTTP/1.1 200 OK
+* Deleting collection 'Application-TopicBranch-outputs' -> Status = HTTP/1.1 200 OK
+** Build finished
+```
 
 ### Bulk Deletes
 When a large number of build groups and/or collections are needed to be deleted, the WebAppCleanUp.groovy script also supports passing in text files which contain a list of build groups or collections to delete. Example:
