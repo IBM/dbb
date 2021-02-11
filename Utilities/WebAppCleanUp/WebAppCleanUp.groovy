@@ -66,8 +66,8 @@ def setup(String[] args) {
 		System.exit(0)
 	}
 
-    // load properties file
-   	properties.load(new File("${getScriptDir()}/WebAppCleanUp.properties"))
+    // load user properties file
+   	properties.load(new File("${getScriptDir()}/user.properties"))
    	
    	// update authentication properties with cli options
    	if (opts.u) properties.url = opts.url
