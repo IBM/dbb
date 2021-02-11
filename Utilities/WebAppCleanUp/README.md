@@ -10,7 +10,7 @@ Application-TopicBranch
 Application-TopicBranch-outputs
 ```
 
-Once development is completed and the topic branch is merged back into the main development branch, the WebAppCleanUp utility script can be used to easily delete the two collections and build group that was created for the topic branch.  Example:
+Once development is completed and the topic branch is merged back into the main development branch and deleted, the WebAppCleanUp utility script can be used to easily delete the two collections and build group that was created for the topic branch.  Example:
 ```
 $DBBHOME/bin/groovyz WebAppCleanUp.groovy --groups Application-TopicBranch --collections Application-TopicBranch,Application-TopicBranch-outputs
 ```
