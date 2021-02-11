@@ -10,7 +10,7 @@ Application-TopicBranch
 Application-TopicBranch-outputs
 ```
 
-Once development in completed and the topic branch is merge back into the main development branch, the WebAppCleanUp utility script can be used to easily delete the two collections and build group that was created for the topic branch.  Example:
+Once development is completed and the topic branch is merge back into the main development branch, the WebAppCleanUp utility script can be used to easily delete the two collections and build group that was created for the topic branch.  Example:
 ```
 $DBBHOME/bin/groovyz WebAppCleanUp.groovy --groups Application-FeatureBranch --collections Application-FeatureBranch,Application-FeatureBranch-outputs
 ```
@@ -26,8 +26,13 @@ MortgageApplication-MQSupport-outputs
 MortgageApplication-Bug1220
 MortgageApplication-Bug1220-outputs
 ```
+### Web Application Authentication Properties
+The `user.properties` file has been provided for a convienient place to store DBB Web Application authentication properties.  However its uses is optional as the user can also provide that information as an argument as well.  Example:
+```
+$DBBHOME/bin/groovyz WebAppCleanUp.groovy --groups Application-FeatureBranch --url https://localhost:9443/dbb --id ADMIN --pw ADMIN
+``` 
 
-## WebAppCleanUp.groovy Command Line Options
+### WebAppCleanUp.groovy Command Line Options
 ```
 usage: WebAppCleanUp.groovy [options]
 options:
