@@ -13,7 +13,7 @@ $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buzt
 ## Processing flow
 - Read command line parameters
 - Read DBB's BuildReport.json from the pipeline work directory
-- Parse and extract build output information from ExecuteRecords 
+- Parse and extract build output information of records of type *ExecuteRecord* and *CopyToPDSRecord*
 - Optionally adds generic PropertyRecords, which are linked to the buildfile
 - Generates shiplist.xml file
 - Invokes buztool.sh on USS with the generated options
@@ -34,6 +34,8 @@ required options:
 optional options:
  -ar,--artifactRepository <arg>     Absolute path to Artifact Respository Server
                                     Server connection file
+ -prop,--propertyFile               Absolute path to property file. 
+                                    From UCD v7.1.x and greater it replace the -ar option.
  -v,--versionName <arg>             Name of the UCD component version
  -p,--preview                       Preview mode generate shiplist, but do
                                     not run buztool.sh

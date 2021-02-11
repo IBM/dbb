@@ -213,6 +213,12 @@ DISPUSS:
             'VGET (ZDBCS) SHARED'
             If ZDBCS = 'YES' THEN BGZEMIX = 'YES'
             "BROWSE File(BGZFILE) MIXED("BGZEMIX")"
+            If rc > 0 Then
+            Do
+              BGZLNGER = ZERRLM
+              'SETMSG MSG(BGZC025)'
+            End
+            "CONTROL ERRORS CANCEL"
             BGZUSCMD = ' '
             'TBMOD 'TabName' ORDER'
           End
@@ -454,8 +460,17 @@ DISPUSS:
               'VGET (ZDBCS) SHARED'
               If ZDBCS = 'YES' THEN BGZEMIX = 'YES'
               "BROWSE File(BGZFLOG) MIXED("BGZEMIX")"
-              If RC = 20 Then
-                'SETMSG MSG(BGZC039)'
+              If rc > 0 Then
+              Do
+                If RC = 20 Then
+                  'SETMSG MSG(BGZC039)'
+                Else
+                Do
+                  BGZLNGER = ZERRLM
+                  'SETMSG MSG(BGZC025)'
+                End
+              End
+              "CONTROL ERRORS CANCEL"
             End
             Else
             Do

@@ -3,6 +3,7 @@ import com.ibm.dbb.dependency.*
 import com.ibm.dbb.build.report.*
 import com.ibm.dbb.build.report.records.*
 import groovy.time.*
+import com.ibm.dbb.build.VersionInfo
 import groovy.xml.MarkupBuilder
 /**
  * This script creates a version in UrbanCode Deploy based on the build result.
@@ -15,8 +16,9 @@ import groovy.xml.MarkupBuilder
  *  -c,--component <name>         Name of the UCD component to create version in
  *  -v,--versionName <name>       Name of the UCD component version name (Optional)
  *  -h,--help                     Prints this message
- *  -ar,--artifactRepository	  Absolute path to Artifact Respository Server connection file (Optional)
- *  -p,--preview				  Preview, not executing buztool.sh
+ *  -ar,--artifactRepository      Absolute path to Artifact Respository Server connection file (Optional)
+ *  -prop,--propertyFile          Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
+ *  -p,--preview                  Preview, not executing buztool.sh
  *
  * notes:
  *   This script uses ship list specification and buztool parameters which are
@@ -34,8 +36,17 @@ import groovy.xml.MarkupBuilder
  *
  * Version 2 - 2020-06
  *  Added option to define UCD component version name (optional)
- *  Option -ar now optional; renamed to --artifactRepository, now supporting both Artifactory + UCD Codestation
+ *  Option -ar now optional; renamed to --artifactRepository, 
+ *   now supporting both external artifact repository (Artifactory/Nexus) + UCD Codestation
  *  Added preview option to skip buztool.sh execution
+ *
+ * Version 3 - 2020-08
+ *  Fix ucd component version property for buildResultUrl
+ *  Added support for build outputs declared in a CopyToPDS Build Record (JCL, REXX, Shared copybooks, etc.)
+ *    Keep backward compatibility with older toolkits
+ *
+ * Version 4 - 2020-11
+ *  Take into account new properties for Artifact Respository Server connection.
  *
  */
 
@@ -55,7 +66,7 @@ def jsonOutputFile = new File("${properties.workDir}/BuildReport.json")
 
 if(!jsonOutputFile.exists()){
 	println("** Build report data at $properties.workDir/BuildReport.json not found")
-	System.exit()
+	System.exit(1)
 }
 
 def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
@@ -72,15 +83,26 @@ println("** Find deployable outputs in the build report ")
 //	it.getType()==DefaultRecordFactory.TYPE_EXECUTE
 //}
 
-// the following example finds all the build outputs with a deployType
+// Print warning, that extraction of COPY_TO_PDS records are not supported with older versions of the dbb toolkit. 
+dbbVersion = new VersionInfo().getVersion()
+println "   ! Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Identified DBB Toolkit version $dbbVersion. Extracting build records for TYPE_COPY_TO_PDS will be skipped."
+
+// finds all the build outputs with a deployType
 def executes= buildReport.getRecords().findAll{
-	it.getType()==DefaultRecordFactory.TYPE_EXECUTE &&
-	!it.getOutputs().findAll{ o ->
-		o.deployType != null
-	}.isEmpty()
+	try {
+		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
+				!it.getOutputs().findAll{ o ->
+					o.deployType != null && o.deployType != 'ZUNIT-TESTCASE'
+				}.isEmpty()
+	} catch (Exception e){}	
 }
 
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+
+if ( executes.size() == 0 ) {
+	println("** No items to deploy. Skipping ship list generation.")
+	System.exit(0)
+}
 
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
@@ -100,7 +122,10 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 				resource(name:member, type:"PDSMember", deployType:output.deployType){
 					// add any custom properties needed
 					property(name:"buildcommand", value:execute.getCommand())
-					property(name:"buildoptions", value:execute.getOptions())
+					// Only TYPE_EXECUTE Records carry options
+					if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:execute.getOptions())
+					// Sample to add additional properties. Here: adding db2 properties for a DBRM 
+					//   which where added to the build report through a basic PropertiesRecord. 
 					if (output.deployType.equals("DBRM")){
 						propertyRecord = buildReport.getRecords().findAll{
 							it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==execute.getFile()
@@ -152,10 +177,16 @@ def cmd = [
 	"${properties.workDir}/buztool.output"
 
 ]
-// set aritifactRepository option if specified
+// set artifactRepository option if specified
 if (properties.artifactRepositorySettings) {
 	cmd << "-ar"
 	cmd << properties.artifactRepositorySettings
+}
+
+// set propertyFile option if specified
+if (properties.propertyFileSettings) {
+	cmd << "-prop"
+	cmd << properties.propertyFileSettings
 }
 
 //set component version name if specified
@@ -174,9 +205,13 @@ if (!properties.preview.toBoolean()){
 
 	
 	println("** Create version by running UCD buztool")
-	def p = cmd.execute();
-	p.waitFor();
-	println(p.text);
+	
+	StringBuffer response = new StringBuffer()
+	StringBuffer error = new StringBuffer()
+	
+	def p = cmd.execute()
+	p.waitForProcessOutput(response, error)
+	println(response.toString())
 
 	def rc = p.exitValue();
 	if(rc==0){
@@ -187,6 +222,7 @@ if (!properties.preview.toBoolean()){
 			println "   $k -> $v"
 		}
 	}else{
+		println("*! Error executing buztool\n" +error.toString())
 		System.exit(rc)
 	}
 }
@@ -210,6 +246,7 @@ def parseInput(String[] cliArgs){
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
 	cli.c(longOpt:'component', args:1, argName:'name', 'Name of the UCD component to create version in')
 	cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file')
+	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
 	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
 	cli.h(longOpt:'help', 'Prints this message')
@@ -236,6 +273,7 @@ def parseInput(String[] cliArgs){
 	if (opts.b) properties.buztoolPath = opts.b
 	if (opts.c) properties.component = opts.c
 	if (opts.ar) properties.artifactRepositorySettings = opts.ar
+	if (opts.prop) properties.propertyFileSettings = opts.prop
 	if (opts.v) properties.versionName = opts.v
 	properties.preview = (opts.p) ? 'true' : 'false'
 

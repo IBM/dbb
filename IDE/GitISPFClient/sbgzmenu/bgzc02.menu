@@ -1,3 +1,5 @@
+BGZC020 .TYPE=WARNING .HELP=* .ALARM=YES
+'Specify Userid/Password'
 BGZC021 'Invalid command ' .TYPE=WARNING .HELP=* .ALARM=YES
 'Only S, L, LOC, LOCATE, REF, or REFRESH commands allowed'
 BGZC022 'Not a UNIX directory' .TYPE=WARNING .HELP=* .ALARM=YES
@@ -24,5 +26,5 @@ BGZC029 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
 'Code L (List), ST (Status), AD (Add), CO (Commit), PU (Push), CP (Commit & P' +
 'ush), PL (Pull), and CM (Command Prompt) allowed'
 /* COPYRIGHT IBM CORP 2019 */
-/* ISPDTLC Release: 7.3.  Level: PID                                  */
-/* z/OS 02.03.00.  Created - Date: 23 Sep 2019, Time: 07:53           */
+/* ISPDTLC Release: 7.4.  Level: PID                                  */
+/* z/OS 02.04.00.  Created - Date: 20 Aug 2020, Time: 05:58           */

@@ -30,12 +30,72 @@
 
    Address ISPEXEC
 
+   /* Get the password option from preference (Y or N)  */
+   'TBOPEN BGZPREFS SHARE'
+   TB_RC = RC
+   If TB_RC = 0 | TB_RC = 12 Then
+   Do
+     BGZPRID = 'git.user.name'
+     'TBGET BGZPREFS'
+     If RC = 0 Then
+       BGZUSER = BGZPRVAL
+     BGZPRID = 'git.password'
+     'TBGET BGZPREFS'
+     If RC = 0 Then
+       BGZPASS = BGZPRVAL
+   End
+   If TB_RC = 0 Then
+   'TBCLOSE BGZPREFS'
+
    'TBOPEN BGZCLONE'
    /* If it didn't exist yet, create it. */
    If RC = 8 Then
    Do
      'TBCREATE BGZCLONE',
-     'KEYS(BGZREPOS,BGZUSDIR) NAMES(BGZRPCMD,BGZSTATU,BGZBRANC) WRITE'
+     'KEYS(BGZREPOS,BGZUSDIR) NAMES(BGZRPCMD,BGZSTATU,BGZBRANC,BGZNEWBR) WRITE'
+   End
+
+   /* Query for an Old version with different structure (without newba) */
+   /* If an old BGZCLONE table exist we need to save the contains       */
+   /* erase the BGZCLONE table create BGZCLONE with the new structure   */
+   /* reload the old contains                                           */
+   'TBQUERY BGZCLONE KEYS(QKEYS) NAMES(QNAMES) ROWNUM(QROWS)'
+   NEWNAMES = '(BGZRPCMD BGZSTATU BGZBRANC BGZNEWBR)'
+   If QNAMES <> (NEWNAMES) Then
+   Do
+      'TBCREATE BGZOLDCL' 'KEYS(OLDREPOS,OLDUSDIR)',
+      'NAMES(OLDRPCMD,OLDSTATU,OLDBRANC)',
+      'REPLACE NOWRITE'
+      'TBTOP BGZCLONE'
+      'TBSKIP BGZCLONE'
+      Do While RC = 0
+         OLDREPOS = BGZREPOS
+         OLDUSDIR = BGZUSDIR
+         OLDRPCMD = BGZRPCMD
+         OLDSTATU = BGZSTATU
+         OLDBRANC = BGZBRANC
+         'TBADD BGZOLDCL'
+         'TBSKIP BGZCLONE'
+      End
+      'TBCLOSE BGZCLONE'
+      'TBERASE BGZCLONE'
+      'TBCREATE BGZCLONE',
+      'KEYS(BGZREPOS,BGZUSDIR) NAMES(BGZRPCMD,BGZSTATU,BGZBRANC,BGZNEWBR) WRITE'
+      'TBTOP BGZOLDCL'
+      'TBSKIP BGZOLDCL'
+      Do While RC = 0
+        BGZRPCMD = ''
+        BGZSTATU = ''
+        BGZBRANC = ''
+        BGZNEWBR = 'N'
+        BGZREPOS = OLDREPOS
+        BGZUSDIR = OLDUSDIR
+        BGZSTATU = OLDSTATU
+        BGZBRANC = OLDBRANC
+        'TBADD BGZCLONE'
+        'TBSKIP BGZOLDCL'
+      End
+      'TBEND BGZOLDCL'
    End
 
    'TBSORT BGZCLONE FIELDS(BGZREPOS)'
@@ -84,7 +144,7 @@
            Do e = 1 to stdout.0
              Say stdout.e
            End
-           Return
+           Iterate
          End
        End
 
@@ -145,13 +205,67 @@
        Do
          /* Git Clone operation  */
          'VGET BGZENVIR SHARED'
+
          shellcmd = ''
          shellcmd = shellcmd || BGZENVIR
 
-         shellcmd=shellcmd || 'cd' BGZNDIR';'||,
-                'git clone' BGZNREPO
+         temp_repo = BGZNREPO
+         If Pos('https://',BGZNREPO) /= 0 & BGZPASS = 'Y' Then
+         Do
+           'ADDPOP ROW(1) COLUMN(14)'
+           BLZPW = ''
+           'DISPLAY PANEL(BGZPASS)'
+           TB_RC = RC
+           Do while (BGZPWDIS /= '' & TB_RC < 8)
+             'DISPLAY PANEL(BGZPASS)'
+             TB_RC = RC
+           End
+           'VGET (ZVERB)'
+           'REMPOP'
 
-         Git_rc = BGZCMD('clone' shellcmd)
+           If Pos('@',BGZNREPO) <> 0 Then
+           Do
+             x = Pos('@',BGZNREPO)
+             temp_repo = Substr(BGZNREPO,1,x-1) || ':'BGZPW ||,
+                         Substr(BGZNREPO,x)
+           End
+           Else
+           Do
+             If BGZUSER = '' | BGZPW = '' Then
+             Do
+               'SETMSG MSG(BGZC030)'
+               ToClone = 0
+               Git_rc  = 8
+             End
+
+             BGZUSER = BGZENCOD(BGZUSER)
+             BGZPW   = BGZENCOD(BGZPW)
+             temp_repo = 'https://' || BGZUSER':'BGZPW'@' ||,
+                         Substr(BGZNREPO,9)
+           End
+         End
+
+         If ToClone = 1 Then
+         Do
+           shellcmd=shellcmd || 'cd' BGZNDIR';'||,
+                  'git clone' temp_repo
+
+           Git_rc = BGZCMD('clone' shellcmd)
+         End
+       End
+       If Git_rc > 0 Then
+       Do
+         /* Clone may have created the repo but with errors */
+         /* In this case we need to create the BGZCLONE row */
+         x = lastPos('/',BGZNREPO)
+         repoName = Substr(BGZNREPO,x+1)
+         y = lastPos('.git',repoName)
+         repoName = Substr(repoName,1,y-1)
+         BGZUSDIR = BGZNDIR'/'repoName
+         Say BGZUSDIR
+         Address syscall 'lstat (BGZUSDIR) ls.'
+         If ls.0 > 0 Then
+           Git_rc = 0
        End
        If Git_rc = 0 Then
        Do
@@ -167,6 +281,8 @@
          /* Need to get the current branch */
          Call BGZBRANC (BGZREPOS BGZUSDIR 'noDisplay')
          'VGET (BGZBRANC) PROFILE'
+         /* Set BGZNEWBR to yes            */
+         BGZNEWBR = 'Y'
          'TBADD BGZCLONE ORDER'
          BGZNREPO = ''
          BGZNDIR = ''
@@ -263,9 +379,19 @@
              shellcmd  = ''
                shellcmd = shellcmd || BGZENVIR
 
+             If BGZNEWBR = 'Y' Then
+             shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,
+                    'git push -f --set-upstream origin' BGZBRANC
+             Else
              shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,
                     'git push'
+
              Git_rc = BGZCMD('push' shellcmd)
+             If Git_rc = 0 Then
+             Do
+               BGZNEWBR = 'N'
+               'TBMOD BGZCLONE'
+             End
            End
            BGZRPCMD = ''
            'TBMOD BGZCLONE'
@@ -288,12 +414,21 @@
            Git_rc = 0
            'VGET BGZENVIR SHARED'
            shellcmd  = ''
-             shellcmd = shellcmd || BGZENVIR
+           shellcmd = shellcmd || BGZENVIR
 
+           If BGZNEWBR = 'Y' Then
+           shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,
+                  'git push -f --set-upstream origin' BGZBRANC
+           Else
            shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,
                   'git push'
-           Git_rc = BGZCMD('push' shellcmd)
 
+           Git_rc = BGZCMD('push' shellcmd)
+           If Git_rc = 0 Then
+           Do
+             BGZNEWBR = 'N'
+             'TBMOD BGZCLONE'
+           End
          End
 
          When BGZRPCMD = 'BR' Then
@@ -302,6 +437,7 @@
            Call BGZBRANC (BGZREPOS BGZUSDIR 'Display')
            BGZRPCMD = ''
            'VGET (BGZBRANC) PROFILE'
+           'VGET (BGZNEWBR) PROFILE'
            'TBMOD BGZCLONE'
          End
 
