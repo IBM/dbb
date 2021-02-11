@@ -20,7 +20,7 @@ When a large number of build groups and/or collections are needed to be deleted,
 ```
 $DBBHOME/bin/groovyz WebAppCleanUp.groovy --groupsFile groups.txt --collectionsFile collections.txt
 ```
-The format of the deletion list files are simple text with build group or collection name per line.  Example of `collectons.txt`:
+The format of the deletion list files are simple text with one build group or collection name per line.  Example of `collectons.txt`:
 ```
 MortgageApplication-MQSupport
 MortgageApplication-MQSupport-outputs
