@@ -17,7 +17,7 @@ $DBBHOME/bin/groovyz WebAppCleanUp.groovy --groups Application-FeatureBranch --c
 
 When a large number of build groups and/or collections are needed to be deleted, the WebAppCleanUp.groovy script also supports passing in text files which contain a list of build groups or collections to delete. Example:
 ```
-$DBBHOME/bin/groovyz WebAppCleanUp.groovy --groupsFile groups.txt --collectionsFile collectionsFile collections.txt
+$DBBHOME/bin/groovyz WebAppCleanUp.groovy --groupsFile groups.txt --collectionsFile collections.txt
 ```
 The format of the deletion list files are simple text with build group or collection name per line.  Example of `collectons.txt`:
 ```
@@ -26,8 +26,9 @@ MortgageApplication-MQSupport-outputs
 MortgageApplication-Bug1220
 MortgageApplication-Bug1220-outputs
 ```
+
 ### Web Application Authentication Properties
-The `user.properties` file has been provided for a convienient place to store DBB Web Application authentication properties.  However its uses is optional as the user can also provide that information as an argument as well.  Example:
+The `user.properties` file has been provided for a convienient place to store DBB Web Application authentication properties.  However its use is optional as the user can  provide the required authentication values as script arguments.  Example:
 ```
 $DBBHOME/bin/groovyz WebAppCleanUp.groovy --groups Application-FeatureBranch --url https://localhost:9443/dbb --id ADMIN --pw ADMIN
 ``` 
