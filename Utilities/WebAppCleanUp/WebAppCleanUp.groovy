@@ -17,7 +17,7 @@ println "** Deleting build groups: $groups"
 groups.each { group ->
   String name = group.trim()
   repoClient.deleteBuildResults(name)
-  println "* Deleting build group '$name' -> Status = ${repoClient.getLastStatus()}"
+  println "*** Deleting build group '$name' -> Status = ${repoClient.getLastStatus()}"
 }
 
 // process collections list
@@ -25,7 +25,7 @@ println "** Deleting collections: $collections"
 collections.each { collection ->
   String name = collection.trim()
   repoClient.deleteCollection(name)
-  println "* Deleting collection '$name' -> Status = ${repoClient.getLastStatus()}"
+  println "*** Deleting collection '$name' -> Status = ${repoClient.getLastStatus()}"
 }
 
 // end script
