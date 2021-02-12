@@ -18,10 +18,10 @@ output:
 ```
 Creating repository client for https://localhost:9443/dbb/
 ** Deleting build groups: [Application-TopicBranch]
-* Deleting build group 'Application-TopicBranch' -> Status = HTTP/1.1 200 OK
+*** Deleting build group 'Application-TopicBranch' -> Status = HTTP/1.1 200 OK
 ** Deleting collections: [Application-TopicBranch, Application-TopicBranch-outputs]
-* Deleting collection 'Application-TopicBranch' -> Status = HTTP/1.1 200 OK
-* Deleting collection 'Application-TopicBranch-outputs' -> Status = HTTP/1.1 200 OK
+*** Deleting collection 'Application-TopicBranch' -> Status = HTTP/1.1 200 OK
+*** Deleting collection 'Application-TopicBranch-outputs' -> Status = HTTP/1.1 200 OK
 ** Build finished
 ```
 
