@@ -88,8 +88,12 @@ def setup(String[] args) {
    	repoClient = new RepositoryClient().forceSSLTrusted(true).url(properties.url).userId(properties.id)
    	if (properties.pw)
    	   repoClient.setPassword(properties.pw)
-   	else
-   	   repoClient.setPasswordFile(properties.pwFile)
+	else {
+   	   String filePath = properties.pwFile
+	   if (!filePath.trim().startsWith('/'))
+	      filePath = "${getScriptDir()}/$filePath"
+	   repoClient.setPasswordFile(new File(filePath))
+	}
    	
 	// populate build groups list
 	if (opts.g)
