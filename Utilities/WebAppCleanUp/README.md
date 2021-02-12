@@ -12,7 +12,7 @@ Application-TopicBranch-outputs
 
 Once development is completed and the topic branch is merged back into the main development branch and deleted, the WebAppCleanUp utility script can be used to easily delete the two collections and build group that was created for the topic branch.  Example:
 ```
-$DBBHOME/bin/groovyz WebAppCleanUp.groovy --groups Application-TopicBranch --collections Application-TopicBranch,Application-TopicBranch-outputs
+$DBB_HOME/bin/groovyz WebAppCleanUp.groovy --groups Application-TopicBranch --collections Application-TopicBranch,Application-TopicBranch-outputs
 ```
 output:
 ```
@@ -28,7 +28,7 @@ Creating repository client for https://localhost:9443/dbb/
 ### Bulk Deletes
 When a large number of build groups and/or collections are needed to be deleted, the WebAppCleanUp.groovy script also supports passing in text files which contain a list of build groups or collections to delete. Example:
 ```
-$DBBHOME/bin/groovyz WebAppCleanUp.groovy --groupsFile groups.txt --collectionsFile collections.txt
+$DBB_HOME/bin/groovyz WebAppCleanUp.groovy --groupsFile groups.txt --collectionsFile collections.txt
 ```
 The format of the deletion list files are simple text with one build group or collection name per line.  Example of `collectons.txt`:
 ```
@@ -41,7 +41,7 @@ MortgageApplication-Bug1220-outputs
 ### Web Application Authentication Properties
 The `user.properties` file has been provided for a convienient place to store DBB Web Application authentication properties.  However its use is optional as the user can  provide the required authentication values as script arguments.  Example:
 ```
-$DBBHOME/bin/groovyz WebAppCleanUp.groovy --groups Application-FeatureBranch --url https://localhost:9443/dbb --id ADMIN --pw ADMIN
+$DBB_HOME/bin/groovyz WebAppCleanUp.groovy --groups Application-FeatureBranch --url https://localhost:9443/dbb --id ADMIN --pw ADMIN
 ``` 
 
 ### WebAppCleanUp.groovy Command Line Options
