@@ -13,7 +13,7 @@ These sample scripts are intended to provide guidance how-to implement this stra
 ### Identify shared copybooks with ```PublicCopybook.groovy``` in the DBB BuildReport.json with zAppBuild
 
 Add the PublicCopybook.groovy to your set of language scripts in zAppBuild and make the necessary configurations, e.q.
-- In appliction.properties add the language script to the `buildOrder` so that it will be processed
+- In application.properties add the language script to the `buildOrder` so that it will be processed
 ```
 # Comma separated list of the build script processing order
 buildOrder=BMS.groovy,Cobol.groovy,LinkEdit.groovy,PublicCopybook.groovy

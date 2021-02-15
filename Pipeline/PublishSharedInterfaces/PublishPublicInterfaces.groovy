@@ -25,6 +25,7 @@ import java.nio.file.*;
 // configuration vars
 @Field lockingFile = ".processLock"
 @Field deployTypeName = "PublicCopy"
+@Field subfolderName = "copybooks"
 
 
 
@@ -72,49 +73,65 @@ if (publicCopies.size()!=0){
 
 	setLock(lockFile)
 
-	String targetDir = properties.targetHfsDirectory +"/"+properties.application
-	def gitHash
-	publicCopies.each {
-		Path originalPath = Paths.get("${it.source}");
-		Path targetPath =  Paths.get(targetDir)
-		Path targetFile = targetPath.resolve(originalPath.getFileName())
+	//    e.q.: /var/jenkins/shared-repo/Shared/<Application>-<subfolder>
+	String targetDir = properties.targetHfsDirectory +"/"+properties.application+"-"+subfolderName
+	
+	if (!isGitDir(properties.targetHfsDirectory)){
+		println("*! $targetDir is not a Git repo. Skipping publishing process.")
+	} else if(!isGitDetachedHEAD(targetDir)) {
+		def gitHash
+		publicCopies.each {
+			Path originalPath = Paths.get("${it.source}");
+			Path targetPath =  Paths.get(targetDir)
+			Path targetFile = targetPath.resolve(originalPath.getFileName())
 
-		Files.createDirectories(targetPath)
-		println("* Copying   " + originalPath.getFileName() + " to $targetDir")
-		Files.copy(originalPath, targetFile, StandardCopyOption.REPLACE_EXISTING);
-		// set file tag
-		currentTag = processCmd("chtag -p " + originalPath).split("\\s+")[1];
-		processCmd("chtag -t -c $currentTag " + targetFile.toString())
-		gitHash = getCurrentGitHash(originalPath.getParent().toString())
+			Files.createDirectories(targetPath)
+			println("* Copying   " + originalPath.getFileName() + " to $targetDir")
+			Files.copy(originalPath, targetFile, StandardCopyOption.REPLACE_EXISTING);
+			// set file tag
+			currentTag = processCmd("chtag -p " + originalPath).split("\\s+")[1];
+			processCmd("chtag -t -c $currentTag " + targetFile.toString())
+			gitHash = getCurrentGitHash(originalPath.getParent().toString())
+		}
+
+		//git opertions - git status + add
+		processCmd("git -C $targetDir status")
+		processCmd("git -C $targetDir add .")
+		processCmd("git -C $targetDir status")
+
+		//git commit
+		ArrayList nextCmd=new ArrayList<String>()
+		nextCmd.add("git")
+		nextCmd.add("-C")
+		nextCmd.add(targetDir)
+		nextCmd.add("commit")
+		nextCmd.add("-m")
+		nextCmd.add("\"${properties.application}:${gitHash}\"")
+		processCmd(nextCmd)
+
+		//git push
+		processCmd("git -C $targetDir push")
+
+		// Placeholder: IEBCOPY Files to shared library, to publish files to a shared library
+
+	} else {
+		println("*!Git Branch in a detached state. Skipping publishing.")
 	}
-
-	//git opertions - git status + add
-	processCmd("git -C $targetDir status")
-	processCmd("git -C $targetDir add .")
-	processCmd("git -C $targetDir status")
-	
-	//git commit
-	ArrayList nextCmd=new ArrayList<String>()
-	nextCmd.add("git")
-	nextCmd.add("-C")
-	nextCmd.add(targetDir)
-	nextCmd.add("commit")
-	nextCmd.add("-m")
-	nextCmd.add("\"${properties.application}:${gitHash}\"")
-	processCmd(nextCmd)
-	
-	//git push
-	processCmd("git -C $targetDir push")
-
-    // Placeholder: IEBCOPY Files to shared library
-
-    //release lock
-    releaseLock(lockFile)
+	//release lock
+	releaseLock(lockFile)
 }
 else {
 	println("*! No Public Copybooks found")
 }
 
+/*
+ * Methods
+ */
+
+
+/*
+ * setLock file. Creates a lock file in the shared repository structure to avoid collisions, while working on the Shared repository.
+ */
 def setLock(Path sharedDir){
 	println("** Setting lock file to avoid collisions." )
 	def lockAttempts = 0
@@ -131,14 +148,20 @@ def setLock(Path sharedDir){
 	}
 
 	println("*! Could not obtain lock for publishing files. Exiting." )
-	System.exit(0)
+	System.exit(1)
 }
 
+/*
+ * releaseLock file.
+ */
 def releaseLock(Path sharedDir){
 	println("* Releasing lock file." )
 	Files.deleteIfExists(sharedDir.resolve(lockingFile))
 }
 
+/*
+ * Returns String containing current hash.
+ */
 def getCurrentGitHash(String gitDir) {
 	String cmd = "git -C $gitDir rev-parse HEAD"
 	StringBuffer gitHash = new StringBuffer()
@@ -152,6 +175,51 @@ def getCurrentGitHash(String gitDir) {
 	return gitHash.toString().trim()
 }
 
+/*
+ * Returns true if this is a detached HEAD
+ *
+ * @param  String gitDir  		Local Git repository directory
+ */
+def isGitDetachedHEAD(String gitDir) {
+	String cmd = "git -C $gitDir status"
+	StringBuffer gitStatus = new StringBuffer()
+	StringBuffer gitError = new StringBuffer()
+
+	Process process = cmd.execute()
+	process.waitForProcessOutput(gitStatus, gitError)
+	if (gitError) {
+		println("*! Error executing Git command: $cmd error $gitError")
+	}
+
+	return gitStatus.toString().contains("HEAD detached at")
+}
+
+/*
+ * Tests if directory is in a local git repository
+ *
+ * @param  String dir  		Directory to test
+ * @return boolean
+ */
+def isGitDir(String dir) {
+	String cmd = "git -C $dir rev-parse --is-inside-work-tree"
+	StringBuffer gitResponse = new StringBuffer()
+	StringBuffer gitError = new StringBuffer()
+	boolean isGit = false
+
+	Process process = cmd.execute()
+	process.waitForProcessOutput(gitResponse, gitError)
+	if (gitError) {
+		println("*? Warning executing isGitDir($dir). Git command: $cmd error: $gitError")
+	}
+	else if (gitResponse) {
+		isGit = gitResponse.toString().trim().toBoolean()
+	}
+
+	return isGit
+}
+/*
+ * Process any cmd. Exits with exit code:2, if failing.
+ */
 def processCmd(def cmd){
 	println("** Running cmd: $cmd")
 	StringBuffer cmdResponse = new StringBuffer()
@@ -161,7 +229,9 @@ def processCmd(def cmd){
 	process.waitForProcessOutput(cmdResponse, cmdError)
 	if (cmdError) {
 		println("*? Error executing cmd. command: $cmd error: $cmdError")
-		System.exit(1)
+		println("*? The shared repository might be in a inconsistent state. Lock file kept. Please release the conflict.")
+		println("*? Exiting with exit code:2 ")
+		System.exit(2)
 	}
 	else if (cmdResponse) {
 		if (properties.verbose) println("** Command response: " + cmdResponse.toString())
@@ -170,6 +240,9 @@ def processCmd(def cmd){
 
 }
 
+/*
+ * Parses cmd inputs.
+ */
 def parseInput(String[] cliArgs){
 	def cli = new CliBuilder(usage: "RunCodeReview.groovy [options]")
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB directory containing the BuildReport.json')
