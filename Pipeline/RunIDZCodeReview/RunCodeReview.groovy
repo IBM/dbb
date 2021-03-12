@@ -71,8 +71,7 @@ def includes= buildReport.getRecords().findAll{
 }
 
 println("** Found source code processed in the build report.")
-sources.each {		
-	println(" ${it.getSource()} ,  ${it.getDestination()}")	}
+sources.each {		 println(" ${it.getSource()} ,  ${it.getDestination()}")	}
 println("** Found include files processed in the build report to extract SYSLIB.")
 
 if (sources.size == 0){
@@ -128,7 +127,7 @@ else
 		println "** Saving spool output to ${props.workDir}"
 		def logFile = new File("${props.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
 		codeRev.saveOutput(logFile, props.logEncoding)
-		
+
 		codeRev.getAllDDNames().each({ ddName ->
 			if (ddName == 'XML') {
 				def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
@@ -173,15 +172,15 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 //*
 //AKGCREV EXEC PROC=AKGCR
 """
+	// add default dummy
 	jcl+="//SYSLIB   DD DUMMY \n"
 	// add identified syslib
-	syslib.eachWithIndex {it, index ->
-		if (index == 0 ) jcl+="//SYSLIB   DD DISP=SHR,DSN=${it} \n"
-		else jcl+="//         DD DISP=SHR,DSN=${it} \n"}
-	// add libraries from property file
+	syslib.each { jcl+="//         DD DISP=SHR,DSN=${it} \n"}
+	// add syslib libraries from property file
 	if (props.codereview_syslib){
 		props.codereview_syslib.split(',').each { jcl+="//         DD DISP=SHR,DSN=${it} \n" }
 	}
+	
 	if ( customRuleFile  ) {
 		def lines = formatJCLPath("//CUSTRULE  DD PATH='$customRuleFile'")
 		lines.each{ jcl += it + "\n" }
