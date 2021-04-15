@@ -21,6 +21,7 @@ required options:
  -e,--environment <environment>                 The UCD application environment name
  -d,--deployVersions <versions to deploy>       The versions to deploy in the format "Comp1:latest\nComp2:latest"
  -t,--deployTimeout                             The deployment timeout in seconds (default 300s)
+ -s,--sslProtocols                              The SSL protocols to handle in the format "TLSv1.2,TLSv1.3". Default is TLSv1.2'
  -k,--disableSSLVerify'                         Disable SSL verification
  -v,--verbose                                   Flag to turn on script trace
  ```
