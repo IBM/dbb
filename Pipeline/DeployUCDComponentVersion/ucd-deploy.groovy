@@ -45,7 +45,9 @@ enum Status {
 				.setConnectTimeout(timeout)
 				.setSocketTimeout(timeout)
 				.build()
-@Field clientBuilder = HttpClients.custom()
+
+//@Field clientBuilder = HttpClients.custom()			
+@Field clientBuilder = HttpClients.custom().useSystemProperties()
 
 // Can only run in the context of groovyz
 def getHttpClient(boolean disableSSLVerify, String sslProtocols) {
