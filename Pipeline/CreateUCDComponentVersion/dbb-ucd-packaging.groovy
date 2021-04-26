@@ -48,6 +48,8 @@ import groovy.xml.MarkupBuilder
  * Version 4 - 2020-11
  *  Take into account new properties for Artifact Respository Server connection.
  *
+ * Version 5 - 2021-04
+ *  Take into account https://github.com/IBM/dbb/issues/76.
  */
 
 // start create version
@@ -91,18 +93,27 @@ println "   ! Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.
 def executes= buildReport.getRecords().findAll{
 	try {
 		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
-				!it.getOutputs().findAll{ o ->
-					o.deployType != null && o.deployType != 'ZUNIT-TESTCASE'
-				}.isEmpty()
+				!it.getOutputs().isEmpty()
 	} catch (Exception e){}	
 }
 
-executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+// Remove unwanted outputs
+executes.each { 
+	def unwantedOutputs =  it.getOutputs().findAll{ o ->
+		o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
+	}
+	it.getOutputs().removeAll(unwantedOutputs)
+}
 
-if ( executes.size() == 0 ) {
+def count = 0
+executes.each { count += it.getOutputs().size() }
+
+if ( count == 0 ) {
 	println("** No items to deploy. Skipping ship list generation.")
 	System.exit(0)
 }
+
+executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
 
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
