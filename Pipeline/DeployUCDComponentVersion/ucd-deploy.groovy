@@ -38,16 +38,19 @@ enum Status {
 	PENDING, EXECUTING, SUCCEEDED, FAULTED
 }
 
+@Field DEFAULT_SSL_PROTOCOLS = "TLSv1.2"
 @Field int timeout = 60000
 @Field requestConfig = RequestConfig.custom()
 				.setConnectionRequestTimeout(timeout)
 				.setConnectTimeout(timeout)
 				.setSocketTimeout(timeout)
 				.build()
-@Field clientBuilder = HttpClients.custom()
+
+//@Field clientBuilder = HttpClients.custom()			
+@Field clientBuilder = HttpClients.custom().useSystemProperties()
 
 // Can only run in the context of groovyz
-def getHttpClient(boolean disableSSLVerify) {
+def getHttpClient(boolean disableSSLVerify, String sslProtocols) {
 	CloseableHttpClient httpClient = null
 	//Set up the HttpClient to bypass SSL certicate untrusted issue if needed.
 	SSLContextBuilder builder = new SSLContextBuilder()
@@ -62,7 +65,9 @@ def getHttpClient(boolean disableSSLVerify) {
 			});
 	}
 	SSLConnectionSocketFactory sslConnectionSocketFactory = 
-		new SSLConnectionSocketFactory(builder.build(), null, null,
+		new SSLConnectionSocketFactory(builder.build(),
+			sslProtocols.split(","), 
+			null,
 			SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER )
 	clientBuilder.setSSLSocketFactory(sslConnectionSocketFactory)
 	httpClient = clientBuilder.build()
@@ -74,14 +79,14 @@ def getHttpClient(boolean disableSSLVerify) {
 
 
  def deploy ( String url, String user, String password, String application,
-			 String applicationProcess, String environment, String deployVersions, String timeout, boolean disableSSLVerify, boolean verbose) {
+			 String applicationProcess, String environment, String deployVersions, String timeout, boolean disableSSLVerify, boolean verbose, String sslProtocols ) {
 	
 	println "**  Deploying component versions: $deployVersions"
 	println "*** Starting deployment process '$applicationProcess' of application '$application' in environment '$environment'"
 
 	def rc = 0
 	def urlString= "$url/cli/applicationProcessRequest/request"
-	def httpClient = getHttpClient(disableSSLVerify)
+	def httpClient = getHttpClient(disableSSLVerify, sslProtocols)
 	def request = new HttpPut(urlString)
 	request.addHeader(new BasicHeader("Content-Type", "application/json"))
 	
@@ -204,6 +209,7 @@ def run(String[] cliArgs)
 	cli.e(longOpt:'environment', args:1, required:true, 'The UCD application environment name')
 	cli.d(longOpt:'deployVersions', args:1, required:true, 'The versions to deploy in the format "Comp1:latest\\nComp2:latest"')
 	cli.t(longOpt:'deployTimeout', args:1, 'The deployment timeout in seconds (default 300s)')
+	cli.s(longOpt:'sslProtocols', args:1, required:false, 'The SSL protocols to handle in the format "TLSv1.2,TLSv1.3". Default is TLSv1.2')
 	cli.k(longOpt:'disableSSLVerify', 'Disable SSL verification')
 	cli.v(longOpt:'verbose', 'Flag to turn on script trace')
 	
@@ -220,7 +226,7 @@ def run(String[] cliArgs)
 		System.exit(0)
 	}
 	
-	def rc = deploy (opts.u, opts.U, opts.P, opts.a, opts.p, opts.e, opts.d, opts.t ? opts.t : "300000", opts.k, opts.v)
+	def rc = deploy (opts.u, opts.U, opts.P, opts.a, opts.p, opts.e, opts.d, opts.t ? opts.t : "300000", opts.k, opts.v, opts.s ? opts.s : DEFAULT_SSL_PROTOCOLS)
 	
 	if  ( rc != 0 ) {
 		System.exit(1)
