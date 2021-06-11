@@ -92,7 +92,7 @@ println("** Find deployable outputs in the build report ")
 
 // Print warning, that extraction of COPY_TO_PDS records are not supported with older versions of the dbb toolkit. 
 dbbVersion = new VersionInfo().getVersion()
-println "   * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might be skipped. Identified DBB Toolkit version $dbbVersion."
+println "   * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version $dbbVersion."
 
 // finds all the build outputs with a deployType
 def executes= buildReport.getRecords().findAll{
@@ -121,12 +121,17 @@ if ( count == 0 ) {
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
 
 // get DBB.BuildResultProperties records stored as generic DBB Record, see https://github.com/IBM/dbb-zappbuild/pull/95
-def buildResultProperties = buildReport.getRecords().find{
+def buildResultRecord = buildReport.getRecords().find{
 		try {
 			it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
 		} catch (Exception e){}
-}.getProperties()
+}
 
+def buildResultProperties = null
+
+if(buildResultRecord!=null){
+	buildResultProperties = buildResultRecord.getProperties()
+}
 
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
@@ -142,7 +147,7 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 	// Url to CI pipeline
 	if (properties.pipelineURL)property(name : "ci-pipeline-url", value : properties.pipelineURL )
 	// Populate build result properties
-	buildResultProperties.each{
+	if (buildResultProperties != null) buildResultProperties.each{
 		property(name:it.key, value:it.value)
 	}
 	//iterate through the outputs and add container and resource elements
@@ -170,25 +175,23 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 							}
 						}
 					}
-					def githash = ""
+					def githash = "" // set empty
 					if (buildResultProperties != null){
-
 						// get git references from build properties
-						gitproperty = buildResultProperties.find{
-							it.key.contains(":githash:")
+						def gitproperty = buildResultProperties.find{
+							it.key.contains(":githash:") && execute.getFile().contains(it.key.substring(9))
 						}
-						if (gitproperty != null )
-						{githash = gitproperty.getValue()
-
+						if (gitproperty != null ) 
+						{
+							githash = gitproperty.getValue()
 							// set properties in shiplist
 							property(name:"githash", value:githash)
 							if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
-
 						}
 					}
 					// add source information in the input column
 					inputs(url : "${githash}"){
-						inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix) ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
+						inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
 						input(name : execute.getFile(), compileType : "Main", url : inputUrl)
 						// dependencies (not used today)
 						dependencies.each{
