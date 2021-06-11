@@ -5,9 +5,21 @@ An important step in the pipeline is to generate a deployable package. This samp
 - generates the UCD shiplist ```shiplist.xml``` file
 - invokes the ```buztool.sh``` of UCD
 
-Example invocation:
+Example invocation (default):
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/ucd/packaging-samples --component MYCOMP --ar /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --ar /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion
+```
+
+Example to establish link to the pipeline url: 
+
+```
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --ar /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/App-EPSC/34/
+```
+
+Example to establish link to the pipeline url: 
+
+```
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --ar /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/App-EPSC/34/ --repositoryInfoPropertiesFile /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
 ```
 
 ## Processing flow
@@ -15,6 +27,8 @@ $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buzt
 - Read DBB's BuildReport.json from the pipeline work directory
 - Parse and extract build output information of records of type *ExecuteRecord* and *CopyToPDSRecord*
 - Optionally adds generic PropertyRecords, which are linked to the buildfile
+- Optionally adds links back to the ci pipeline build 
+- Optionally adds links to changes (git hashes) within the version control system
 - Generates shiplist.xml file
 - Invokes buztool.sh on USS with the generated options
 
@@ -24,21 +38,23 @@ $DBB_HOME/bin/groovyz <ussLocation>/dbb-ucd-packaging.groovy [options]
 
 required options:
 
- -b,--buztool <file>                Absolute path to UrbanCode Deploy
-                                    buztool.sh script
- -c,--component <name>              Name of the UCD component to
-                                    create version in
- -w,--workDir <dir>                 Absolute path to the DBB build
-                                    output directory
+ -b,--buztool <file>               		Absolute path to UrbanCode Deploy
+                                    		buztool.sh script
+ -c,--component <name>              		Name of the UCD component to
+                                    		create version in
+ -w,--workDir <dir>                 		Absolute path to the DBB build
+                                    		output directory
 
 optional options:
- -ar,--artifactRepository <arg>     Absolute path to Artifact Respository Server
-                                    Server connection file
- -prop,--propertyFile               Absolute path to property file. 
-                                    From UCD v7.1.x and greater it replace the -ar option.
- -v,--versionName <arg>             Name of the UCD component version
- -p,--preview                       Preview mode generate shiplist, but do
-                                    not run buztool.sh
+ -ar,--artifactRepository <arg>     		Absolute path to Artifact Respository Server
+                                    		Server connection file
+ -prop,--propertyFile               		Absolute path to property file. 
+                                    		From UCD v7.1.x and greater it replace the -ar option.
+ -v,--versionName <arg>             		Name of the UCD component version
+ -pURL,--pipelineURL <arg>				 to the pipeline build result
+ -rpFile,--repositoryInfoPropertiesFile <arg>	Absolute path to property file containing URL prefixes to git provider
+ -p,--preview                       		Preview mode generate shiplist, but do
+                                    		not run buztool.sh
 
 
 utility options
