@@ -7,19 +7,19 @@ An important step in the pipeline is to generate a deployable package. This samp
 
 Example invocation (default):
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --ar /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion
 ```
 
 Example to establish link to the pipeline url: 
 
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --ar /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/App-EPSC/34/
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/App-EPSC/34/
 ```
 
 Example to establish link to the pipeline url: 
 
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --ar /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/App-EPSC/34/ --repositoryInfoPropertiesFile /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/App-EPSC/34/ --repositoryInfoPropertiesFile /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
 ```
 
 ## Processing flow
@@ -48,7 +48,7 @@ required options:
 optional options:
  -ar,--artifactRepository <arg>     		Absolute path to Artifact Respository Server
                                     		Server connection file
- -prop,--propertyFile               		Absolute path to property file. 
+ -prop,--propertyFile <arg>         		Absolute path to property file. 
                                     		From UCD v7.1.x and greater it replace the -ar option.
  -v,--versionName <arg>             		Name of the UCD component version
  -pURL,--pipelineURL <arg>			URL to the pipeline build result
