@@ -13,13 +13,19 @@ $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buzt
 Example to establish link to the pipeline url: 
 
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/App-EPSC/34/
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/
 ```
 
-Example to establish link to the pipeline url: 
+Example to establish link to the pipeline url and links for each deployable file to the git provider: 
 
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/App-EPSC/34/ --repositoryInfoPropertiesFile /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --repositoryInfoPropertiesFile /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
+```
+
+Example to establish link to the pipeline url and git branch: 
+
+```
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --gitBranch development
 ```
 
 ## Processing flow
