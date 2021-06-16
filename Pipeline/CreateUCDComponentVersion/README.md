@@ -52,6 +52,7 @@ optional options:
                                     		From UCD v7.1.x and greater it replace the -ar option.
  -v,--versionName <arg>             		Name of the UCD component version
  -pURL,--pipelineURL <arg>			URL to the pipeline build result
+ -g,--gitBranch <arg>					Name of the git branch
  -rpFile,--repositoryInfoPropertiesFile <arg>	Absolute path to the property file containing URL prefixes to git provider
  -p,--preview                       		Preview mode generate shiplist, but do
                                     		not run buztool.sh

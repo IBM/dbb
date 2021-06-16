@@ -20,6 +20,7 @@ import groovy.xml.MarkupBuilder
  *  -prop,--propertyFile          Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
  *  -p,--preview                  Preview, not executing buztool.sh
  *  -pURL,--pipelineURL			  URL to the pipeline build result (Optional)
+ *  -g,--gitBranch				  Name of the git branch (Optional)
  *  -rpFile,--repositoryInfoPropertiesFile  Absolute path to property file containing URL prefixes to git provider (Optional).
  *
  * notes:
@@ -143,9 +144,11 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 	//top level property will be added as version properties
 	//requires UCD v6.2.6 and above
 	// Url to DBB Build result
-	property(name : buildResult.getGroup() + "-buildResultUrl", value : buildResult.getUrl())
+	property(name : "dbb-buildResultUrl", value : buildResult.getUrl())
 	// Url to CI pipeline
-	if (properties.pipelineURL)property(name : "ci-pipeline-url", value : properties.pipelineURL )
+	if (properties.pipelineURL) property(name : "ci-pipelineUrl", value : properties.pipelineURL )
+	// Git branch
+	if (properties.gitBranch) property(name : "ci-gitBranch", value : properties.gitBranch )
 	// Populate build result properties
 	if (buildResultProperties != null) buildResultProperties.each{
 		property(name:it.key, value:it.value)
@@ -303,6 +306,7 @@ def parseInput(String[] cliArgs){
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
 	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
 	cli.pURL(longOpt:'pipelineURL', args:1,'URL to the pipeline build result (Optional)')
+	cli.g(longOpt:'gitBranch', args:1,'Name of the git branch (Optional)')
 	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional)')
 		
 	cli.h(longOpt:'help', 'Prints this message')
@@ -341,6 +345,7 @@ def parseInput(String[] cliArgs){
 	if (opts.prop) properties.propertyFileSettings = opts.prop
 	if (opts.v) properties.versionName = opts.v
 	if (opts.pURL) properties.pipelineURL = opts.pURL
+	if (opts.g) properties.gitBranch = opts.g
 	properties.preview = (opts.p) ? 'true' : 'false'
 
 	// validate required properties
