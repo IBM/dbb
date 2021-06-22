@@ -81,7 +81,6 @@ def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
 
 // parse build report to find the build result meta info
 def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0];
-def dependencies = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET};
 
 // parse build report to find the build outputs to be deployed.
 println("** Find deployable outputs in the build report ")
@@ -91,7 +90,7 @@ println("** Find deployable outputs in the build report ")
 //	it.getType()==DefaultRecordFactory.TYPE_EXECUTE
 //}
 
-// Print warning, that extraction of COPY_TO_PDS records are not supported with older versions of the dbb toolkit. 
+// Print warning, that extraction of COPY_TO_PDS records are not supported with older versions of the dbb toolkit.
 dbbVersion = new VersionInfo().getVersion()
 println "   * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version $dbbVersion."
 
@@ -100,11 +99,11 @@ def executes= buildReport.getRecords().findAll{
 	try {
 		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
 				!it.getOutputs().isEmpty()
-	} catch (Exception e){}	
+	} catch (Exception e){}
 }
 
 // Remove excluded outputs
-executes.each { 
+executes.each {
 	def unwantedOutputs =  it.getOutputs().findAll{ o ->
 		o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
 	}
@@ -123,9 +122,9 @@ executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployTyp
 
 // get DBB.BuildResultProperties records stored as generic DBB Record, see https://github.com/IBM/dbb-zappbuild/pull/95
 def buildResultRecord = buildReport.getRecords().find{
-		try {
-			it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
-		} catch (Exception e){}
+	try {
+		it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
+	} catch (Exception e){}
 }
 
 def buildResultProperties = null
@@ -161,11 +160,11 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 				resource(name:member, type:"PDSMember", deployType:output.deployType){
 					// add any custom properties needed
 					property(name:"buildcommand", value:execute.getCommand())
-					
+
 					// Only TYPE_EXECUTE Records carry options
 					if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:execute.getOptions())
-					// Sample to add additional properties. Here: adding db2 properties for a DBRM 
-					//   which where added to the build report through a basic PropertiesRecord. 
+					// Sample to add additional properties. Here: adding db2 properties for a DBRM
+					//   which where added to the build report through a basic PropertiesRecord.
 					if (output.deployType.equals("DBRM")){
 						propertyRecord = buildReport.getRecords().findAll{
 							it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==execute.getFile()
@@ -184,8 +183,7 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 						def gitproperty = buildResultProperties.find{
 							it.key.contains(":githash:") && execute.getFile().contains(it.key.substring(9))
 						}
-						if (gitproperty != null ) 
-						{
+						if (gitproperty != null ) {
 							githash = gitproperty.getValue()
 							// set properties in shiplist
 							property(name:"githash", value:githash)
@@ -193,16 +191,22 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 						}
 					}
 					// add source information in the input column
-					inputs(url : "${githash}"){
-						inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
+					inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
+					inputs(url : "${inputUrl}"){
 						input(name : execute.getFile(), compileType : "Main", url : inputUrl)
-						// dependencies (not used today)
-						dependencies.each{
-							if(it.getId() == execute.getFile()){
-								it.getAllDependencies().each{
-									
-									def displayName = it.getFile()? it.getFile() : it.getLname()
-									input(name : displayName , compileType : it.getCategory())
+						// dependencies
+						def dependencySets = buildReport.getRecords().findAll{
+							it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==execute.getFile()
+						};
+						Set<String> dependencyCache = new HashSet<String>()
+						dependencySets.unique().each{
+							it.getAllDependencies().each{
+								if (it.isResolved() && !dependencyCache.contains(it.getLname())){
+									def displayName = it.getFile() ? it.getFile() : it.getLname()
+									def dependencyUrl =""
+									if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
+									input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
+									dependencyCache.add(it.getLname())
 								}
 							}
 						}
@@ -231,7 +235,6 @@ def cmd = [
 	//requires UCD v6.2.6 and above
 	"-o",
 	"${properties.workDir}/buztool.output"
-
 ]
 // set artifactRepository option if specified
 if (properties.artifactRepositorySettings) {
@@ -259,12 +262,12 @@ println cmdStr
 // execute command, if no preview is set
 if (!properties.preview.toBoolean()){
 
-	
+
 	println("** Create version by running UCD buztool")
-	
+
 	StringBuffer response = new StringBuffer()
 	StringBuffer error = new StringBuffer()
-	
+
 	def p = cmd.execute()
 	p.waitForProcessOutput(response, error)
 	println(response.toString())
@@ -308,7 +311,7 @@ def parseInput(String[] cliArgs){
 	cli.pURL(longOpt:'pipelineURL', args:1,'URL to the pipeline build result (Optional)')
 	cli.g(longOpt:'gitBranch', args:1,'Name of the git branch (Optional)')
 	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional)')
-		
+
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
 	if (opts.h) { // if help option used, print usage and exit
@@ -327,13 +330,12 @@ def parseInput(String[] cliArgs){
 		if (buildProperties.workDir != null)
 			properties.workDir = buildProperties.workDir
 	}
-	
+
 	// load properties from repositoryInfoPropertiesFile
 	if (opts.rpFile){
 		def repositoryPropFile = new File("$opts.rpFile")
 		if (repositoryPropFile.exists()){
-			repositoryPropFile.withInputStream { 
-				properties.load(it) }
+			repositoryPropFile.withInputStream {  properties.load(it) }
 		}
 	}
 
