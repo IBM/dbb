@@ -5,13 +5,13 @@ Another area, where this script is beneficial as a sample, is to adapt this scri
 The ArtifactoryHelpers allow you to upload and download packages from Artifactory. The ArtifactoryHelpers are a very simple implementation sufficient for a show case, we recommend to rather use the Artifactory Publishers which are available by your CI pipeline coordinator.
 
 ## Prerequisites
-'PackageBuildOutputs.groovy' is a sample of an post-build sample and relies on the a DBB Build Report as an input .
+`PackageBuildOutputs.groovy` is a sample of an post-build sample and relies on the a DBB Build Report as an input .
 
 ## Package Build Outputs
 
 ### Packaging
 
-1. After a successful DBB build, 'PackageBuildOutputs.groovy' reads the build report and retrieves all outputs from the build report. It excludes outputs without a `deployType` as well as those labeled `ZUNIT-TESTCASE` 
+1. After a successful DBB build, `PackageBuildOutputs.groovy` reads the build report and retrieves all outputs from the build report. It excludes outputs without a `deployType` as well as those labeled `ZUNIT-TESTCASE` 
 2. It then invokes CopyToHFS to copy the outputs from the libraries to a temporary directory on zFS. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS  
 3. It packages these load files into a tar file, and adds the BuildReport.json to it.
 
