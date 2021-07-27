@@ -14,12 +14,28 @@ import groovy.transform.*
  *
  * usage: PackageBuildOutputs.groovy [options]
  *
- * options:
- *  -w,--workDir <dir>            Absolute path to the DBB build output directory
- *  -v,--versionName <name>       Name of the sub directory path
- *  -h,--help                     Prints this message
- *  -prop,--propertyFile          Absolute path to a property file containing application specific Artifactory configuration (Optional)
- *  -p,--publish                  Leverage the Artifactory configuration to upload the package (Optional; requires -prop)
+ * -w,--workDir <dir>                    Absolute path to the DBB build
+ *                                       output directory
+ * Optional:
+ * -t,--tarFileName <filename>           Name of the package tar file.
+ *                                       (Optional)
+ * -d,--deployTypes <deployTypes>        Comma-seperated list of deployTypes
+ *                                       to filter on the scope of the tar
+ *                                       file. (Optional)
+ * -verb,--verbose                       Flag to provide more log output.
+ *                                       (Optional)
+ *                                       
+ * Optional Artifactory Upload opts:
+ *
+ * -p,--publish                          Flag to indicate package upload to
+ *                                       the provided Artifactory server.
+ *                                       (Optional)
+ * -prop,--propertyFile <propertyFile>   Absolute path of a property file
+ *                                       containing application specific
+ *                                       Artifactory details. (Optional)
+ * -v,--versionName <versionName>        Name of the Artifactory version.
+ *                                       (Optional)
+ * -h,--help                             Prints this message
  *
  * Version 0 - 2019
  *  called PublishLoadModule.groovy and located in Build/PublishLoadModules
@@ -60,12 +76,27 @@ def executes= buildReport.getRecords().findAll{
 	} catch (Exception e){}
 }
 
-// Remove outputs without deployType + ZUNIT-TESTCASEs
-executes.each {
-	def unwantedOutputs =  it.getOutputs().findAll{ o ->
-		o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
+if (props.deployTypeFilter){
+	println("** Filtering Output Records on following deployTypes: ${props.deployTypeFilter}")
+	executes.each {
+		// filtered executes
+		def filteredOutputs =  it.getOutputs().findAll{ o ->
+			o.deployType != null && (props.deployTypeFilter).split(',').contains(o.deployType)
+		}
+		// Manipulating the scope of build outputs
+		it.getOutputs().clear()
+		it.getOutputs().addAll(filteredOutputs)
 	}
-	it.getOutputs().removeAll(unwantedOutputs)
+}
+else {
+	// Remove outputs without deployType + ZUNIT-TESTCASEs
+	println("** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE ")
+	executes.each {
+		def unwantedOutputs =  it.getOutputs().findAll{ o ->
+			o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
+		}
+		it.getOutputs().removeAll(unwantedOutputs)
+	}
 }
 
 assert executes.size() > 0, "There are no outputs found in the build report"
@@ -79,7 +110,7 @@ def buildInfo = buildReport.getRecords().findAll{
 }
 
 def String tarFileLabel = buildInfo[0].label
-def String tarFileName = "${buildInfo[0].label}.tar"
+def String tarFileName = (props.tarFileName) ? props.tarFileName : "${buildInfo[0].label}.tar"
 def String buildGroup = buildInfo[0].group
 
 
@@ -168,10 +199,10 @@ if (props.publish && props.publish.toBoolean()){
 	File artifactoryHelpersFile = new File("$scriptDir/ArtifactoryHelpers.groovy")
 	Class artifactoryHelpersClass = new GroovyClassLoader(getClass().getClassLoader()).parseClass(artifactoryHelpersFile)
 	GroovyObject artifactoryHelpers = (GroovyObject) artifactoryHelpersClass.newInstance()
-	
+
 	println ("** Uploading package to Artifactory $url.")
 	artifactoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
-	}
+}
 
 /**
  * parse data set name and member name
@@ -216,8 +247,12 @@ def runProcess(ArrayList cmd, File dir){
 def parseInput(String[] cliArgs){
 	def cli = new CliBuilder(usage: "PackageBuildOutputs.groovy [options]")
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
-	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the package tar file (Optional)')
+	cli.d(longOpt:'deployTypes', args:1, argName:'deployTypes','Comma-seperated list of deployTypes to filter on the scope of the tar file. (Optional)')
+	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional)')
+	
+	// Artifactory Options:
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifactory server. (Optional)')
+	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the Artifactory version. (Optional)')
 	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFile', 'Absolute path of a property file containing application specific Artifactory details. (Optional)')
 	cli.verb(longOpt:'verbose', 'Flag to provide more log output. (Optional)')
 
@@ -232,13 +267,15 @@ def parseInput(String[] cliArgs){
 
 	// set command line arguments
 	if (opts.w) props.workDir = opts.w
-
-	// Optional parms
-	if (opts.v) props.versionName = opts.v
+	if (opts.d) props.deployTypeFilter = opts.d
+	if (opts.t) props.tarFileName = opts.t
 	
-	props.publish = (opts.p) ? 'true' : 'false'
 	props.verbose = (opts.verb) ? 'true' : 'false'
 	
+	// Optional Artifactory to publish 
+	if (opts.v) props.versionName = opts.v
+	props.publish = (opts.p) ? 'true' : 'false'
+
 	if (opts.prop){
 		def propertyFile = new File(opts.prop)
 		if (propertyFile.exists()){
