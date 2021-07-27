@@ -190,7 +190,7 @@ def getDatasetName(String fullname){
  * run process
  */
 def runProcess(ArrayList cmd, File dir){
-	if (props.verbose) println "executing $cmd: "
+	if (props.verbose && props.verbose.toBoolean()) println "executing $cmd: "
 	StringBuffer response = new StringBuffer()
 	StringBuffer error = new StringBuffer()
 
@@ -205,7 +205,7 @@ def runProcess(ArrayList cmd, File dir){
 
 	}else{
 		println("*! Error executing $cmd \n" + error.toString())
-		//System.exit(rc)
+		//System.exit(1)
 	}
 	return rc
 }
