@@ -153,7 +153,7 @@ def download(String url, String fileName, String user, String password, boolean 
 def run(String[] cliArgs)
 {
 	System.setProperty("com.ibm.jsse2.overrideDefaultTLS", "true")
-	def cli = new CliBuilder(usage: "Artifactory.groovy [options]", header: '', stopAtNonOption: false)
+	def cli = new CliBuilder(usage: "ArtifactoryHelpers.groovy [options]", header: '', stopAtNonOption: false)
 	cli.h(longOpt:'help', 'Prints this message')
 	cli.u(longOpt:'url', args:1, required:true, 'Artifactory file uri location')
 	cli.fU(longOpt:'fileToUpload', args:1, 'The full path of the file to upload')

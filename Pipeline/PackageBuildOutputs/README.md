@@ -1,22 +1,26 @@
-# Package Build Outputs in an independent tar format
-This sample shows how to create a tar-file with the build outputs based on the DBB Build Report after a successful build, which can be published to an artifact repository and used in a scripted deployment.
-Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository. 
+# Package Build Outputs in tar format
 
-The ArtifactoryHelpers allow you to upload and download packages from Artifactory. The ArtifactoryHelpers are a very simple implementation sufficient for a show case, we recommend to rather use the Artifactory Publishers which are available by your CI pipeline coordinator.
+This sample shows how to create a tar-file with the build outputs based on the DBB Build Report after a successful build.
+
+The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and tp pull them into the build process.
+The `ArtifactoryHelpers.groovy` allow you to upload and download packages from Artifactory. The ArtifactoryHelpers are a very simple implementation sufficient for a show case, we recommend to rather use the Artifactory Publishers which are available by your CI pipeline coordinator.
 
 ## Prerequisites
-`PackageBuildOutputs.groovy` is a sample of an post-build sample and relies on the a DBB Build Report as an input .
+`PackageBuildOutputs.groovy` is a sample of an post-build script relying at least on the a DBB Build Report as an input.
 
-## Package Build Outputs
+## Package Build Outputs Process
 
 ### Packaging
 
 1. After a successful DBB build, `PackageBuildOutputs.groovy` reads the build report and retrieves all outputs from the build report. It excludes outputs without a `deployType` as well as those labeled `ZUNIT-TESTCASE` 
 2. It then invokes CopyToHFS to copy the outputs from the libraries to a temporary directory on zFS. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS  
 3. It packages these load files into a tar file, and adds the BuildReport.json to it.
+4. (Optional) Publishes the tar file to the Artifactory repository based on the given configuration using the ArtifactoryHelpers.
 
-### (Optional) Uploading package
-4. Publishes the tar file to the Artifactory repository based on the given configuration.
+## Package Upload and Download
+`ArtifactoryHelpers.groovy` allow uploading and downloading a package to Artifactory. 
+
+### 
 
 ## Sample Invocation
 
@@ -89,9 +93,21 @@ groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy --workDir /var/jenkins/
 ** Build finished
 ```
 
+### Only Upload or Download to/from Artifactory
+
+```
+groovyz  /var/jenkins/pipeline/ArtifactoryHelpers.groovy --url http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.1/build.20210727.073406.034.tar --user xxxxx --password xxxxx --fileToUpload /var/jenkins/workspace/MortgageApplication//build.20210727.073406.034.tar --verbose
+
+** Headers: [Expect: 100-continue, Connection: Keep-Alive]
+** Request: PUT http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.1/build.20210727.073406.034.tar HTTP/1.1
+** Response: HttpResponseProxy{HTTP/1.1 201 Created [Server: Artifactory/6.6.5, X-Artifactory-Id: 6e0b564c45b20ed4:-57a85152:1783ac71376:-8000, Location: http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.1/build.20210727.073406.034.tar, Content-Type: application/vnd.org.jfrog.artifactory.storage.ItemCreated+json;charset=ISO-8859-1, Transfer-Encoding: chunked, Date: Tue, 27 Jul 2021 06:37:30 GMT] ResponseEntityProxy{[Content-Type: application/vnd.org.jfrog.artifactory.storage.ItemCreated+json;charset=ISO-8859-1,Chunked: true]}}
+** Build finished
+ 
+```
 
 
-## Command Line Options Summary
+
+## Command Line Options Summary - PackageBuildOutputs
 
 ```
 usage: PackageBuildOutputs.groovy [options]
@@ -112,4 +128,18 @@ Optional:
                                        (Optional)
 
  -h,--help                             Prints this message
+```
+
+## Command Line Options Summary - ArtifactoryHelpers
+
+```
+usage: ArtifactoryHelpers.groovy [options]
+
+ -fD,--fileToDownload <arg>   The full path of the file to download
+ -fU,--fileToUpload <arg>     The full path of the file to upload
+ -h,--help                    Prints this message
+ -P,--password <arg>          Artifactory password
+ -u,--url <arg>               Artifactory file uri location
+ -U,--user <arg>              Artifactory user id
+ -v,--verbose                 Flag to turn on script trace
 ```
