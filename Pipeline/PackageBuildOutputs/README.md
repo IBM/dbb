@@ -3,7 +3,9 @@
 This sample shows how to create a tar-file with the build outputs based on the DBB Build Report after a successful build.
 
 The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and tp pull them into the build process.
-The `ArtifactoryHelpers.groovy` allow you to upload and download packages from Artifactory. The ArtifactoryHelpers are a very simple implementation sufficient for a show case, we recommend to rather use the Artifactory Publishers which are available by your CI pipeline coordinator.
+The `ArtifactoryHelpers.groovy` allow you to upload and download packages from Artifactory. 
+
+The ArtifactoryHelpers is a very simple implementation sufficient for a show case, we recommend to rather use the Artifactory Publishers which are available by your CI pipeline coordinator.
 
 ## Prerequisites
 `PackageBuildOutputs.groovy` is a sample of an post-build script relying at least on the a DBB Build Report as an input.
@@ -17,12 +19,7 @@ The `ArtifactoryHelpers.groovy` allow you to upload and download packages from A
 3. It packages these load files into a tar file, and adds the BuildReport.json to it.
 4. (Optional) Publishes the tar file to the Artifactory repository based on the given configuration using the ArtifactoryHelpers.
 
-## Package Upload and Download
-`ArtifactoryHelpers.groovy` allow uploading and downloading a package to Artifactory. 
-
-### 
-
-## Sample Invocation
+## Invocation samples 
 
 ### Package only
 ```
