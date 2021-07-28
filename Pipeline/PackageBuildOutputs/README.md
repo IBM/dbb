@@ -15,7 +15,7 @@ The ArtifactoryHelpers is a very simple implementation sufficient for a show cas
 ### Packaging
 
 1. After a successful DBB build, `PackageBuildOutputs.groovy` reads the build report and retrieves all outputs from the build report. It excludes outputs without a `deployType` as well as those labeled `ZUNIT-TESTCASE` 
-2. It then invokes CopyToHFS to copy the outputs from the libraries to a temporary directory on zFS. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS  
+2. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS.  
 3. It packages these load files into a tar file, and adds the BuildReport.json to it.
 4. (Optional) Publishes the tar file to the Artifactory repository based on the given configuration using the ArtifactoryHelpers.
 
@@ -105,8 +105,6 @@ groovyz  /var/jenkins/pipeline/ArtifactoryHelpers.groovy --url http://10.3.20.23
  
 ```
 
-
-
 ## Command Line Options Summary - PackageBuildOutputs
 
 ```
@@ -150,4 +148,20 @@ usage: ArtifactoryHelpers.groovy [options]
  -u,--url <arg>               Artifactory file uri location
  -U,--user <arg>              Artifactory user id
  -v,--verbose                 Flag to turn on script trace
+```
+
+
+## Useful reference material
+
+This sample implementation makes use of tar on USS.
+Please see IBM Docs for further details on [tar](https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file)
+
+The implementation preserves the file tags for further processing.
+
+```
+tar -tvf justloads.jar -L T
+USTAR Version 00
+                    drwxr-xr-x   1 BPXROOT  DB2USR         0 Jul 28 13:47 JENKINS.DBB.SAMP.BUILD.LOAD/
+b binary      T=off -rwxr-xr-x   1 BPXROOT  DB2USR     32768 Jul 28 13:47 JENKINS.DBB.SAMP.BUILD.LOAD/EPSMPMT
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  DB2USR     18326 Jul 28 13:47 BuildReport.json
 ```

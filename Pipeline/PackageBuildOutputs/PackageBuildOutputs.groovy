@@ -55,7 +55,8 @@ props.each{k,v->
 	println "   $k -> $v"
 }
 
-def loadDatasets = properties.loadDatasets
+// Enable file tagging
+BuildProperties.setProperty("dbb.file.tagging", "true") // Enable dbb file tagging
 
 // read build report data
 println("** Read build report data from $props.workDir/BuildReport.json")
@@ -155,16 +156,32 @@ loadDatasetToMembersMap.each { dataset, members ->
 
 		println "     Copying $dataset($member) to $filePath with DBB Copymode $currentCopyMode"
 		copy.dataset(dataset).member(member).file(file).execute()
+		
+		// Workaround DBB 1.1.1 toolkit
+		if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD){
+			StringBuffer stdout = new StringBuffer()
+			StringBuffer stderr = new StringBuffer()
+			
+			Process process = "chtag -b $file".execute()
+			process.waitForProcessOutput(stdout, stderr)
+			if (stderr){
+				println ("*! stderr : $stderr")
+				println ("*! stdout : $stdout")
+			}
+
+		}
 	}
 }
 
 def tarFile = new File("$props.workDir/${tarFileName}")
 
 println("** Creating tar file at $tarFile.")
+// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
+// To save all attributes to be restored on z/OS and non-z/OS systems : tar -UX
 def processCmd = [
 	"sh",
 	"-c",
-	"tar cf $tarFile *"
+	"tar cUXf $tarFile *"
 ]
 
 def rc = runProcess(processCmd, tempLoadDir)
@@ -175,7 +192,7 @@ println("** Adding BuildReport.json to $tarFile.")
 processCmd = [
 	"sh",
 	"-c",
-	"tar rf $tarFile BuildReport.json"
+	"tar rUXf $tarFile BuildReport.json"
 ]
 
 rc = runProcess(processCmd, new File(props.workDir))
