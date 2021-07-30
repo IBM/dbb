@@ -249,9 +249,7 @@ def runProcess(ArrayList cmd, File dir){
 	println(response.toString())
 
 	def rc = p.exitValue();
-	if(rc==0){
-
-	}else{
+	if(rc!=0){
 		println("*! Error executing $cmd \n" + error.toString())
 		//System.exit(1)
 	}

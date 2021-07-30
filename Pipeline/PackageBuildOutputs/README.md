@@ -2,7 +2,7 @@
 
 This sample shows how to create a tar-file with the build outputs based on the DBB Build Report after a successful build.
 
-The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and tp pull them into the build process.
+The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and to pull them into the build process.
 The `ArtifactoryHelpers.groovy` allow you to upload and download packages from Artifactory. 
 
 The ArtifactoryHelpers is a very simple implementation sufficient for a show case, **_we recommend_** to use the Artifactory publishers which are available with your CI pipeline coordinator.

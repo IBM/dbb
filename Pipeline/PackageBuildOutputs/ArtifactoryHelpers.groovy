@@ -57,8 +57,6 @@ run(args)
 
 def upload(String url, String fileName, String user, String password, boolean verbose) throws IOException {
 
-	System.setProperty("com.ibm.jsse2.overrideDefaultTLS", "true")
-	
 	RequestConfig requestConfig = RequestConfig
 		.custom()
 		.setSocketTimeout(timeoutMilliSeconds)
@@ -152,7 +150,7 @@ def download(String url, String fileName, String user, String password, boolean 
 //Parsing the command line
 def run(String[] cliArgs)
 {
-	System.setProperty("com.ibm.jsse2.overrideDefaultTLS", "true")
+
 	def cli = new CliBuilder(usage: "ArtifactoryHelpers.groovy [options]", header: '', stopAtNonOption: false)
 	cli.h(longOpt:'help', 'Prints this message')
 	cli.u(longOpt:'url', args:1, required:true, 'Artifactory file uri location')
