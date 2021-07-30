@@ -153,8 +153,9 @@ usage: ArtifactoryHelpers.groovy [options]
 
 ## Useful reference material
 
-This sample implementation makes use of tar on USS.
-Please see IBM Docs for further details on [tar](https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file)
+#### TAR on USS 
+
+This sample implementation makes use of tar on USS. Please see IBM Docs for further details on [tar](https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file)
 
 The implementation preserves the file tags for further processing.
 
@@ -165,3 +166,39 @@ USTAR Version 00
 b binary      T=off -rwxr-xr-x   1 BPXROOT  DB2USR     32768 Jul 28 13:47 JENKINS.DBB.SAMP.BUILD.LOAD/EPSMPMT
 t UTF-8       T=on  -rw-r--r--   1 BPXROOT  DB2USR     18326 Jul 28 13:47 BuildReport.json
 ```
+
+#### Jenkins Integration  
+
+As mentioned in the introductions of this sample, we recommend to use the existing plugins of your binary artifact repository manager. You find useful material at:
+- [Documentation Jenkins Artifactory Plug-in](https://www.jfrog.com/confluence/display/JFROG/Jenkins+Artifactory+Plug-in)
+- [Configuring Jenkins Artifactory Plug-in] (https://www.jfrog.com/confluence/display/JFROG/Configuring+Jenkins+Artifactory+Plug-in)
+- [Jenkins Sample provided by JFrog](https://github.com/jfrog/project-examples/tree/master/jenkins-examples/pipeline-examples)
+
+
+Below is a snippet to use PackageBuildOutputs.groovy along with the Jenkins Artifactory plugins, which provides the Build Info in Artifactory
+
+```
+stage("Package & Upload to Artifactory") {
+		sh "${groovyz}  $pipelineScripts/PackageBuildOutputs.groovy --workDir ${WORKSPACE}/BUILD-${BUILD_NUMBER}"	
+
+        artifactoryServer.credentialsId = artifactoryCredentialsId
+        def buildInfo = Artifactory.newBuildInfo()
+        buildInfo.name = buildName
+
+        // Upload DBB build outputs to Artifactory
+        artifactoryServer.upload buildInfo: buildInfo, spec:
+        """{
+                "files": [
+                    {
+                        "pattern": "${WORKSPACE}/BUILD-${BUILD_NUMBER}/*.tar",
+                        "target": "${artifactoryRepository}/${buildName}/${env.BUILD_NUMBER}/"
+                    }
+                ]
+            }"""
+
+        // Publish the build
+        artifactoryServer.publishBuildInfo buildInfo      
+	}  
+```
+
+ 
