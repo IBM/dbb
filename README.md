@@ -27,10 +27,10 @@ Build/zAppBuild | zAppBuild has been moved to its own stand alone repository at 
 [IDE/GitISPFClient](IDE/GitISPFClient) | An ISPF interface that interacts with a Git repository to allow cloning, staging, checking in, pushing and pulling as well as other git commands.
 [Migration/sclm](Migration/sclm) | This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
 [Pipeline/CreateUCDComponentVersion](Pipeline/CreateUCDComponentVersion) | Post-build script to parse the DBB Build report to generate a UCD component shiplist file and to create a new UCD component version. 
-[Pipeline/DeployUCDComponentVersion](Pipeline/DeployUCDComponentVersion) | Sample script to trigger a UCD deployment from the pipeline, where the pipeline orchestrator does not provide standard plugins to this action.
-[Pipeline/PackageBuildOutputs](Pipeline/PackageBuildOutputs) | Post-build script to create a generic package with the produced build outputs. Optionally uploads results to an Artifactory repository.    
-[Pipeline/PublishSharedInterfaces](Pipeline/PublishSharedInterfaces) | Post-build script to move shared copybooks to a git repository managing all shared copybooks. 
-[Pipeline/RunIDZCodeReview](Pipeline/RunIDZCodeReview) | Post-build script to include IDz Code Review application to a pipeline.
+[Pipeline/DeployUCDComponentVersion](Pipeline/DeployUCDComponentVersion) | Sample script to trigger a UCD deployment from the pipeline, where the pipeline orchestrator does not provide standard plugins for this task.
+[Pipeline/PackageBuildOutputs](Pipeline/PackageBuildOutputs) | Post-build script to create a generic package with the produced build outputs, optionally uploads results to an Artifactory repository. Artifactory deploy/download sample script.    
+[Pipeline/PublishSharedInterfaces](Pipeline/PublishSharedInterfaces) | Post-build script to publish shared copybooks to a shared git repository managing all shared copybooks. 
+[Pipeline/RunIDZCodeReview](Pipeline/RunIDZCodeReview) | Post-build script to integrate IBM IDz Code Review application into a pipeline.
 [Snippets/InteractiveGateway](Snippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
 [Snippets/PropertyMappings](Snippets/PropertyMappings) | Example showing how to use the new PropertyMappings class to perform aggregate functions on DBB BuildProperties.
 [Snippets/zUnitTestCase](Snippets/zUnitTestCase) | Example showing how to use the JCLExec command added in DBB v1.0.1
