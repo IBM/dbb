@@ -47,6 +47,12 @@ import groovy.transform.*
 
 // start create & publish package
 @Field Properties props = parseInput(args)
+
+// Map of last level dataset qualifier to DBB CopyToFS CopyMode.
+// TODO: Customize to your needs. 
+def copyModeMap = ["COPYBOOK": CopyMode.TEXT, "COPY": CopyMode.TEXT, "DBRM": CopyMode.BINARY, "LOAD": CopyMode.LOAD]
+
+
 def startTime = new Date()
 props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
 println("** PackageBuildOutputs start at $props.startTime")
@@ -139,8 +145,6 @@ else {
 	println("** Copying BuildOutputs to temporary package dir.")
 
 	CopyToHFS copy = new CopyToHFS()
-
-	def copyModeMap = ["COPYBOOK": CopyMode.TEXT, "COPY": CopyMode.TEXT, "DBRM": CopyMode.BINARY, "LOAD": CopyMode.LOAD]
 
 	println "*** Number of build outputs to publish: $loadCount"
 	loadDatasetToMembersMap.each { dataset, members ->
