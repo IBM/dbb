@@ -2,9 +2,11 @@
 Welcome to the IBM Dependency Based Build (DBB) community repository. The helpful and handy location for finding and sharing example DBB scripts and snippets.
 
 ## Resources
-* [IBM Dependency Based Build Product Page](https://developer.ibm.com/mainframe/products/ibm-dependency-based-build/)
-* [IBM DBB Community](https://www.ibm.com/developerworks/community/groups/service/html/communitystart?communityUuid=eb5571db-e187-47c1-bd64-d5da2bd73e73)
-* [IBM DBB Knowledge Center](https://www.ibm.com/support/knowledgecenter/SS6T76_1.0.2/welcome.html)
+* [IBM Dependency Based Build Product Page](https://www.ibm.com/products/dependency-based-build)
+* [IBM DBB Knowledge Center](https://www.ibm.com/docs/en/dbb/1.1.0)
+* [IBM zDevOps Community](https://community.ibm.com/community/user/ibmz-and-linuxone/groups/topic-home?CommunityKey=f36c1ced-7e79-43cd-897c-e798acfef4a4)
+* [IBM DBB Community](https://community.ibm.com/community/user/ibmz-and-linuxone/groups/topic-home/blog-entries?communitykey=20c9b889-9450-4ab6-8f11-8a5eb2b3342d)
+
 
 ## Contributing
 For instructions on how to contribute new samples and bug fixes, please read the [Contributions Guidelines](CONTRIBUTIONS.md).
@@ -20,10 +22,15 @@ Sample | Description
 [Build/MortgageApplication](Build/MortgageApplication) | Sample application demonstrating many of the  build functions provided by DBB.
 Build/MortgageApplicationV2 | MortgageApplicationV2 has been moved to the new zAppBuild repository at https://github.com/IBM/dbb-zappbuild.
 [Build/MultiThreadMVSJob](Build/MultiThreadMVSJob) | Sample showing how to modilfy a compilation script to run in a multi-thread environment.
-[Build/PublishLoadModules](Build/PublishLoadModules) | Sample demonstrating how to publish load modules to Artifactory after a successful build.
+Build/PublishLoadModules | Sample demonstrating how to publish load modules to Artifactory after a successful build. Removed and superseded by [Pipeline/PackageBuildOutputs](Pipeline/PackageBuildOutputs).
 Build/zAppBuild | zAppBuild has been moved to its own stand alone repository at https://github.com/IBM/dbb-zappbuild. 
 [IDE/GitISPFClient](IDE/GitISPFClient) | An ISPF interface that interacts with a Git repository to allow cloning, staging, checking in, pushing and pulling as well as other git commands.
 [Migration/sclm](Migration/sclm) | This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
+[Pipeline/CreateUCDComponentVersion](Pipeline/CreateUCDComponentVersion) | Post-build script to parse the DBB Build report to generate a UCD component shiplist file and to create a new UCD component version. 
+[Pipeline/DeployUCDComponentVersion](Pipeline/DeployUCDComponentVersion) | Sample script to trigger a UCD deployment from the pipeline, where the pipeline orchestrator does not provide standard plugins to this action.
+[Pipeline/PackageBuildOutputs](Pipeline/PackageBuildOutputs) | Post-build script to create a generic package with the produced build outputs. Optionally uploads results to an Artifactory repository.    
+[Pipeline/PublishSharedInterfaces](Pipeline/PublishSharedInterfaces) | Post-build script to move shared copybooks to a git repository managing all shared copybooks. 
+[Pipeline/RunIDZCodeReview](Pipeline/RunIDZCodeReview) | Post-build script to include IDz Code Review application to a pipeline.
 [Snippets/InteractiveGateway](Snippets/InteractiveGateway) | Example showing how to use the new ISPFExec/TSOExec Interactive Gateway support added in DBB v1.0.2
 [Snippets/PropertyMappings](Snippets/PropertyMappings) | Example showing how to use the new PropertyMappings class to perform aggregate functions on DBB BuildProperties.
 [Snippets/zUnitTestCase](Snippets/zUnitTestCase) | Example showing how to use the JCLExec command added in DBB v1.0.1
