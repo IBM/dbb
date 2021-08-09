@@ -100,7 +100,7 @@ else {
 	}
 }
 
-if (executes.size() > 0) { 
+if (executes.size() == 0) { 
 	println("*!* There are no outputs found in the build report.")
 }
 else {
