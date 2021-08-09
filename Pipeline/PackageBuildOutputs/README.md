@@ -183,7 +183,7 @@ stage("Package & Upload to Artifactory") {
 
         artifactoryServer.credentialsId = artifactoryCredentialsId
         def buildInfo = Artifactory.newBuildInfo()
-        buildInfo.name = buildName
+        buildInfo.name = buildName // tbd - for example {application-branch}
 
         // Upload DBB build outputs to Artifactory
         artifactoryServer.upload buildInfo: buildInfo, spec:
