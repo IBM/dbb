@@ -201,7 +201,7 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 						Set<String> dependencyCache = new HashSet<String>()
 						dependencySets.unique().each{
 							it.getAllDependencies().each{
-								if (it.isResolved() && !dependencyCache.contains(it.getLname())){
+								if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=execute.getFile()){
 									def displayName = it.getFile() ? it.getFile() : it.getLname()
 									def dependencyUrl =""
 									if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
