@@ -1,6 +1,6 @@
 <copyr>             COPYRIGHT IBM CORP 2019
  <panel name=bgzdbbpm width=76 depth=20 keylist=BGZSABx applid=BGZ
-              help=bgzA0013>&pan_title
+              help=bgzA0012>&pan_title
 <ab>
   &bgzmenu
   &bgzhelp
@@ -32,7 +32,7 @@
 </area>
 <cmdarea name=bgzcmd caps=on>
 <source type=proc>
-VER (&BGZPMCMD,LIST,E,D,MSG=BGZC041)
+VER (&BGZPMCMD,LIST,/,E,D,MSG=BGZC041)
 </source>
 
 </panel>

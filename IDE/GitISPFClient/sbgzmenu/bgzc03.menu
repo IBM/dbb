@@ -1,10 +1,9 @@
 BGZC030 'Specify user & password' .TYPE=WARNING .HELP=* .ALARM=YES
 'User name must be specified in preferences and password must be entered when' +
 ' specify password is selected in preferences.'
-BGZC031 .TYPE=WARNING .HELP=* .ALARM=YES
-'SMSG="Invalid select code ">Codes CB (Change working branch), PB (Push branc' +
-'h on github), DB (Delete local branch) and JU (Jump to working directory) al' +
-'lowed'
+BGZC031 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
+'Codes CB (Change working branch), PB (Push branch on github), DB (Delete loc' +
+'al branch) and JU (Jump to working directory) allowed'
 BGZC032 'Remove dir failed' .TYPE=WARNING .HELP=* .ALARM=YES
 '&BGZLNGER.'
 BGZC033 'File not US ASCII       ' .TYPE=WARNING .HELP=* .ALARM=YES
@@ -23,5 +22,5 @@ BGZC038 .TYPE=NOTIFY .HELP=* .ALARM=NO
 BGZC039 'DBB build log not found' .TYPE=WARNING .HELP=* .ALARM=YES
 'No DBB build log exists for this file'
 /* COPYRIGHT IBM CORP 2019 */
-/* ISPDTLC Release: 7.4.  Level: PID                                  */
-/* z/OS 02.04.00.  Created - Date: 20 Aug 2020, Time: 05:59           */
+/* ISPDTLC Release: 7.5.  Level: PID                                  */
+/* z/OS 02.05.00.  Created - Date: 6 Aug 2021, Time: 05:16            */

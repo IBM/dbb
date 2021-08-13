@@ -7,7 +7,7 @@
 /*********************************************************************/
 /*                                                                   */
 /*                                                                   */
-/* NAME := BGZuslst                                                  */
+/* NAME := BGZUSLST                                                  */
 /*                                                                   */
 /* DESCRIPTIVE NAME := GIT ISPF Client z/OS Unix directory list      */
 /*                                                                   */
@@ -212,7 +212,14 @@ DISPUSS:
             BGZEMIX = 'NO'
             'VGET (ZDBCS) SHARED'
             If ZDBCS = 'YES' THEN BGZEMIX = 'YES'
+            "CONTROL ERRORS RETURN"
             "BROWSE File(BGZFILE) MIXED("BGZEMIX")"
+            If rc > 0 Then
+            Do
+              BGZLNGER = ZERRLM
+              'SETMSG MSG(BGZC025)'
+            End
+            "CONTROL ERRORS CANCEL"
             BGZUSCMD = ' '
             'TBMOD 'TabName' ORDER'
           End
@@ -453,7 +460,19 @@ DISPUSS:
               BGZEMIX = 'NO'
               'VGET (ZDBCS) SHARED'
               If ZDBCS = 'YES' THEN BGZEMIX = 'YES'
+              "CONTROL ERRORS RETURN"
               "BROWSE File(BGZFLOG) MIXED("BGZEMIX")"
+              If rc > 0 Then
+              Do
+                If RC = 20 Then
+                  'SETMSG MSG(BGZC039)'
+                Else
+                Do
+                  BGZLNGER = ZERRLM
+                  'SETMSG MSG(BGZC025)'
+                End
+              End
+              "CONTROL ERRORS CANCEL"
               If RC = 20 Then
                 'SETMSG MSG(BGZC039)'
             End

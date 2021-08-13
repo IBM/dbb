@@ -14,7 +14,7 @@
   <vardcl name=bgzPATH  varclass=vcpat>
 </varlist>
 
-<panel name=bgzUEDTU help=bgzp0005 keylist=bgzsnab applid=bgz
+<panel name=bgzUEDTU help=BGZA0013 keylist=bgzsnab applid=bgz
        width=&panel_width; depth=22 window=yes padc=user
        wintitle='&window_title;' >&panel_title;
 

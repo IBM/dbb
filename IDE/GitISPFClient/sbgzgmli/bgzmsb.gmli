@@ -1,5 +1,5 @@
 <copyr>             COPYRIGHT IBM CORP 2019
-<panel name=bgzMSG depth=22 width=70 help=bgzA099 ATTRUSE=YES
+<panel name=bgzMSG depth=22 width=70 help=bgzA0099 ATTRUSE=YES
        wintitle="&panel_title;" keylist=bgzsabx applid=bgz>
 
 <da depth=2 extend=on name=bgzdyn scroll=on scrollvar=amt>

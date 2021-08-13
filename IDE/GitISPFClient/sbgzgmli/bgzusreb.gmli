@@ -3,7 +3,7 @@
 <varlist>
 <vardcl name=bgzussdr varclass=vcuss>
 </varlist>
-<panel name=BGZUSREN keylist=BGZSABx applid=BGZ depth=17 width=70 help=BGZA0011
+<panel name=BGZUSREN keylist=BGZSABx applid=BGZ depth=17 width=70 help=BGZA0099
        window=yes padc=user wintitle='&window_title;'>&panel_title;
 <area>
     <dtafld datavar=bgzussdr usage=out pmtfmt=none pmtwidth=*

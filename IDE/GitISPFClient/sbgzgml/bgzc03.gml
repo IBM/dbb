@@ -17,7 +17,7 @@
 User name must be specified in preferences and password must be entered
 when specify password is selected in preferences.
 
-<MSG SUFFIX=1 MSGTYPE=WARNING ALARM=YES HELP=*>
+<MSG SUFFIX=1 MSGTYPE=WARNING ALARM=YES HELP=*
      SMSG="Invalid select code     ">
 Codes CB (Change working branch), PB (Push branch on github),
 DB (Delete local branch) and JU (Jump to working directory) allowed

@@ -1,4 +1,4 @@
-<panel name=bgzabout width=70 depth=12 keylist=bgzHELP applid=bgz
+<panel name=bgzabout width=70 depth=12 keylist=bgzhelp applid=bgz
       >&panel_title;
 
 <area depth=1 extend=on>

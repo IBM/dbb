@@ -1,6 +1,6 @@
 <copyr>             COPYRIGHT IBM CORP 2019
 <panel name=bgzDBBSC depth=10 wintitle="&window_title;" keylist=bgzsabx
-             applid=bgz help=bgzA0009>
+             applid=bgz help=bgzA0099>
 
 <area>
   <dtacol pmtwidth=10 vardcl=no>

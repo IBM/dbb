@@ -156,14 +156,14 @@
 /*         If BGZNPNAM <> '' & BGZNPVAL <> '' Then */
            If BGZNPNAM <> '' Then
            Do
-               nbparm = nbparm + 1
-               BGZPROW = nbparm
-               BGZPNAME = BGZNPNAM
-               BGZPVAL  = BGZNPVAL
-               BGZNPNAM = ''
-               BGZNPVAL = ''
-               'TBADD BGZPROPS ORDER'
-               'TBSORT BGZPROPS FIELDS(BGZPROW)'
+             nbparm = nbparm + 1
+             BGZPROW = nbparm
+             BGZPNAME = BGZNPNAM
+             BGZPVAL  = BGZNPVAL
+             BGZNPNAM = ''
+             BGZNPVAL = ''
+             'TBADD BGZPROPS ORDER'
+             'TBSORT BGZPROPS FIELDS(BGZPROW)'
            End
            /* S command on BGZDBBPM panel  */
            If BGZCMD = 'S' Then
@@ -195,6 +195,7 @@
            End
            'TBTOP BGZPROPS'
            'TBSKIP BGZPROPS POSITION(TEMPROW)'
+
            Do While RC = 0
 /*           If BGZPMCMD = '/' Then          */
 /*           Do                              */

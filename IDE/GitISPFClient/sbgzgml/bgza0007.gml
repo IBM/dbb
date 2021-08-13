@@ -1,14 +1,14 @@
 <:doctype dm system (
 )>
 
-<copyr> © COPYRIGHT IBM CORP 2019
+<copyr> © COPYRIGHT IBM CORP 2019, 2021
 <help name=bgzA0007 keylist=ISRHLP2 applid=ISR depth=20
       width=70 WINTITLE="">Help for Git Branch
 <area depth=1 extend=on>
 <info width=*>
 <p>
 This panel allows you to list all the branches in your repository, and also
-tell you what branch you're currently in (the one with <HP>'*'</HP>).
+tell you the branch you are currently working in (the one with <HP>'*'</HP>).
 <P>
 To create a new branch, enter a branch name on the first intput line.
 <P>
@@ -28,4 +28,4 @@ enter an action shortcut character from the following list:
 </info>
 </area>
 </help>
-<:--    COPYRIGHT IBM CORP 2019       -->
+<:--    COPYRIGHT IBM CORP 2019, 2021 -->

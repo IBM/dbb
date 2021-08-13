@@ -1,5 +1,5 @@
 <copyr>5724-V04     COPYRIGHT IBM CORP 2020
-<panel name=BGZPASS depth=07 help=BGZC0004 keylist=BGZSABX applid=BGZ
+<panel name=BGZPASS depth=07 help=BGZA0001 keylist=BGZSABX applid=BGZ
        width=40 wintitle='&window_title;'>
 <area>
   <dtacol vardcl=no pmtwidth=*>
