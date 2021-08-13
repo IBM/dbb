@@ -203,6 +203,7 @@ The Checkout to local branch will replace the conmtents of your work tree with t
 ### Finished working with a clone?
 Once you have finished working with a clone you can remove it by entering an **RM** next to the repository name. This will delete the working directory as well.
 
-### Creating a local git repository
+### Working on this copy of the Git ISPF Client
+If you change any of the GML and regenerate the panel members using ISPDTLC and want to store them back in the Git repository you will need to use sample job BGZOPUT to do that. This is because certain panels have chanracters that do not round trip to and from the Git repository correctly, so they need to be copied using the BINARY option. Sample job BGZOPUT.jcl is proved for that.
 
 ------------
