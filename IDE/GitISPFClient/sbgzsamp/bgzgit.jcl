@@ -1,6 +1,6 @@
 //BGZGIT   JOB <JOB PARAMETERS>
 //*********************************************************************
-//* JOB NAME: GITALLOC                                                *
+//* JOB NAME: BGZGIT                                                  *
 //*                                                                   *
 //*    Licensed materials - Property of IBM                           *
 //*    5725-F21                                                       *
@@ -155,27 +155,27 @@
 //SYSEXEC   DD DSN=SYS1.SBPXEXEC,DISP=SHR
 //SYSTSPRT DD SYSOUT=*
 //SYSTSIN  DD *
- OGETX '#clonePath/GitISPFClient/sbgzgml' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzgml' +
        '#hlqual.SBGZGML'  LC SUFFIX ASIS
- OGETX '#clonePath/GitISPFClient/sbgzgmli' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzgmli' +
        '#hlqual.SBGZGMLI' LC SUFFIX ASIS
- OGETX '#clonePath/GitISPFClient/sbgzexec' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzexec' +
        '#hlqual.SBGZEXEC' LC SUFFIX ASIS
- OGETX '#clonePath/GitISPFClient/sbgzmenu' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzmenu' +
        '#hlqual.SBGZMENU' LC SUFFIX ASIS
- OGETX '#clonePath/GitISPFClient/sbgzpenu' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzpenu' +
        '#hlqual.SBGZPENU' LC SUFFIX ASIS
- OGETX '#clonePath/GitISPFClient/sbgzpenu/bgzmain.penu' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzpenu/bgzmain.penu' +
        '#hlqual.SBGZPENU(BGZMAIN)' BIN LC SUFFIX
- OGETX '#clonePath/GitISPFClient/sbgzpenu/bgzslbra.penu' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzpenu/bgzslbra.penu' +
        '#hlqual.SBGZPENU(BGZSLBRA)' BIN LC SUFFIX
- OGETX '#clonePath/GitISPFClient/sbgzpenu/bgzslrep.penu' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzpenu/bgzslrep.penu' +
        '#hlqual.SBGZPENU(BGZSLREP)' BIN LC SUFFIX
- OGETX '#clonePath/GitISPFClient/sbgzpenu/bgzsludl.penu' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzpenu/bgzsludl.penu' +
        '#hlqual.SBGZPENU(BGZSLUDL)' BIN LC SUFFIX
- OGETX '#clonePath/GitISPFClient/sbgzpenu/bgzcfclo.penu' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgzpenu/bgzcfclo.penu' +
        '#hlqual.SBGZPENU(BGZCFCLO)' BIN LC SUFFIX
- OGETX '#clonePath/GitISPFClient/sbgztlib/bgzkeys.gmlkey' +
+ OGETX '#clonePath/IDE/GitISPFClient/sbgztlib/bgzkeys.gmlkey' +
        '#hlqual.SBGZTLIB(BGZKEYS)' BIN LC SUFFIX
 /*
 //*
