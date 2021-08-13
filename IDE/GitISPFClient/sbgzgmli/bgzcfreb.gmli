@@ -1,31 +1,31 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<varclass name=vcrep  type='char 48'>
-<varclass name=vcdir  type='char 48'>
-<varlist>
-<vardcl name=bgzrepos varclass=vcrep>
-<vardcl name=bgzusdir varclass=vcdir>
-</varlist>
-<panel name=BGZCFREM width=76 depth=24 keylist=bgzsabx applid=bgz
-             help=bgzA0099>&panel_title
-<area>
-  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzrepos_prompt;
-  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzusdir_prompt;
-   <grphdr>&group_header_1;
-   <info width=*>
-     <p compact indent=2>&panel_instruct_1;
-     <divider>
-     </divider>
-     <p compact indent=2>&delete_1_text;
-     <divider>
-     </divider>
-     <p compact indent=2>&delete_2_text;
-     <divider>
-     </divider>
-     <p compact indent=2>&panel_instruct_2;
-
-   </info>
-</area>
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<varclass name=vcrep  type='char 48'>                                           
+<varclass name=vcdir  type='char 48'>                                           
+<varlist>                                                                       
+<vardcl name=bgzrepos varclass=vcrep>                                           
+<vardcl name=bgzusdir varclass=vcdir>                                           
+</varlist>                                                                      
+<panel name=BGZCFREM width=76 depth=24 keylist=bgzsabx applid=bgz               
+             help=bgzA0099>&panel_title                                         
+<area>                                                                          
+  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzrepos_prompt;                                          
+  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzusdir_prompt;                                          
+   <grphdr>&group_header_1;                                                     
+   <info width=*>                                                               
+     <p compact indent=2>&panel_instruct_1;                                     
+     <divider>                                                                  
+     </divider>                                                                 
+     <p compact indent=2>&delete_1_text;                                        
+     <divider>                                                                  
+     </divider>                                                                 
+     <p compact indent=2>&delete_2_text;                                        
+     <divider>                                                                  
+     </divider>                                                                 
+     <p compact indent=2>&panel_instruct_2;                                     
+                                                                                
+   </info>                                                                      
+</area>                                                                         
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             

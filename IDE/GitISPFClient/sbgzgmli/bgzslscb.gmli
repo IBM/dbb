@@ -1,35 +1,35 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<varclass name=vcscr  type='char 48'>
-<varlist>
-<vardcl name=bgzblscr varclass=vcscr>
-</varlist>
-<panel name=bgzSLSCR help=bgzA0099 keylist=bgzsnab applid=bgz
-      width=&panel_width; depth=14 window=yes padc=user
-                               >&pan_title;
-
-<source type=init>
-  &bgzSEL = ''
-</source>
-<area depth=1 extend=on>
-<divider>
-<dtafld datavar=bgzblscr entwidth=48 pmtwidth=14 usage=out
-       pmtfmt=none>&bgzscr_prompt;
-<divider>
-<region dir=vert>
- <selfld name=bgzSEL selwidth=* init=no autotab=no listtype=radio
-         choicecols=1 choicedepth=2 pmtloc=above
-         entwidth=1 pmtwidth=24>&selfld_01_text;
-     <choice><ps var=bgzSEL value=1>&choice_01_text;</ps>
-     <choice><ps var=bgzSEL value=2>&choice_02_text;</ps>
- </selfld>
-</region>
-<divider>
-<info>
- <p compact>&ins_choice;
-</info>
-</area>
-<source type=reinit>
-  &bgzSEL = ''
-</source>
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<varclass name=vcscr  type='char 48'>                                           
+<varlist>                                                                       
+<vardcl name=bgzblscr varclass=vcscr>                                           
+</varlist>                                                                      
+<panel name=bgzSLSCR help=bgzA0099 keylist=bgzsnab applid=bgz                   
+      width=&panel_width; depth=14 window=yes padc=user                         
+                               >&pan_title;                                     
+                                                                                
+<source type=init>                                                              
+  &bgzSEL = ''                                                                  
+</source>                                                                       
+<area depth=1 extend=on>                                                        
+<divider>                                                                       
+<dtafld datavar=bgzblscr entwidth=48 pmtwidth=14 usage=out                      
+       pmtfmt=none>&bgzscr_prompt;                                              
+<divider>                                                                       
+<region dir=vert>                                                               
+ <selfld name=bgzSEL selwidth=* init=no autotab=no listtype=radio               
+         choicecols=1 choicedepth=2 pmtloc=above                                
+         entwidth=1 pmtwidth=24>&selfld_01_text;                                
+     <choice><ps var=bgzSEL value=1>&choice_01_text;</ps>                       
+     <choice><ps var=bgzSEL value=2>&choice_02_text;</ps>                       
+ </selfld>                                                                      
+</region>                                                                       
+<divider>                                                                       
+<info>                                                                          
+ <p compact>&ins_choice;                                                        
+</info>                                                                         
+</area>                                                                         
+<source type=reinit>                                                            
+  &bgzSEL = ''                                                                  
+</source>                                                                       
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             

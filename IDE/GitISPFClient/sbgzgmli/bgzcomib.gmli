@@ -1,61 +1,61 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<varclass name=vcrep  type='char 48'>
-<varclass name=vcdir  type='char 48'>
-<varclass name=vcbra  type='char 48'>
-<varlist>
-<vardcl name=bgzrepos varclass=vcrep>
-<vardcl name=bgzusdir varclass=vcdir>
-<vardcl name=bgzbranc varclass=vcbra>
-</varlist>
- <panel name=bgzCOMIT depth=24 width=76 help=bgzA0008
-        keylist=bgzsabx applid=bgz>&pan_title
-
-<ab>
-  &bgzmenu
-  &bgzhelp
-</ab>
-<area>
-  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzrepos_prompt;
-  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzusdir_prompt;
-  <dtafld datavar=bgzbranc entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzbranc_prompt;
-</area>
-<divider>
-</divider>
-<info>
- <p compact>&panel_instruct_1;
-</info>
-<divider>
-</divider>
-<area>
- <region width=*>
-  <region dir=horiz>
-  <dtacol pmtwidth=* vardcl=no>
-    <dtafld datavar=bgzcomm usage=in caps=off pmtfmt=none
-            entwidth=60>&comment_prompt;
-            <scrfld displen=256>
-  </dtacol>
-  </region>
- </region>
-</area>
-<area>
-  <grphdr div=none
-  indent=2>&status_prompt &modfile_prompt
-  </grphdr>
-  <lstfld vardcl=no scrollvar=zamt>
-    <lstcol datavar=bgzcmcmd usage=in caps=on colwidth=1>
-    <lstcol datavar=bgzstat usage=out colwidth=3>
-    <lstcol datavar=bgzfile usage=out colwidth=60>
-      <scrfld displen=1024>
-  </lstfld>
-</area>
- <cmdarea name=bgzcmd caps=on>
-
-<:-- panel logic -->
-<source type=proc>
-VER (&bgzCMD,LIST, ,MSG=bgzA001)
-</source>
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<varclass name=vcrep  type='char 48'>                                           
+<varclass name=vcdir  type='char 48'>                                           
+<varclass name=vcbra  type='char 48'>                                           
+<varlist>                                                                       
+<vardcl name=bgzrepos varclass=vcrep>                                           
+<vardcl name=bgzusdir varclass=vcdir>                                           
+<vardcl name=bgzbranc varclass=vcbra>                                           
+</varlist>                                                                      
+ <panel name=bgzCOMIT depth=24 width=76 help=bgzA0008                           
+        keylist=bgzsabx applid=bgz>&pan_title                                   
+                                                                                
+<ab>                                                                            
+  &bgzmenu                                                                      
+  &bgzhelp                                                                      
+</ab>                                                                           
+<area>                                                                          
+  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzrepos_prompt;                                          
+  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzusdir_prompt;                                          
+  <dtafld datavar=bgzbranc entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzbranc_prompt;                                          
+</area>                                                                         
+<divider>                                                                       
+</divider>                                                                      
+<info>                                                                          
+ <p compact>&panel_instruct_1;                                                  
+</info>                                                                         
+<divider>                                                                       
+</divider>                                                                      
+<area>                                                                          
+ <region width=*>                                                               
+  <region dir=horiz>                                                            
+  <dtacol pmtwidth=* vardcl=no>                                                 
+    <dtafld datavar=bgzcomm usage=in caps=off pmtfmt=none                       
+            entwidth=60>&comment_prompt;                                        
+            <scrfld displen=256>                                                
+  </dtacol>                                                                     
+  </region>                                                                     
+ </region>                                                                      
+</area>                                                                         
+<area>                                                                          
+  <grphdr div=none                                                              
+  indent=2>&status_prompt &modfile_prompt                                       
+  </grphdr>                                                                     
+  <lstfld vardcl=no scrollvar=zamt>                                             
+    <lstcol datavar=bgzcmcmd usage=in caps=on colwidth=1>                       
+    <lstcol datavar=bgzstat usage=out colwidth=3>                               
+    <lstcol datavar=bgzfile usage=out colwidth=60>                              
+      <scrfld displen=1024>                                                     
+  </lstfld>                                                                     
+</area>                                                                         
+ <cmdarea name=bgzcmd caps=on>                                                  
+                                                                                
+<:-- panel logic -->                                                            
+<source type=proc>                                                              
+VER (&bgzCMD,LIST, ,MSG=bgzA001)                                                
+</source>                                                                       
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             

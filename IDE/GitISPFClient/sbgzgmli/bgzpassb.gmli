@@ -1,23 +1,23 @@
-<copyr>5724-V04     COPYRIGHT IBM CORP 2020
-<panel name=BGZPASS depth=07 help=BGZA0001 keylist=BGZSABX applid=BGZ
-       width=40 wintitle='&window_title;'>
-<area>
-  <dtacol vardcl=no pmtwidth=*>
-    <dtafld datavar=bgzpw usage=in required=yes
-            pmtfmt=none display=yes entwidth=&pass_width>&bgzpw_prompt;
-      <scrfld displen=100 indvar=bgzpind fldspos=same>
-    <divider>
-    <selfld type=multi pmtwidth=15 init=no selwidth=*>
-      <choice name=bgzpwdis>&bgzdi_prompt;
-    </selfld>
-  </dtacol>
-</area>
-<source type=init>
-IF (&BGZPWDIS NE &Z)
-  .ATTR(BGZPW)='TYPE(LEF)'
-IF (&BGZPWDIS EQ &Z)
-  .ATTR(BGZPW)='INTENS(NON)'
-</source>
-</panel>
-
-<:-- 5724-V04     COPYRIGHT IBM CORP 2020       -->
+<copyr>5724-V04     COPYRIGHT IBM CORP 2020                                     
+<panel name=BGZPASS depth=07 help=BGZA0001 keylist=BGZSABX applid=BGZ           
+       width=40 wintitle='&window_title;'>                                      
+<area>                                                                          
+  <dtacol vardcl=no pmtwidth=*>                                                 
+    <dtafld datavar=bgzpw usage=in required=yes                                 
+            pmtfmt=none display=yes entwidth=&pass_width>&bgzpw_prompt;         
+      <scrfld displen=100 indvar=bgzpind fldspos=same>                          
+    <divider>                                                                   
+    <selfld type=multi pmtwidth=15 init=no selwidth=*>                          
+      <choice name=bgzpwdis>&bgzdi_prompt;                                      
+    </selfld>                                                                   
+  </dtacol>                                                                     
+</area>                                                                         
+<source type=init>                                                              
+IF (&BGZPWDIS NE &Z)                                                            
+  .ATTR(BGZPW)='TYPE(LEF)'                                                      
+IF (&BGZPWDIS EQ &Z)                                                            
+  .ATTR(BGZPW)='INTENS(NON)'                                                    
+</source>                                                                       
+</panel>                                                                        
+                                                                                
+<:-- 5724-V04     COPYRIGHT IBM CORP 2020       -->                             

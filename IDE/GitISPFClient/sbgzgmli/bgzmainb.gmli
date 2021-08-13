@@ -1,45 +1,45 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<panel name=bgzMAIN width=76 depth=24 keylist=bgzsabx applid=bgz
-       menu prime help=bgzA0002>&panel_title
-<ab>
-  &bgzmenu
-  &bgzhelp
-</ab>
-<area depth=1 extend=on>
-<region dir=horiz align=no>
-  <:-- bottom of option menu panel follows, status area  -->
-  <selfld type=menu selwidth=&sel_width; trail=ztrail fchoice=0 entwidth=1
-          tsize=&t_size; selcheck=yes>
-    <choice> <ps var=zcmd value=0>
-        &choice_0_pnts;</ps>
-        &choice_0_text;
-      <action run=bgzMAIN parm=0/ type=cmd NEST LANG=CREX scrname=GIT>
-    <choice> <ps var=zcmd value=1>
-        &choice_1_pnts;</ps>
-        &choice_1_text;
-      <action run=bgzMAIN parm=1/ type=cmd NEST LANG=CREX scrname=GIT>
-    <choice> <ps var=zcmd value=2>
-        &choice_2_pnts;</ps>
-        &choice_2_text;
-      <action run=bgzMAIN parm=2/ type=cmd NEST LANG=CREX scrname=GIT>
-    <choice selchar=X> <ps var=zcmd value=X>
-        &choice_4_pnts;</ps>
-        &choice_4_text;
-      <action run=exit TYPE=EXIT>
-  </selfld>
- </region>
- </area>
- <cmdarea caps=on noinit>&option_prompt;
-
- <:-- panel logic -->
- <source type=init>
- IF (&ZTRAIL ^= ' ')
-   &OPT = &ZTRAIL
-   .RESP = ENTER
-   &ZTRAIL = ' '
- </source>
- <source type=proc>
- VER (&ZCMD,LIST,0,1,2,X,MSG=bgzA002)
- </source>
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<panel name=bgzMAIN width=76 depth=24 keylist=bgzsabx applid=bgz                
+       menu prime help=bgzA0002>&panel_title                                    
+<ab>                                                                            
+  &bgzmenu                                                                      
+  &bgzhelp                                                                      
+</ab>                                                                           
+<area depth=1 extend=on>                                                        
+<region dir=horiz align=no>                                                     
+  <:-- bottom of option menu panel follows, status area  -->                    
+  <selfld type=menu selwidth=&sel_width; trail=ztrail fchoice=0 entwidth=1      
+          tsize=&t_size; selcheck=yes>                                          
+    <choice> <ps var=zcmd value=0>                                              
+        &choice_0_pnts;</ps>                                                    
+        &choice_0_text;                                                         
+      <action run=bgzMAIN parm=0/ type=cmd NEST LANG=CREX scrname=GIT>          
+    <choice> <ps var=zcmd value=1>                                              
+        &choice_1_pnts;</ps>                                                    
+        &choice_1_text;                                                         
+      <action run=bgzMAIN parm=1/ type=cmd NEST LANG=CREX scrname=GIT>          
+    <choice> <ps var=zcmd value=2>                                              
+        &choice_2_pnts;</ps>                                                    
+        &choice_2_text;                                                         
+      <action run=bgzMAIN parm=2/ type=cmd NEST LANG=CREX scrname=GIT>          
+    <choice selchar=X> <ps var=zcmd value=X>                                    
+        &choice_4_pnts;</ps>                                                    
+        &choice_4_text;                                                         
+      <action run=exit TYPE=EXIT>                                               
+  </selfld>                                                                     
+ </region>                                                                      
+ </area>                                                                        
+ <cmdarea caps=on noinit>&option_prompt;                                        
+                                                                                
+ <:-- panel logic -->                                                           
+ <source type=init>                                                             
+ IF (&ZTRAIL ^= ' ')                                                            
+   &OPT = &ZTRAIL                                                               
+   .RESP = ENTER                                                                
+   &ZTRAIL = ' '                                                                
+ </source>                                                                      
+ <source type=proc>                                                             
+ VER (&ZCMD,LIST,0,1,2,X,MSG=bgzA002)                                           
+ </source>                                                                      
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             

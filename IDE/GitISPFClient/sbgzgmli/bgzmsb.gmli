@@ -1,35 +1,35 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<panel name=bgzMSG depth=22 width=70 help=bgzA0099 ATTRUSE=YES
-       wintitle="&panel_title;" keylist=bgzsabx applid=bgz>
-
-<da depth=2 extend=on name=bgzdyn scroll=on scrollvar=amt>
-  <attr attrchar=01 TYPE=DATAOUT INTENS=LOW COLOR=GREEN FORMAT=%MIXED
-  <attr attrchar=02 TYPE=DATAOUT INTENS=LOW COLOR=TURQ  FORMAT=%MIXED
-  <attr attrchar=03 TYPE=DATAOUT INTENS=LOW COLOR=BLUE  FORMAT=%MIXED
-  <attr attrchar=04 TYPE=DATAOUT INTENS=LOW COLOR=WHITE FORMAT=%MIXED
-  <attr attrchar=05 TYPE=DATAIN  INTENS=LOW COLOR=TURQ  CAPS=OFF PADC='_'
-  <attr attrchar=06 TYPE=DATAOUT INTENS=LOW COLOR=WHITE PADC='_'
-  <attr attrchar=07 TYPE=DATAOUT INTENS=LOW COLOR=WHITE
-  <attr attrchar=0D TYPE=DATAOUT PAS=ON
-</da>
-
-<cmdarea name=bgzcmd caps=on>
-<source type=init>
-  .cursor = bgzCMD         /* Position cursor                       */
-  &MIXED = MIX             /* Set format mix                        */
-  IF (&ZPDMIX = N)         /* If ebcdic mode requested              */
-    &MIXED = EBCDIC        /*  Set format ebcdic                    */
-</source>
-<source type=reinit>
-  &FIELD = .CURSOR         /* Save cursor field name                */
-  &POSIT = .CSRPOS         /* Save offset into field                */
-  REFRESH(bgzCMD,bgzDYN)
-</source>
-<source type=proc>
-  VER (&bgzCMD,LIST, ,MSG=bgzA001)
-  REFRESH(bgzCMD,bgzDYN)
-  &ZCURSOR = .CURSOR
-  &ZCSROFF = .CSRPOS
-</source>
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<panel name=bgzMSG depth=22 width=70 help=bgzA0099 ATTRUSE=YES                  
+       wintitle="&panel_title;" keylist=bgzsabx applid=bgz>                     
+                                                                                
+<da depth=2 extend=on name=bgzdyn scroll=on scrollvar=amt>                      
+  <attr attrchar=01 TYPE=DATAOUT INTENS=LOW COLOR=GREEN FORMAT=%MIXED           
+  <attr attrchar=02 TYPE=DATAOUT INTENS=LOW COLOR=TURQ  FORMAT=%MIXED           
+  <attr attrchar=03 TYPE=DATAOUT INTENS=LOW COLOR=BLUE  FORMAT=%MIXED           
+  <attr attrchar=04 TYPE=DATAOUT INTENS=LOW COLOR=WHITE FORMAT=%MIXED           
+  <attr attrchar=05 TYPE=DATAIN  INTENS=LOW COLOR=TURQ  CAPS=OFF PADC='_'       
+  <attr attrchar=06 TYPE=DATAOUT INTENS=LOW COLOR=WHITE PADC='_'                
+  <attr attrchar=07 TYPE=DATAOUT INTENS=LOW COLOR=WHITE                         
+  <attr attrchar=0D TYPE=DATAOUT PAS=ON                                         
+</da>                                                                           
+                                                                                
+<cmdarea name=bgzcmd caps=on>                                                   
+<source type=init>                                                              
+  .cursor = bgzCMD         /* Position cursor                       */          
+  &MIXED = MIX             /* Set format mix                        */          
+  IF (&ZPDMIX = N)         /* If ebcdic mode requested              */          
+    &MIXED = EBCDIC        /*  Set format ebcdic                    */          
+</source>                                                                       
+<source type=reinit>                                                            
+  &FIELD = .CURSOR         /* Save cursor field name                */          
+  &POSIT = .CSRPOS         /* Save offset into field                */          
+  REFRESH(bgzCMD,bgzDYN)                                                        
+</source>                                                                       
+<source type=proc>                                                              
+  VER (&bgzCMD,LIST, ,MSG=bgzA001)                                              
+  REFRESH(bgzCMD,bgzDYN)                                                        
+  &ZCURSOR = .CURSOR                                                            
+  &ZCSROFF = .CSRPOS                                                            
+</source>                                                                       
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             
