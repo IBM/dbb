@@ -47,6 +47,12 @@ import groovy.transform.*
 
 // start create & publish package
 @Field Properties props = parseInput(args)
+
+// Map of last level dataset qualifier to DBB CopyToFS CopyMode.
+// TODO: Customize to your needs. 
+def copyModeMap = ["COPYBOOK": CopyMode.TEXT, "COPY": CopyMode.TEXT, "DBRM": CopyMode.BINARY, "LOAD": CopyMode.LOAD]
+
+
 def startTime = new Date()
 props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
 println("** PackageBuildOutputs start at $props.startTime")
@@ -100,125 +106,127 @@ else {
 	}
 }
 
-assert executes.size() > 0, "There are no outputs found in the build report"
-
-// Read buildInfo to obtain build information
-
-def buildInfo = buildReport.getRecords().findAll{
-	try {
-		it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT
-	} catch (Exception e){}
+if (executes.size() == 0) { 
+	println("*!* There are no outputs found in the build report.")
 }
+else {
+	// Read buildInfo to obtain build information
 
-def String tarFileLabel = buildInfo[0].label
-def String tarFileName = (props.tarFileName) ? props.tarFileName : "${buildInfo[0].label}.tar"
-def String buildGroup = buildInfo[0].group
-
-
-//Create a temporary directory on zFS to copy the load modules from data sets to
-def tempLoadDir = new File("$props.workDir/tempPackageDir")
-!tempLoadDir.exists() ?: tempLoadDir.deleteDir()
-tempLoadDir.mkdirs()
-
-//Iterate over executes and obtain map of <dataset,member>
-def loadDatasetToMembersMap = [:]
-def loadCount = 0
-executes.each { execute ->
-	execute.outputs.each { output ->
-		def (dataset, member) = output.dataset.split("\\(|\\)")
-		if (loadDatasetToMembersMap[dataset] == null)
-			loadDatasetToMembersMap[dataset] = []
-		loadDatasetToMembersMap[dataset].add(member)
-		loadCount++
+	def buildInfo = buildReport.getRecords().findAll{
+		try {
+			it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT
+		} catch (Exception e){}
 	}
-}
 
-//For each load modules, use CopyToHFS with option 'CopyMode.LOAD' to maintain SSI
-println("** Copying BuildOutputs to temporary package dir.")
+	def String tarFileLabel = buildInfo[0].label
+	def String tarFileName = (props.tarFileName) ? props.tarFileName : "${buildInfo[0].label}.tar"
+	def String buildGroup = buildInfo[0].group
 
-CopyToHFS copy = new CopyToHFS()
 
-def copyModeMap = ["COPYBOOK": CopyMode.TEXT, "COPY": CopyMode.TEXT, "DBRM": CopyMode.BINARY, "LOAD": CopyMode.LOAD]
+	//Create a temporary directory on zFS to copy the load modules from data sets to
+	def tempLoadDir = new File("$props.workDir/tempPackageDir")
+	!tempLoadDir.exists() ?: tempLoadDir.deleteDir()
+	tempLoadDir.mkdirs()
 
-println "*** Number of build outputs to publish: $loadCount"
-loadDatasetToMembersMap.each { dataset, members ->
-	members.each { member ->
-
-		def fullyQualifiedDsn = "$dataset($member)"
-		def filePath = "$tempLoadDir/$dataset"
-		new File(filePath).mkdirs()
-		def file = new File(filePath, member)
-
-		// set copyMode based on last level qualifier
-		currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
-		copy.setCopyMode(currentCopyMode)
-		copy.setDataset(dataset)
-
-		println "     Copying $dataset($member) to $filePath with DBB Copymode $currentCopyMode"
-		copy.dataset(dataset).member(member).file(file).execute()
-		
-		// Workaround DBB 1.1.1 toolkit
-		if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD){
-			StringBuffer stdout = new StringBuffer()
-			StringBuffer stderr = new StringBuffer()
-			
-			Process process = "chtag -b $file".execute()
-			process.waitForProcessOutput(stdout, stderr)
-			if (stderr){
-				println ("*! stderr : $stderr")
-				println ("*! stdout : $stdout")
-			}
-
+	//Iterate over executes and obtain map of <dataset,member>
+	def loadDatasetToMembersMap = [:]
+	def loadCount = 0
+	executes.each { execute ->
+		execute.outputs.each { output ->
+			def (dataset, member) = output.dataset.split("\\(|\\)")
+			if (loadDatasetToMembersMap[dataset] == null)
+				loadDatasetToMembersMap[dataset] = []
+			loadDatasetToMembersMap[dataset].add(member)
+			loadCount++
 		}
 	}
-}
 
-def tarFile = new File("$props.workDir/${tarFileName}")
+	//For each load modules, use CopyToHFS with option 'CopyMode.LOAD' to maintain SSI
+	println("** Copying BuildOutputs to temporary package dir.")
 
-println("** Creating tar file at $tarFile.")
-// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
-// To save all attributes to be restored on z/OS and non-z/OS systems : tar -UX
-def processCmd = [
-	"sh",
-	"-c",
-	"tar cUXf $tarFile *"
-]
+	CopyToHFS copy = new CopyToHFS()
 
-def rc = runProcess(processCmd, tempLoadDir)
-assert rc == 0 : "Failed to package"
+	println "*** Number of build outputs to publish: $loadCount"
+	loadDatasetToMembersMap.each { dataset, members ->
+		members.each { member ->
 
-//Package BuildReport.json to carry BuildInfo including deployTypes etc.
-println("** Adding BuildReport.json to $tarFile.")
-processCmd = [
-	"sh",
-	"-c",
-	"tar rUXf $tarFile BuildReport.json"
-]
+			def fullyQualifiedDsn = "$dataset($member)"
+			def filePath = "$tempLoadDir/$dataset"
+			new File(filePath).mkdirs()
+			def file = new File(filePath, member)
 
-rc = runProcess(processCmd, new File(props.workDir))
-assert rc == 0 : "Failed to append BuildReport.json"
+			// set copyMode based on last level qualifier
+			currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
+			copy.setCopyMode(currentCopyMode)
+			copy.setDataset(dataset)
 
-println ("** Package successfully created at $tarFile.")
+			println "     Copying $dataset($member) to $filePath with DBB Copymode $currentCopyMode"
+			copy.dataset(dataset).member(member).file(file).execute()
 
-//Set up the artifactory information to publish the tar file
-if (props.publish && props.publish.toBoolean()){
-	// Configuring ArtifactoryHelper parms
-	def String remotePath = (props.versionName) ? (props.versionName + "/" + tarFileName) : (tarFileLabel + "/" + tarFileName)
-	def url = new URI(props.get('artifactory.url') + "/" + props.get('artifactory.repo') + "/" + remotePath ).normalize().toString() // Normalized URL
+			// Workaround DBB 1.1.1 toolkit
+			if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD){
+				StringBuffer stdout = new StringBuffer()
+				StringBuffer stderr = new StringBuffer()
 
-	def apiKey = props.'artifactory.user'
-	def user = props.'artifactory.user'
-	def password = props.'artifactory.password'
-	def repo = props.get('artifactory.repo') as String
+				Process process = "chtag -b $file".execute()
+				process.waitForProcessOutput(stdout, stderr)
+				if (stderr){
+					println ("*! stderr : $stderr")
+					println ("*! stdout : $stdout")
+				}
 
-	//Call the ArtifactoryHelpers to publish the tar file
-	def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
-	File artifactoryHelpersFile = new File("$scriptDir/ArtifactoryHelpers.groovy")
-	Class artifactoryHelpersClass = new GroovyClassLoader(getClass().getClassLoader()).parseClass(artifactoryHelpersFile)
-	GroovyObject artifactoryHelpers = (GroovyObject) artifactoryHelpersClass.newInstance()
+			}
+		}
+	}
 
-	println ("** Uploading package to Artifactory $url.")
-	artifactoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
+	def tarFile = new File("$props.workDir/${tarFileName}")
+
+	println("** Creating tar file at $tarFile.")
+	// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
+	// To save all attributes to be restored on z/OS and non-z/OS systems : tar -UX
+	def processCmd = [
+		"sh",
+		"-c",
+		"tar cUXf $tarFile *"
+	]
+
+	def rc = runProcess(processCmd, tempLoadDir)
+	assert rc == 0 : "Failed to package"
+
+	//Package BuildReport.json to carry BuildInfo including deployTypes etc.
+	println("** Adding BuildReport.json to $tarFile.")
+	processCmd = [
+		"sh",
+		"-c",
+		"tar rUXf $tarFile BuildReport.json"
+	]
+
+	rc = runProcess(processCmd, new File(props.workDir))
+	assert rc == 0 : "Failed to append BuildReport.json"
+
+	println ("** Package successfully created at $tarFile.")
+
+	//Set up the artifactory information to publish the tar file
+	if (props.publish && props.publish.toBoolean()){
+		// Configuring ArtifactoryHelper parms
+		def String remotePath = (props.versionName) ? (props.versionName + "/" + tarFileName) : (tarFileLabel + "/" + tarFileName)
+		def url = new URI(props.get('artifactory.url') + "/" + props.get('artifactory.repo') + "/" + remotePath ).normalize().toString() // Normalized URL
+
+		def apiKey = props.'artifactory.user'
+		def user = props.'artifactory.user'
+		def password = props.'artifactory.password'
+		def repo = props.get('artifactory.repo') as String
+
+		//Call the ArtifactoryHelpers to publish the tar file
+		def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
+		File artifactoryHelpersFile = new File("$scriptDir/ArtifactoryHelpers.groovy")
+		Class artifactoryHelpersClass = new GroovyClassLoader(getClass().getClassLoader()).parseClass(artifactoryHelpersFile)
+		GroovyObject artifactoryHelpers = (GroovyObject) artifactoryHelpersClass.newInstance()
+
+		println ("** Uploading package to Artifactory $url.")
+		artifactoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
+	}
+
 }
 
 /**
@@ -264,7 +272,7 @@ def parseInput(String[] cliArgs){
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
 	cli.d(longOpt:'deployTypes', args:1, argName:'deployTypes','Comma-seperated list of deployTypes to filter on the scope of the tar file. (Optional)')
 	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional)')
-	
+
 	// Artifactory Options:
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifactory server. (Optional)')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the Artifactory version. (Optional)')
@@ -284,10 +292,10 @@ def parseInput(String[] cliArgs){
 	if (opts.w) props.workDir = opts.w
 	if (opts.d) props.deployTypeFilter = opts.d
 	if (opts.t) props.tarFileName = opts.t
-	
+
 	props.verbose = (opts.verb) ? 'true' : 'false'
-	
-	// Optional Artifactory to publish 
+
+	// Optional Artifactory to publish
 	if (opts.v) props.versionName = opts.v
 	props.publish = (opts.p) ? 'true' : 'false'
 
