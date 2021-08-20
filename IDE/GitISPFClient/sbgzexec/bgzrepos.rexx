@@ -571,4 +571,3 @@ GetCMD: PROCEDURE
   End                                                                           
   'REMPOP'                                                                      
 Return Cmd                                                                      
-                                                                                
