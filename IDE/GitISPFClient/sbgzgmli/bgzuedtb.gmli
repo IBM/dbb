@@ -1,109 +1,109 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<:-- common panel file imbed for bgzUEDTU                            -->
-
-<varclass name=uppcase type='char 8'>
-  <xlatl format=upper>
-  </xlatl>
-<varclass name=vcpat  type='char 56'>
-<varlist>
-  <vardcl name=bgzEMAC varclass=uppcase>
-  <vardcl name=bgzEPROF varclass=uppcase>
-  <vardcl name=bgzEFORM varclass=uppcase>
-  <vardcl name=bgzEPANL varclass=uppcase>
-  <vardcl name=bgzERECL varclass=uppcase>
-  <vardcl name=bgzPATH  varclass=vcpat>
-</varlist>
-
-<panel name=bgzUEDTU help=bgzp0005 keylist=bgzsnab applid=bgz
-       width=&panel_width; depth=22 window=yes padc=user
-       wintitle='&window_title;' >&panel_title;
-
-<area depth=1 extend=on>
-
-<:-- panel logic -->
-<source type=init>
-&bgzCMD = &Z
-&bgzEMAC = &Z
-&bgzEPROF = &Z
-&bgzEFORM = &Z
-&bgzCFMCN = &Z
-&bgzEMIX = &Z
-VGET (bgzEMAC bgzEPROF bgzEFORM bgzEPANL) PROFILE
-IF (&ZDBCS = 'NO') &bgzEMIX = 'NO'
-&bgzEMIXV = TRANS(&bgzEMIX,'NO',' '  *,'/')
-&bgzECONV = TRANS(&bgzCFMCN,' ',' ' *,'/')
-VGET (bgzERECL)
-IF (&bgzERECL = 0)
-  &bgzERECL = ' '
-</source>
-<source type=reinit>
-</source>
-<source type=proc>
-&bgzEMIX = TRANS(&bgzEMIXV,' ','NO' *,'YES')
-&bgzCFMCN = TRANS(&bgzECONV,' ',' ' *,'/')
-IF (&ZDBCS = YES AND &bgzENCD = '2') &bgzEMIX = 'YES'
-IF (&bgzEMAC ^= ' ' )
-  &ZXXX = TRUNC(&bgzEMAC,'!')
-  &bgzEMACN = .TRAIL
-  IF (&bgzEMACN = ' ') &bgzEMACN = &ZXXX
-  VER (&bgzEMACN NAME MSG = bgzP21)
-VER (&bgzEPROF NAME)
-VER (&bgzEFORM NAME)
-VER (&bgzEPANL NAME)
-VER (&bgzERECL,NUM)
-VER (&bgzERECL,RANGE,0,32752)
-IF (&bgzERECL = ' ')
-  &bgzERECL = 0
-IF (&bgzEMAC NE CAN,CANCEL,END,EXIT) VPUT (bgzEMAC) PROFILE
-VPUT (bgzEPROF bgzEFORM bgzEPANL) PROFILE
-VPUT (bgzERECL) SHARED
-</source>
-<:-- end of panel logic -->
-
-  <info>
-    <p compact>&object_name;
-  </info>
-  <dtacol entwidth=56 pmtwidth=0 pmtloc=above dbalign=field>
-    <dtafld datavar=bgzpath usage=out>
-         <scrfld displen=256>
-  </dtacol>
-
-  <region dir=vert indent=2 >
-    <dtacol entwidth=8 pmtwidth=&dcol_pmtwidth; deswidth=*>
-      <dtafld datavar=bgzemac  usage=both>&imac_prompt;
-      <dtafld datavar=bgzeprof usage=both>&prof_prompt;
-        <dtafldd>&profile_descr;
-      <dtafld datavar=bgzeform usage=both>&fnam_prompt;
-      <dtafld datavar=bgzepanl usage=both>&panel_prompt;
-        <dtafldd>&panel_descr;
-      <dtafld datavar=bgzerecl usage=both entwidth=5>&recl_prompt;
-    </dtacol>
-  </region>
-
-  <divider>
-  <region dir=horiz align=no>
-  <region dir=vert indent=2 grpbox=yes>&opt_prompt;
-   <selfld type=multi pmtwidth=* init=no
-           selwidth=&sfld_selwidth; dbalign=field>
-     <choice name=bgzeconv>&opt_confirm;
-     <choice name=bgzemixv>&opt_mixed;
-     <choice name=bgzedrbs>&opt_vb_save;
-   </selfld>
-   </region>
-  <region dir=vert grpbox=yes>&selfld_1_prompt;
-   <selfld name=bgzencd selwidth=&selfld_1_width; init=no verify=yes
-      type=single entwidth=1 pmtwidth=20 required=no
-      pmtloc=above>
-        <choice>&choice_A1_text;
-        <choice>&choice_A2_text;
-    </selfld>
-     </region>
-   </region>
-
-  <info>
-    <p>&panel_instruction;
-  </info>
-</area>
-<cmdarea name=bgzcmd caps=on noinit>
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<:-- common panel file imbed for bgzUEDTU                            -->        
+                                                                                
+<varclass name=uppcase type='char 8'>                                           
+  <xlatl format=upper>                                                          
+  </xlatl>                                                                      
+<varclass name=vcpat  type='char 56'>                                           
+<varlist>                                                                       
+  <vardcl name=bgzEMAC varclass=uppcase>                                        
+  <vardcl name=bgzEPROF varclass=uppcase>                                       
+  <vardcl name=bgzEFORM varclass=uppcase>                                       
+  <vardcl name=bgzEPANL varclass=uppcase>                                       
+  <vardcl name=bgzERECL varclass=uppcase>                                       
+  <vardcl name=bgzPATH  varclass=vcpat>                                         
+</varlist>                                                                      
+                                                                                
+<panel name=bgzUEDTU help=BGZA0013 keylist=bgzsnab applid=bgz                   
+       width=&panel_width; depth=22 window=yes padc=user                        
+       wintitle='&window_title;' >&panel_title;                                 
+                                                                                
+<area depth=1 extend=on>                                                        
+                                                                                
+<:-- panel logic -->                                                            
+<source type=init>                                                              
+&bgzCMD = &Z                                                                    
+&bgzEMAC = &Z                                                                   
+&bgzEPROF = &Z                                                                  
+&bgzEFORM = &Z                                                                  
+&bgzCFMCN = &Z                                                                  
+&bgzEMIX = &Z                                                                   
+VGET (bgzEMAC bgzEPROF bgzEFORM bgzEPANL) PROFILE                               
+IF (&ZDBCS = 'NO') &bgzEMIX = 'NO'                                              
+&bgzEMIXV = TRANS(&bgzEMIX,'NO',' '  *,'/')                                     
+&bgzECONV = TRANS(&bgzCFMCN,' ',' ' *,'/')                                      
+VGET (bgzERECL)                                                                 
+IF (&bgzERECL = 0)                                                              
+  &bgzERECL = ' '                                                               
+</source>                                                                       
+<source type=reinit>                                                            
+</source>                                                                       
+<source type=proc>                                                              
+&bgzEMIX = TRANS(&bgzEMIXV,' ','NO' *,'YES')                                    
+&bgzCFMCN = TRANS(&bgzECONV,' ',' ' *,'/')                                      
+IF (&ZDBCS = YES AND &bgzENCD = '2') &bgzEMIX = 'YES'                           
+IF (&bgzEMAC ^= ' ' )                                                           
+  &ZXXX = TRUNC(&bgzEMAC,'!')                                                   
+  &bgzEMACN = .TRAIL                                                            
+  IF (&bgzEMACN = ' ') &bgzEMACN = &ZXXX                                        
+  VER (&bgzEMACN NAME MSG = bgzP21)                                             
+VER (&bgzEPROF NAME)                                                            
+VER (&bgzEFORM NAME)                                                            
+VER (&bgzEPANL NAME)                                                            
+VER (&bgzERECL,NUM)                                                             
+VER (&bgzERECL,RANGE,0,32752)                                                   
+IF (&bgzERECL = ' ')                                                            
+  &bgzERECL = 0                                                                 
+IF (&bgzEMAC NE CAN,CANCEL,END,EXIT) VPUT (bgzEMAC) PROFILE                     
+VPUT (bgzEPROF bgzEFORM bgzEPANL) PROFILE                                       
+VPUT (bgzERECL) SHARED                                                          
+</source>                                                                       
+<:-- end of panel logic -->                                                     
+                                                                                
+  <info>                                                                        
+    <p compact>&object_name;                                                    
+  </info>                                                                       
+  <dtacol entwidth=56 pmtwidth=0 pmtloc=above dbalign=field>                    
+    <dtafld datavar=bgzpath usage=out>                                          
+         <scrfld displen=256>                                                   
+  </dtacol>                                                                     
+                                                                                
+  <region dir=vert indent=2 >                                                   
+    <dtacol entwidth=8 pmtwidth=&dcol_pmtwidth; deswidth=*>                     
+      <dtafld datavar=bgzemac  usage=both>&imac_prompt;                         
+      <dtafld datavar=bgzeprof usage=both>&prof_prompt;                         
+        <dtafldd>&profile_descr;                                                
+      <dtafld datavar=bgzeform usage=both>&fnam_prompt;                         
+      <dtafld datavar=bgzepanl usage=both>&panel_prompt;                        
+        <dtafldd>&panel_descr;                                                  
+      <dtafld datavar=bgzerecl usage=both entwidth=5>&recl_prompt;              
+    </dtacol>                                                                   
+  </region>                                                                     
+                                                                                
+  <divider>                                                                     
+  <region dir=horiz align=no>                                                   
+  <region dir=vert indent=2 grpbox=yes>&opt_prompt;                             
+   <selfld type=multi pmtwidth=* init=no                                        
+           selwidth=&sfld_selwidth; dbalign=field>                              
+     <choice name=bgzeconv>&opt_confirm;                                        
+     <choice name=bgzemixv>&opt_mixed;                                          
+     <choice name=bgzedrbs>&opt_vb_save;                                        
+   </selfld>                                                                    
+   </region>                                                                    
+  <region dir=vert grpbox=yes>&selfld_1_prompt;                                 
+   <selfld name=bgzencd selwidth=&selfld_1_width; init=no verify=yes            
+      type=single entwidth=1 pmtwidth=20 required=no                            
+      pmtloc=above>                                                             
+        <choice>&choice_A1_text;                                                
+        <choice>&choice_A2_text;                                                
+    </selfld>                                                                   
+     </region>                                                                  
+   </region>                                                                    
+                                                                                
+  <info>                                                                        
+    <p>&panel_instruction;                                                      
+  </info>                                                                       
+</area>                                                                         
+<cmdarea name=bgzcmd caps=on noinit>                                            
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             

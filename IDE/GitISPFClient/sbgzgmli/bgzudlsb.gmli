@@ -1,53 +1,53 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<varclass name=vcrep  type='char 48'>
-<varclass name=vcbra  type='char 48'>
-<varclass name=vcuss  type='char 65'>
-<varlist>
-<vardcl name=bgzusrep varclass=vcrep>
-<vardcl name=bgzbranc varclass=vcbra>
-<vardcl name=bgzussdr varclass=vcuss>
-</varlist>
-<panel name=bgzUDLST width=76 depth=22 keylist=bgzsabx applid=bgz
-             help=bgzA0006>&pan_title
-<ab>
-  &bgzmenu
-  &bgzhelp
-</ab>
-<area>
-  <dtafld datavar=bgzusrep entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzrepos_prompt;
-  <dtafld datavar=bgzbranc entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzbranc_prompt;
-<divider>
-</divider>
-    <dtafld datavar=bgzussdr usage=out pmtfmt=none pmtwidth=*
-                             entwidth=65>&ussdir_prompt;
-            <scrfld displen=256>
-</area>
-<divider>
-</divider>
-<area>
-  <lstfld vardcl=no scrollvar=zamt>
-    <lstcol datavar=bgzuscmd usage=in caps=on colwidth=2>
-    <lstcol datavar=bgzusfil usage=out colwidth=30>&filename_prompt;
-            <scrfld displen=256>
-    <lstcol datavar=bgzustag usage=out colwidth=10>&selfld_02_text;
-    <lstcol datavar=bgzustyp usage=out colwidth=4>&selfld_03_text;
-  </lstfld>
-</area>
-<cmdarea name=bgzcmd caps=off>
-<source type=proc>
-VGET (bgzEUTF) SHARED
-IF (&bgzUSTYP = 'Dir ')
-  VER (&bgzUSCMD,LIST,L,ST,AD,CO,PS,CP,PL,CM,/,MSG=bgzC029)
-IF (&bgzUSTYP NE 'Dir ')
- IF (&bgzEUTF = 'TRUE')
-  VER(&bgzUSCMD,LIST,E,EA,EU,V,VA,VU,B,D,R,
-                     ST,AD,CO,PS,CP,PL,CM,UB,UL,/,MSG=bgzC024)
-IF (&bgzUSTYP NE 'Dir ')
- IF (&bgzEUTF = 'FALSE')
-  VER (&bgzUSCMD,LIST,E,EA,V,VA,B,D,R,
-                      ST,AD,CO,PS,CP,PL,CM,UB,UL,/,MSG=bgzC026)
-</source>
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<varclass name=vcrep  type='char 48'>                                           
+<varclass name=vcbra  type='char 48'>                                           
+<varclass name=vcuss  type='char 65'>                                           
+<varlist>                                                                       
+<vardcl name=bgzusrep varclass=vcrep>                                           
+<vardcl name=bgzbranc varclass=vcbra>                                           
+<vardcl name=bgzussdr varclass=vcuss>                                           
+</varlist>                                                                      
+<panel name=bgzUDLST width=76 depth=22 keylist=bgzsabx applid=bgz               
+             help=bgzA0006>&pan_title                                           
+<ab>                                                                            
+  &bgzmenu                                                                      
+  &bgzhelp                                                                      
+</ab>                                                                           
+<area>                                                                          
+  <dtafld datavar=bgzusrep entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzrepos_prompt;                                          
+  <dtafld datavar=bgzbranc entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzbranc_prompt;                                          
+<divider>                                                                       
+</divider>                                                                      
+    <dtafld datavar=bgzussdr usage=out pmtfmt=none pmtwidth=*                   
+                             entwidth=65>&ussdir_prompt;                        
+            <scrfld displen=256>                                                
+</area>                                                                         
+<divider>                                                                       
+</divider>                                                                      
+<area>                                                                          
+  <lstfld vardcl=no scrollvar=zamt>                                             
+    <lstcol datavar=bgzuscmd usage=in caps=on colwidth=2>                       
+    <lstcol datavar=bgzusfil usage=out colwidth=30>&filename_prompt;            
+            <scrfld displen=256>                                                
+    <lstcol datavar=bgzustag usage=out colwidth=10>&selfld_02_text;             
+    <lstcol datavar=bgzustyp usage=out colwidth=4>&selfld_03_text;              
+  </lstfld>                                                                     
+</area>                                                                         
+<cmdarea name=bgzcmd caps=off>                                                  
+<source type=proc>                                                              
+VGET (bgzEUTF) SHARED                                                           
+IF (&bgzUSTYP = 'Dir ')                                                         
+  VER (&bgzUSCMD,LIST,L,ST,AD,CO,PS,CP,PL,CM,/,MSG=bgzC029)                     
+IF (&bgzUSTYP NE 'Dir ')                                                        
+ IF (&bgzEUTF = 'TRUE')                                                         
+  VER(&bgzUSCMD,LIST,E,EA,EU,V,VA,VU,B,D,R,                                     
+                     ST,AD,CO,PS,CP,PL,CM,UB,UL,/,MSG=bgzC024)                  
+IF (&bgzUSTYP NE 'Dir ')                                                        
+ IF (&bgzEUTF = 'FALSE')                                                        
+  VER (&bgzUSCMD,LIST,E,EA,V,VA,B,D,R,                                          
+                      ST,AD,CO,PS,CP,PL,CM,UB,UL,/,MSG=bgzC026)                 
+</source>                                                                       
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             

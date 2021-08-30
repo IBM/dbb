@@ -1,30 +1,30 @@
-BGZC020 .TYPE=WARNING .HELP=* .ALARM=YES
-'Specify Userid/Password'
-BGZC021 'Invalid command ' .TYPE=WARNING .HELP=* .ALARM=YES
-'Only S, L, LOC, LOCATE, REF, or REFRESH commands allowed'
-BGZC022 'Not a UNIX directory' .TYPE=WARNING .HELP=* .ALARM=YES
-'The L line command can only be used against a UNIX directory'
-BGZC023 'Invalid UNIX file type' .TYPE=WARNING .HELP=* .ALARM=YES
-'Edit is only valid for regular UNIX files'
-BGZC024 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
+BGZC020 .TYPE=WARNING .HELP=* .ALARM=YES                                        
+'Specify Userid/Password'                                                       
+BGZC021 'Invalid command ' .TYPE=WARNING .HELP=* .ALARM=YES                     
+'Only S, L, LOC, LOCATE, REF, or REFRESH commands allowed'                      
+BGZC022 'Not a UNIX directory' .TYPE=WARNING .HELP=* .ALARM=YES                 
+'The L line command can only be used against a UNIX directory'                  
+BGZC023 'Invalid UNIX file type' .TYPE=WARNING .HELP=* .ALARM=YES               
+'Edit is only valid for regular UNIX files'                                     
+BGZC024 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES             
 'Codes E (Edit), EA (Edit ASCII), EU (Edit UTF-8), V (View), VA (View ASCII),' +
 ' VU (View UTF-8), B (Browse), D (Delete) R (Rename), ST (Status), AD (Add), ' +
 'CO (Commit), PS (Push), CP (Commit & Push), PL (Pull), CM (Command Prompt) U' +
-'B (DBB user build) and UL (View DBB log) allowed'
-BGZC025 'Edit/View failed' .TYPE=WARNING .HELP=* .ALARM=YES
-'&BGZLNGER.'
-BGZC026 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
+'B (DBB user build) and UL (View DBB log) allowed'                              
+BGZC025 'Edit/View failed' .TYPE=WARNING .HELP=* .ALARM=YES                     
+'&BGZLNGER.'                                                                    
+BGZC026 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES             
 'Codes E (Edit), EA (Edit ASCII), V (View), VA (View ASCII), B (Browse), D (D' +
 'elete, R (Rename), ST (Status), AD (Add), CO (Commit), PS (Push), CP (Commit' +
 ' & Push), PL (Pull), CM (Command Prompt) UB (DBB user build) and UL (View DB' +
-'B log) allowed'
-BGZC027 .TYPE=NOTIFY .HELP=* .ALARM=NO
-'File'
-BGZC028 .TYPE=NOTIFY .HELP=* .ALARM=NO
-'Dir'
-BGZC029 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
+'B log) allowed'                                                                
+BGZC027 .TYPE=NOTIFY .HELP=* .ALARM=NO                                          
+'File'                                                                          
+BGZC028 .TYPE=NOTIFY .HELP=* .ALARM=NO                                          
+'Dir'                                                                           
+BGZC029 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES             
 'Code L (List), ST (Status), AD (Add), CO (Commit), PU (Push), CP (Commit & P' +
-'ush), PL (Pull), and CM (Command Prompt) allowed'
-/* COPYRIGHT IBM CORP 2019 */
-/* ISPDTLC Release: 7.4.  Level: PID                                  */
-/* z/OS 02.04.00.  Created - Date: 20 Aug 2020, Time: 05:58           */
+'ush), PL (Pull), and CM (Command Prompt) allowed'                              
+/* COPYRIGHT IBM CORP 2019 */                                                   
+/* ISPDTLC Release: 7.4.  Level: PID                                  */        
+/* z/OS 02.04.00.  Created - Date: 20 Aug 2020, Time: 05:58           */        

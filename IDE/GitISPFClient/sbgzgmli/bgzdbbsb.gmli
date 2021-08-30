@@ -1,16 +1,16 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<panel name=bgzDBBSC depth=10 wintitle="&window_title;" keylist=bgzsabx
-             applid=bgz help=bgzA0009>
-
-<area>
-  <dtacol pmtwidth=10 vardcl=no>
-    <dtafld datavar=bgzprnme usage=in required=yes entwidth=52>&name_prompt;
-      <scrfld displen=1024 indvar=bgzpind fldspos=same>
-    <dtafld datavar=bgzprval usage=in required=no entwidth=52>&value_prompt;
-      <scrfld displen=1024 indvar=bgzvind fldspos=same>
-  </dtacol>
-</area>
-
-<:-- panel logic -->
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<panel name=bgzDBBSC depth=10 wintitle="&window_title;" keylist=bgzsabx         
+             applid=bgz help=bgzA0099>                                          
+                                                                                
+<area>                                                                          
+  <dtacol pmtwidth=10 vardcl=no>                                                
+    <dtafld datavar=bgzprnme usage=in required=yes entwidth=52>&name_prompt;    
+      <scrfld displen=1024 indvar=bgzpind fldspos=same>                         
+    <dtafld datavar=bgzprval usage=in required=no entwidth=52>&value_prompt;    
+      <scrfld displen=1024 indvar=bgzvind fldspos=same>                         
+  </dtacol>                                                                     
+</area>                                                                         
+                                                                                
+<:-- panel logic -->                                                            
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             

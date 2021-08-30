@@ -1,18 +1,18 @@
-<panel name=bgzabout width=70 depth=12 keylist=bgzHELP applid=bgz
-      >&panel_title;
-
-<area depth=1 extend=on>
-  <info width=*>
-    <h1><hp>&bgz_l1;</hp>
-
-  </info>
-</area>
-
-<source type=init>
-&ZWINTTL = ' '
-&ZCMD = ' '
-&CMD = ' '
-</source>
-
-</panel>
-<:--             COPYRIGHT IBM CORP 2019       -->
+<panel name=bgzabout width=70 depth=12 keylist=bgzhelp applid=bgz               
+      >&panel_title;                                                            
+                                                                                
+<area depth=1 extend=on>                                                        
+  <info width=*>                                                                
+    <h1><hp>&bgz_l1;</hp>                                                       
+                                                                                
+  </info>                                                                       
+</area>                                                                         
+                                                                                
+<source type=init>                                                              
+&ZWINTTL = ' '                                                                  
+&ZCMD = ' '                                                                     
+&CMD = ' '                                                                      
+</source>                                                                       
+                                                                                
+</panel>                                                                        
+<:--             COPYRIGHT IBM CORP 2019       -->                              

@@ -1,39 +1,39 @@
-<copyr>             COPYRIGHT IBM CORP 2019
- <panel name=bgzdbbpm width=76 depth=20 keylist=BGZSABx applid=BGZ
-              help=bgzA0013>&pan_title
-<ab>
-  &bgzmenu
-  &bgzhelp
-</ab>
-<topinst>
-         <HP color=white type=text>S</HP> &insfld_01_text;
-<area>
- <region dir=horiz indent=2>
- <info>
-   <p compact>&panel_instruct_1;
- </info>
- </region>
- <grphdr div=none indent=4>&selfld_01_text  &selfld_02_text
- </grphdr>
- <region dir=horiz indent=4>
-  <dtafld datavar=bgznpnam usage=in entwidth=20 vardcl=no>
-    <scrfld displen=1024 indvar=bgznind>
-  <dtafld datavar=bgznpval usage=in entwidth=40 vardcl=no>
-    <scrfld displen=1024 indvar=bgzvind>
- </region>
-
-  <lstfld vardcl=no scrollvar=zamt>
-    <lstcol datavar=bgzpmcmd usage=in caps=on colwidth=1>
-    <lstcol datavar=bgzpname usage=out colwidth=20>
-      <scrfld displen=1024>
-    <lstcol datavar=bgzpval usage=out colwidth=40 position=32>
-      <scrfld displen=1024>
-  </lstfld>
-</area>
-<cmdarea name=bgzcmd caps=on>
-<source type=proc>
-VER (&BGZPMCMD,LIST,E,D,MSG=BGZC041)
-</source>
-
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+ <panel name=bgzdbbpm width=76 depth=20 keylist=BGZSABx applid=BGZ              
+              help=bgzA0012>&pan_title                                          
+<ab>                                                                            
+  &bgzmenu                                                                      
+  &bgzhelp                                                                      
+</ab>                                                                           
+<topinst>                                                                       
+         <HP color=white type=text>S</HP> &insfld_01_text;                      
+<area>                                                                          
+ <region dir=horiz indent=2>                                                    
+ <info>                                                                         
+   <p compact>&panel_instruct_1;                                                
+ </info>                                                                        
+ </region>                                                                      
+ <grphdr div=none indent=4>&selfld_01_text  &selfld_02_text                     
+ </grphdr>                                                                      
+ <region dir=horiz indent=4>                                                    
+  <dtafld datavar=bgznpnam usage=in entwidth=20 vardcl=no>                      
+    <scrfld displen=1024 indvar=bgznind>                                        
+  <dtafld datavar=bgznpval usage=in entwidth=40 vardcl=no>                      
+    <scrfld displen=1024 indvar=bgzvind>                                        
+ </region>                                                                      
+                                                                                
+  <lstfld vardcl=no scrollvar=zamt>                                             
+    <lstcol datavar=bgzpmcmd usage=in caps=on colwidth=1>                       
+    <lstcol datavar=bgzpname usage=out colwidth=20>                             
+      <scrfld displen=1024>                                                     
+    <lstcol datavar=bgzpval usage=out colwidth=40 position=32>                  
+      <scrfld displen=1024>                                                     
+  </lstfld>                                                                     
+</area>                                                                         
+<cmdarea name=bgzcmd caps=on>                                                   
+<source type=proc>                                                              
+VER (&BGZPMCMD,LIST,/,E,D,MSG=BGZC041)                                          
+</source>                                                                       
+                                                                                
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             

@@ -1,11 +1,11 @@
-BGZA001 'Invalid Command     ' .TYPE=WARNING .HELP=* .ALARM=YES
-'The primary command entered is invalid'
-BGZA002 'Invalid command         ' .TYPE=WARNING .HELP=* .ALARM=YES
-'Primary command 0, 1, 2 or X allowed'
-BGZA003 'System Error            ' .TYPE=WARNING .HELP=* .ALARM=YES
-'&BLZLNGER.'
-BGZA004 'Invalid initial option  ' .TYPE=WARNING .HELP=* .ALARM=YES
-'Initial option 1, 2, 3, 4, 5 allowed'
-/* COPYRIGHT IBM CORP 2019 */
-/* ISPDTLC Release: 7.3.  Level: PID                                  */
-/* z/OS 02.03.00.  Created - Date: 25 Feb 2019, Time: 05:21           */
+BGZA001 'Invalid Command     ' .TYPE=WARNING .HELP=* .ALARM=YES                 
+'The primary command entered is invalid'                                        
+BGZA002 'Invalid command         ' .TYPE=WARNING .HELP=* .ALARM=YES             
+'Primary command 0, 1, 2 or X allowed'                                          
+BGZA003 'System Error            ' .TYPE=WARNING .HELP=* .ALARM=YES             
+'&BLZLNGER.'                                                                    
+BGZA004 'Invalid initial option  ' .TYPE=WARNING .HELP=* .ALARM=YES             
+'Initial option 1, 2, 3, 4, 5 allowed'                                          
+/* COPYRIGHT IBM CORP 2019 */                                                   
+/* ISPDTLC Release: 7.3.  Level: PID                                  */        
+/* z/OS 02.03.00.  Created - Date: 25 Feb 2019, Time: 05:21           */        

@@ -1,0 +1,7 @@
+BGZC040 'Invalid Git repository' .TYPE=WARNING .HELP=* .ALARM=YES               
+'Invalid Git repository specified. A Git repository ends with .git'             
+BGZC041 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES             
+'Codes E (Edit) and D (Delete) allowed'                                         
+/* COPYRIGHT IBM CORP 2019 */                                                   
+/* ISPDTLC Release: 7.5.  Level: PID                                  */        
+/* z/OS 02.05.00.  Created - Date: 6 Aug 2021, Time: 03:04            */        

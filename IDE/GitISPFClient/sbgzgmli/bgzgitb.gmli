@@ -1,94 +1,74 @@
-<copyr>             COPYRIGHT IBM CORP 2019
-<varclass name=vcrep  type='char 48'>
-<varclass name=vcdir  type='char 48'>
-<varclass name=vcbra  type='char 48'>
-<varclass name=vcgit  type='char 66'>
-<varclass name=vc1 type='char 2'>
-
-<varlist>
-<vardcl name=bgzrepos varclass=vcrep>
-<vardcl name=bgzusdir varclass=vcdir>
-<vardcl name=bgzbranc varclass=vcbra>
-<vardcl name=bgzgit varclass=vcgit>
-<vardcl name=rsel varclass=vc1>
-</varlist>
- <panel name=bgzGITC width=76 depth=24 keylist=bgzsabx applid=bgz
-              help=bgzA0099>&pan_title
-<ab>
-  &bgzmenu
-  &bgzhelp
-</ab>
-<area>
-  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzrepos_prompt;
-  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzusdir_prompt;
-  <dtafld datavar=bgzbranc entwidth=48 pmtwidth=20 usage=out
-         pmtfmt=none>&bgzbranc_prompt;
-</area>
-<divider>
-</divider>
-<area>
-  <region dir=horiz>
-    <grphdr compact>&panel_instruct_1;
-  </region>
-</area>
-<divider>
-</divider>
-
-<area>
-<dtafld datavar=bgzgit usage=in entwidth=62 vardcl=no>===>
-  <scrfld displen=1024>
-</area>
-
-<divider>
-</divider>
-<area>
-  <info>
-    <p compact>&panel_instruct_2;
-  </info>
-</area>
-
-<area depth=1 extend=on>
-
-  <:-- selection options follow                                     -->
-
-  <dtacol pmtwidth=2 entwidth=70 padc=' '>
-    <dtafld datavar=ztcret01 usage=out psvar=rsel psval=1>=>
-            <ps VAR=rsel VALUE=1>
-            </ps>
-    <dtafld datavar=ztcret02 usage=out psvar=rsel psval=2>=>
-            <ps VAR=rsel VALUE=2>
-            </ps>
-    <dtafld datavar=ztcret03 usage=out psvar=rsel psval=3>=>
-            <ps VAR=rsel VALUE=3>
-            </ps>
-    <dtafld datavar=ztcret04 usage=out psvar=rsel psval=4>=>
-            <ps VAR=rsel VALUE=4>
-            </ps>
-    <dtafld datavar=ztcret05 usage=out psvar=rsel psval=5>=>
-            <ps VAR=rsel VALUE=5>
-            </ps>
-    <dtafld datavar=ztcret06 usage=out psvar=rsel psval=6>=>
-            <ps VAR=rsel VALUE=6>
-            </ps>
-    <dtafld datavar=ztcret07 usage=out psvar=rsel psval=7>=>
-            <ps VAR=rsel VALUE=7>
-            </ps>
-    <dtafld datavar=ztcret08 usage=out psvar=rsel psval=8>=>
-            <ps VAR=rsel VALUE=8>
-            </ps>
-    <dtafld datavar=ztcret09 usage=out psvar=rsel psval=9>=>
-            <ps VAR=rsel VALUE=9>
-            </ps>
-    <dtafld datavar=ztcret10 usage=out psvar=rsel psval=10>=>
-            <ps VAR=rsel VALUE=10>
-            </ps>
-  </dtacol>
-</area>
-
-<:-- panel logic -->
-<source type=proc>
-</source>
-</panel>
-<:--              COPYRIGHT IBM CORP 2019       -->
+<copyr>             COPYRIGHT IBM CORP 2019                                     
+<varclass name=vcrep  type='char 48'>                                           
+<varclass name=vcdir  type='char 48'>                                           
+<varclass name=vcbra  type='char 48'>                                           
+<varclass name=vcgit  type='char 66'>                                           
+<varclass name=vc1 type='char 2'>                                               
+                                                                                
+<varlist>                                                                       
+<vardcl name=bgzrepos varclass=vcrep>                                           
+<vardcl name=bgzusdir varclass=vcdir>                                           
+<vardcl name=bgzbranc varclass=vcbra>                                           
+<vardcl name=bgzgit varclass=vcgit>                                             
+<vardcl name=rsel varclass=vc1>                                                 
+</varlist>                                                                      
+ <panel name=bgzGITC width=76 depth=24 keylist=bgzsabx applid=bgz               
+              help=bgzA0099>&pan_title                                          
+<ab>                                                                            
+  &bgzmenu                                                                      
+  &bgzhelp                                                                      
+</ab>                                                                           
+<area>                                                                          
+  <dtafld datavar=bgzrepos entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzrepos_prompt;                                          
+  <dtafld datavar=bgzusdir entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzusdir_prompt;                                          
+  <dtafld datavar=bgzbranc entwidth=48 pmtwidth=20 usage=out                    
+         pmtfmt=none>&bgzbranc_prompt;                                          
+</area>                                                                         
+<divider>                                                                       
+</divider>                                                                      
+<area>                                                                          
+  <region dir=horiz>                                                            
+    <grphdr compact>&panel_instruct_1;                                          
+  </region>                                                                     
+</area>                                                                         
+<divider>                                                                       
+</divider>                                                                      
+                                                                                
+<area>                                                                          
+  <dtafld datavar=bgzgit usage=in entwidth=62 pmtwidth=4 vardcl=no>===>         
+    <scrfld displen=1024>                                                       
+</area>                                                                         
+                                                                                
+<divider>                                                                       
+</divider>                                                                      
+<area>                                                                          
+  <info>                                                                        
+    <p compact>&panel_instruct_2;                                               
+  </info>                                                                       
+</area>                                                                         
+                                                                                
+<area depth=1 extend=on>                                                        
+                                                                                
+  <:-- selection options follow                                     -->         
+                                                                                
+  <dtacol pmtwidth=2 entwidth=70 padc=' '>                                      
+    <dtafld datavar=ztcret01 vardcl=no usage=out psvar=rsel psval=1>=>          
+    <dtafld datavar=ztcret02 vardcl=no usage=out psvar=rsel psval=2>=>          
+    <dtafld datavar=ztcret03 vardcl=no usage=out psvar=rsel psval=3>=>          
+    <dtafld datavar=ztcret04 vardcl=no usage=out psvar=rsel psval=4>=>          
+    <dtafld datavar=ztcret05 vardcl=no usage=out psvar=rsel psval=5>=>          
+    <dtafld datavar=ztcret06 vardcl=no usage=out psvar=rsel psval=6>=>          
+    <dtafld datavar=ztcret07 vardcl=no usage=out psvar=rsel psval=7>=>          
+    <dtafld datavar=ztcret08 vardcl=no usage=out psvar=rsel psval=8>=>          
+    <dtafld datavar=ztcret09 vardcl=no usage=out psvar=rsel psval=9>=>          
+    <dtafld datavar=ztcret10 vardcl=no usage=out psvar=rsel psval=10>=>         
+  </dtacol>                                                                     
+</area>                                                                         
+                                                                                
+<:-- panel logic -->                                                            
+<source type=proc>                                                              
+</source>                                                                       
+</panel>                                                                        
+<:--              COPYRIGHT IBM CORP 2019       -->                             
