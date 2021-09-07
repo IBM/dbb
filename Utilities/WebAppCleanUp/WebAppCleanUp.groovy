@@ -52,8 +52,9 @@ def setup(String[] args) {
 	cli.i(longOpt:'id', args:1, 'DBB WebApp ID')
 	cli.p(longOpt:'pw', args:1,  'DBB WebApp Password')
 	cli.P(longOpt:'pwFile', args:1, 'Absolute or relative (from this script) path to file containing DBB password')
-	cli.h(longOpt:'help', 'Prints this message')
-	
+	cli.prop(longOpt:'propertyFile', args:1, 'Absolute path to property file that contains DBB WebApp information (Optional)')	
+
+		cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(args)
 	if (!args || !opts) {
 	    cli.usage()
@@ -66,8 +67,9 @@ def setup(String[] args) {
 		System.exit(0)
 	}
 
-    // load user properties file
-   	properties.load(new File("${getScriptDir()}/user.properties"))
+	// if specified, load user properties file
+	if (opts.prop)
+   		properties.load(new File("${opts.prop}"))
    	
    	// update authentication properties with cli options
    	if (opts.u) properties.url = opts.url
