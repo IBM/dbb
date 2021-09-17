@@ -54,7 +54,8 @@ def setup(String[] args) {
 	cli.P(longOpt:'pwFile', args:1, 'Absolute or relative (from this script) path to file containing DBB password')
 	cli.prop(longOpt:'propertyFile', args:1, 'Absolute or relative (from this script) path to property file that contains DBB WebApp information (Optional)')	
 
-		cli.h(longOpt:'help', 'Prints this message')
+	cli.h(longOpt:'help', 'Prints this message')
+	
 	def opts = cli.parse(args)
 	if (!args || !opts) {
 	    cli.usage()
@@ -67,7 +68,7 @@ def setup(String[] args) {
 		System.exit(0)
 	}
 
-	// if specified, load user properties file
+	// if specified, load the specified properties file
 	if (opts.prop)
    		properties.load(new File("${opts.prop}"))
    	
