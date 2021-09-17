@@ -32,7 +32,7 @@ collections.each { collection ->
 
 /*
   setup :
-  handle cli arguments, load WebAppCleanUp.properties file, 
+  handle cli arguments, load property file if present, 
   create repository client, populate deletion lists
 */
 def setup(String[] args) {
@@ -52,7 +52,7 @@ def setup(String[] args) {
 	cli.i(longOpt:'id', args:1, 'DBB WebApp ID')
 	cli.p(longOpt:'pw', args:1,  'DBB WebApp Password')
 	cli.P(longOpt:'pwFile', args:1, 'Absolute or relative (from this script) path to file containing DBB password')
-	cli.prop(longOpt:'propertyFile', args:1, 'Absolute path to property file that contains DBB WebApp information (Optional)')	
+	cli.prop(longOpt:'propertyFile', args:1, 'Absolute or relative (from this script) path to property file that contains DBB WebApp information (Optional)')	
 
 		cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(args)
