@@ -5,7 +5,7 @@ Typically, after a build in a feature branch where datasets where created for th
 
 To delete datasets with the DeletePDS utility, you would need to specify the parameter `-h`/`--hlq` to indicate the High-Level Qualifier for your datasets to be deleted. This value is used as a filter expression for identifying the datasets to be deleted.
 
-An other parameter `-p`/`--preview` is helpful to verify which datasets are to be deleted. Using this parameter will just display the datasets that matches the filter expression passed in - HLQ paramater of the script.
+An other parameter `-p`/`--preview` is helpful to verify which datasets are to be deleted. Using this parameter will just display the datasets that matches the filter expression passed in the HLQ parameter of the script.
 
 
 Preview:
@@ -60,7 +60,7 @@ Output:
 
 
 
-### Delete.groovy Command Line Options
+### DeletePDS.groovy Command Line Options
 ```
 usage: DeletePDS.groovy [options]
 options:

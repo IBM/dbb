@@ -57,7 +57,7 @@ else
 */
 def setup(String[] args) {
 	// parse input arguments
-	String usage = 'deletePDS.groovy [options]'
+	String usage = 'DeletePDS.groovy [options]'
 	String header = 'options:'
 	def cli = new CliBuilder(usage:usage,header:header)
 	cli.h(longOpt:'hlq', args:1, 'High-Level Qualifier of datasets to delete')
