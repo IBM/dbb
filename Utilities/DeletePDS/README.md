@@ -1,7 +1,7 @@
 # DeletePDS Utility
 
 The DeletePDS utility is used to delete PDSes on z/OS that are no longer needed.
-Typically, after a build in a feature branch where datasets where created for the build, clean-up should occur to limit and optimize the required storage space on z/OS.
+Typically, after a build in a feature branch where datasets were created for the build, clean-up should occur to limit and optimize the required storage space on z/OS.
 
 To delete datasets with the DeletePDS utility, you would need to specify the parameter `-h`/`--hlq` to indicate the High-Level Qualifier for your datasets to be deleted. This value is used as a filter expression for identifying the datasets to be deleted.
 
