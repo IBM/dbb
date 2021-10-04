@@ -39,7 +39,8 @@ MortgageApplication-Bug1220-outputs
 ```
 
 ### Web Application Authentication Properties
-The `user.properties` file has been provided for a convienient place to store DBB Web Application authentication properties.  However its use is optional as the user can  provide the required authentication values as script arguments.  Example:
+A property file can be specified through the --prop parameter. This property file can stored DBB Web Application authentication properties. A sample property file `user.properties` is supplied along this script. 
+ However its use is optional as the user can provide the required authentication values as script arguments.  Example:
 ```
 $DBB_HOME/bin/groovyz WebAppCleanUp.groovy --groups Application-FeatureBranch --url https://localhost:9443/dbb --id ADMIN --pw ADMIN
 ``` 
@@ -62,6 +63,9 @@ options:
  -i,--id <arg>                DBB WebApp ID
  -p,--pw <arg>                DBB WebApp Password
  -P,--pwFile <arg>            Absolute or relative (from this script) path
-                              to file containing DBB password
+                              to file containing DBB password   
+ -prop,--propertyFile <arg>   Absolute or relative (from this script) path
+                              to property file that contains DBB WebApp
+                              information (Optional)                                                 
  -u,--url <arg>               DBB WebApp URL
 ```
