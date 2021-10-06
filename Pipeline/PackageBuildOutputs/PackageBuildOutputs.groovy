@@ -47,7 +47,8 @@ import groovy.transform.*
  ************************************************************************************/
 
 // start create & publish package
-def Properties props = parseInput(args)
+def Properties _props = parseInput(args)
+@Field Properties props = _props
 
 // Map of last level dataset qualifier to DBB CopyToFS CopyMode.
 // TODO: Customize to your needs. 
