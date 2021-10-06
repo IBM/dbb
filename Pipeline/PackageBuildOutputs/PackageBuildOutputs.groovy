@@ -1,3 +1,4 @@
+@groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
 import java.io.File
 import java.io.UnsupportedEncodingException
 import java.security.MessageDigest
