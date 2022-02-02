@@ -118,9 +118,16 @@ else {
 		} catch (Exception e){}
 	}
 
-	def String tarFileLabel = buildInfo[0].label
+	if (buildInfo.size() == 0){
+		def String tarFileLabel = "fullBuild"
+		def String buildGroup = "buildGroup"
+	}
+	else {
+		def String tarFileLabel = buildInfo[0].label
+		def String buildGroup = buildInfo[0].group
+	}
+
 	def String tarFileName = (props.tarFileName) ? props.tarFileName : "${buildInfo[0].label}.tar"
-	def String buildGroup = buildInfo[0].group
 
 
 	//Create a temporary directory on zFS to copy the load modules from data sets to
