@@ -2,9 +2,6 @@
 //* usedel:                                                                               *
 //*         Remove a user from the system                                                 *
 //*                                                                                       *
-//* Dependencies:                                                                         *
-//*              apache commons cli (https://commons.apache.org/proper/commons-cli/)      *
-//*              this not only handles the arguments for the add, it does the documention *
 //*                                                                                       *
 //*****************************************************************************************
 import com.ibm.dbb.build.*

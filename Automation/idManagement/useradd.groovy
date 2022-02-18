@@ -2,9 +2,6 @@
 //* useradd:                                                                              *
 //*         Add a user to the system                                                      *
 //*                                                                                       *
-//* Dependencies:                                                                         *
-//*              apache commons cli (https://commons.apache.org/proper/commons-cli/)      *
-//*              this not only handles the arguments for the add, it does the documention *
 //*                                                                                       *
 //* Additional Components:                                                                *
 //*              useradd.properties - a file that holds the defaults for adding a user    *
