@@ -12,7 +12,7 @@
 //*                                   defaults for different user types.                  *
 //*****************************************************************************************
 import com.ibm.dbb.build.*
-import org.apache.commons.cli.*
+import groovy.cli.commons.*
 
 // Take input and define any overrides to the defaults
 def cli= new CliBuilder(usage: 'useradd -u userid -n "users name"')

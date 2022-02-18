@@ -1,5 +1,6 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
 import groovy.transform.*
+import groovy.cli.commons.*
 import com.ibm.jzos.CatalogSearch;
 import com.ibm.jzos.CatalogSearchField;
 import com.ibm.jzos.ZFile;

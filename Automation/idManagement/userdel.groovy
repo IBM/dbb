@@ -8,7 +8,7 @@
 //*                                                                                       *
 //*****************************************************************************************
 import com.ibm.dbb.build.*
-import org.apache.commons.cli.*
+import groovy.cli.commons.*
 
 // Take input
 def cli= new CliBuilder(usage: 'userdel [options] userid ')

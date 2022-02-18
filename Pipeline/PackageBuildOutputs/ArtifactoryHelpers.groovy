@@ -1,5 +1,6 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
 import groovy.transform.*
+import groovy.cli.commons.*
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;

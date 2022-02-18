@@ -1,6 +1,7 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
 import groovy.transform.*
 import groovy.json.JsonSlurper
+import groovy.cli.commons.*
 
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
