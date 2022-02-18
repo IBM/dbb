@@ -7,6 +7,8 @@ import com.ibm.dbb.build.*
 import com.ibm.dbb.build.internal.Messages
 import com.ibm.dbb.build.smf.*
 
+import groovy.cli.commons.*
+
 def parseArgs(String[] cliArgs){
 	def cli = new CliBuilder(usage: "readSMF.groovy [options]",header: "\nAvailable options\n")
 	cli.h(longOpt: 'help','help')

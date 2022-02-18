@@ -4,6 +4,8 @@ import com.ibm.dbb.build.report.*
 import com.ibm.dbb.build.report.records.*
 import groovy.time.*
 import groovy.xml.MarkupBuilder
+import groovy.cli.commons.*
+
 /**
  * This script creates a version in UrbanCode Deploy based on the build result. 
  *

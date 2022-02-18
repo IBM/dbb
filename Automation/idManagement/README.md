@@ -19,10 +19,6 @@ userdel - a groovy script that deletes a user from the system. It is meant to
           and alias.
 
 # Notes
-The groovy scripts in this folder rely on apache common cli to manage the
-command line arguments. You can download the apache common cli files from:
-https://commons.apache.org/proper/commons-cli/
-
 In each of the scripts there are two hardcoded definitions that must be
 modified prior to use. You will find:
 a DDStatement with ("HLQ.ISPFGWY.EXEC") specification. The HLQ must be modified

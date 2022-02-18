@@ -2,6 +2,7 @@
 import com.ibm.dbb.repository.*
 import com.ibm.dbb.build.*
 import groovy.transform.*
+import groovy.cli.commons.*
 
 // global variables
 @Field BuildProperties properties = BuildProperties.getInstance()

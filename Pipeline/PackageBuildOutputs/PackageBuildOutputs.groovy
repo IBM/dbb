@@ -7,6 +7,7 @@ import com.ibm.dbb.build.DBBConstants.CopyMode
 import com.ibm.dbb.build.report.BuildReport
 import com.ibm.dbb.build.report.records.DefaultRecordFactory
 import groovy.transform.*
+import groovy.cli.commons.*
 
 /************************************************************************************
  * This script creates a simplified package with the outputs generated from a DBB build 
