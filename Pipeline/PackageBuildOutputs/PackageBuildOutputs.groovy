@@ -1,3 +1,4 @@
+@groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
 import java.io.File
 import java.io.UnsupportedEncodingException
 import java.security.MessageDigest
@@ -47,7 +48,8 @@ import groovy.cli.commons.*
  ************************************************************************************/
 
 // start create & publish package
-@Field Properties props = parseInput(args)
+@Field Properties props = null
+props = parseInput(args)
 
 // Map of last level dataset qualifier to DBB CopyToFS CopyMode.
 // TODO: Customize to your needs. 
