@@ -53,6 +53,8 @@ groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy --workDir /var/jenkins/
 ### Package only including *.log files from build workspace
 
 ```
+groovyz dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/MortgageApplication/BUILD-2 --packagingPropertiesFile dbb/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --includeLogs *.log
+
 ** PackageBuildOutputs start at 20220222.112956.029
 ** Properties at startup:
    verbose -> false
@@ -60,26 +62,26 @@ groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy --workDir /var/jenkins/
    startTime -> 20220222.112956.029
    publish -> false
    includeLogs -> *.log
-   workDir -> /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2
-** Read build report data from /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/BuildReport.json
+   workDir -> /var/jenkins/workspace/MortgageApplication/BUILD-2
+** Read build report data from /var/jenkins/workspace/MortgageApplication/BUILD-2/BuildReport.json
 ** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
 ** Copying BuildOutputs to temporary package dir.
 *** Number of build outputs to publish: 8
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMORT) to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMLIS) to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCSMRT) to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMPMT) to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCMORT) to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCSMRD) to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMLIST) to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.DBRM(EPSCMORT) to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.DBRM with DBB Copymode BINARY
-** Creating tar file at /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/build.20220222.021034.010.tar.
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMORT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMLIS) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCSMRT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMPMT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCMORT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCSMRD) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMLIST) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.DBRM(EPSCMORT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.DBRM with DBB Copymode BINARY
+** Creating tar file at /var/jenkins/workspace/MortgageApplication/BUILD-2/build.20220222.021034.010.tar.
 
-** Adding BuildReport.json to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/build.20220222.021034.010.tar.
+** Adding BuildReport.json to /var/jenkins/workspace/MortgageApplication/BUILD-2/build.20220222.021034.010.tar.
 
-** Adding *.log to /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/build.20220222.021034.010.tar.
+** Adding *.log to /var/jenkins/workspace/MortgageApplication/BUILD-2/build.20220222.021034.010.tar.
 
-** Package successfully created at /var/jenkins/workspace/dbb-zappbuild-pipeline-artifactory-test/BUILD-2/build.20220222.021034.010.tar.
+** Package successfully created at /var/jenkins/workspace/MortgageApplication/BUILD-2/build.20220222.021034.010.tar.
 ** Build finished
 ```
 
