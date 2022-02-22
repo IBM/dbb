@@ -38,7 +38,8 @@ import groovy.cli.commons.*
  * -p,--publish                                   Flag to indicate package upload to
  *                                                the provided Artifactory server.
  *                                                (Optional)
- * -artifactory,--propertyFile <propertyFile>     Absolute path of a property file
+ * -artifactory,
+ *   --artifactoryPropertiesFile <propertyFile>   Absolute path of a property file
  *                                                containing application specific
  *                                                Artifactory details. (Optional)
  * -v,--versionName <versionName>                 Name of the Artifactory version.
@@ -51,6 +52,11 @@ import groovy.cli.commons.*
  * Version 1 - 2021
  *  Re-Design to run as a post-build script and make publishing optional
  *
+ * Version 2 - 2022-02
+ *  - Externalize the Map of LLQ to CopyMode
+ *  - Add capablity to add additional files from build workspace 
+ *  - Verbose logging will print tar contents
+ *  
  ************************************************************************************/
 
 // start create & publish package
@@ -164,7 +170,7 @@ else {
 
 			// set copyMode based on last level qualifier
 			currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
-			copy.setCopyMode(currentCopyMode)
+			copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
 			copy.setDataset(dataset)
 
 			println "     Copying $dataset($member) to $filePath with DBB Copymode $currentCopyMode"
@@ -212,7 +218,7 @@ else {
 	assert rc == 0 : "Failed to append BuildReport.json"
 
 	//Package additional outputs to tar file.
-	includeLogs.each { logPattern ->
+	if (props.includeLogs) (props.includeLogs).split(",").each { logPattern ->
 		println("** Adding $logPattern to $tarFile.")
 		processCmd = [
 			"sh",
@@ -225,7 +231,21 @@ else {
 	}
 	
 	println ("** Package successfully created at $tarFile.")
-
+	
+	if(props.verbose && props.verbose.toBoolean()) {
+		println ("**   List package contents.")
+		
+		processCmd = [
+			"sh",
+			"-c",
+			"tar tvf $tarFile"
+		]
+		
+		rc = runProcess(processCmd, new File(props.workDir))
+		assert rc == 0 : "Failed to list contents of tarfile $tarFile."
+		
+	}
+	
 	//Set up the artifactory information to publish the tar file
 	if (props.publish && props.publish.toBoolean()){
 		// Configuring ArtifactoryHelper parms
@@ -291,7 +311,8 @@ def parseInput(String[] cliArgs){
 	def cli = new CliBuilder(usage: "PackageBuildOutputs.groovy [options]")
 	// required packaging options
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
-	cli.properties(longOpt:'packagingPropertiesFile', args:1, argName:'packagingPropertiesFile', 'Absolute path of a property file containing application specific Artifactory details. (Optional)')
+	cli.properties(longOpt:'packagingPropertiesFile', args:1, argName:'packagingPropertiesFile', 'Path of a property file containing application specific packaging details.')
+	
 	// optional packaging options
 	cli.d(longOpt:'deployTypes', args:1, argName:'deployTypes','Comma-seperated list of deployTypes to filter on the scope of the tar file. (Optional)')
 	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional)')
