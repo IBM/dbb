@@ -136,8 +136,6 @@ else {
 
 	def String tarFileLabel = buildInfo[0].label
 	def String tarFileName = (props.tarFileName) ? props.tarFileName : "${buildInfo[0].label}.tar"
-	def String buildGroup = buildInfo[0].group
-
 
 	//Create a temporary directory on zFS to copy the load modules from data sets to
 	def tempLoadDir = new File("$props.workDir/tempPackageDir")
