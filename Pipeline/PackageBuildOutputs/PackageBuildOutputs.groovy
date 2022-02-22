@@ -68,7 +68,10 @@ props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
 println("** PackageBuildOutputs start at $props.startTime")
 println("** Properties at startup:")
 props.each{k,v->
-	println "   $k -> $v"
+        if ( k == "artifactory.password" )
+            println "   $k -> xxxxxx "
+        else
+            println "   $k -> $v"
 }
 
 // Enable file tagging
