@@ -118,13 +118,10 @@ else {
 		} catch (Exception e){}
 	}
 
-	if (buildInfo.size() == 0){
-		def String tarFileLabel = "fullBuild"
-		def String buildGroup = "buildGroup"
-	}
-	else {
-		def String tarFileLabel = buildInfo[0].label
-		def String buildGroup = buildInfo[0].group
+	def String tarFileLabel = "fullBuild"
+
+	if (buildInfo.size() != 0) {
+		tarFileLabel = buildInfo[0].label
 	}
 
 	def String tarFileName = (props.tarFileName) ? props.tarFileName : "${buildInfo[0].label}.tar"
