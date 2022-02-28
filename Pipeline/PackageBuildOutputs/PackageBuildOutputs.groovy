@@ -44,6 +44,10 @@ import groovy.cli.commons.*
  *                                                Artifactory details. (Optional)
  * -v,--versionName <versionName>                 Name of the Artifactory version.
  *                                                (Optional)
+ * -prop,--propertyFile <propertyFile>            ** Deprecated ** Absolute path of a
+ *                                                property file containing application
+ *                                                specific Artifactory details. (Optional)
+ *                                                
  * -h,--help                                      Prints this message
  *
  * Version 0 - 2019
@@ -322,7 +326,10 @@ def parseInput(String[] cliArgs){
 	// Artifactory Options:
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifactory server. (Optional)')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the Artifactory version. (Optional)')
-	cli.artifactory(longOpt:'artifactoryPropertiesFile', args:1, argName:'artifactoryPropertiesFile', 'Absolute path of a property file containing application specific Artifactory details. (Optional)')
+	cli.artifactory(longOpt:'artifactoryPropertiesFile', args:1, argName:'artifactoryPropertiesFile', 'Path of a property file containing application specific Artifactory details. (Optional)')
+	// old prop option (deprecated)
+	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFile', 'Path of a property file containing application specific Artifactory details. (Optional) ** (Deprecated)')
+	
 	cli.verb(longOpt:'verbose', 'Flag to provide more log output. (Optional)')
 
 	cli.h(longOpt:'help', 'Prints this message')
@@ -339,6 +346,12 @@ def parseInput(String[] cliArgs){
 		def propertiesFile = new File(opts.properties)
 		if (propertiesFile.exists()){
 			propertiesFile.withInputStream { props.load(it) }
+		}
+	} else { // read default sample properties file shipped with the script
+		def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
+		def defaultPackagePropFile = new File("$scriptDir/packageBuildOutputs.properties")
+		if (defaultPackagePropFile.exists()){
+			defaultPackagePropFile.withInputStream { props.load(it) }
 		}
 	}
 	
@@ -357,6 +370,14 @@ def parseInput(String[] cliArgs){
 	// Optional artifactory properties
 	if (opts.artifactory){
 		def propertyFile = new File(opts.artifactory)
+		if (propertyFile.exists()){
+			propertyFile.withInputStream { props.load(it) }
+		}
+	}
+	
+	// ** Deprecated ** Read of artifactory properties
+	if (opts.prop){
+		def propertyFile = new File(opts.prop)
 		if (propertyFile.exists()){
 			propertyFile.withInputStream { props.load(it) }
 		}
