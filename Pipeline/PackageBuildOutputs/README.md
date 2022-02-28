@@ -16,7 +16,7 @@ The ArtifactoryHelpers is a very simple implementation sufficient for a show cas
 
 1. After a successful DBB build, `PackageBuildOutputs.groovy` reads the build report and retrieves all outputs from the build report. It excludes outputs without a `deployType` as well as those labeled `ZUNIT-TESTCASE` 
 2. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS.  
-3. It packages these load files into a tar file, and adds the BuildReport.json to it.
+3. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
 4. (Optional) Publishes the tar file to the Artifactory repository based on the given configuration using the ArtifactoryHelpers.
 
 ## Invocation samples 
@@ -50,9 +50,45 @@ groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy --workDir /var/jenkins/
 ** Build finished
 ```
 
+### Package only including *.log files from build workspace
+
+```
+groovyz dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/MortgageApplication/BUILD-2 --packagingPropertiesFile dbb/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --includeLogs *.log
+
+** PackageBuildOutputs start at 20220222.112956.029
+** Properties at startup:
+   verbose -> false
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD"]
+   startTime -> 20220222.112956.029
+   publish -> false
+   includeLogs -> *.log
+   workDir -> /var/jenkins/workspace/MortgageApplication/BUILD-2
+** Read build report data from /var/jenkins/workspace/MortgageApplication/BUILD-2/BuildReport.json
+** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
+** Copying BuildOutputs to temporary package dir.
+*** Number of build outputs to publish: 8
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMORT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMLIS) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCSMRT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMPMT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCMORT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCSMRD) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMLIST) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
+     Copying JENKINS.DBB.SAMP.BUILD.DBRM(EPSCMORT) to /var/jenkins/workspace/MortgageApplication/BUILD-2/tempPackageDir/JENKINS.DBB.SAMP.BUILD.DBRM with DBB Copymode BINARY
+** Creating tar file at /var/jenkins/workspace/MortgageApplication/BUILD-2/build.20220222.021034.010.tar.
+
+** Adding BuildReport.json to /var/jenkins/workspace/MortgageApplication/BUILD-2/build.20220222.021034.010.tar.
+
+** Adding *.log to /var/jenkins/workspace/MortgageApplication/BUILD-2/build.20220222.021034.010.tar.
+
+** Package successfully created at /var/jenkins/workspace/MortgageApplication/BUILD-2/build.20220222.021034.010.tar.
+** Build finished
+```
+
+
 ### Package and Publish to Artifactory
 ```
-groovyz /var/jenkins/pipeline/PublishLoadModule.groovy --workDir /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034 --propertyFile publish.properties -v MortgageRelease_1.0 -t myPackage.tar --verbose --publish
+groovyz /var/jenkins/pipeline/PublishLoadModule.groovy --workDir /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034 --artifactoryPropertiesFile publish.properties -v MortgageRelease_1.0 -t myPackage.tar --verbose --publish
 
 
 ** PackageBuildOutputs start at 20210727.042032.020
@@ -108,32 +144,39 @@ groovyz  /var/jenkins/pipeline/ArtifactoryHelpers.groovy --url http://10.3.20.23
 ## Command Line Options Summary - PackageBuildOutputs
 
 ```
-usage: PackageBuildOutputs.groovy [options]
-
- -w,--workDir <dir>                    Absolute path to the DBB build
-                                       output directory
-
-Optional:
- -t,--tarFileName <filename>           Name of the package tar file.
-                                       (Optional)
- -d,--deployTypes <deployTypes>        Comma-seperated list of deployTypes
-                                       to filter on the scope of the tar
-                                       file. (Optional)
- -verb,--verbose                       Flag to provide more log output.
-                                       (Optional)
-                                       
-Artifactory Upload Options
-
- -p,--publish                          Flag to indicate package upload to
-                                       the provided Artifactory server.
-                                       (Optional)
- -prop,--propertyFile <propertyFile>   Absolute path of a property file
-                                       containing application specific
-                                       Artifactory details. (Optional)
- -v,--versionName <versionName>        Name of the Artifactory version.
-                                       (Optional)
-
- -h,--help                             Prints this message
+  usage: PackageBuildOutputs.groovy [options]
+ 
+  -w,--workDir <dir>                             Absolute path to the DBB build
+                                                 output directory
+  -properties,--packagingPropertiesFile <file>   Absolute path of a property file
+                                                 containing application specific
+                                                 packaging details. 
+                                                                                                                                          
+  Optional:
+  -t,--tarFileName <filename>                    Name of the package tar file.
+                                                 (Optional)
+  -d,--deployTypes <deployTypes>                 Comma-seperated list of deployTypes
+                                                 to filter on the scope of the tar
+                                                 file. (Optional)
+  -verb,--verbose                                Flag to provide more log output.
+                                                 (Optional)
+  -il,--includeLogs                              Comma-separated list of files/patterns
+                                                 from the USS build workspace                                               
+                                        
+  Optional Artifactory Upload opts:
+ 
+  -p,--publish                                   Flag to indicate package upload to
+                                                 the provided Artifactory server.
+                                                 (Optional)
+  -artifactory,
+    --artifactoryPropertiesFile <propertyFile>   Absolute path of a property file
+                                                 containing application specific
+                                                 Artifactory details. (Optional)
+  -v,--versionName <versionName>                 Name of the Artifactory version.
+                                                 (Optional)
+ 
+ 
+  -h,--help                                      Prints this message
 ```
 
 ## Command Line Options Summary - ArtifactoryHelpers
