@@ -226,9 +226,16 @@ shiplistFile.text = writer
 // command parameters can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_runtools_uss.html
 
+// pass buztool package version2 if specified
+// https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format
+def buztoolOption = "createzosversion"
+if (properties.ucdV2PackageFormat) {
+	buztoolOption = "createzosversion2"
+}
+
 def cmd = [
 	properties.buztoolPath,
-	"createzosversion",
+	buztoolOption,
 	"-c",
 	properties.component,
 	"-s",
@@ -237,12 +244,6 @@ def cmd = [
 	"-o",
 	"${properties.workDir}/buztool.output"
 ]
-
-// pass buztool pakage version if specified
-// https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format
-if (properties.ucdV2PackageFormat) {
-	cmd << "-zpv v2"
-}
 
 // set artifactRepository option if specified
 if (properties.artifactRepositorySettings) {
