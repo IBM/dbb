@@ -177,7 +177,7 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 				container(name:ds, type:"PDS")
 			}
 			// define resource elements
-			{
+			resources: {
 				resource(name:member, type:"PDSMember", deployType:output.deployType){
 					// add any custom properties needed
 					property(name:"buildcommand", value:execute.getCommand())
