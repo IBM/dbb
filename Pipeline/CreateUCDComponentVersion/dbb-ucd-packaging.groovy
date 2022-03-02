@@ -157,12 +157,13 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 	executes.each{ execute ->
 		execute.getOutputs().each{ output ->
 			def (ds,member) = getDatasetName(output.dataset)
-			// define container element
+			// define container attributes
+			def containerAttMap
 			if (properties.ucdV2PackageFormat.toBoolean()) {
 				// ucd package format v2 requres to set a deployType at container level
 				def containerDeployType
 				def lastLevelQual = ds.substring(ds.lastIndexOf('.'))
-				if (properties.containerMapping) { 
+				if (properties.containerMapping) {
 					// obtain the deployType setting from the property
 					cMapping = evaluate(properties.containerMapping)
 					containerDeployType = cMapping[lastLevelQual]
@@ -171,63 +172,66 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 					containerDeployType = lastLevelQual
 				}
 				// create container element with deployType
-				container(name:ds, type:"PDS", deployType:containerDeployType)
-			}else { 
+				containerAttMap = [name:ds, type:"PDS", deployType:containerDeployType]
+			}else {
 				// create container without deployType attribute
-				container(name:ds, type:"PDS")
+				containerAttMap = [name:ds, type:"PDS"]
 			}
-			// define resource elements
-			resources: {
-				resource(name:member, type:"PDSMember", deployType:output.deployType){
-					// add any custom properties needed
-					property(name:"buildcommand", value:execute.getCommand())
+			// add container node
+			container(containerAttMap){
+				// define resource elements
+				resources: {
+					resource(name:member, type:"PDSMember", deployType:output.deployType){
+						// add any custom properties needed
+						property(name:"buildcommand", value:execute.getCommand())
 
-					// Only TYPE_EXECUTE Records carry options
-					if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:execute.getOptions())
-					// Sample to add additional properties. Here: adding db2 properties for a DBRM
-					//   which where added to the build report through a basic PropertiesRecord.
-					if (output.deployType.equals("DBRM")){
-						propertyRecord = buildReport.getRecords().findAll{
-							it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==execute.getFile()
-						}
-						propertyRecord.each { propertyRec ->
-							// Iterate Properties
-							(propertyRec.getProperties()).each {
-								property(name:"$it.key", value:it.value)
+						// Only TYPE_EXECUTE Records carry options
+						if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:execute.getOptions())
+						// Sample to add additional properties. Here: adding db2 properties for a DBRM
+						//   which where added to the build report through a basic PropertiesRecord.
+						if (output.deployType.equals("DBRM")){
+							propertyRecord = buildReport.getRecords().findAll{
+								it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==execute.getFile()
+							}
+							propertyRecord.each { propertyRec ->
+								// Iterate Properties
+								(propertyRec.getProperties()).each {
+									property(name:"$it.key", value:it.value)
 
+								}
 							}
 						}
-					}
-					def githash = "" // set empty
-					if (buildResultProperties != null){
-						// get git references from build properties
-						def gitproperty = buildResultProperties.find{
-							it.key.contains(":githash:") && execute.getFile().contains(it.key.substring(9))
+						def githash = "" // set empty
+						if (buildResultProperties != null){
+							// get git references from build properties
+							def gitproperty = buildResultProperties.find{
+								it.key.contains(":githash:") && execute.getFile().contains(it.key.substring(9))
+							}
+							if (gitproperty != null ) {
+								githash = gitproperty.getValue()
+								// set properties in shiplist
+								property(name:"githash", value:githash)
+								if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
+							}
 						}
-						if (gitproperty != null ) {
-							githash = gitproperty.getValue()
-							// set properties in shiplist
-							property(name:"githash", value:githash)
-							if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
-						}
-					}
-					// add source information in the input column
-					inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
-					inputs(url : "${inputUrl}"){
-						input(name : execute.getFile(), compileType : "Main", url : inputUrl)
-						// dependencies
-						def dependencySets = buildReport.getRecords().findAll{
-							it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==execute.getFile()
-						};
-						Set<String> dependencyCache = new HashSet<String>()
-						dependencySets.unique().each{
-							it.getAllDependencies().each{
-								if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=execute.getFile()){
-									def displayName = it.getFile() ? it.getFile() : it.getLname()
-									def dependencyUrl =""
-									if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
-									input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
-									dependencyCache.add(it.getLname())
+						// add source information in the input column
+						inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
+						inputs(url : "${inputUrl}"){
+							input(name : execute.getFile(), compileType : "Main", url : inputUrl)
+							// dependencies
+							def dependencySets = buildReport.getRecords().findAll{
+								it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==execute.getFile()
+							};
+							Set<String> dependencyCache = new HashSet<String>()
+							dependencySets.unique().each{
+								it.getAllDependencies().each{
+									if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=execute.getFile()){
+										def displayName = it.getFile() ? it.getFile() : it.getLname()
+										def dependencyUrl =""
+										if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
+										input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
+										dependencyCache.add(it.getLname())
+									}
 								}
 							}
 						}
@@ -249,7 +253,7 @@ shiplistFile.text = writer
 // pass buztool package version2 if specified
 // https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format
 def buztoolOption = "createzosversion"
-if (properties.ucdV2PackageFormat) {
+if (properties.ucdV2PackageFormat.toBoolean()) {
 	buztoolOption = "createzosversion2"
 }
 
