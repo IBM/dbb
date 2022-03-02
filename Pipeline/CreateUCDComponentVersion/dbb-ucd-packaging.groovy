@@ -157,7 +157,27 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 	executes.each{ execute ->
 		execute.getOutputs().each{ output ->
 			def (ds,member) = getDatasetName(output.dataset)
-			container(name:ds, type:"PDS"){
+			// define container element
+			if (properties.ucdV2PackageFormat.toBoolean()) {
+				// ucd package format v2 requres to set a deployType at container level
+				def containerDeployType
+				def lastLevelQual = ds.substring(ds.lastIndexOf('.'))
+				if (properties.containerMapping) { 
+					// obtain the deployType setting from the property
+					cMapping = evaluate(properties.containerMapping)
+					containerDeployType = cMapping[lastLevelQual]
+				} else {
+					// set the last level qualifier as deployType
+					containerDeployType = lastLevelQual
+				}
+				// create container element with deployType
+				container(name:ds, type:"PDS", deployType:containerDeployType)
+			}else { 
+				// create container without deployType attribute
+				container(name:ds, type:"PDS")
+			}
+			// define resource elements
+			{
 				resource(name:member, type:"PDSMember", deployType:output.deployType){
 					// add any custom properties needed
 					property(name:"buildcommand", value:execute.getCommand())
@@ -320,7 +340,9 @@ def parseInput(String[] cliArgs){
 	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
 	cli.pURL(longOpt:'pipelineURL', args:1,'URL to the pipeline build result (Optional)')
 	cli.g(longOpt:'gitBranch', args:1,'Name of the git branch (Optional)')
-	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional)')
+	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional). ** Deprecated, please use cli option packagingPropFiles**')
+	cli.ppf(longOpt:'packagingPropFiles', args:1,'Comma separated list of property files to configure the dbb-ucd-packaging script')
+
 
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
@@ -349,6 +371,16 @@ def parseInput(String[] cliArgs){
 		}
 	}
 
+	// load configuration files
+	if (opts.ppf){
+		opts.ppf.split(",").each { propertyFile ->
+			def repositoryPropFile = new File(propertyFile)
+			if (repositoryPropFile.exists()){
+				repositoryPropFile.withInputStream {  properties.load(it) }
+			}
+		}
+	}
+
 	// set command line arguments
 	if (opts.w) properties.workDir = opts.w
 	if (opts.b) properties.buztoolPath = opts.b
@@ -360,8 +392,8 @@ def parseInput(String[] cliArgs){
 	if (opts.g) properties.gitBranch = opts.g
 	properties.preview = (opts.p) ? 'true' : 'false'
 	properties.ucdV2PackageFormat = (opts.zpv) ? 'true' : 'false'
-	
-	
+
+
 	// validate required properties
 	try {
 		assert properties.buztoolPath : "Missing property buztool script path"
