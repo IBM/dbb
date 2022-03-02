@@ -340,7 +340,7 @@ def parseInput(String[] cliArgs){
 	cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file')
 	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
-	cli.zpv(longOpt:'ucdV2PackageFormat', 'Invoke buztool with the buztool package version v2.')
+	cli.zpv2(longOpt:'ucdV2PackageFormat', 'Invoke buztool with the buztool package version v2.')
 	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
 	cli.pURL(longOpt:'pipelineURL', args:1,'URL to the pipeline build result (Optional)')
 	cli.g(longOpt:'gitBranch', args:1,'Name of the git branch (Optional)')
@@ -395,7 +395,7 @@ def parseInput(String[] cliArgs){
 	if (opts.pURL) properties.pipelineURL = opts.pURL
 	if (opts.g) properties.gitBranch = opts.g
 	properties.preview = (opts.p) ? 'true' : 'false'
-	properties.ucdV2PackageFormat = (opts.zpv) ? 'true' : 'false'
+	properties.ucdV2PackageFormat = (opts.zpv2) ? 'true' : 'false'
 
 
 	// validate required properties
