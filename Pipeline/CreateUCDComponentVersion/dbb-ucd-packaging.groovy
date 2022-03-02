@@ -162,7 +162,7 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			if (properties.ucdV2PackageFormat.toBoolean()) {
 				// ucd package format v2 requres to set a deployType at container level
 				def containerDeployType
-				def lastLevelQual = ds.substring(ds.lastIndexOf('.'))
+				def lastLevelQual = ds.tokenize('.').last()
 				if (properties.containerMapping) {
 					// obtain the deployType setting from the property
 					cMapping = evaluate(properties.containerMapping)
