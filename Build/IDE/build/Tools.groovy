@@ -4,6 +4,7 @@ import com.ibm.dbb.build.html.*
 import com.ibm.dbb.repository.*
 import com.ibm.dbb.dependency.*
 import java.io.*
+import groovy.cli.commons.*
 
 def parseArgs(String[] cliArgs) {
 	def cli = new CliBuilder(usage: 'build.groovy [options] buildfile')

@@ -2,13 +2,10 @@
 //* usedel:                                                                               *
 //*         Remove a user from the system                                                 *
 //*                                                                                       *
-//* Dependencies:                                                                         *
-//*              apache commons cli (https://commons.apache.org/proper/commons-cli/)      *
-//*              this not only handles the arguments for the add, it does the documention *
 //*                                                                                       *
 //*****************************************************************************************
 import com.ibm.dbb.build.*
-import org.apache.commons.cli.*
+import groovy.cli.commons.*
 
 // Take input
 def cli= new CliBuilder(usage: 'userdel [options] userid ')

@@ -2,9 +2,6 @@
 //* useradd:                                                                              *
 //*         Add a user to the system                                                      *
 //*                                                                                       *
-//* Dependencies:                                                                         *
-//*              apache commons cli (https://commons.apache.org/proper/commons-cli/)      *
-//*              this not only handles the arguments for the add, it does the documention *
 //*                                                                                       *
 //* Additional Components:                                                                *
 //*              useradd.properties - a file that holds the defaults for adding a user    *
@@ -12,7 +9,7 @@
 //*                                   defaults for different user types.                  *
 //*****************************************************************************************
 import com.ibm.dbb.build.*
-import org.apache.commons.cli.*
+import groovy.cli.commons.*
 
 // Take input and define any overrides to the defaults
 def cli= new CliBuilder(usage: 'useradd -u userid -n "users name"')
