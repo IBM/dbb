@@ -131,15 +131,19 @@ if (executes.size() == 0) {
 }
 else {
 	// Read buildInfo to obtain build information
-
 	def buildInfo = buildReport.getRecords().findAll{
 		try {
 			it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT
 		} catch (Exception e){}
 	}
 
-	def String tarFileLabel = buildInfo[0].label
-	def String tarFileName = (props.tarFileName) ? props.tarFileName : "${buildInfo[0].label}.tar"
+  // default label when no name is passed via cli nor applicable from build report
+	def String tarFileLabel = "fullBuild"
+	if (buildInfo.size() != 0) {
+		tarFileLabel = buildInfo[0].label
+	}
+
+	def String tarFileName = (props.tarFileName) ? props.tarFileName : "${tarFileLabel}.tar"
 
 	//Create a temporary directory on zFS to copy the load modules from data sets to
 	def tempLoadDir = new File("$props.workDir/tempPackageDir")
