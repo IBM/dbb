@@ -111,15 +111,32 @@ executes.each {
 	it.getOutputs().removeAll(unwantedOutputs)
 }
 
+// deletions
+def deletions= buildReport.getRecords().findAll{
+	try {
+		it.getType()==DefaultRecordFactory.TYPE_DELETE
+	} catch (Exception e){
+		println e
+	}
+}
+
 def count = 0
+def deletionCount = 0
 executes.each { count += it.getOutputs().size() }
+deletions.each { deletionCount += it.getOutputs().size()}
+
+if ( count + deletionCount == 0 ) {
 
 if ( count == 0 ) {
 	println("** No items to deploy. Skipping ship list generation.")
 	System.exit(0)
 }
 
+println("** Deployable files")
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+
+println("** Deleted files")
+deletions.each { it.getOutputs().each { println("   ${it.dataset}")}}
 
 // get DBB.BuildResultProperties records stored as generic DBB Record, see https://github.com/IBM/dbb-zappbuild/pull/95
 def buildResultRecord = buildReport.getRecords().find{
@@ -236,6 +253,16 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 							}
 						}
 					}
+				}
+			}
+		}
+	}
+	deletions.each{ deletion ->
+		deletion.getOutputs().each { output ->
+			def (ds,member) = getDatasetName(output.dataset)
+			deleted{
+				container(name:ds, type:"PDS"){
+					resource(name:member, type:"PDSMember")
 				}
 			}
 		}
