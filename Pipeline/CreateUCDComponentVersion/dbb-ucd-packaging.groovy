@@ -126,8 +126,6 @@ executes.each { count += it.getOutputs().size() }
 deletions.each { deletionCount += it.getOutputs().size()}
 
 if ( count + deletionCount == 0 ) {
-
-if ( count == 0 ) {
 	println("** No items to deploy. Skipping ship list generation.")
 	System.exit(0)
 }
