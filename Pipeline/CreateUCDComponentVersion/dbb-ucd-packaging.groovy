@@ -136,7 +136,7 @@ println("** Deployable files")
 executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
 
 println("** Deleted files")
-deletions.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it.dataset}")}}
+deletions.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
 
 // get DBB.BuildResultProperties records stored as generic DBB Record, see https://github.com/IBM/dbb-zappbuild/pull/95
 def buildResultRecord = buildReport.getRecords().find{
