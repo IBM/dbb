@@ -114,7 +114,8 @@ executes.each {
 // deletions
 def deletions= buildReport.getRecords().findAll{
 	try {
-		it.getType()==DefaultRecordFactory.TYPE_DELETE
+		// Obtain delete records, which got added by zAppBuild
+		it.getType()=="DELETE_RECORD"
 	} catch (Exception e){
 		println e
 	}
@@ -255,12 +256,19 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			}
 		}
 	}
+	// document deletions
+	
 	deletions.each{ deletion ->
-		deletion.getOutputs().each { output ->
-			def (ds,member) = getDatasetName(output.dataset)
-			deleted{
-				container(name:ds, type:"PDS"){
-					resource(name:member, type:"PDSMember")
+		if (deletion instanceof AnyTypeRecord) {
+			// obtain the list of build outputs to delete
+			deletedFiles = deletion.getAttributeAsList("deletedBuildOutputs")
+			deletedFiles.each { deletedOutput ->
+				def (ds,member) = getDatasetName(deletedOutput)
+				deleted{
+					// create container
+					container(name:ds, type:"PDS"){
+						resource(name:member, type:"PDSMember")
+					}
 				}
 			}
 		}
