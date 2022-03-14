@@ -260,16 +260,14 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 	// document deletions
 	
 	deletions.each{ deletion ->
-		if (deletion instanceof AnyTypeRecord) {
-			// obtain the list of build outputs to delete
-			deletedFiles = deletion.getAttributeAsList("deletedBuildOutputs")
-			deletedFiles.each { deletedOutput ->
-				def (ds,member) = getDatasetName(deletedOutput)
-				deleted{
-					// create container
-					container(name:ds, type:"PDS"){
-						resource(name:member, type:"PDSMember")
-					}
+		// obtain the list of build outputs to delete
+		deletedFiles = deletion.getAttributeAsList("deletedBuildOutputs")
+		deletedFiles.each { deletedOutput ->
+			def (ds,member) = getDatasetName(deletedOutput)
+			deleted{
+				// create container
+				container(name:ds, type:"PDS"){
+					resource(name:member, type:"PDSMember")
 				}
 			}
 		}
