@@ -93,7 +93,7 @@ optional cli options :
                                                 the dbb-ucd-packaging script
 
  -rpFile,--repositoryInfoPropertiesFile <arg>   Absolute path to the property file containing
-                                                 URL prefixes to git provider (** Deprecated,
+                                                URL prefixes to git provider (** Deprecated,
                                                 please use cli option --packagingPropFiles **)
 
  -pURL,--pipelineURL <arg>                      URL to the pipeline build result
