@@ -19,10 +19,10 @@ Process the DBB Build report
 
 Generates the UCD shiplist.xml file and invokes UCD packaging step
 - Write the shiplist.xml to the build directory
-	- Adds links back to the ci pipeline build to UCD component version (Optional).
-	- Adds UCD properties for bind information captured in the zAppBuild framework through generic PropertyRecords for DBRM members, such as bind_collectionID,bind_packageOwner,bind_qualifier on the element level - see [generateDb2BindInfoRecord configuration in zAppBuild](https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89) (Optional).  
-	- Adds UCD properties to changes (git hashes) within the version control system (Optional).
-	- Adds source input information about the input files from the DBB Dependency Sets.
+    - Adds links back to the ci pipeline build to UCD component version (Optional).
+    - Adds UCD properties for bind information captured in the zAppBuild framework through generic PropertyRecords for DBRM members, such as bind_collectionID,bind_packageOwner,bind_qualifier on the element level - see [generateDb2BindInfoRecord configuration in zAppBuild](https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89) (Optional).  
+    - Adds UCD properties to changes (git hashes) within the version control system (Optional).
+    - Adds source input information about the input files from the DBB Dependency Sets.
 - Invokes buztool.sh on USS with the generated shiplist file and passed cli options.
 ## Invocation samples
 
@@ -65,48 +65,48 @@ $DBB_HOME/bin/groovyz <ussLocation>/dbb-ucd-packaging.groovy [options]
 
 required options:
 
- -b,--buztool <file>           		    		Absolute path to UrbanCode Deploy
-                                    			buztool.sh script
+ -b,--buztool <file>                            Absolute path to UrbanCode Deploy
+                                                buztool.sh script
 
- -c,--component <name>              			Name of the UCD component to
-                                    			create version in
+ -c,--component <name>                          Name of the UCD component to
+                                                create version in
 
- -w,--workDir <dir>                 			Absolute path to the DBB build
-												output directory
+ -w,--workDir <dir>                             Absolute path to the DBB build
+                                                output directory
 
 optional cli options :
 
  buztool parameters : 
 
- -prop,--propertyFile <arg>         			Absolute path to UCD buztool property file. 
-                                    			From UCD v7.1.x and greater it replaces the -ar option.
+ -prop,--propertyFile <arg>                     Absolute path to UCD buztool property file. 
+                                                From UCD v7.1.x and greater it replaces the -ar option.
 
- -ar,--artifactRepository <arg>     			Absolute path to Artifact Respository Server
-                                    			Server connection file (** Deprecated, 
-												Please use --propertyFile instead **)
+ -ar,--artifactRepository <arg>                 Absolute path to Artifact Respository Server
+                                                Server connection file (** Deprecated, 
+                                                Please use --propertyFile instead **)
 
- -v,--versionName <arg>             			Name of the UCD component version
+ -v,--versionName <arg>                         Name of the UCD component version
  
  packaging script parameters : 
 
- -ppf,--packagingPropFiles <arg>				Comma separated list of property files to configure
-												the dbb-ucd-packaging script
+ -ppf,--packagingPropFiles <arg>                Comma separated list of property files to configure
+                                                the dbb-ucd-packaging script
 
- -rpFile,--repositoryInfoPropertiesFile <arg>	Absolute path to the property file containing
- 												URL prefixes to git provider (** Deprecated,
+ -rpFile,--repositoryInfoPropertiesFile <arg>   Absolute path to the property file containing
+                                                 URL prefixes to git provider (** Deprecated,
                                                 please use cli option --packagingPropFiles **)
 
- -pURL,--pipelineURL <arg>	     				URL to the pipeline build result
+ -pURL,--pipelineURL <arg>                      URL to the pipeline build result
 
- -g,--gitBranch <arg>							Name of the git branch
+ -g,--gitBranch <arg>                           Name of the git branch
 
- -p,--preview                       			Preview mode generate shiplist, but do
- 						               			not run buztool.sh
+ -p,--preview                                   Preview mode generate shiplist, but do
+                                                not run buztool.sh
 
 
 utility options :
 
- -help,--help             						Prints this message
+ -help,--help                                   Prints this message
  ```
 
 
