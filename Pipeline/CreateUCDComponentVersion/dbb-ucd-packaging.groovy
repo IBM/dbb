@@ -12,16 +12,16 @@ import groovy.xml.MarkupBuilder
  * usage: dbb-ucd-packaging.groovy [options]
  *
  * options:
- *  -b,--buztool <file>           Absolute path to UrbanCode Deploy buztool.sh script
- *  -w,--workDir <dir>            Absolute path to the DBB build output directory
- *  -c,--component <name>         Name of the UCD component to create version in
- *  -v,--versionName <name>       Name of the UCD component version name (Optional)
- *  -h,--help                     Prints this message
- *  -ar,--artifactRepository      Absolute path to Artifact Respository Server connection file (Optional)
- *  -prop,--propertyFile          Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
- *  -p,--preview                  Preview, not executing buztool.sh
- *  -pURL,--pipelineURL			  URL to the pipeline build result (Optional)
- *  -g,--gitBranch				  Name of the git branch (Optional)
+ *  -b,--buztool <file>           			Absolute path to UrbanCode Deploy buztool.sh script
+ *  -w,--workDir <dir>            			Absolute path to the DBB build output directory
+ *  -c,--component <name>         			Name of the UCD component to create version in
+ *  -v,--versionName <name>       			Name of the UCD component version name (Optional)
+ *  -h,--help                     			Prints this message
+ *  -ar,--artifactRepository      			Absolute path to Artifact Respository Server connection file (Optional)
+ *  -prop,--propertyFile          			Absolute path to UCD buztool property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
+ *  -p,--preview                  			Preview, not executing buztool.sh
+ *  -pURL,--pipelineURL			  			URL to the pipeline build result (Optional)
+ *  -g,--gitBranch				  			Name of the git branch (Optional)
  *  -rpFile,--repositoryInfoPropertiesFile  Absolute path to property file containing URL prefixes to git provider (Optional).
  *
  * notes:
@@ -57,6 +57,11 @@ import groovy.xml.MarkupBuilder
  *  
  * Version 6 - 2021-06
  *  Take into account  https://github.com/IBM/dbb/issues/78
+ * 
+ * Version 7 - 2022-03
+ *  Support for UCD packaging format v2 
+ *  Ability to package deletions
+ *  
  */
 
 // start create version
@@ -258,7 +263,6 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 		}
 	}
 	// document deletions
-	
 	deletions.each{ deletion ->
 		// obtain the list of build outputs to delete
 		deletedFiles = deletion.getAttributeAsList("deletedBuildOutputs")
@@ -369,15 +373,15 @@ def parseInput(String[] cliArgs){
 	cli.b(longOpt:'buztool', args:1, argName:'file', 'Absolute path to UrbanCode Deploy buztool.sh script')
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
 	cli.c(longOpt:'component', args:1, argName:'name', 'Name of the UCD component to create version in')
-	cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file')
-	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option')
+	cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file (** Deprecated, please use --propertyFile instead **)')
+	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to UCD buztool property file (Optional). From UCD v7.1.x and greater it replaces the -ar option')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
 	cli.zpv2(longOpt:'ucdV2PackageFormat', 'Invoke buztool with the buztool package version v2.')
 	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
 	cli.pURL(longOpt:'pipelineURL', args:1,'URL to the pipeline build result (Optional)')
 	cli.g(longOpt:'gitBranch', args:1,'Name of the git branch (Optional)')
-	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional). ** Deprecated, please use cli option packagingPropFiles**')
-	cli.ppf(longOpt:'packagingPropFiles', args:1,'Comma separated list of property files to configure the dbb-ucd-packaging script')
+	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional). (** Deprecated, please use cli option --packagingPropFiles**)')
+	cli.ppf(longOpt:'packagingPropFiles', args:1,'Comma separated list of property files to configure the dbb-ucd-packaging script (Optional)')
 
 
 	cli.h(longOpt:'help', 'Prints this message')
