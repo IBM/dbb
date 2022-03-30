@@ -8,10 +8,10 @@ These information can be leveraged by developers as part their Unit Testing proc
 
 The script uses the Code Coverage APIs, which is a set of Java API to parse the results contained in the CCZIP file created by the IBM Debug Code Coverage feature.
 The Code Coverage APIs are described in a JAR file, that is shipped with IBM Debug (in the plugins subfolder of the IBM Debug installation on USS).
-The required `ccapi.jar` file is packaged in a JAR file that must first be extracted (this JAR file is called com.ibm.debug.pdt.codecoverage.core.results_10.1.1.jar for IDz 15.0.3). Once extracted, the `ccapi.jar` must be made available (typically through to the Java classpath), to be correctly imported by the CodeCoverageReport script.
+The required `ccapi.jar` file is packaged in a JAR file that must first be extracted (this JAR file is called com.ibm.debug.pdt.codecoverage.core.results_10.1.1.jar for IDz 15.0.3). Once extracted, the `ccapi.jar` must be made available (typically through to the Java classpath), to be correctly imported by the AnalyzeCodeCoverageReport script.
 The script was tested on z/OS (Unix System Services).
 
-To run the CodeCoverageReport script, a file or a list of comma-separated files must be provided through the `-f`/`--files` parameter. This file or these files must be CCZIP files created by the IBM Debug Code Coverage feature.
+To run the AnalyzeCodeCoverageReport script, a file or a list of comma-separated files must be provided through the `-f`/`--files` parameter. This file or these files must be CCZIP files created by the IBM Debug Code Coverage feature.
 If multiple files are provided, the Code Coverage Percentage is printed for each module found, and the combined Code Coverage Percentage is printed as the "Global Code Coverage Percentage".
 
 ### Invocation example (for the Code Coverage data collected for the "DFH0XVDS" module):
