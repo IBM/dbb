@@ -57,7 +57,29 @@ import groovy.xml.MarkupBuilder
  *  
  * Version 6 - 2021-06
  *  Take into account  https://github.com/IBM/dbb/issues/78
+ *  
+ * Version 7 - 2022-03 
+ *  Added functionality for --buildReportOrder CLI, allowing multiple build reports to be processed at once
  */
+
+
+/*
+Sample CLI's, directories may need to be updated to your local machine 
+
+groovyz dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties --preview
+	single build report, with preview 
+
+groovyz dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --buildReportOrder /u/jnemec/sample_buildreports/BuildReport_1.json,/u/jnemec/sample_buildreports/BuildReport_2.json --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties --preview
+	many build reports, BuildReport_1.json then BuildReport_2.json, with preview 
+
+groovyz dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --buildReportOrder /u/jnemec/sample_buildreports/BuildReport_2.json,/u/jnemec/sample_buildreports/BuildReport_1.json --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties --preview
+	many build reports, BuildReport_2.json then BuildReport_1.json. with preview 
+
+groovyz dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --buildReportOrder /u/jnemec/sample_buildreports/BuildReport_1.json,/u/jnemec/sample_buildreports/BuildReport_2.json --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion_Demo_2 --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties
+	many build reports, BuildReport_1.json then BuildReport_2.json, without preview 
+
+*/
+
 
 // start create version
 def properties = parseInput(args)
@@ -69,70 +91,66 @@ properties.each{k,v->
 	println "   $k -> $v"
 }
 
-// read build report data
-println("** Read build report data from $properties.workDir/BuildReport.json")
-def jsonOutputFile = new File("${properties.workDir}/BuildReport.json")
+// initializing variables for later use. datasetToBuildReport and datasetToExecute are initially populated individually, then merged together into executeToBuildReport
+Map<String,String> datasetToBuildReport = new HashMap<String,String>()
+Map<String,String> datasetToExecute = new HashMap<String,String>()
+Map<String,String> executeToBuildReport = new HashMap<String,String>()
 
-if(!jsonOutputFile.exists()){
-	println("** Build report data at $properties.workDir/BuildReport.json not found")
-	System.exit(1)
+// Go through each .json file given and populate variables
+properties.buildReportOrder.each{ myFile ->
+	println(myFile)
+	def buildReport = BuildReport.parse(new FileInputStream(myFile))
+	
+	// parse build report to find the build result meta info
+	def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0]
+	def buildResultRecord = buildReport.getRecords().find{
+		try {
+			it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
+		} catch (Exception e){}
+	}
+	
+	// finds all the build outputs with a deployType
+	def executes= buildReport.getRecords().findAll{
+		try {
+			(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
+					!it.getOutputs().isEmpty()
+		} catch (Exception e){}
+	}
+	
+	// Remove excluded outputs
+	executes.each {
+		def unwantedOutputs =  it.getOutputs().findAll{ o ->
+			o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
+		}
+		it.getOutputs().removeAll(unwantedOutputs)
+	}
+	
+	// populate variables 
+	def count = 0
+	executes.each { myExecute ->
+		if(myExecute.getOutputs().isEmpty() != true) {
+			datasetToBuildReport.put(myExecute.getOutputs().dataset,myFile)
+			datasetToExecute.put(myExecute.getOutputs().dataset,myExecute)
+			count += myExecute.getOutputs().size() 
+		}	
+	}
+
+	if ( count == 0 ) {
+		println("** No items to deploy. Skipping ship list generation.")
+	}
+	
+	executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+
 }
 
-def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
+// merge hashmaps
+datasetToExecute.keySet().each { dataset ->
+	executeToBuildReport.put(datasetToExecute.get(dataset), datasetToBuildReport.get(dataset))
+}
 
-// parse build report to find the build result meta info
-def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0];
-
-// parse build report to find the build outputs to be deployed.
-println("** Find deployable outputs in the build report ")
-
-// the following example finds all the build outputs with and without deployType
-//def executes= buildReport.getRecords().findAll{
-//	it.getType()==DefaultRecordFactory.TYPE_EXECUTE
-//}
-
-// Print warning, that extraction of COPY_TO_PDS records are not supported with older versions of the dbb toolkit.
 dbbVersion = new VersionInfo().getVersion()
 println "   * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version $dbbVersion."
-
-// finds all the build outputs with a deployType
-def executes= buildReport.getRecords().findAll{
-	try {
-		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
-				!it.getOutputs().isEmpty()
-	} catch (Exception e){}
-}
-
-// Remove excluded outputs
-executes.each {
-	def unwantedOutputs =  it.getOutputs().findAll{ o ->
-		o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
-	}
-	it.getOutputs().removeAll(unwantedOutputs)
-}
-
-def count = 0
-executes.each { count += it.getOutputs().size() }
-
-if ( count == 0 ) {
-	println("** No items to deploy. Skipping ship list generation.")
-	System.exit(0)
-}
-
-executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
-
-// get DBB.BuildResultProperties records stored as generic DBB Record, see https://github.com/IBM/dbb-zappbuild/pull/95
-def buildResultRecord = buildReport.getRecords().find{
-	try {
-		it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
-	} catch (Exception e){}
-}
-
-def buildResultProperties = null
-
-if(buildResultRecord!=null){
-	buildResultProperties = buildResultRecord.getProperties()
-}
+// read build report data
 
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
@@ -141,27 +159,42 @@ def writer = new StringWriter()
 writer.write("<?xml version=\"1.0\" encoding=\"CP037\"?>\n");
 def xml = new MarkupBuilder(writer)
 xml.manifest(type:"MANIFEST_SHIPLIST"){
-	//top level property will be added as version properties
-	//requires UCD v6.2.6 and above
-	// Url to DBB Build result
-	property(name : "dbb-buildResultUrl", value : buildResult.getUrl())
-	// Url to CI pipeline
-	if (properties.pipelineURL) property(name : "ci-pipelineUrl", value : properties.pipelineURL )
-	// Git branch
-	if (properties.gitBranch) property(name : "ci-gitBranch", value : properties.gitBranch )
-	// Populate build result properties
-	if (buildResultProperties != null) buildResultProperties.each{
-		property(name:it.key, value:it.value)
-	}
-	//iterate through the outputs and add container and resource elements
-	executes.each{ execute ->
+	
+	// generate container sections of the shiplist.xml file
+	executeToBuildReport.each{ execute, myBuildReport ->
+	
+		// goes from just the file name to the various required classes
+		buildReport = BuildReport.parse(new FileInputStream(myBuildReport))
+		def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0]
+		def buildResultRecord = buildReport.getRecords().find{
+			try {
+				it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
+			} catch (Exception e){}
+		}	
+		def buildResultProperties = null
+		if(buildResultRecord!=null){
+			buildResultProperties = buildResultRecord.getProperties()
+		}
+		
+		// actually generate each container to add to the shiplist.xml file
 		execute.getOutputs().each{ output ->
 			def (ds,member) = getDatasetName(output.dataset)
 			container(name:ds, type:"PDS"){
 				resource(name:member, type:"PDSMember", deployType:output.deployType){
-					// add any custom properties needed
+					
+					// Url to DBB Build result
+					property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+					// Url to CI pipeline
+					if (properties.pipelineURL) property(name : "ci-pipelineUrl", value : properties.pipelineURL )
+					// Git branch
+					if (properties.gitBranch) property(name : "ci-gitBranch", value : properties.gitBranch )
+					// Populate build result properties
+					if (buildResultProperties != null) buildResultProperties.each{
+						property(name:it.key, value:it.value)
+					}
+					
 					property(name:"buildcommand", value:execute.getCommand())
-
+					
 					// Only TYPE_EXECUTE Records carry options
 					if (execute.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:execute.getOptions())
 					// Sample to add additional properties. Here: adding db2 properties for a DBRM
@@ -174,10 +207,11 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 							// Iterate Properties
 							(propertyRec.getProperties()).each {
 								property(name:"$it.key", value:it.value)
-
 							}
 						}
 					}
+					
+					// add githash to container 
 					def githash = "" // set empty
 					if (buildResultProperties != null){
 						// get git references from build properties
@@ -191,6 +225,7 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 							if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
 						}
 					}
+							
 					// add source information in the input column
 					inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
 					inputs(url : "${inputUrl}"){
@@ -217,6 +252,7 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 		}
 	}
 }
+
 println("** Write ship list file to  $properties.workDir/shiplist.xml")
 def shiplistFile = new File("${properties.workDir}/shiplist.xml")
 shiplistFile.text = writer
@@ -262,8 +298,6 @@ println cmdStr
 
 // execute command, if no preview is set
 if (!properties.preview.toBoolean()){
-
-
 	println("** Create version by running UCD buztool")
 
 	StringBuffer response = new StringBuffer()
@@ -300,6 +334,7 @@ def getDatasetName(String fullname){
 	return [ds, member];
 }
 
+
 def parseInput(String[] cliArgs){
 	def cli = new CliBuilder(usage: "deploy.groovy [options]")
 	cli.b(longOpt:'buztool', args:1, argName:'file', 'Absolute path to UrbanCode Deploy buztool.sh script')
@@ -312,7 +347,8 @@ def parseInput(String[] cliArgs){
 	cli.pURL(longOpt:'pipelineURL', args:1,'URL to the pipeline build result (Optional)')
 	cli.g(longOpt:'gitBranch', args:1,'Name of the git branch (Optional)')
 	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional)')
-
+	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'List of build reports in order of processing ')
+	
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
 	if (opts.h) { // if help option used, print usage and exit
@@ -339,7 +375,7 @@ def parseInput(String[] cliArgs){
 			repositoryPropFile.withInputStream {  properties.load(it) }
 		}
 	}
-
+	
 	// set command line arguments
 	if (opts.w) properties.workDir = opts.w
 	if (opts.b) properties.buztoolPath = opts.b
@@ -349,6 +385,11 @@ def parseInput(String[] cliArgs){
 	if (opts.v) properties.versionName = opts.v
 	if (opts.pURL) properties.pipelineURL = opts.pURL
 	if (opts.g) properties.gitBranch = opts.g
+	if (opts.bO) {
+		properties.buildReportOrder = opts.bO.split(',')
+	} else {
+		properties.buildReportOrder = [opts.w + "/BuildReport.json"]
+	}
 	properties.preview = (opts.p) ? 'true' : 'false'
 
 	// validate required properties
@@ -362,3 +403,4 @@ def parseInput(String[] cliArgs){
 	}
 	return properties
 }
+
