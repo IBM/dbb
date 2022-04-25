@@ -20,8 +20,8 @@ import groovy.xml.MarkupBuilder
  *  -ar,--artifactRepository      Absolute path to Artifact Respository Server connection file (Optional)
  *  -prop,--propertyFile          Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
  *  -p,--preview                  Preview, not executing buztool.sh
- *  -pURL,--pipelineURL			  URL to the pipeline build result (Optional)
- *  -g,--gitBranch				  Name of the git branch (Optional)
+ *  -pURL,--pipelineURL           URL to the pipeline build result (Optional)
+ *  -g,--gitBranch                Name of the git branch (Optional)
  *  -rpFile,--repositoryInfoPropertiesFile  Absolute path to property file containing URL prefixes to git provider (Optional).
  *
  * notes:
@@ -63,25 +63,9 @@ import groovy.xml.MarkupBuilder
  */
 
 
-/*
-Sample CLI's, directories may need to be updated to your local machine 
-
-groovyz dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties --preview
-	single build report, with preview 
-
-groovyz dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --buildReportOrder /u/jnemec/sample_buildreports/BuildReport_1.json,/u/jnemec/sample_buildreports/BuildReport_2.json --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties --preview
-	many build reports, BuildReport_1.json then BuildReport_2.json, with preview 
-
-groovyz dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --buildReportOrder /u/jnemec/sample_buildreports/BuildReport_2.json,/u/jnemec/sample_buildreports/BuildReport_1.json --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties --preview
-	many build reports, BuildReport_2.json then BuildReport_1.json. with preview 
-
-groovyz dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --buildReportOrder /u/jnemec/sample_buildreports/BuildReport_1.json,/u/jnemec/sample_buildreports/BuildReport_2.json --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion_Demo_2 --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties
-	many build reports, BuildReport_1.json then BuildReport_2.json, without preview 
-
-*/
+// groovyz dbb-ucd-packaging-merged.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/jnemec/sample_buildreports --buildReportOrder /u/jnemec/sample_buildreports/BuildReport_1.json,/u/jnemec/sample_buildreports/BuildReport_2.json,/u/jnemec/sample_buildreports/BuildReport_3.json --component retirementCalculator-jn --prop /var/ucd-agent/conf/artifactory/artifactoryRetirementCalcJN.properties --versionName MyVersion --repositoryInfoPropertiesFile /u/jnemec/sample_buildreports/retirementCalulcatur.packaging.properties --preview
 
 
-// start create version
 def properties = parseInput(args)
 def startTime = new Date()
 properties.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
@@ -91,63 +75,77 @@ properties.each{k,v->
 	println "   $k -> $v"
 }
 
-// initializing variables for later use. datasetToBuildReport and datasetToExecute are initially populated individually, then merged together into executeToBuildReport
-Map<String,String> datasetToBuildReport = new HashMap<String,String>()
-Map<String,String> datasetToExecute = new HashMap<String,String>()
-Map<String,String> executeToBuildReport = new HashMap<String,String>()
+/*
+	<Dataset, {buildReport:Executes}> 
+	
+	Dataset as key, then buildReport and Executes as a key-value pair as value 
+	
+	this'll allow us to go from generating the hashmap while reading in the data 
+	to generating the shiplist from the hashmap right away, without having to process the hashmap in between 
+ 
+*/
+Map<String, Map> myMap = new HashMap<String, Map>()
 
-// Go through each .json file given and populate variables
-properties.buildReportOrder.each{ myFile ->
+properties.buildReportOrder.each{ myFile -> 
 	println(myFile)
+
 	def buildReport = BuildReport.parse(new FileInputStream(myFile))
 	
-	// parse build report to find the build result meta info
-	def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0]
-	def buildResultRecord = buildReport.getRecords().find{
-		try {
-			it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
-		} catch (Exception e){}
-	}
-	
-	// finds all the build outputs with a deployType
-	def executes= buildReport.getRecords().findAll{
+	def executes = buildReport.getRecords().findAll{
 		try {
 			(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
-					!it.getOutputs().isEmpty()
-		} catch (Exception e){}
+			!it.getOutputs().isEmpty()
+		} catch (Exception e) {}
 	}
 	
-	// Remove excluded outputs
+	//removes all outputs of deploytype ZUNIT-TESTCASE or null
 	executes.each {
-		def unwantedOutputs =  it.getOutputs().findAll{ o ->
+		def unwantedOutputs = it.getOutputs().findAll{ o ->
 			o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
 		}
 		it.getOutputs().removeAll(unwantedOutputs)
 	}
 	
-	// populate variables 
-	def count = 0
-	executes.each { myExecute ->
-		if(myExecute.getOutputs().isEmpty() != true) {
-			datasetToBuildReport.put(myExecute.getOutputs().dataset,myFile)
-			datasetToExecute.put(myExecute.getOutputs().dataset,myExecute)
-			count += myExecute.getOutputs().size() 
-		}	
-	}
-
-	if ( count == 0 ) {
-		println("** No items to deploy. Skipping ship list generation.")
+	
+	
+	
+	def deletions = buildReport.getRecords().findAll{
+		try {
+			// Obtain delete records, which got added by zAppBuild
+			it.getType()=="DELETE_RECORD"
+		} catch (Exception e){
+			println e
+		}
 	}
 	
-	executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
-
+	
+	def deletionCount = 0
+	
+	deletions.each { deletionCount += it.getAttributeAsList("deletedBuildOutputs").size()}
+	
+	def count = 0
+	executes.each{ myExecute ->
+		if(myExecute.getOutputs().isEmpty() != true) {
+			count += myExecute.getOutputs().size()
+			myMap.put(myExecute.getOutputs().dataset, [buildReport, myExecute])
+		}
+		
+	}
+	
+	if ( count + deletionCount == 0 ) {
+		println("** No items to deploy. Skipping ship list generation.")
+	}
 }
 
-// merge hashmaps
-datasetToExecute.keySet().each { dataset ->
-	executeToBuildReport.put(datasetToExecute.get(dataset), datasetToBuildReport.get(dataset))
+/*
+
+myMap.keySet().each{ myDataset ->
+	println(myDataset)
+	println(myMap.get(myDataset)[0])
+	println(myMap.get(myDataset)[1])
 }
 
+*/
 dbbVersion = new VersionInfo().getVersion()
 println "   * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version $dbbVersion."
 // read build report data
@@ -159,12 +157,11 @@ def writer = new StringWriter()
 writer.write("<?xml version=\"1.0\" encoding=\"CP037\"?>\n");
 def xml = new MarkupBuilder(writer)
 xml.manifest(type:"MANIFEST_SHIPLIST"){
-	
-	// generate container sections of the shiplist.xml file
-	executeToBuildReport.each{ execute, myBuildReport ->
-	
-		// goes from just the file name to the various required classes
-		buildReport = BuildReport.parse(new FileInputStream(myBuildReport))
+
+	myMap.each{ dataset, info ->
+		buildReport = info[0]
+		execute = info[1]
+		
 		def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0]
 		def buildResultRecord = buildReport.getRecords().find{
 			try {
@@ -176,10 +173,9 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			buildResultProperties = buildResultRecord.getProperties()
 		}
 		
-		// actually generate each container to add to the shiplist.xml file
 		execute.getOutputs().each{ output ->
-			def (ds,member) = getDatasetName(output.dataset)
-			container(name:ds, type:"PDS"){
+			def (ds, member) = getDatasetName(output.dataset)
+			container(name: ds, type:"PDS"){
 				resource(name:member, type:"PDSMember", deployType:output.deployType){
 					
 					// Url to DBB Build result
@@ -189,8 +185,13 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 					// Git branch
 					if (properties.gitBranch) property(name : "ci-gitBranch", value : properties.gitBranch )
 					// Populate build result properties
-					if (buildResultProperties != null) buildResultProperties.each{
-						property(name:it.key, value:it.value)
+					if (buildResultProperties != null) {						
+						buildResultProperties.each{
+							//not all properties need to be included in the shiplist
+							//can ignore files processed 
+							//can ignore full build / impact build
+							property(name:it.key, value:it.value)
+						}
 					}
 					
 					property(name:"buildcommand", value:execute.getCommand())
@@ -210,7 +211,6 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 							}
 						}
 					}
-					
 					// add githash to container 
 					def githash = "" // set empty
 					if (buildResultProperties != null){
@@ -225,7 +225,6 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 							if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
 						}
 					}
-							
 					// add source information in the input column
 					inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
 					inputs(url : "${inputUrl}"){
@@ -253,154 +252,145 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 	}
 }
 
-println("** Write ship list file to  $properties.workDir/shiplist.xml")
-def shiplistFile = new File("${properties.workDir}/shiplist.xml")
-shiplistFile.text = writer
-
-// assemble and run UCD buztool command to create a version. An example of the command is like below
-// /opt/ibm-ucd/agent/bin/buztool.sh createzosversion -c MYCOMP -s /var/dbb/workDir/shiplist.xml
-// command parameters can be found at
-// https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_runtools_uss.html
 
 def cmd = [
-	properties.buztoolPath,
-	"createzosversion",
-	"-c",
-	properties.component,
-	"-s",
-	"$properties.workDir/shiplist.xml",
-	//requires UCD v6.2.6 and above
-	"-o",
-	"${properties.workDir}/buztool.output"
-]
-// set artifactRepository option if specified
-if (properties.artifactRepositorySettings) {
-	cmd << "-ar"
-	cmd << properties.artifactRepositorySettings
-}
+       	properties.buztoolPath,
+       	"createzosversion",
+       	"-c",
+       	properties.component,
+       	"-s",
+       	"$properties.workDir/shiplist.xml",
+       	//requires UCD v6.2.6 and above
+       	"-o",
+       	"${properties.workDir}/buztool.output"
+       ]
+       // set artifactRepository option if specified
+       if (properties.artifactRepositorySettings) {
+       	cmd << "-ar"
+       	cmd << properties.artifactRepositorySettings
+       }
 
-// set propertyFile option if specified
-if (properties.propertyFileSettings) {
-	cmd << "-prop"
-	cmd << properties.propertyFileSettings
-}
+       // set propertyFile option if specified
+       if (properties.propertyFileSettings) {
+       	cmd << "-prop"
+       	cmd << properties.propertyFileSettings
+       }
 
-//set component version name if specified
-if(properties.versionName){
-	cmd << "-v"
-	cmd <<  properties.versionName
-}
+       //set component version name if specified
+       if(properties.versionName){
+       	cmd << "-v"
+       	cmd <<  properties.versionName
+       }
 
-def cmdStr = "";
-cmd.each{ cmdStr = cmdStr + it + " "}
-println("** Following UCD buztool cmd will be invoked")
-println cmdStr
+       def cmdStr = "";
+       cmd.each{ cmdStr = cmdStr + it + " "}
+       println("** Following UCD buztool cmd will be invoked")
+       println cmdStr
 
-// execute command, if no preview is set
-if (!properties.preview.toBoolean()){
-	println("** Create version by running UCD buztool")
+       // execute command, if no preview is set
+       if (!properties.preview.toBoolean()){
+       	println("** Create version by running UCD buztool")
 
-	StringBuffer response = new StringBuffer()
-	StringBuffer error = new StringBuffer()
+       	StringBuffer response = new StringBuffer()
+       	StringBuffer error = new StringBuffer()
 
-	def p = cmd.execute()
-	p.waitForProcessOutput(response, error)
-	println(response.toString())
+       	def p = cmd.execute()
+       	p.waitForProcessOutput(response, error)
+       	println(response.toString())
 
-	def rc = p.exitValue();
-	if(rc==0){
-		println("** buztool output properties")
-		def outputProp = new Properties()
-		new File("${properties.workDir}/buztool.output").withInputStream { outputProp.load(it) }
-		outputProp.each{k,v->
-			println "   $k -> $v"
-		}
-	}else{
-		println("*! Error executing buztool\n" +error.toString())
-		System.exit(rc)
-	}
-}
+       	def rc = p.exitValue();
+       	if(rc==0){
+       		println("** buztool output properties")
+       		def outputProp = new Properties()
+       		new File("${properties.workDir}/buztool.output").withInputStream { outputProp.load(it) }
+       		outputProp.each{k,v->
+       			println "   $k -> $v"
+       		}
+       	}else{
+       		println("*! Error executing buztool\n" +error.toString())
+       		System.exit(rc)
+       	}
+       }
 
-/**
- * parse data set name and member name
- * @param fullname e.g. BLD.LOAD(PGM1)
- * @return e.g. (BLD.LOAD, PGM1)
- */
-def getDatasetName(String fullname){
-	def ds,member;
-	def elements =  fullname.split("[\\(\\)]");
-	ds = elements[0];
-	member = elements.size()>1? elements[1] : "";
-	return [ds, member];
-}
+       /**
+        * parse data set name and member name
+        * @param fullname e.g. BLD.LOAD(PGM1)
+        * @return e.g. (BLD.LOAD, PGM1)
+        */
+       def getDatasetName(String fullname){
+       	def ds,member;
+       	def elements =  fullname.split("[\\(\\)]");
+       	ds = elements[0];
+       	member = elements.size()>1? elements[1] : "";
+       	return [ds, member];
+       }
 
 
-def parseInput(String[] cliArgs){
-	def cli = new CliBuilder(usage: "deploy.groovy [options]")
-	cli.b(longOpt:'buztool', args:1, argName:'file', 'Absolute path to UrbanCode Deploy buztool.sh script')
-	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
-	cli.c(longOpt:'component', args:1, argName:'name', 'Name of the UCD component to create version in')
-	cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file')
-	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option')
-	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
-	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
-	cli.pURL(longOpt:'pipelineURL', args:1,'URL to the pipeline build result (Optional)')
-	cli.g(longOpt:'gitBranch', args:1,'Name of the git branch (Optional)')
-	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional)')
-	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'List of build reports in order of processing ')
-	
-	cli.h(longOpt:'help', 'Prints this message')
-	def opts = cli.parse(cliArgs)
-	if (opts.h) { // if help option used, print usage and exit
-		cli.usage()
-		System.exit(0)
-	}
+       def parseInput(String[] cliArgs){
+       	def cli = new CliBuilder(usage: "deploy.groovy [options]")
+       	cli.b(longOpt:'buztool', args:1, argName:'file', 'Absolute path to UrbanCode Deploy buztool.sh script')
+       	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
+       	cli.c(longOpt:'component', args:1, argName:'name', 'Name of the UCD component to create version in')
+       	cli.ar(longOpt:'artifactRepository', args:1, argName:'artifactRepositorySettings', 'Absolute path to Artifactory Server connection file')
+       	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFileSettings', 'Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option')
+       	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the UCD component version')
+       	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
+       	cli.pURL(longOpt:'pipelineURL', args:1,'URL to the pipeline build result (Optional)')
+       	cli.g(longOpt:'gitBranch', args:1,'Name of the git branch (Optional)')
+       	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional)')
+       	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'List of build reports in order of processing ')
+       	
+       	cli.h(longOpt:'help', 'Prints this message')
+       	def opts = cli.parse(cliArgs)
+       	if (opts.h) { // if help option used, print usage and exit
+       		cli.usage()
+       		System.exit(0)
+       	}
 
-	def properties = new Properties()
+       	def properties = new Properties()
 
-	// load workDir from ./build.properties if it exists
-	def buildProperties = new Properties()
-	def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
-	def buildPropFile = new File("$scriptDir/build.properties")
-	if (buildPropFile.exists()){
-		buildPropFile.withInputStream { buildProperties.load(it) }
-		if (buildProperties.workDir != null)
-			properties.workDir = buildProperties.workDir
-	}
+       	// load workDir from ./build.properties if it exists
+       	def buildProperties = new Properties()
+       	def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
+       	def buildPropFile = new File("$scriptDir/build.properties")
+       	if (buildPropFile.exists()){
+       		buildPropFile.withInputStream { buildProperties.load(it) }
+       		if (buildProperties.workDir != null)
+       			properties.workDir = buildProperties.workDir
+       	}
 
-	// load properties from repositoryInfoPropertiesFile
-	if (opts.rpFile){
-		def repositoryPropFile = new File("$opts.rpFile")
-		if (repositoryPropFile.exists()){
-			repositoryPropFile.withInputStream {  properties.load(it) }
-		}
-	}
-	
-	// set command line arguments
-	if (opts.w) properties.workDir = opts.w
-	if (opts.b) properties.buztoolPath = opts.b
-	if (opts.c) properties.component = opts.c
-	if (opts.ar) properties.artifactRepositorySettings = opts.ar
-	if (opts.prop) properties.propertyFileSettings = opts.prop
-	if (opts.v) properties.versionName = opts.v
-	if (opts.pURL) properties.pipelineURL = opts.pURL
-	if (opts.g) properties.gitBranch = opts.g
-	if (opts.bO) {
-		properties.buildReportOrder = opts.bO.split(',')
-	} else {
-		properties.buildReportOrder = [opts.w + "/BuildReport.json"]
-	}
-	properties.preview = (opts.p) ? 'true' : 'false'
+       	// load properties from repositoryInfoPropertiesFile
+       	if (opts.rpFile){
+       		def repositoryPropFile = new File("$opts.rpFile")
+       		if (repositoryPropFile.exists()){
+       			repositoryPropFile.withInputStream {  properties.load(it) }
+       		}
+       	}
+       	
+       	// set command line arguments
+       	if (opts.w) properties.workDir = opts.w
+       	if (opts.b) properties.buztoolPath = opts.b
+       	if (opts.c) properties.component = opts.c
+       	if (opts.ar) properties.artifactRepositorySettings = opts.ar
+       	if (opts.prop) properties.propertyFileSettings = opts.prop
+       	if (opts.v) properties.versionName = opts.v
+       	if (opts.pURL) properties.pipelineURL = opts.pURL
+       	if (opts.g) properties.gitBranch = opts.g
+       	if (opts.bO) {
+       		properties.buildReportOrder = opts.bO.split(',')
+       	} else {
+       		properties.buildReportOrder = [opts.w + "/BuildReport.json"]
+       	}
+       	properties.preview = (opts.p) ? 'true' : 'false'
 
-	// validate required properties
-	try {
-		assert properties.buztoolPath : "Missing property buztool script path"
-		assert properties.workDir: "Missing property build work directory"
-		assert properties.component: "Missing property UCD component"
-	} catch (AssertionError e) {
-		cli.usage()
-		throw e
-	}
-	return properties
-}
-
+       	// validate required properties
+       	try {
+       		assert properties.buztoolPath : "Missing property buztool script path"
+       		assert properties.workDir: "Missing property build work directory"
+       		assert properties.component: "Missing property UCD component"
+       	} catch (AssertionError e) {
+       		cli.usage()
+       		throw e
+       	}
+       	return properties
+       }
