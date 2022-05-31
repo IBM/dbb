@@ -94,6 +94,12 @@ required options:
 
 optional cli options :
 
+ -bo,--buildReportOrder <arg>                   Build a cumulative package based on a comma separated list of
+                                                one or multiple DBB build reports processed in the provided order (Optional).
+
+ -boFile,--buildReportOrderFile <arg>           Build a cumulative package based on an input file that lists
+                                                one or multiple build reports defining the order of processing (Optional).
+
  buztool parameters : 
 
  -prop,--propertyFile <arg>                     Absolute path to UCD buztool property file. 
@@ -119,6 +125,7 @@ optional cli options :
  -prURL,--pullRequestURL <arg>                  URL to the Pull Request
 
  -g,--gitBranch <arg>                           Name of the git branch
+
 
  -p,--preview                                   Preview mode generate shiplist, but do
                                                 not run buztool.sh
