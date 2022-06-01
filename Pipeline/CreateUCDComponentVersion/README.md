@@ -1,4 +1,4 @@
-# IBM UCD Packaging based on IBM DBB Build Report
+# IBM UCD Packaging Based on IBM DBB Build Report
 
 ## Summary
 
@@ -7,12 +7,12 @@ An important step in the pipeline is to generate a deployable package. This samp
 - Generates the UrbanCode Deploy (UCD) shiplist `shiplist.xml` file.
 - Invokes the `buztool.sh` with the appropriate configuration to store the binary package in the artifact repository and to register a new UCD component version.
 
-## High-level Processing flow
+## High-level Processing Flow
 **Initialization**
 - Read command line parameters. 
 - Read application and global properties which are supposed to be passed via `--packagingPropFiles` (Optionally)
 
-**Process the DBB Build report(s)**
+**Process the DBB build report(s)**
 - Either read DBB's `BuildReport.json` from the pipeline work directory, or loop through the list of provided DBB build reports (using the `--buildReportOrder` or `--buildReportOrderFile` option).
 - Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord* (requires at least DBB 1.0.8).
 - Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the BuildReport by zAppBuild leveraging the AnyTypeRecord API that got introduced with IBM Dependency Based Build 1.1.3. (requires at least DBB 1.1.3)
@@ -24,7 +24,7 @@ An important step in the pipeline is to generate a deployable package. This samp
     - Add UCD artifact level properties to trace changes back to the version control system (via Git hashes) (Optional).
     - Add source input information (and optionally links to the version control system) about the input files from the DBB Dependency Sets.
 - Invoke buztool.sh on USS with the generated shiplist file and passed command line interface (CLI) options.
-## Invocation samples
+## Invocation Samples
 
 Example invocation (default):
 ```
@@ -137,7 +137,7 @@ utility options :
  ```
 
 
- ## Sample console log for processing a single BuildReport.json
+ ## Sample Console Log for Processing a Single Build Report
 A sample invocation that stores the application package in an external artifact repository in UCD packaging format v2, including all traceability links:
 
 ```
@@ -183,7 +183,7 @@ A sample invocation that stores the application package in an external artifact 
 ```
 </details>
 
- ## Sample console log for processing multiple BuildReports to assemble a cumulative package.
+ ## Sample Console Log for Processing Multiple Build Reports to Assemble a Cumulative Package
 
 A sample invocation that builds a cumulative package across multiple build reports leveraging the `--buildReportOrder` CLI option:
 
