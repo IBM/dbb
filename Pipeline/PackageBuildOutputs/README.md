@@ -14,7 +14,7 @@ The ArtifactoryHelpers is a very simple implementation sufficient for a show cas
 
 ### Packaging
 
-1. After a successful DBB build, `PackageBuildOutputs.groovy` reads the build report and retrieves all outputs from the build report. It excludes outputs without a `deployType` as well as those labeled `ZUNIT-TESTCASE` 
+1. After a successful DBB build, `PackageBuildOutputs.groovy` reads the build report and retrieves all outputs from the build report. It excludes outputs without a `deployType` as well as those labeled `ZUNIT-TESTCASE`. You can specify multiple build reports using --buildReportOrder and --buildReportOrderFile
 2. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS.  
 3. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
 4. (Optional) Publishes the tar file to the Artifactory repository based on the given configuration using the ArtifactoryHelpers.
@@ -153,8 +153,15 @@ groovyz  /var/jenkins/pipeline/ArtifactoryHelpers.groovy --url http://10.3.20.23
                                                  packaging details. 
                                                                                                                                           
   Optional:
+  -boFile,--buildReportOrderFile <file> 	 Name of the buildReportOrder file, used to specify
+  						 buildReport.json files to be processed.
+						 
+  -b0,--buildReportOrder <buildReports> 	 Additional build reports to be processed. If -boFile and -b0 
+  						 are used together, the build reports from -b0 are 
+						 appended to the build reports from -boFile.
+						 
   -t,--tarFileName <filename>                    Name of the package tar file.
-                                                 (Optional)
+                                                 (Optional unless using --buildReportOrder or --buildReportOrderFile)
   -d,--deployTypes <deployTypes>                 Comma-seperated list of deployTypes
                                                  to filter on the scope of the tar
                                                  file. (Optional)
