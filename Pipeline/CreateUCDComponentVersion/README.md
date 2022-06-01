@@ -3,7 +3,7 @@
 ## Summary
 
 An important step in the pipeline is to generate a deployable package. This sample Groovy script:
-- Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB Build report or multiple Build reports to build a cumulative package across multiple incremental builds. 
+- Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
 - Generates the UrbanCode Deploy (UCD) shiplist `shiplist.xml` file.
 - Invokes the `buztool.sh` with the appropriate configuration to store the binary package in the artifact repository and to register a new UCD component version.
 
@@ -13,7 +13,7 @@ An important step in the pipeline is to generate a deployable package. This samp
 - Read application and global properties which are supposed to be passed via `--packagingPropFiles` (Optionally)
 
 **Process the DBB Build report(s)**
-- Either read DBB's `BuildReport.json` from the pipeline work directory, or loop through the list of provided DBB Build reports (using the `--buildReportOrder` or `--buildReportOrderFile` option).
+- Either read DBB's `BuildReport.json` from the pipeline work directory, or loop through the list of provided DBB build reports (using the `--buildReportOrder` or `--buildReportOrderFile` option).
 - Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord* (requires at least DBB 1.0.8).
 - Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the BuildReport by zAppBuild leveraging the AnyTypeRecord API that got introduced with IBM Dependency Based Build 1.1.3. (requires at least DBB 1.1.3)
 
