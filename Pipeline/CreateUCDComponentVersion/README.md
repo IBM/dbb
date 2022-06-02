@@ -251,7 +251,7 @@ groovyz /var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCD
 /var/ucd-agent/bin/buztool.sh createzosversion2 -c retirementCalculatorGithub -s /var/jenkins/workspace/zunit-retirementCalculator/BUILD-139/build.20220602.100747.007/shiplist.xml -o /var/jenkins/workspace/zunit-retirementCalculator/BUILD-139/build.20220602.100747.007/buztool.output -prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties -v "139_20220602.080800.008" 
 ** Create version by running UCD buztool
 ```
-**generated shiplist file **
+**generated shiplist file**
 
 ```
 <?xml version="1.0" encoding="CP037"?>
