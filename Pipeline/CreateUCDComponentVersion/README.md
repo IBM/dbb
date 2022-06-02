@@ -14,15 +14,17 @@ This section provides a more detailed explanation of how the CreateUCDComponentV
 
 1. **Initialization**
    1. Read command line parameters.
-   1. Read any application and global properties that are passed as a comma-separated list via `--packagingPropFiles` (This is optional for the UCD package format v1, but an required option using the UCD package format v2 - see `--ucdV2PackageFormat`).
+   1. Read any application and global properties files that are passed as a comma-separated list via `--packagingPropFiles`.
+       (This parameter is optional for UCD package format v1, but required when using UCD package format v2 - see `--ucdV2PackageFormat`.)
 
 1. **Process the DBB build report(s)**
    1. Either read DBB's `BuildReport.json` from the pipeline work directory, or loop through the list of provided DBB build reports (using the `--buildReportOrder` or `--buildReportOrderFile` option).
    1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*. (Requires at least DBB 1.0.8.)
    1. Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the build report by zAppBuild. (Requires at least DBB 1.1.3, as the script uses the AnyTypeRecord API introduced in this version.)
 
-1. **Generate the UCD `shiplist.xml` file and invoke UCD packaging step**
-   1. Generating the container records for the UCD shiplist for build outputs in partitioned datasets [IBM Docs UCD Shiplist](https://www.ibm.com/docs/en/urbancode-deploy/7.2.2?topic=SS4GSP_7.2.2/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html). Writes `shiplist.xml` to the build directory:
+1. **Generate the UCD `shiplist.xml` file and invoke the UCD packaging step**
+   1. Generate the container records for the UCD shiplist for build outputs in partitioned datasets. (For more details, see the [IBM Docs UCD Shiplist](https://www.ibm.com/docs/en/urbancode-deploy/7.2.2?topic=SS4GSP_7.2.2/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html) page.)
+   1. Write `shiplist.xml` to the build directory:
       1. (Optional) Add links to the UCD component version for the relevant continuous integration (CI) pipeline build and Git pull request.
       1. (Optional) Add UCD artifact-level properties for bind properties such as `bind_collectionID`, `bind_packageOwner`, `bind_qualifier` captured in the zAppBuild framework through generic PropertyRecords for members with deployType `DBRM` - see [generateDb2BindInfoRecord configuration in zAppBuild](https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89).  
       1. (Optional) Add UCD artifact-level properties to trace changes back to the version control system (via Git hashes).
@@ -42,7 +44,7 @@ Example to build a cumulative package across multiple build reports via `buildRe
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --buildReportOrder /u/ibmuser/sample_buildreports/BuildReport_1.json,/u/ibmuser/sample_buildreports/BuildReport_2.json,/u/ibmuser/sample_buildreports/BuildReport_3.json --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
 ```
 
-Example to build a cumulative package across multiple build reports via `buildReportOrderFile`. The file contains the references to the locations of the buildReport:
+Example to build a cumulative package across multiple build reports via `buildReportOrderFile`. The file contains the references to the locations of the build reports:
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --buildReportOrderFile /u/ibmuser/sample_buildreports/BuildReportOrderFile.txt --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
@@ -58,7 +60,7 @@ $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buzt
 
 Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format):
 
-- Note: This requires to set the deployTypes attribute on the UCD shiplist container level, which are defined via the `containerMapping` property passed via `--packagingPropFiles` . The property maps the last level qualifiers to the deployType. A sample is provided at [applicationRepositoryProps.properties](applicationRepositoryProps.properties). Additionally, the buztool properties file requires the mapping of deployTypes to copyTypes to configure how files are copied from the PDS to the temporary directory on USS for the packging process of the v2 format.
+- Note: This requires setting the deployTypes attribute on the UCD shiplist container level, which are defined via the `containerMapping` property passed via `--packagingPropFiles` . The property maps the last level qualifiers to the deployType. A sample is provided at [applicationRepositoryProps.properties](applicationRepositoryProps.properties). Additionally, the Buztool properties file requires the mapping of deployTypes to copyTypes to configure how files are copied from the PDS to the temporary directory on USS for the packaging process of the v2 format.
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --ucdV2PackageFormat
