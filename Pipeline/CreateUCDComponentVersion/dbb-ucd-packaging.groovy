@@ -161,7 +161,7 @@ properties.buildReportOrder.each{ buildReportFile ->
 
 if (buildOutputsMap.size() == 0 ) {
 	println("** No items to package in the provided build reports (s). Process exiting.")
-	exit(2)
+	System.exit(2)
 }
 
 
