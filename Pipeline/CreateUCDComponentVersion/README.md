@@ -17,12 +17,11 @@ This section provides a more detailed explanation of how the CreateUCDComponentV
    1. Read any application and global properties files that are passed as a comma-separated list via `--packagingPropFiles`.
 
 1. **Process the DBB build report(s)**
-   1. If one or multipe DBB build reports are passed to the script via either `--buildReportOrder` or `--buildReportOrderFile`, the script loops through the provided DBB build reports. If no build report specified, the script reads the DBB's BuildReport.json file from the pipeline work directory pointed by the `--workDir` parameter. For each build report, the following steps are performed:
+   1. If one or multiple DBB build reports are passed to the script via either `--buildReportOrder` or `--buildReportOrderFile`, the script loops through the provided DBB build reports. If no build report is specified, the script reads DBB's `BuildReport.json` file from the pipeline work directory specified by the `--workDir` parameter. For each build report, the following steps are performed:
       1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*. (Requires at least DBB 1.0.8.)
-      1. Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the build report by [zAppBuild (release 2.4.0 onwards)](https://github.com/IBM/dbb-zappbuild/releases/tag/2.4.0) . (Requires at least DBB 1.1.3, as the script uses the AnyTypeRecord API introduced in this version.)
-      1. Remove output entries which don't have a `deployType` set and remove unwanted outputs such as outputs with the deployType ZUNIT-TESTCASE
-   1. In case of processing multiple build reports, a cumulative list of output records is created to be able to combine outputs from multiple pipeline builds into one UCD component version. 
-
+      1. Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the build report by [zAppBuild (release 2.4.0 onwards)](https://github.com/IBM/dbb-zappbuild/releases/tag/2.4.0). (Requires at least DBB 1.1.3, as the script uses the AnyTypeRecord API introduced in this version.)
+      1. Remove output entries that have no `deployType` set and remove unwanted outputs such as outputs with the `deployType` equal to `ZUNIT-TESTCASE`.
+   1. If processing multiple build reports, a cumulative list of output records is created to be able to combine outputs from multiple pipeline builds into one UCD component version.
 
 1. **Generate the UCD `shiplist.xml` file and invoke the UCD packaging step**
    1. Generate the container records for the UCD shiplist for build outputs in partitioned datasets. (For more details, see the [IBM Docs UCD Shiplist](https://www.ibm.com/docs/en/urbancode-deploy/7.2.2?topic=SS4GSP_7.2.2/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html) page.)
