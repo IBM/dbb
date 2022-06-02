@@ -16,8 +16,8 @@ An important step in the pipeline is to generate a deployable package. This samp
 
 1. **Process the DBB build report(s)**
    1. Either read DBB's `BuildReport.json` from the pipeline work directory, or loop through the list of provided DBB build reports (using the `--buildReportOrder` or `--buildReportOrderFile` option).
-   1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord* (requires at least DBB 1.0.8).
-   1. Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the BuildReport by zAppBuild leveraging the AnyTypeRecord API that got introduced with IBM Dependency Based Build 1.1.3. (requires at least DBB 1.1.3)
+   1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*. (Requires at least DBB 1.0.8.)
+   1. Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the build report by zAppBuild. (Requires at least DBB 1.1.3, as the script uses the AnyTypeRecord API introduced in this version.)
 
 1. **Generate the UCD `shiplist.xml` file and invoke UCD packaging step**
    1. Write `shiplist.xml` to the build directory:
@@ -45,14 +45,16 @@ Example to build a cumulative package across multiple build reports via `buildRe
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --buildReportOrderFile /u/ibmuser/sample_buildreports/BuildReportOrderFile.txt --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
 ```
+
 - Contents of `/u/ibmuser/sample_buildreports/BuildReportOrderFile.txt`:
+
   ```
   /u/ibmuser/sample_buildreports/BuildReport_1.json
   /u/ibmuser/sample_buildreports/BuildReport_2.json
   /u/ibmuser/sample_buildreports/BuildReport_3.json 
   ```
 
-Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format): 
+Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format):
 
 - Note: This requires defining the mapping of the copyModes through the buztool properties file.
 
@@ -66,13 +68,13 @@ Example to establish link to the pipeline URL:
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/
 ```
 
-Example to establish link to the pipeline URL and links for each deployable artifact to the Git provider (see sample `applicationRepositoryProps.properties`): 
+Example to establish link to the pipeline URL and links for each deployable artifact to the Git provider (see sample `applicationRepositoryProps.properties`):
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --packagingPropFiles /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
 ```
 
-Example to establish links to the pipeline URL, the Git branch, and the pull request in the UCD component version: 
+Example to establish links to the pipeline URL, the Git branch, and the pull request in the UCD component version:
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --pullRequestURL https://github.com/IBM/dbb/pull/102 --gitBranch development
