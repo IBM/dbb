@@ -6,7 +6,7 @@ An important step in the pipeline is to generate a deployable package. This samp
 
 - Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
 - Generates the UrbanCode Deploy (UCD) shiplist `shiplist.xml` file.
-- Invokes the `buztool.sh` with the appropriate configuration to store the binary package in the artifact repository and to register a new UCD component version.
+- Invokes the `buztool.sh` with the appropriate configuration to store the binary package either in UCD packaging format v1 or v2 in the artifact repository and to register a new UCD component version. To use UCD packaging format v2, pass the CLI option `--ucdV2PackageFormat`.
 
 ## High-level Processing Flow
 
@@ -15,7 +15,6 @@ This section provides a more detailed explanation of how the CreateUCDComponentV
 1. **Initialization**
    1. Read command line parameters.
    1. Read any application and global properties files that are passed as a comma-separated list via `--packagingPropFiles`.
-       (This parameter is optional for UCD package format v1, but required when using UCD package format v2 - see `--ucdV2PackageFormat`.)
 
 1. **Process the DBB build report(s)**
    1. Either read DBB's `BuildReport.json` from the pipeline work directory, or loop through the list of provided DBB build reports (using the `--buildReportOrder` or `--buildReportOrderFile` option).
@@ -60,7 +59,7 @@ $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buzt
 
 Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format):
 
-- Note: This requires setting the deployTypes attribute on the UCD shiplist container level, which are defined via the `containerMapping` property passed via `--packagingPropFiles` . The property maps the last level qualifiers to the deployType. A sample is provided at [applicationRepositoryProps.properties](applicationRepositoryProps.properties). Additionally, the Buztool properties file requires the mapping of deployTypes to copyTypes to configure how files are copied from the PDS to the temporary directory on USS for the packaging process of the v2 format.
+- Note: This requires setting the `deployType` attribute on the UCD shiplist container level, which are defined via the `containerMapping` property passed via `--packagingPropFiles`. The property maps the last level qualifiers to the `deployType`. A sample is provided at [applicationRepositoryProps.properties](applicationRepositoryProps.properties). Additionally, the Buztool properties file requires the mapping of `deployType` to `copyType` to configure how files are copied from the PDS to the temporary directory on USS for the packaging process of the v2 format.
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --ucdV2PackageFormat
