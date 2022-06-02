@@ -147,7 +147,7 @@ utility options :
 A sample invocation that stores the application package in an external artifact repository in UCD packaging format v2, including all traceability links:
 
 ```
-/var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035 --component retirementCalculatorGithub --prop /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties --versionName 135_20220531.113630.036 --packagingPropFiles /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalulcatur.packaging.properties --ucdV2PackageFormat --pipelineURL http://jenkins-server/job/zunit-retirementCalculator/135/ --gitBranch main
+/var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035 --component retirementCalculatorGithub --prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties --versionName 135_20220531.113630.036 --packagingPropFiles /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalulcatur.packaging.properties --ucdV2PackageFormat --pipelineURL http://jenkins-server/job/zunit-retirementCalculator/135/ --gitBranch main
 ```
 
 <details>
@@ -159,7 +159,7 @@ A sample invocation that stores the application package in an external artifact 
 ```
 ** Create version start at 20220531.013637.036
 ** Properties at startup:
-   buztoolPropertyFile -> /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties
+   buztoolPropertyFile -> /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties
    workDir -> /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035
    startTime -> 20220531.013637.036
    versionName -> 120_20220531.113630.036
@@ -184,7 +184,7 @@ A sample invocation that stores the application package in an external artifact 
    Creating shiplist record for build output JENKINS.ZDAT.RETIRE.LOAD(EBUD01) with recordType EXECUTE.
 ** Write ship list file to  /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/shiplist.xml
 ** Following UCD buztool cmd will be invoked
-/var/ucd-agent/bin/buztool.sh createzosversion2 -c retirementCalculatorGithub -s /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/shiplist.xml -o /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/buztool.output -prop /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties -v "120_20220531.113630.036" 
+/var/ucd-agent/bin/buztool.sh createzosversion2 -c retirementCalculatorGithub -s /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/shiplist.xml -o /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/buztool.output -prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties -v "120_20220531.113630.036" 
 
 ```
 </details>
@@ -194,7 +194,7 @@ A sample invocation that stores the application package in an external artifact 
 A sample invocation that builds a cumulative package across multiple build reports leveraging the `--buildReportOrder` CLI option:
 
 ```
-groovyz /var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035 --buildReportOrder /var/jenkins/tmp/BuildReport-134.json,/var/jenkins/tmp/BuildReport-135.json --component retirementCalculatorGithub --prop /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties --versionName 135_20220531.113630.036 --packagingPropFiles /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalulcatur.packaging.properties --ucdV2PackageFormat --pipelineURL http://jenkins-server/job/zunit-retirementCalculator/135/ --gitBranch main
+groovyz /var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035 --buildReportOrder /var/jenkins/tmp/BuildReport-134.json,/var/jenkins/tmp/BuildReport-135.json --component retirementCalculatorGithub --prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties --versionName 135_20220531.113630.036 --packagingPropFiles /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalulcatur.packaging.properties --ucdV2PackageFormat --pipelineURL http://jenkins-server/job/zunit-retirementCalculator/135/ --gitBranch main
 ```
 
 <details>
@@ -206,7 +206,7 @@ groovyz /var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCD
 ```
 ** Create version start at 20220531.013644.036
 ** Properties at startup:
-   buztoolPropertyFile -> /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties
+   buztoolPropertyFile -> /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties
    workDir -> /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035
    startTime -> 20220531.013644.036
    versionName -> 135_20220531.113630.036
@@ -235,7 +235,7 @@ groovyz /var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCD
    Creating shiplist record for build output JENKINS.ZDAT.RETIRE.LOAD(EBUD01) with recordType EXECUTE.
 ** Write ship list file to  /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035/shiplist.xml
 ** Following UCD buztool cmd will be invoked
-/var/ucd-agent/bin/buztool.sh createzosversion2 -c retirementCalculatorGithub -s /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035/shiplist.xml -o /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035/buztool.output -prop /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties -v "135_20220531.113630.036" 
+/var/ucd-agent/bin/buztool.sh createzosversion2 -c retirementCalculatorGithub -s /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035/shiplist.xml -o /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035/buztool.output -prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties -v "135_20220531.113630.036" 
 ```
 </details>
  
