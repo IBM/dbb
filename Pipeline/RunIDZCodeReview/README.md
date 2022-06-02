@@ -36,6 +36,7 @@ $DBB_HOME/bin/groovyz RunCodeReview.groovy --workDir /var/dbb/buildworkspace/zAp
       -l,--logEncoding        (Optional) Defines the Encoding for output files (JCL spool, reports),  default UTF-8
       -props,--properties     (Optional) Absolute path to the codereview.properties file
       -p,--preview            (Optional) Preview JCL, do not submit it
+      -rc, --maxRC            (Optional) Maximum acceptable return code. If not provided, will look for it in the codereview.properties file
       -h,--help               (Optional) Prints this message
    
     requires:

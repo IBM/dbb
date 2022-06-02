@@ -107,15 +107,25 @@ else
 		// Splitting the String into a StringArray using CC as the seperator
 		def jobRcStringArray = codeRev.maxRC.split("CC")
 
+		// Retrieve the maxRC from property
+		int codeReview_maxRC
+		if (props.codereview_maxRC) {
+			codeReview_maxRC = props.codereview_maxRC.toInteger()
+			println "   Maximum acceptable return code is ${props.codereview_maxRC}"
+		} else {
+			codeReview_maxRC = 3
+			println "   Maximum acceptable return code is 3 (default)"
+		}
+
 		// This evals the number of items in the ARRAY! Dont get confused with the returnCode itself
 		if ( jobRcStringArray.length > 1 ){
 			// Ok, the string can be splitted because it contains the keyword CC : Splitting by CC the second record contains the actual RC
 			rc = jobRcStringArray[1].toInteger()
 			// manage processing the RC, up to your logic. You might want to flag the build as failed.
-			if (rc <= 2){
-				println   "***  Job ${codeRev.submittedJobId} completed with RC=$rc "}
+			if (rc <= codeReview_maxRC){
+				println   "** Job '${codeRev.submittedJobId}' completed with RC=$rc "}
 			else{
-				println   "***  Job ${codeRev.submittedJobId} failed with RC=$rc "
+				println   "** Job '${codeRev.submittedJobId}' failed with RC=$rc "
 				System.exit(1)
 			}
 		}
@@ -225,6 +235,7 @@ def parseInput(String[] cliArgs){
 	cli.ccr(longOpt:'ccrRulesFile', args:1, '(Optional) Absolute path of the custom rules file. If not provided, will look for it in the codereview.properties file.')
 	cli.l(longOpt:'logEncoding', args:1, '(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8')
 	cli.p(longOpt:'preview', '(Optional) Preview JCL for CR, do not submit it')
+	cli.rc(longOpt:'maxRC', args:1, '(Optional) Maximum acceptable return code. If not provided, will look for it in the codereview.properties file.')
 	cli.h(longOpt:'help', '(Optional) Prints this message.')
 
 	def opts = cli.parse(cliArgs)
@@ -260,6 +271,9 @@ def parseInput(String[] cliArgs){
 
 	if ( opts.ccr )
 		props.codereview_ccrRulesFile = opts.ccr
+
+	if ( opts.rc )
+		props.codereview_maxRC = opts.rc
 
 	// Validate required properties
 	try {
