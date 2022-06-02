@@ -3,27 +3,30 @@
 ## Summary
 
 An important step in the pipeline is to generate a deployable package. This sample Groovy script:
+
 - Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
 - Generates the UrbanCode Deploy (UCD) shiplist `shiplist.xml` file.
 - Invokes the `buztool.sh` with the appropriate configuration to store the binary package in the artifact repository and to register a new UCD component version.
 
 ## High-level Processing Flow
-**Initialization**
-- Read command line parameters. 
-- Read application and global properties which are supposed to be passed via `--packagingPropFiles` (Optionally)
 
-**Process the DBB build report(s)**
-- Either read DBB's `BuildReport.json` from the pipeline work directory, or loop through the list of provided DBB build reports (using the `--buildReportOrder` or `--buildReportOrderFile` option).
-- Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord* (requires at least DBB 1.0.8).
-- Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the BuildReport by zAppBuild leveraging the AnyTypeRecord API that got introduced with IBM Dependency Based Build 1.1.3. (requires at least DBB 1.1.3)
+1. **Initialization**
+   1. Read command line parameters.
+   1. (Optional) Read any application and global properties that are passed via `--packagingPropFiles`.
 
-**Generate the UCD `shiplist.xml` file and invoke UCD packaging step**
-- Write `shiplist.xml` to the build directory:
-    - Optionally, add links back to the continuous integration (CI) pipeline build, the Git pull request to UCD component version.
-    - Add UCD artifact level properties for bind information captured in the zAppBuild framework through generic PropertyRecords for DBRM members, such as bind_collectionID,bind_packageOwner,bind_qualifier on the element level - see [generateDb2BindInfoRecord configuration in zAppBuild](https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89) (Optional).  
-    - Add UCD artifact level properties to trace changes back to the version control system (via Git hashes) (Optional).
-    - Add source input information (and optionally links to the version control system) about the input files from the DBB Dependency Sets.
-- Invoke buztool.sh on USS with the generated shiplist file and passed command line interface (CLI) options.
+1. **Process the DBB build report(s)**
+   1. Either read DBB's `BuildReport.json` from the pipeline work directory, or loop through the list of provided DBB build reports (using the `--buildReportOrder` or `--buildReportOrderFile` option).
+   1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord* (requires at least DBB 1.0.8).
+   1. Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the BuildReport by zAppBuild leveraging the AnyTypeRecord API that got introduced with IBM Dependency Based Build 1.1.3. (requires at least DBB 1.1.3)
+
+1. **Generate the UCD `shiplist.xml` file and invoke UCD packaging step**
+   1. Write `shiplist.xml` to the build directory:
+      1. (Optional) Add links back to the continuous integration (CI) pipeline build, the Git pull request to UCD component version.
+      1. (Optional) Add UCD artifact level properties for bind information captured in the zAppBuild framework through generic PropertyRecords for DBRM members, such as `bind_collectionID`, `bind_packageOwner`, `bind_qualifier` on the element level - see [generateDb2BindInfoRecord configuration in zAppBuild](https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89).  
+      1. (Optional) Add UCD artifact level properties to trace changes back to the version control system (via Git hashes).
+      1. Add source input information (and optionally links to the version control system) about the input files from the DBB Dependency Sets.
+   1. Invoke `buztool.sh` on USS with the generated shiplist file and passed command line interface (CLI) options.
+
 ## Invocation Samples
 
 Example invocation (default):
@@ -31,18 +34,18 @@ Example invocation (default):
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
 ```
 
-Example to build a cumulative package across multiple build reports via `buildReportOrder`: 
+Example to build a cumulative package across multiple build reports via `buildReportOrder`:
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --buildReportOrder /u/ibmuser/sample_buildreports/BuildReport_1.json,/u/ibmuser/sample_buildreports/BuildReport_2.json,/u/ibmuser/sample_buildreports/BuildReport_3.json --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
 ```
 
-Example to build a cumulative package across multiple build reports via `buildReportOrderFile`. The file contains the references to the locations of the buildReport: 
+Example to build a cumulative package across multiple build reports via `buildReportOrderFile`. The file contains the references to the locations of the buildReport:
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --buildReportOrderFile /u/ibmuser/sample_buildreports/BuildReportOrderFile.txt --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
 ```
-- Content of `/u/ibmuser/sample_buildreports/BuildReportOrderFile.txt`:
+- Contents of `/u/ibmuser/sample_buildreports/BuildReportOrderFile.txt`:
   ```
   /u/ibmuser/sample_buildreports/BuildReport_1.json
   /u/ibmuser/sample_buildreports/BuildReport_2.json
@@ -51,13 +54,13 @@ $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buzt
 
 Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format): 
 
-* Please note that this requires to define the mapping of the copyModes through the buztool properties file.
+- Note: This requires defining the mapping of the copyModes through the buztool properties file.
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --ucdV2PackageFormat
 ```
 
-Example to establish link to the pipeline URL: 
+Example to establish link to the pipeline URL:
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/
@@ -75,9 +78,8 @@ Example to establish links to the pipeline URL, the Git branch, and the pull req
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --pullRequestURL https://github.com/IBM/dbb/pull/102 --gitBranch development
 ```
 
-
-
 ## Command Line Options Summary
+
 ```
 $DBB_HOME/bin/groovyz <ussLocation>/dbb-ucd-packaging.groovy [options]
 
@@ -136,8 +138,8 @@ utility options :
  -help,--help                                   Prints this message
  ```
 
+## Sample Console Log for Processing a Single Build Report
 
- ## Sample Console Log for Processing a Single Build Report
 A sample invocation that stores the application package in an external artifact repository in UCD packaging format v2, including all traceability links:
 
 ```
@@ -183,7 +185,7 @@ A sample invocation that stores the application package in an external artifact 
 ```
 </details>
 
- ## Sample Console Log for Processing Multiple Build Reports to Assemble a Cumulative Package
+## Sample Console Log for Processing Multiple Build Reports to Assemble a Cumulative Package
 
 A sample invocation that builds a cumulative package across multiple build reports leveraging the `--buildReportOrder` CLI option:
 
