@@ -12,16 +12,16 @@ import groovy.xml.MarkupBuilder
  * usage: dbb-ucd-packaging.groovy [options]
  *
  * options:
- *  -b,--buztool <file>           Absolute path to UrbanCode Deploy buztool.sh script
- *  -w,--workDir <dir>            Absolute path to the DBB build output directory
- *  -c,--component <name>         Name of the UCD component to create version in
- *  -v,--versionName <name>       Name of the UCD component version name (Optional)
- *  -h,--help                     Prints this message
- *  -ar,--artifactRepository      Absolute path to Artifact Respository Server connection file (Optional)
- *  -prop,--propertyFile          Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
- *  -p,--preview                  Preview, not executing buztool.sh
- *  -pURL,--pipelineURL           URL to the pipeline build result (Optional)
- *  -g,--gitBranch                Name of the git branch (Optional)
+ *  -b,--buztool <file>           			Absolute path to UrbanCode Deploy buztool.sh script
+ *  -w,--workDir <dir>            			Absolute path to the DBB build output directory
+ *  -c,--component <name>         			Name of the UCD component to create version in
+ *  -v,--versionName <name>       			Name of the UCD component version name (Optional)
+ *  -h,--help                     			Prints this message
+ *  -ar,--artifactRepository      			Absolute path to Artifact Respository Server connection file (Optional)
+ *  -prop,--propertyFile          			Absolute path to UCD buztool property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
+ *  -p,--preview                  			Preview, not executing buztool.sh
+ *  -pURL,--pipelineURL			  			URL to the pipeline build result (Optional)
+ *  -g,--gitBranch				  			Name of the git branch (Optional)
  *  -rpFile,--repositoryInfoPropertiesFile  Absolute path to property file containing URL prefixes to git provider (Optional).
  *
  * notes:
@@ -60,6 +60,9 @@ import groovy.xml.MarkupBuilder
  *  
  * Version 7 - 2022-03 
  *  Added functionality for --buildReportOrder CLI, allowing multiple build reports to be processed at once
+ *  Support for UCD packaging format v2 
+ *  Ability to package deletions
+ *  
  */
 
 
@@ -150,6 +153,62 @@ dbbVersion = new VersionInfo().getVersion()
 println "   * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version $dbbVersion."
 // read build report data
 
+// finds all the build outputs with a deployType
+def executes= buildReport.getRecords().findAll{
+	try {
+		(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
+				!it.getOutputs().isEmpty()
+	} catch (Exception e){}
+}
+
+// Remove excluded outputs
+executes.each {
+	def unwantedOutputs =  it.getOutputs().findAll{ o ->
+		o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
+	}
+	it.getOutputs().removeAll(unwantedOutputs)
+}
+
+// deletions
+def deletions= buildReport.getRecords().findAll{
+	try {
+		// Obtain delete records, which got added by zAppBuild
+		it.getType()=="DELETE_RECORD"
+	} catch (Exception e){
+		println e
+	}
+}
+
+def count = 0
+def deletionCount = 0
+executes.each { count += it.getOutputs().size() }
+
+deletions.each { deletionCount += it.getAttributeAsList("deletedBuildOutputs").size()}
+
+if ( count + deletionCount == 0 ) {
+	println("** No items to deploy. Skipping ship list generation.")
+	System.exit(0)
+}
+
+println("** Deployable files")
+executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+
+println("** Deleted files")
+deletions.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
+
+// get DBB.BuildResultProperties records stored as generic DBB Record, see https://github.com/IBM/dbb-zappbuild/pull/95
+def buildResultRecord = buildReport.getRecords().find{
+	try {
+		it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
+	} catch (Exception e){}
+}
+
+def buildResultProperties = null
+
+if(buildResultRecord!=null){
+	buildResultProperties = buildResultRecord.getProperties()
+}
+
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
 println("** Generate UCD ship list file")
@@ -218,30 +277,24 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 						def gitproperty = buildResultProperties.find{
 							it.key.contains(":githash:") && execute.getFile().contains(it.key.substring(9))
 						}
-						if (gitproperty != null ) {
-							githash = gitproperty.getValue()
-							// set properties in shiplist
-							property(name:"githash", value:githash)
-							if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
-						}
-					}
-					// add source information in the input column
-					inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
-					inputs(url : "${inputUrl}"){
-						input(name : execute.getFile(), compileType : "Main", url : inputUrl)
-						// dependencies
-						def dependencySets = buildReport.getRecords().findAll{
-							it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==execute.getFile()
-						};
-						Set<String> dependencyCache = new HashSet<String>()
-						dependencySets.unique().each{
-							it.getAllDependencies().each{
-								if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=execute.getFile()){
-									def displayName = it.getFile() ? it.getFile() : it.getLname()
-									def dependencyUrl =""
-									if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
-									input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
-									dependencyCache.add(it.getLname())
+						// add source information in the input column
+						inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ execute.getFile() : ""
+						inputs(url : "${inputUrl}"){
+							input(name : execute.getFile(), compileType : "Main", url : inputUrl)
+							// dependencies
+							def dependencySets = buildReport.getRecords().findAll{
+								it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==execute.getFile()
+							};
+							Set<String> dependencyCache = new HashSet<String>()
+							dependencySets.unique().each{
+								it.getAllDependencies().each{
+									if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=execute.getFile()){
+										def displayName = it.getFile() ? it.getFile() : it.getLname()
+										def dependencyUrl =""
+										if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
+										input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
+										dependencyCache.add(it.getLname())
+									}
 								}
 							}
 						}
@@ -250,25 +303,47 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			}
 		}
 	}
+	// document deletions
+	deletions.each{ deletion ->
+		// obtain the list of build outputs to delete
+		deletedFiles = deletion.getAttributeAsList("deletedBuildOutputs")
+		deletedFiles.each { deletedOutput ->
+			def (ds,member) = getDatasetName(deletedOutput)
+			deleted{
+				// create container
+				container(name:ds, type:"PDS"){
+					resource(name:member, type:"PDSMember")
+				}
+			}
+		}
+	}
 }
 
 
+// pass buztool package version2 if specified
+// https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format
+def buztoolOption = "createzosversion"
+if (properties.ucdV2PackageFormat.toBoolean()) {
+	buztoolOption = "createzosversion2"
+}
+
 def cmd = [
-       	properties.buztoolPath,
-       	"createzosversion",
-       	"-c",
-       	properties.component,
-       	"-s",
-       	"$properties.workDir/shiplist.xml",
-       	//requires UCD v6.2.6 and above
-       	"-o",
-       	"${properties.workDir}/buztool.output"
-       ]
-       // set artifactRepository option if specified
-       if (properties.artifactRepositorySettings) {
-       	cmd << "-ar"
-       	cmd << properties.artifactRepositorySettings
-       }
+	properties.buztoolPath,
+	buztoolOption,
+	"-c",
+	properties.component,
+	"-s",
+	"$properties.workDir/shiplist.xml",
+	//requires UCD v6.2.6 and above
+	"-o",
+	"${properties.workDir}/buztool.output"
+]
+
+// set artifactRepository option if specified
+if (properties.artifactRepositorySettings) {
+	cmd << "-ar"
+	cmd << properties.artifactRepositorySettings
+}
 
        // set propertyFile option if specified
        if (properties.propertyFileSettings) {
