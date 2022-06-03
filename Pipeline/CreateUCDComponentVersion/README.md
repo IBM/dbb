@@ -24,7 +24,7 @@ This section provides a more detailed explanation of how the CreateUCDComponentV
    1. If processing multiple build reports, a cumulative list of output records is created to be able to combine outputs from multiple pipeline builds into one UCD component version.
 
 1. **Generate the UCD `shiplist.xml` file and invoke the UCD packaging step**
-   1. Generate the container records for the UCD shiplist for build outputs in partitioned datasets. (For more details, see the [IBM Docs UCD Shiplist](https://www.ibm.com/docs/en/urbancode-deploy/7.2.2?topic=SS4GSP_7.2.2/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html) page.)
+   1. Generate the UCD's shiplist records (known as "container records" in UCD documentation) related to build outputs in partitioned datasets. (For more details, see the [IBM Docs UCD Shiplist](https://www.ibm.com/docs/en/urbancode-deploy/7.2.2?topic=SS4GSP_7.2.2/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html)
    1. Write `shiplist.xml` to the build directory:
       1. (Optional) Add links to the UCD component version for the relevant continuous integration (CI) pipeline build and Git pull request.
       1. (Optional) Add UCD artifact-level properties for bind properties such as `bind_collectionID`, `bind_packageOwner`, `bind_qualifier` captured in the zAppBuild framework through generic PropertyRecords for members with deployType `DBRM` - see [generateDb2BindInfoRecord configuration in zAppBuild](https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89).  
