@@ -474,7 +474,7 @@ def getContainerAttributes(String ds, Properties properties) {
 		def lastLevelQual = ds.tokenize('.').last()
 		if (properties.containerMapping) {
 			// obtain the deployType setting from the property
-			cMapping = evaluate(properties.containerMapping)
+			cMapping = parseStringToMap(properties.containerMapping)
 			containerDeployType = cMapping[lastLevelQual]
 			if (containerDeployType == null) {
 				println "*!* UCD Packaging v2 formar requires a mapping for the copymode for $lastLevelQual through the containerMapping property - see $properties.containerMapping."
@@ -595,4 +595,36 @@ def parseInput(String[] cliArgs){
 		throw e
 	}
 	return properties
+}
+
+
+// Parse a property value into a proper map
+def parseStringToMap(String packageProperty) {
+	
+	Map map = [:]
+
+	tempMappingString = packageProperty
+	try {
+		// remove trailing brackets
+		if (props.cobol_dependenciesAlternativeLibraryNameMapping.take(1) == "[")  tempMappingString = tempMappingString.substring(1)
+		if (props.cobol_dependenciesAlternativeLibraryNameMapping.takeRight(1) == "]")  tempMappingString = tempMappingString.substring(0, tempMappingString.length() - 1)
+		// remove whitespaces, single and double quotes
+		tempMappingString = tempMappingString.replaceAll(" ","")
+		tempMappingString = tempMappingString.replaceAll("\'","")
+		tempMappingString = tempMappingString.replaceAll("\"","")
+		
+		// split by comma
+		tempMappingString.split(",").each{ keyValuePair ->
+			// split by :
+			def (key, value) = keyValuePair.split(":")
+			map.put(key, value)
+		}
+	} catch (Exception e) {
+		errorMsg = "*! dbb-ucd-packaging.parseStringToMap - Failed to parse setting $packageProperty from String into a Map object. Process exiting."
+		println errorMsg
+		println e.getMessage()
+		System.exit(3)
+	}
+	
+	return map
 }
