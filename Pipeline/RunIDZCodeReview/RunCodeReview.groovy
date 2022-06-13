@@ -103,7 +103,7 @@ else
 	//If no SYSLIB found and no SYSLIB passed in codereview_syslib and no Property Group file passed, fails and exits
 	if (syslib.size() == 0 && !props.codereview_syslib && !props.codereview_PropertyGroupFile) {
 		println "*** SYSLIB Concatenation is empty and no Property Group file was provided. Exiting..."
-		System.exit(1)
+		System.exit(2)
 	}
 	
 	println("** Create JCL Stream for IDZ Code Review")
