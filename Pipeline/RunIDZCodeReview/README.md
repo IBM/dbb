@@ -16,9 +16,9 @@ This sample groovy `RunCodeReview.groogy` script
 
 ## Return codes
 The script will exists with the following return codes:
-0 - No problem encountered
-1 - Maximum acceptable return code of Code Review exceeded
-2 - Wrong configuration (Missing Property Group file, while no SYSLIB concatenation was found or defined).
+- 0 - No problem encountered
+- 1 - Maximum acceptable return code of Code Review exceeded
+- 2 - Wrong configuration (Missing Property Group file, while no SYSLIB concatenation was found or defined).
 
 ### Example invocations:
 Invoke RunCodeReview.groovy passing the work directory, which stores the BuildReport.json. The property file ```codereview.properties``` is retrieved from the default location, which is the location of the RunCodeReview.groovy
