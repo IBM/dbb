@@ -6,6 +6,9 @@ import groovy.time.*
 import groovy.cli.commons.*
 import com.ibm.dbb.build.VersionInfo
 import groovy.xml.MarkupBuilder
+import groovy.json.JsonParserType
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 /**
  * This script creates a version in UrbanCode Deploy based on the build result.
  *
@@ -474,7 +477,7 @@ def getContainerAttributes(String ds, Properties properties) {
 		def lastLevelQual = ds.tokenize('.').last()
 		if (properties.containerMapping) {
 			// obtain the deployType setting from the property
-			cMapping = parseStringToMap(properties.containerMapping)
+			cMapping = parseJSONStringToMap(properties.containerMapping)
 			containerDeployType = cMapping[lastLevelQual]
 			if (containerDeployType == null) {
 				println "*!* UCD Packaging v2 formar requires a mapping for the copymode for $lastLevelQual through the containerMapping property - see $properties.containerMapping."
@@ -598,33 +601,21 @@ def parseInput(String[] cliArgs){
 }
 
 
-// Parse a property value into a proper map
-def parseStringToMap(String packageProperty) {
-	
-	Map map = [:]
+/*
+ *  This is a helper method which parses a JSON String representing a map of key value pairs to a proper map
+ *  e.q. cobol_dependenciesAlternativeLibraryNameMapping = {"MYFILE": "cobol_myfilePDS", "DCLGEN" : "cobol_dclgenPDS"}
+ */
 
-	tempMappingString = packageProperty
+def parseJSONStringToMap(String packageProperty) {
+	Map map = [:]
 	try {
-		// remove trailing brackets
-		if (tempMappingString.take(1) == "[")  tempMappingString = tempMappingString.substring(1)
-		if (tempMappingString.takeRight(1) == "]")  tempMappingString = tempMappingString.substring(0, tempMappingString.length() - 1)
-		// remove whitespaces, single and double quotes
-		tempMappingString = tempMappingString.replaceAll(" ","")
-		tempMappingString = tempMappingString.replaceAll("\'","")
-		tempMappingString = tempMappingString.replaceAll("\"","")
-		
-		// split by comma
-		tempMappingString.split(",").each{ keyValuePair ->
-			// split by :
-			def (key, value) = keyValuePair.split(":")
-			map.put(key, value)
-		}
+		JsonSlurper slurper = new groovy.json.JsonSlurper()
+		map = slurper.parseText(packageProperty)
 	} catch (Exception e) {
 		errorMsg = "*! dbb-ucd-packaging.parseStringToMap - Failed to parse setting $packageProperty from String into a Map object. Process exiting."
 		println errorMsg
 		println e.getMessage()
 		System.exit(3)
 	}
-	
 	return map
 }
