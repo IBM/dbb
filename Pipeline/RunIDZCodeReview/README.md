@@ -15,7 +15,7 @@ This sample groovy `RunCodeReview.groogy` script
 - Stores the IDZ Code review reports ```CodeReviewCSV.csv```, ```CodeReviewJUNIT.xml```  as well as the JCL spool in the workdir.
 
 ## Return codes
-The script will exists with the following return codes:
+The script will exit with the following return codes:
 - 0 - No problem encountered
 - 1 - Maximum acceptable return code of Code Review exceeded
 - 2 - Wrong configuration (Missing Property Group file, while no SYSLIB concatenation was found or defined).
