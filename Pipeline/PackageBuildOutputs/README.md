@@ -161,7 +161,9 @@ groovyz  /var/jenkins/pipeline/ArtifactoryHelpers.groovy --url http://10.3.20.23
   -verb,--verbose                                Flag to provide more log output.
                                                  (Optional)
   -il,--includeLogs                              Comma-separated list of files/patterns
-                                                 from the USS build workspace                                               
+                                                 from the USS build workspace
+  -ae,--addExtension                             Add the deploy type extension to the member
+                                                 in the package tar file						 
                                         
   Optional Artifactory Upload opts:
  
