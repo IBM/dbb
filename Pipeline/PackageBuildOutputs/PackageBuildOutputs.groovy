@@ -32,6 +32,8 @@ import groovy.cli.commons.*
  *                                                (Optional)
  * -il,--includeLogs                              Comma-separated list of files/patterns
  *                                                from the USS build workspace                                               
+ * -ae,--addExtension                             Add the deploy type extension to the member
+ *                                                in the package tar file
  *                                       
  * Optional Artifactory Upload opts:
  *
@@ -171,14 +173,17 @@ else {
 	println "*** Number of build outputs to publish: $loadCount"
 	loadDatasetToMembersMap.each { dataset, members ->
 		members.each { member ->
-
+			def deployType = dataset.replaceAll(/.*\.([^.]*)/, "\$1")
 			def fullyQualifiedDsn = "$dataset($member)"
 			def filePath = "$tempLoadDir/$dataset"
 			new File(filePath).mkdirs()
-			def file = new File(filePath, member)
+			def tar_member = member
+			if (props.addExtension && props.addExtension.toBoolean())
+				tar_member = tar_member+'.'+deployType
+			def file = new File(filePath, tar_member)
 
 			// set copyMode based on last level qualifier
-			currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
+			currentCopyMode = copyModeMap[deployType]
 			copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
 			copy.setDataset(dataset)
 
@@ -326,6 +331,7 @@ def parseInput(String[] cliArgs){
 	cli.d(longOpt:'deployTypes', args:1, argName:'deployTypes','Comma-seperated list of deployTypes to filter on the scope of the tar file. (Optional)')
 	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional)')
 	cli.il(longOpt:'includeLogs', args:1, argName:'includeLogs', 'Comma-separated list of files/patterns from the USS build workspace. (Optional)')
+	cli.ae(longOpt:'addExtension', 'Flag to add the deploy type extension to the member in the package tar file. (Optional)')
 
 	// Artifactory Options:
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifactory server. (Optional)')
@@ -364,6 +370,7 @@ def parseInput(String[] cliArgs){
 	if (opts.d) props.deployTypeFilter = opts.d
 	if (opts.t) props.tarFileName = opts.t
 	if (opts.il) props.includeLogs = opts.il
+	props.addExtension = (opts.ae) ? 'true' : 'false'
 
 	props.verbose = (opts.verb) ? 'true' : 'false'
 
