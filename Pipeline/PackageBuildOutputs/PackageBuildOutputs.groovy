@@ -62,7 +62,8 @@ import groovy.cli.commons.*
  *  - Externalize the Map of LLQ to CopyMode
  *  - Add capablity to add additional files from build workspace 
  *  - Verbose logging will print tar contents
- *  
+ * Version 3 - 2022-08
+ *  - Add an optional option to add the deploy type extension to the member
  ************************************************************************************/
 
 // start create & publish package
