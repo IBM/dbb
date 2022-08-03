@@ -468,7 +468,7 @@ def convertAllocationToDD(def concat)
 		else
 		{
 			def dispnorValue = "${concat.dispnor}".toLowerCase()
-            //* Map the disposition catlg/uncatlg to catalog/uncatalog to align to BPXWDYN utility options
+            //* Map the disposition catlg/uncatlg to catalog/uncatalog to align to BPXWDYN utility options.
 			if (dispnorValue == "catlg") {
 				options << "catalog"
 			}
