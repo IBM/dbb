@@ -467,7 +467,16 @@ def convertAllocationToDD(def concat)
 			dd.'pass' = true
 		else
 		{
-			options << "${concat.dispnor}".toLowerCase()
+			def dispnorValue = "${concat.dispnor}".toLowerCase()
+            //* Map the disposition catlg/uncatlg to catalog/uncatalog to align to BPXWDYN utility options
+			if (dispnorValue == "catlg") {
+				options << "catalog"
+			}
+			else if (dispnorValue == "uncatlg") {
+				options << "uncatalog"
+			} else {
+				options << dispnorValue
+			}			
 		}
 	}
 	if (!concat.parm.text().isEmpty())
@@ -573,7 +582,7 @@ def processAllocOption( parm )
 					}
 					if (allocations.size() > 2 && allocations[2].length() > 0)
 					{
-						options << "directory(${allocations[2]})"
+						options << "dir(${allocations[2]})"
 					}
 					break
 				case 2:
