@@ -1,6 +1,7 @@
 import com.ibm.dbb.build.CopyToHFS
 import com.ibm.dbb.build.DBBConstants
 import com.ibm.dbb.build.JCLExec
+import groovy.xml.*
 
 
 /*********************************************************************************
