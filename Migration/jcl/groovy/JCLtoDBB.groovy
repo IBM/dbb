@@ -468,7 +468,7 @@ def convertAllocationToDD(def concat)
 		else
 		{
 			def dispnorValue = "${concat.dispnor}".toLowerCase()
-            //* Updated to use catalog/uncatalog instead for catlg/uncatlg for BPXWDYN utility
+            //* Map the disposition catlg/uncatlg to catalog/uncatalog to align to BPXWDYN utility options
 			if (dispnorValue == "catlg") {
 				options << "catalog"
 			}
@@ -582,8 +582,7 @@ def processAllocOption( parm )
 					}
 					if (allocations.size() > 2 && allocations[2].length() > 0)
 					{
-                        //* updated to use dir instead of directory for BPXWDYN utility
-						options << "dir(${allocations[2]})"
+                        			options << "dir(${allocations[2]})"
 					}
 					break
 				case 2:
