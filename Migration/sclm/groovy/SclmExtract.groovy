@@ -4,6 +4,7 @@ import com.ibm.jzos.*
 import java.nio.file.*
 import groovy.transform.SourceURI
 import groovy.cli.commons.*
+import groovy.xml.*
 
 /*******************************************************************************
  *

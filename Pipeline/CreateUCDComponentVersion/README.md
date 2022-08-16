@@ -1,4 +1,4 @@
-# IBM UCD Packaging based on IBM DBB Build Report
+# IBM UCD Packaging Based on IBM DBB Build Report
 
 ## Summary
 
@@ -37,29 +37,61 @@ Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbanc
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --ucdV2PackageFormat
-```
-
-Example to establish link to the pipeline url: 
 
 ```
+
+Example to build a cumulative package across multiple build reports via `buildReportOrder`:
+
+```
+
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/
+
 ```
 
-Example to establish link to the pipeline url and links for each deployable artifact to the git provider: 
+Example to build a cumulative package across multiple build reports via `buildReportOrderFile`. The file contains the references to the locations of the build reports:
 
 ```
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --packagingPropFiles /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
-```
-
-Example to establish link to the pipeline url and git branch: 
 
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --gitBranch development
+
+- Contents of `/u/ibmuser/sample_buildreports/BuildReportOrderFile.txt`:
+
+  ```
+  /u/ibmuser/sample_buildreports/BuildReport_1.json
+  /u/ibmuser/sample_buildreports/BuildReport_2.json
+  /u/ibmuser/sample_buildreports/BuildReport_3.json 
+  ```
+
+Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format):
+
+- Note: This requires setting the `deployType` attribute on the UCD shiplist container level, which are defined via the `containerMapping` property passed via `--packagingPropFiles`. The property maps the last level qualifiers to the `deployType`. A sample is provided at [applicationRepositoryProps.properties](applicationRepositoryProps.properties). Additionally, the Buztool properties file requires the mapping of `deployType` to `copyType` to configure how files are copied from the PDS to the temporary directory on USS for the packaging process of the v2 format.
+
 ```
 
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --ucdV2PackageFormat
+```
 
+Example to establish link to the pipeline URL:
+
+```
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/
+```
+
+Example to establish link to the pipeline URL and links for each deployable artifact to the Git provider (see sample `applicationRepositoryProps.properties`):
+
+```
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --packagingPropFiles /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
+```
+
+Example to establish links to the pipeline URL, the Git branch, and the pull request in the UCD component version:
+
+```
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --pullRequestURL https://github.com/IBM/dbb/pull/102 --gitBranch development
+```
 
 ## Command Line Options Summary
+
 ```
 $DBB_HOME/bin/groovyz <ussLocation>/dbb-ucd-packaging.groovy [options]
 
@@ -75,6 +107,12 @@ required options:
                                                 output directory
 
 optional cli options :
+
+ -bo,--buildReportOrder <arg>                   Build a cumulative package based on a comma separated list of
+                                                one or multiple DBB build reports processed in the provided order (Optional).
+
+ -boFile,--buildReportOrderFile <arg>           Build a cumulative package based on an input file that lists
+                                                one or multiple build reports defining the order of processing (Optional).
 
  buztool parameters : 
 
@@ -98,11 +136,11 @@ optional cli options :
 
  -pURL,--pipelineURL <arg>                      URL to the pipeline build result
 
+
  -g,--gitBranch <arg>                           Name of the git branch
 
  -p,--preview                                   Preview mode generate shiplist, but do
                                                 not run buztool.sh
-
 
 utility options :
 
@@ -115,6 +153,7 @@ A sample invocation which stores the application package in an external artifact
 
 <details>
   <summary>Console outputs</summary>
+
 
 
 **dbb-ucd-packaging script output**
@@ -191,6 +230,7 @@ Elapsed time: 2.0 seconds.
 ```
 
 **Generated Shiplistfile.xml**
+
 
 ```
 <?xml version="1.0" encoding="CP037"?>
