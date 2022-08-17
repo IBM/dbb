@@ -58,7 +58,6 @@ import groovy.xml.MarkupBuilder
  * Version 6 - 2021-06
  *  Take into account  https://github.com/IBM/dbb/issues/78
  *  
-
  * Version 7 - 2022-06 
  *  Added functionality for --buildReportOrder CLI, allowing multiple build reports to be processed at once to build cumulative packages
  *  Support for UCD packaging format v2 
@@ -507,7 +506,6 @@ def parseInput(String[] cliArgs){
 
 	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'Build a cumulative package based on a comma separated list of one or multiple DBB build reports processed in the provided order (Optional).')
 	cli.boFile(longOpt:'buildReportOrderFile', args:1, argName:'buildReportOrderFile', 'Build a cumulative package based on an input file that lists one or multiple build reports defining the order of processing (Optional).')
-
 
 	cli.ppf(longOpt:'packagingPropFiles', args:1,'Comma separated list of property files to configure the dbb-ucd-packaging script (Optional)')
 	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional) (** Deprecated, please use --packagingPropFiles instead **)')
