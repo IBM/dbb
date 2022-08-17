@@ -12,17 +12,16 @@ import groovy.xml.MarkupBuilder
  * usage: dbb-ucd-packaging.groovy [options]
  *
  * options:
- *  -b,--buztool <file>           			Absolute path to UrbanCode Deploy buztool.sh script
- *  -w,--workDir <dir>            			Absolute path to the DBB build output directory
- *  -c,--component <name>         			Name of the UCD component to create version in
- *  -v,--versionName <name>       			Name of the UCD component version name (Optional)
- *  -h,--help                     			Prints this message
- *  -ar,--artifactRepository      			Absolute path to Artifact Respository Server connection file (Optional)
- *  -prop,--propertyFile          			Absolute path to UCD buztool property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
- *  -p,--preview                  			Preview, not executing buztool.sh
- *  -pURL,--pipelineURL			  			URL to the pipeline build result (Optional)
- *  -g,--gitBranch				  			Name of the git branch (Optional)
-
+ *  -b,--buztool <file>           Absolute path to UrbanCode Deploy buztool.sh script
+ *  -w,--workDir <dir>            Absolute path to the DBB build output directory
+ *  -c,--component <name>         Name of the UCD component to create version in
+ *  -v,--versionName <name>       Name of the UCD component version name (Optional)
+ *  -h,--help                     Prints this message
+ *  -ar,--artifactRepository      Absolute path to Artifact Respository Server connection file (Optional)
+ *  -prop,--propertyFile          Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
+ *  -p,--preview                  Preview, not executing buztool.sh
+ *  -pURL,--pipelineURL           URL to the pipeline build result (Optional)
+ *  -g,--gitBranch                Name of the git branch (Optional)
  *  -rpFile,--repositoryInfoPropertiesFile  Absolute path to property file containing URL prefixes to git provider (Optional).
  *
  * notes:
@@ -58,12 +57,11 @@ import groovy.xml.MarkupBuilder
  *  
  * Version 6 - 2021-06
  *  Take into account  https://github.com/IBM/dbb/issues/78
- *
+ *  
  * Version 7 - 2022-06 
  *  Added functionality for --buildReportOrder CLI, allowing multiple build reports to be processed at once to build cumulative packages
  *  Support for UCD packaging format v2 
  *  Ability to package deletions (requires DBB Toolkit 1.1.3 and zAppBuild 2.4.0)
- *
  *  
  */
 
@@ -507,7 +505,6 @@ def parseInput(String[] cliArgs){
 
 	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'Build a cumulative package based on a comma separated list of one or multiple DBB build reports processed in the provided order (Optional).')
 	cli.boFile(longOpt:'buildReportOrderFile', args:1, argName:'buildReportOrderFile', 'Build a cumulative package based on an input file that lists one or multiple build reports defining the order of processing (Optional).')
-
 
 	cli.ppf(longOpt:'packagingPropFiles', args:1,'Comma separated list of property files to configure the dbb-ucd-packaging script (Optional)')
 	cli.rpFile(longOpt:'repositoryInfoPropertiesFile', args:1,'Absolute path to property file containing URL prefixes to git provider (Optional) (** Deprecated, please use --packagingPropFiles instead **)')

@@ -2,57 +2,53 @@
 
 ## Summary
 
-An important step in the pipeline is to generate a deployable package. This sample groovy script
-- extracts information about the build outputs from the Dependency Based Build ```BuildReport.json```
-- generates the UCD shiplist ```shiplist.xml``` file
-- invokes the ```buztool.sh``` with the approriate configuration to store the binary package in the artifact repository and to register a new UCD component version.
+An important step in the pipeline is to generate a deployable package. This sample Groovy script:
 
-## High-level Processing flow
-Initialization
-- Read command line parameters
-- Read Application level properties are supposed to be passed via `--packagingPropFiles` (Optionally)
+- Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
+- Generates the UrbanCode Deploy (UCD) shiplist `shiplist.xml` file.
+- Invokes the `buztool.sh` with the appropriate configuration to store the binary package either in UCD packaging format v1 or v2 in the artifact repository and to register a new UCD component version. To use UCD packaging format v2, pass the CLI option `--ucdV2PackageFormat`.
 
-Process the DBB Build report
-- Read DBB's BuildReport.json from the pipeline work directory
-- Parse and extract build output information of records of type *ExecuteRecord* and *CopyToPDSRecord* (requires at least DBB 1.0.8)
-- Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the BuildReport by zAppBuild leveraging the AnyTypeRecord API which got introced with IBM Dependency Based Build 1.1.3.
+## High-level Processing Flow
 
-Generates the UCD shiplist.xml file and invokes UCD packaging step
-- Write the shiplist.xml to the build directory
-    - Adds links back to the ci pipeline build to UCD component version (Optional).
-    - Adds UCD properties for bind information captured in the zAppBuild framework through generic PropertyRecords for DBRM members, such as bind_collectionID,bind_packageOwner,bind_qualifier on the element level - see [generateDb2BindInfoRecord configuration in zAppBuild](https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89) (Optional).  
-    - Adds UCD properties to changes (git hashes) within the version control system (Optional).
-    - Adds source input information about the input files from the DBB Dependency Sets.
-- Invokes buztool.sh on USS with the generated shiplist file and passed cli options.
-## Invocation samples
+This section provides a more detailed explanation of how the CreateUCDComponentVersion script works and what it does.
+
+1. **Initialization**
+   1. Read [command line parameters](#command-line-options-summary).
+   1. Read any application and global properties files that are passed as a comma-separated list via `--packagingPropFiles`.
+
+1. **Process the DBB build report(s)**
+   1. If one or multiple DBB build reports are passed to the script via either `--buildReportOrder` or `--buildReportOrderFile`, the script loops through the provided DBB build reports. If no build report is specified, the script reads DBB's `BuildReport.json` file from the pipeline work directory specified by the `--workDir` parameter. For each build report, the following steps are performed:
+      1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*. (Requires at least DBB 1.0.8.)
+      1. Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the build report by [zAppBuild (release 2.4.0 onwards)](https://github.com/IBM/dbb-zappbuild/releases/tag/2.4.0). (Requires at least DBB 1.1.3, as the script uses the AnyTypeRecord API introduced in this version.)
+      1. Remove output entries that have no `deployType` set and remove unwanted outputs such as outputs with the `deployType` equal to `ZUNIT-TESTCASE`.
+   1. If processing multiple build reports, a cumulative list of output records is created to be able to combine outputs from multiple pipeline builds into one UCD component version.
+
+1. **Generate the UCD `shiplist.xml` file and invoke the UCD packaging step**
+   1. Generate the UCD's shiplist records (known as "container records" in UCD documentation) related to build outputs in partitioned datasets. (For more details, see the [IBM Docs UCD Shiplist](https://www.ibm.com/docs/en/urbancode-deploy/7.2.2?topic=SS4GSP_7.2.2/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html)
+   1. Write `shiplist.xml` to the build directory:
+      1. (Optional) Add links to the UCD component version for the relevant continuous integration (CI) pipeline build and Git pull request.
+      1. (Optional) Add UCD artifact-level properties for bind properties such as `bind_collectionID`, `bind_packageOwner`, `bind_qualifier` captured in the zAppBuild framework through generic PropertyRecords for members with deployType `DBRM` - see [generateDb2BindInfoRecord configuration in zAppBuild](https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89).  
+      1. (Optional) Add UCD artifact-level properties to trace changes back to the version control system (via Git hashes).
+      1. (Optional) Add information about the input source files (and optionally links to the version control system) from the DBB Dependency Sets.
+   1. Invoke `buztool.sh` on USS with the generated shiplist file and passed command line interface (CLI) options.
+
+## Invocation Samples
 
 Example invocation (default):
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
-```
-
-Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbancode-deploy/7.2.1?topic=czcv-creating-zos-component-version-using-v2-package-format): 
-
-* Please note that this requires to define the mapping of the copyModes through the buztool properties file.
-
-```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --ucdV2PackageFormat
-
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
 ```
 
 Example to build a cumulative package across multiple build reports via `buildReportOrder`:
 
 ```
-
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/
-
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --buildReportOrder /u/ibmuser/sample_buildreports/BuildReport_1.json,/u/ibmuser/sample_buildreports/BuildReport_2.json,/u/ibmuser/sample_buildreports/BuildReport_3.json --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
 ```
 
 Example to build a cumulative package across multiple build reports via `buildReportOrderFile`. The file contains the references to the locations of the build reports:
 
 ```
-$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --prop /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --packagingPropFiles /var/dbb/extensions/ucd-packaging/mortgageRepositoryProps.properties 
-
+$DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --buildReportOrderFile /u/ibmuser/sample_buildreports/BuildReportOrderFile.txt --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion
 ```
 
 - Contents of `/u/ibmuser/sample_buildreports/BuildReportOrderFile.txt`:
@@ -68,7 +64,6 @@ Example to leverage [UCD packaging format v2](https://www.ibm.com/docs/en/urbanc
 - Note: This requires setting the `deployType` attribute on the UCD shiplist container level, which are defined via the `containerMapping` property passed via `--packagingPropFiles`. The property maps the last level qualifiers to the `deployType`. A sample is provided at [applicationRepositoryProps.properties](applicationRepositoryProps.properties). Additionally, the Buztool properties file requires the mapping of `deployType` to `copyType` to configure how files are copied from the PDS to the temporary directory on USS for the packaging process of the v2 format.
 
 ```
-
 $DBB_HOME/bin/groovyz dbb-ucd-packaging.groovy --buztool /var/ucd/agent/bin/buztool.sh --workDir /var/build/job/dbb-outputdir --component MYCOMP --propertyFile /var/ucd/agent/conf/artifactrepository/myapp.artifactory.properties --versionName MyVersion --pipelineURL https://ci-server/job/MortgageApplication/34/ --ucdV2PackageFormat
 ```
 
@@ -136,158 +131,184 @@ optional cli options :
 
  -pURL,--pipelineURL <arg>                      URL to the pipeline build result
 
+ -prURL,--pullRequestURL <arg>                  URL to the Pull Request
 
  -g,--gitBranch <arg>                           Name of the git branch
 
+
  -p,--preview                                   Preview mode generate shiplist, but do
                                                 not run buztool.sh
+
 
 utility options :
 
  -help,--help                                   Prints this message
  ```
 
+## Sample Console Log for Processing a Single Build Report
 
- ## Sample script log
-A sample invocation which stores the application package in an external artifact repository in UCD packaging format v2, including all traceability links.
+A sample invocation that stores the application package in an external artifact repository in UCD packaging format v2, including all traceability links:
+
+```
+/var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /var/jenkins/workspace/zunit-retirementCalculator/BUILD-135/build.20220531.013558.035 --component retirementCalculatorGithub --prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties --versionName 135_20220531.113630.036 --packagingPropFiles /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalulcatur.packaging.properties --ucdV2PackageFormat --pipelineURL http://jenkins-server/job/zunit-retirementCalculator/135/ --gitBranch main
+```
 
 <details>
-  <summary>Console outputs</summary>
-
+  <summary>Console log</summary>
 
 
 **dbb-ucd-packaging script output**
 
 ```
-+ /usr/lpp/dbb/v1r0/bin/groovyz /var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002 --component retirementCalculator --prop /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties --versionName 112_20220315.050325.003 --packagingPropFiles /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalulcatur.packaging.properties --ucdV2PackageFormat --pipelineURL http://jenkins-server/job/zunit-retirementCalculator/112/ --gitBranch main 
-** Create version start at 20220315.080327.003
+** Create version start at 20220531.013637.036
 ** Properties at startup:
-   workDir -> /var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002
-   startTime -> 20220315.080327.003
-   versionName -> 112_20220315.050325.003
-   git_commitURL_prefix -> https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/commit
-   git_treeURL_prefix -> https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree
+   buztoolPropertyFile -> /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties
+   workDir -> /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035
+   startTime -> 20220531.013637.036
+   versionName -> 120_20220531.113630.036
+   git_commitURL_prefix -> https://github.ibm.com/zDevOps/retirementCalculator/commit
+   git_treeURL_prefix -> https://github.ibm.com/zDevOps/retirementCalculator/tree
+   ucdV2PackageFormat -> true
+   preview -> true
+   gitBranch -> main
+   containerMapping -> ["LOAD": "LOAD", "LOADLIB": "LOAD", "COPY" : "TEXT", "DBRM" : "DBRM", "JCL" : "TEXT"]
+   buildReportOrder -> [/var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/BuildReport.json]
+   pipelineURL -> http://jenkins-server/job/zunit-retirementCalculator/120/
+   buztoolPath -> /var/ucd-agent/bin/buztool.sh
+   component -> retirementCalculatorGithub
+* Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version 1.1.3.
+**  Reading provided build report(s).
+*** Parsing DBB build report /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/BuildReport.json.
+**  Deployable files detected in /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/BuildReport.json
+   JENKINS.ZDAT.RETIRE.LOAD(EBUD01), LOAD
+** Generate UCD ship list file
+   Creating general UCD component version properties.
+   Storing DBB Build result properties as general component version properties due to single build report.
+   Creating shiplist record for build output JENKINS.ZDAT.RETIRE.LOAD(EBUD01) with recordType EXECUTE.
+** Write ship list file to  /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/shiplist.xml
+** Following UCD buztool cmd will be invoked
+/var/ucd-agent/bin/buztool.sh createzosversion2 -c retirementCalculatorGithub -s /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/shiplist.xml -o /var/jenkins/workspace/zunit-retirementCalculator/BUILD-120/build.20220531.013558.035/buztool.output -prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties -v "120_20220531.113630.036" 
+
+```
+</details>
+
+## Sample Console Log for Processing Multiple Build Reports to Assemble a Cumulative Package
+
+A sample invocation that builds a cumulative package across multiple build reports leveraging the `--buildReportOrder` CLI option:
+
+```
+groovyz /var/jenkins/workspace/zunit-retirementCalculator/dbb/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /var/jenkins/workspace/zunit-retirementCalculator/BUILD-139/build.20220602.100747.007 --buildReportOrder /var/jenkins/tmp/BuildReport-134.json,/var/jenkins/tmp/BuildReport-135.json,/var/jenkins/tmp/BuildReport-137.json,/var/jenkins/tmp/BuildReport-138.json,/var/jenkins/tmp/BuildReport-139.json --component retirementCalculatorGithub --prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties --versionName 139_20220602.080800.008 --packagingPropFiles /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalulcatur.packaging.properties --ucdV2PackageFormat --pipelineURL http://jenkins-server/job/zunit-retirementCalculator/139/ --gitBranch main 
+```
+
+<details>
+  <summary>Console log and sample shiplist file</summary>
+
+
+**dbb-ucd-packaging script output**
+
+```
+
+** Create version start at 20220602.100807.008
+** Properties at startup:
+   buztoolPropertyFile -> /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties
+   workDir -> /var/jenkins/workspace/zunit-retirementCalculator/BUILD-139/build.20220602.100747.007
+   startTime -> 20220602.100807.008
+   versionName -> 139_20220602.080800.008
+   git_commitURL_prefix -> https://github.ibm.com/zDevOps/retirementCalculator/commit
+   git_treeURL_prefix -> https://github.ibm.com/zDevOps/retirementCalculator/tree
    ucdV2PackageFormat -> true
    preview -> false
    gitBranch -> main
    containerMapping -> ["LOAD": "LOAD", "LOADLIB": "LOAD", "COPY" : "TEXT", "DBRM" : "DBRM", "JCL" : "TEXT"]
-   pipelineURL -> http://jenkins-server/job/zunit-retirementCalculator/112/
+   buildReportOrder -> [/var/jenkins/tmp/BuildReport-134.json, /var/jenkins/tmp/BuildReport-135.json, /var/jenkins/tmp/BuildReport-137.json, /var/jenkins/tmp/BuildReport-138.json, /var/jenkins/tmp/BuildReport-139.json]
+   pipelineURL -> http://jenkins-server/job/zunit-retirementCalculator/139/
    buztoolPath -> /var/ucd-agent/bin/buztool.sh
-   propertyFileSettings -> /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties
-   component -> retirementCalculator
-** Read build report data from /var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002/BuildReport.json
-** Find deployable outputs in the build report 
-   * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version 1.1.2.
-** Deployable files
-   JENKINS.ZDAT.RETIRE.LOAD(EBUD01), LOAD
-   JENKINS.ZDAT.RETIRE.LOAD(EBUD03), LOAD
+   component -> retirementCalculatorGithub
+* Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version 1.1.3.
+**  Reading provided build report(s).
+*** Parsing DBB build report /var/jenkins/tmp/BuildReport-134.json.
+**  Deployable files detected in /var/jenkins/tmp/BuildReport-134.json
    JENKINS.ZDAT.RETIRE.LOAD(EBUD0RUN), LOAD
-   JENKINS.ZDAT.RETIRE.LOAD(EBUD02), LOAD
-** Deleted files
+*** Parsing DBB build report /var/jenkins/tmp/BuildReport-135.json.
+**  Deployable files detected in /var/jenkins/tmp/BuildReport-135.json
+   JENKINS.ZDAT.RETIRE.LOAD(EBUD01), LOAD
+*** Parsing DBB build report /var/jenkins/tmp/BuildReport-137.json.
+**  Deployable files detected in /var/jenkins/tmp/BuildReport-137.json
+   JENKINS.ZDAT.RETIRE.LOAD(EBUD0RUN), LOAD
+*** Parsing DBB build report /var/jenkins/tmp/BuildReport-138.json.
+**  No items to package in /var/jenkins/tmp/BuildReport-138.json.
+*** Parsing DBB build report /var/jenkins/tmp/BuildReport-139.json.
+**  Deployable files detected in /var/jenkins/tmp/BuildReport-139.json
+   JENKINS.ZDAT.RETIRE.LOAD(EBUD03), LOAD
 ** Generate UCD ship list file
-** Write ship list file to  /var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002/shiplist.xml
+   Creating general UCD component version properties.
+   Creating shiplist record for build output JENKINS.ZDAT.RETIRE.LOAD(EBUD0RUN) with recordType EXECUTE.
+   Creating shiplist record for build output JENKINS.ZDAT.RETIRE.LOAD(EBUD03) with recordType EXECUTE.
+   Creating shiplist record for build output JENKINS.ZDAT.RETIRE.LOAD(EBUD01) with recordType EXECUTE.
+** Write ship list file to  /var/jenkins/workspace/zunit-retirementCalculator/BUILD-139/build.20220602.100747.007/shiplist.xml
 ** Following UCD buztool cmd will be invoked
-/var/ucd-agent/bin/buztool.sh createzosversion2 -c retirementCalculator -s /var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002/shiplist.xml -o /var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002/buztool.output -prop /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties -v 112_20220315.050325.003 
+/var/ucd-agent/bin/buztool.sh createzosversion2 -c retirementCalculatorGithub -s /var/jenkins/workspace/zunit-retirementCalculator/BUILD-139/build.20220602.100747.007/shiplist.xml -o /var/jenkins/workspace/zunit-retirementCalculator/BUILD-139/build.20220602.100747.007/buztool.output -prop /var/jenkins/workspace/zunit-retirementCalculator/retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties -v "139_20220602.080800.008" 
 ** Create version by running UCD buztool
-zOS toolkit config   : /var/ucd-agent/ (7.2.1.0,20211011-0758)
-zOS toolkit binary   : /var/ucd-agent/ (7.2.1.0,20211011-0758)
-zOS toolkit data set : RATCFG.UCD.V7R2M1 (7.2.1.0,20211011-0758)
-Reading parameters:
-....Command : createzosversion2
-....Component : retirementCalculator
-....Version : 112_20220315.050325.003
-....Shiplist file : /var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002/shiplist.xml
-....Buztool Properties File : /var/jenkins/workspace/zunit-retirementCalculator//retirementCalculator/retirementCalculator/application-conf/retirementCalculator.ucd.properties
-....Output File:/var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002/buztool.output
-Verifying version
-....Repository location : /var/ucd-agent/var/repository/retirementCalculator/112_20220315.050325.003
-Pre-processing shiplist:
-....Shiplist after processing :/var/ucd-agent/var/repository/retirementCalculator/112_20220315.050325.003/shiplist.xml
-Packaging data sets:
-....Shiplist : /var/ucd-agent/var/repository/retirementCalculator/112_20220315.050325.003/shiplist.xml
-....Location to store zip :  /var/ucd-agent/var/repository/retirementCalculator/112_20220315.050325.003
-....Zip name : package.zip
-....verbose : false
-....Datasets copied succesfully
-Post-processing package:
-PackageManifest file post-processing completed. 
-Create version and store package:
-....Uploading to artifactory using details from prop file
-....Executing request PUT http://artifactory-server/artifactory/RetirementCalculator/112_20220315.050325.003.zip HTTP/1.1
-....Version artifacts stored to ARTIFACTORY server
-....Version created in UCD server
-....Version:112_20220315.050325.003 created
-Elapsed time: 2.0 seconds.
-
-** buztool output properties
-   version.url -> https://ucd.dat.ibm.com:8443//#version/c9f2f810-8314-4baa-af79-937a57f81c51
-   version.repository.type -> CODESTATION
-   version.name -> 112_20220315.050325.003
-   version.id -> c9f2f810-8314-4baa-af79-937a57f81c51
-   component.name -> retirementCalculator
-   version.shiplist -> /var/jenkins/workspace/zunit-retirementCalculator/BUILD-112/build.20220315.080246.002/shiplist.xml
-** Build finished
 ```
-
-**Generated Shiplistfile.xml**
-
+**generated shiplist file**
 
 ```
 <?xml version="1.0" encoding="CP037"?>
 <manifest type='MANIFEST_SHIPLIST'>
-  <property name='dbb-buildResultUrl' value='https://10.3.20.96:10443/dbb/rest/buildResult/90543' />
-  <property name='ci-pipelineUrl' value='http://jenkins-server/job/zunit-retirementCalculator/112/' />
+  <property name='ci-pipelineUrl' value='http://jenkins-server/job/zunit-retirementCalculator/139/' />
   <property name='ci-gitBranch' value='main' />
-  <property name='filesProcessed' value='8' />
-  <property name=':githash:retirementCalculator' value='532647316aecd2acd4b3a545e8985080c97415db' />
-  <property name='fullBuild' value='true' />
-  <property name=':giturl:retirementCalculator' value='git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git' />
   <container name='JENKINS.ZDAT.RETIRE.LOAD' type='PDS' deployType='LOAD'>
-    <resource name='EBUD01' type='PDSMember' deployType='LOAD'>
+    <resource name='EBUD0RUN' type='PDSMember' deployType='LOAD'>
+      <property name='dbb-buildResultUrl' label='build.20220602.054657.046' value='https://10.3.20.96:10443/dbb/rest/buildResult/93067' />
+      <property name='impactBuild' value='true' />
+      <property name='filesProcessed' value='1' />
+      <property name=':githash:retirementCalculator' value='f7ee158c9f790006778d650abfff415aa1f83149' />
+      <property name=':giturl:retirementCalculator' value='git@github.ibm.com:zDevOps/retirementCalculator.git' />
       <property name='buildcommand' value='IEWBLINK' />
       <property name='buildoptions' value='RENT,REUS=RENT,LIST,XREF,AMODE=31,RMODE=ANY' />
-      <property name='githash' value='532647316aecd2acd4b3a545e8985080c97415db' />
-      <property name='git-link-to-commit' value='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/commit/532647316aecd2acd4b3a545e8985080c97415db' />
-      <inputs url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/cobol/EBUD01.cbl'>
-        <input name='retirementCalculator/cobol/EBUD01.cbl' compileType='Main' url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/cobol/EBUD01.cbl' />
+      <property name='githash' value='f7ee158c9f790006778d650abfff415aa1f83149' />
+      <property name='git-link-to-commit' value='https://github.ibm.com/zDevOps/retirementCalculator/commit/f7ee158c9f790006778d650abfff415aa1f83149' />
+      <inputs url='https://github.ibm.com/zDevOps/retirementCalculator/tree/f7ee158c9f790006778d650abfff415aa1f83149/retirementCalculator/cobol/EBUD0RUN.cbl'>
+        <input name='retirementCalculator/cobol/EBUD0RUN.cbl' compileType='Main' url='https://github.ibm.com/zDevOps/retirementCalculator/tree/f7ee158c9f790006778d650abfff415aa1f83149/retirementCalculator/cobol/EBUD0RUN.cbl' />
+        <input name='retirementCalculator/copy/LINPUT.cpy' compileType='COPY' url='https://github.ibm.com/zDevOps/retirementCalculator/tree/f7ee158c9f790006778d650abfff415aa1f83149/retirementCalculator/copy/LINPUT.cpy' />
       </inputs>
     </resource>
   </container>
   <container name='JENKINS.ZDAT.RETIRE.LOAD' type='PDS' deployType='LOAD'>
     <resource name='EBUD03' type='PDSMember' deployType='LOAD'>
+      <property name='dbb-buildResultUrl' label='build.20220602.100747.007' value='https://10.3.20.96:10443/dbb/rest/buildResult/93087' />
+      <property name='impactBuild' value='true' />
+      <property name='filesProcessed' value='1' />
+      <property name=':githash:retirementCalculator' value='db183e92ca33433a558bac1d7a84bf2f5857ab65' />
+      <property name=':giturl:retirementCalculator' value='git@github.ibm.com:zDevOps/retirementCalculator.git' />
       <property name='buildcommand' value='IEWBLINK' />
       <property name='buildoptions' value='RENT,REUS=RENT,LIST,XREF,AMODE=31,RMODE=ANY' />
-      <property name='githash' value='532647316aecd2acd4b3a545e8985080c97415db' />
-      <property name='git-link-to-commit' value='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/commit/532647316aecd2acd4b3a545e8985080c97415db' />
-      <inputs url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/cobol/EBUD03.cbl'>
-        <input name='retirementCalculator/cobol/EBUD03.cbl' compileType='Main' url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/cobol/EBUD03.cbl' />
+      <property name='githash' value='db183e92ca33433a558bac1d7a84bf2f5857ab65' />
+      <property name='git-link-to-commit' value='https://github.ibm.com/zDevOps/retirementCalculator/commit/db183e92ca33433a558bac1d7a84bf2f5857ab65' />
+      <inputs url='https://github.ibm.com/zDevOps/retirementCalculator/tree/db183e92ca33433a558bac1d7a84bf2f5857ab65/retirementCalculator/cobol/EBUD03.cbl'>
+        <input name='retirementCalculator/cobol/EBUD03.cbl' compileType='Main' url='https://github.ibm.com/zDevOps/retirementCalculator/tree/db183e92ca33433a558bac1d7a84bf2f5857ab65/retirementCalculator/cobol/EBUD03.cbl' />
       </inputs>
     </resource>
   </container>
   <container name='JENKINS.ZDAT.RETIRE.LOAD' type='PDS' deployType='LOAD'>
-    <resource name='EBUD0RUN' type='PDSMember' deployType='LOAD'>
+    <resource name='EBUD01' type='PDSMember' deployType='LOAD'>
+      <property name='dbb-buildResultUrl' label='build.20220531.013558.035' value='https://10.3.20.96:10443/dbb/rest/buildResult/93008' />
+      <property name='impactBuild' value='true' />
+      <property name='filesProcessed' value='2' />
+      <property name=':githash:retirementCalculator' value='11b9be5c88f3888d69b4b1a9c883734196c24958' />
+      <property name=':giturl:retirementCalculator' value='git@github.ibm.com:zDevOps/retirementCalculator.git' />
       <property name='buildcommand' value='IEWBLINK' />
       <property name='buildoptions' value='RENT,REUS=RENT,LIST,XREF,AMODE=31,RMODE=ANY' />
-      <property name='githash' value='532647316aecd2acd4b3a545e8985080c97415db' />
-      <property name='git-link-to-commit' value='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/commit/532647316aecd2acd4b3a545e8985080c97415db' />
-      <inputs url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/cobol/EBUD0RUN.cbl'>
-        <input name='retirementCalculator/cobol/EBUD0RUN.cbl' compileType='Main' url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/cobol/EBUD0RUN.cbl' />
-        <input name='retirementCalculator/copy/LINPUT.cpy' compileType='COPY' url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/copy/LINPUT.cpy' />
-      </inputs>
-    </resource>
-  </container>
-  <container name='JENKINS.ZDAT.RETIRE.LOAD' type='PDS' deployType='LOAD'>
-    <resource name='EBUD02' type='PDSMember' deployType='LOAD'>
-      <property name='buildcommand' value='IEWBLINK' />
-      <property name='buildoptions' value='RENT,REUS=RENT,LIST,XREF,AMODE=31,RMODE=ANY' />
-      <property name='githash' value='532647316aecd2acd4b3a545e8985080c97415db' />
-      <property name='git-link-to-commit' value='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/commit/532647316aecd2acd4b3a545e8985080c97415db' />
-      <inputs url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/cobol/EBUD02.cbl'>
-        <input name='retirementCalculator/cobol/EBUD02.cbl' compileType='Main' url='https://github.ibm.com/zDevOps-Acceleration/retirementCalculator/tree/532647316aecd2acd4b3a545e8985080c97415db/retirementCalculator/cobol/EBUD02.cbl' />
+      <property name='githash' value='11b9be5c88f3888d69b4b1a9c883734196c24958' />
+      <property name='git-link-to-commit' value='https://github.ibm.com/zDevOps/retirementCalculator/commit/11b9be5c88f3888d69b4b1a9c883734196c24958' />
+      <inputs url='https://github.ibm.com/zDevOps/retirementCalculator/tree/11b9be5c88f3888d69b4b1a9c883734196c24958/retirementCalculator/cobol/EBUD01.cbl'>
+        <input name='retirementCalculator/cobol/EBUD01.cbl' compileType='Main' url='https://github.ibm.com/zDevOps/retirementCalculator/tree/11b9be5c88f3888d69b4b1a9c883734196c24958/retirementCalculator/cobol/EBUD01.cbl' />
       </inputs>
     </resource>
   </container>
 </manifest>
 ```
+
+
 </details>
  
