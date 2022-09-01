@@ -61,6 +61,10 @@ import groovy.cli.commons.*
  *  - Externalize the Map of LLQ to CopyMode
  *  - Add capablity to add additional files from build workspace 
  *  - Verbose logging will print tar contents
+ *
+ * Version 3 - 2022-08
+ *  - Ability to pass multiple build reports to build a cumulative package
+ *  - Add an optional option to add the deploy type extension to the member
  *  
  ************************************************************************************/
 
@@ -143,12 +147,25 @@ props.buildReportOrder.each{ buildReportFile ->
 		}
 	}
 	
+	def count = 0
+	
 	// adding files and executes with outputs to Hashmap to remove redundant data
 	buildRecords.each{ buildRecord ->
 		if (buildRecord.getOutputs().size() != 0) {
 			buildRecord.getOutputs().each{ output ->
+				count++
 				buildOutputsMap.put(output.dataset, buildRecord)
 			}
+		}
+	}
+	
+	if ( count == 0 ) {
+		println("**  No items to package in $buildReportFile.")
+	} else {
+		// Log files
+		if (count != 0) {
+			println("**  Files detected in $buildReportFile")
+			buildRecords.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
 		}
 	}
 }
@@ -194,15 +211,32 @@ if (buildOutputsMap.size() == 0) {
 			def fullyQualifiedDsn = "$dataset($member)"
 			def filePath = "$tempLoadDir/$dataset"
 			new File(filePath).mkdirs()
-			def file = new File(filePath, member)
+			
+			// define file name in USS
+			// default : member
+			def fileName = member
+			
+			// add deployType to file name
+			if (props.addExtension && props.addExtension.toBoolean()) {
+				buildRecord = buildOutputsMap.getAt(fullyQualifiedDsn)
+				// retrieve the output definition 
+				outputDefintion = buildRecord.getOutputs().find{
+					it.dataset == fullyQualifiedDsn
+				}
+				fileName = fileName + '.' + outputDefintion.deployType
+			}
+			def file = new File(filePath, fileName)
+			
 
+			
+			
 			// set copyMode based on last level qualifier
 			currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
 			if (currentCopyMode != null) {
 				copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
 				copy.setDataset(dataset)
 
-				println "     Copying $dataset($member) to $filePath with DBB Copymode $currentCopyMode"
+				println "     Copying $dataset($member) to $filePath/$fileName with DBB Copymode $currentCopyMode"
 				copy.dataset(dataset).member(member).file(file).execute()
 
 				// Workaround DBB 1.1.1 toolkit
@@ -247,6 +281,15 @@ if (buildOutputsMap.size() == 0) {
 		
 		}
 	}
+	
+	// copy the build report file over before modifying the string
+	print("** Copying $props.packagingPropertiesFile to temporary package dir.")
+	processCmd = [
+		"sh",
+		"-c",
+		"cp $props.packagingPropertiesFile $tempLoadDir"
+	]
+	rc = runProcess(processCmd, tempLoadDir)
 	
 	def tarFile = new File("$props.workDir/${tarFileName}")
 
@@ -363,7 +406,8 @@ def parseInput(String[] cliArgs){
 	cli.d(longOpt:'deployTypes', args:1, argName:'deployTypes','Comma-seperated list of deployTypes to filter on the scope of the tar file. (Optional)')
 	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional unless using --buildReportOrder or --buildReportOrderFile)')
 	cli.il(longOpt:'includeLogs', args:1, argName:'includeLogs', 'Comma-separated list of files/patterns from the USS build workspace. (Optional)')
-
+	cli.ae(longOpt:'addExtension', 'Flag to add the deploy type extension to the member in the package tar file. (Optional)')
+	
 	// Artifactory Options:
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifactory server. (Optional)')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the Artifactory version. (Optional)')
@@ -391,12 +435,14 @@ def parseInput(String[] cliArgs){
 	if (opts.properties){
 		def propertiesFile = new File(opts.properties)
 		if (propertiesFile.exists()){
+			props.packagingPropertiesFile = opts.properties
 			propertiesFile.withInputStream { props.load(it) }
 		}
 	} else { // read default sample properties file shipped with the script
 		def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 		def defaultPackagePropFile = new File("$scriptDir/packageBuildOutputs.properties")
 		if (defaultPackagePropFile.exists()){
+			props.packagingPropertiesFile = "$scriptDir/packageBuildOutputs.properties"
 			defaultPackagePropFile.withInputStream { props.load(it) }
 		}
 	}
@@ -406,6 +452,7 @@ def parseInput(String[] cliArgs){
 	if (opts.d) props.deployTypeFilter = opts.d
 	if (opts.t) props.tarFileName = opts.t
 	if (opts.il) props.includeLogs = opts.il
+	props.addExtension = (opts.ae) ? 'true' : 'false'
 
 	props.verbose = (opts.verb) ? 'true' : 'false'
 
