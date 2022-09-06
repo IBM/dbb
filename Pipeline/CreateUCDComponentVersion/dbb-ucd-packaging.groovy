@@ -503,7 +503,6 @@ def parseInput(String[] cliArgs){
 	cli.zpv2(longOpt:'ucdV2PackageFormat', 'Invoke buztool with the buztool package version v2.')
 	cli.p(longOpt:'preview', 'Preview mode - generate shiplist, but do not run buztool.sh')
 
-
 	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'Build a cumulative package based on a comma separated list of one or multiple DBB build reports processed in the provided order (Optional).')
 	cli.boFile(longOpt:'buildReportOrderFile', args:1, argName:'buildReportOrderFile', 'Build a cumulative package based on an input file that lists one or multiple build reports defining the order of processing (Optional).')
 
