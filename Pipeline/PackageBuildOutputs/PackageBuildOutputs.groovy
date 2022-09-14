@@ -101,7 +101,7 @@ props.buildReportOrder.each{ buildReportFile ->
 	def jsonOutputFile = new File(buildReportFile)
 
 	if(!jsonOutputFile.exists()){
-		println("** Build report data at $buildReportFile not found")
+		println("*! Error: Build report data at $buildReportFile not found")
 		System.exit(1)
 	}
 
@@ -426,7 +426,7 @@ def parseInput(String[] cliArgs){
 	def opts = cli.parse(cliArgs)
 	if (opts.h) { // if help option used, print usage and exit
 		cli.usage()
-		System.exit(0)
+		System.exit(2)
 	}
 
 	def props = new Properties()
@@ -486,7 +486,7 @@ def parseInput(String[] cliArgs){
 		
 		if(opts.t == false) {
 			println("*! Error: tarFilename is only optional when no build report order is specified")
-			System.exit(0)
+			System.exit(3)
 		}
 		
    	}
@@ -496,7 +496,7 @@ def parseInput(String[] cliArgs){
 	    }
 		if(opts.t == false) {
 			println("*! Error: tarFilename is only optional when no build report order is specified")
-			System.exit(0)
+			System.exit(3)
 		}
 	} else if (buildReports.isEmpty()){
 		buildReports = [opts.w + "/BuildReport.json"]
