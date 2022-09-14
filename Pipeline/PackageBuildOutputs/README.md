@@ -26,7 +26,7 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
    1. If processing multiple build reports, a cumulative hashmap of output records is created to be able to combine outputs from multiple pipeline builds into a single tar file.
 
 1. **Create Tar-file**
-    1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS.  
+    1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
     1. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
 
 1. **(Optional) Publish to Artifactory**
@@ -306,7 +306,9 @@ ArtifactoryHelpers console output
                                                  file. (Optional)
   -verb,--verbose                                Flag to provide more log output. (Optional)
   -il,--includeLogs                              Comma-separated list of files/patterns
-                                                 from the USS build workspace                                               
+                                                 from the USS build workspace
+  -ae,--addExtension                             Flag to add the deploy type extension to the member
+                                                in the package tar file. (Optional)                                                                                              
                                         
   Optional Artifactory Upload opts:
  
