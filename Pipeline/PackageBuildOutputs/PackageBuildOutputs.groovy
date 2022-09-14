@@ -266,19 +266,17 @@ if (buildOutputsMap.size() == 0) {
 	buildReportOrder.withWriter(logEncoding) { writer ->
 		props.buildReportOrder.each{ buildReportFile ->
 			counter++
-			
+			buildReportFileName = buildReportFile
 			// remove unneeded leading file path, so just the build report file name remains
-			while(buildReportFile.indexOf('/')!= -1) {
-				buildReportFile = buildReportFile.substring(buildReportFile.indexOf('/') + 1)
+			while(buildReportFileName.indexOf('/')!= -1) {
+				buildReportFileName = buildReportFileName.substring(buildReportFileName.indexOf('/') + 1)
 			}
-			// prefixing the buildreport with the sequence number 
-			buildReportFileName = "$counter".padLeft("0") + buildReportFile
-			writer.write("$buildReportFile\n")
-			
-			uildreport
+			// prefixing the buildreport with sequence number when having multiple
+			if(props.buildReportOrder.size() > 1) buildReportFileName = "$counter".padLeft(3, "0") + "_" + buildReportFileName
+			writer.write("$buildReportFileName\n")
 			
 			// copy the build report file over before modifying the string 
-			print("** Copying $buildReportFile to temporary package dir as $buildReportFileName.")
+			println("** Copying $buildReportFile to temporary package dir as $buildReportFileName.")
 			processCmd = [
 		        "sh",
 				"-c",
@@ -290,7 +288,7 @@ if (buildOutputsMap.size() == 0) {
 	}
 	
 	// copy the build report file over before modifying the string
-	print("** Copying $props.packagingPropertiesFile to temporary package dir.")
+	println("** Copying $props.packagingPropertiesFile to temporary package dir.")
 	processCmd = [
 		"sh",
 		"-c",
@@ -382,7 +380,7 @@ def getDatasetName(String fullname){
  * run process
  */
 def runProcess(ArrayList cmd, File dir){
-	if (props.verbose && props.verbose.toBoolean()) println "executing $cmd: "
+	if (props.verbose && props.verbose.toBoolean()) println " Executing $cmd: "
 	StringBuffer response = new StringBuffer()
 	StringBuffer error = new StringBuffer()
 
@@ -390,7 +388,7 @@ def runProcess(ArrayList cmd, File dir){
 	def p = cmd.execute(null, dir)
 
 	p.waitForProcessOutput(response, error)
-	println(response.toString())
+	if(response) println(response.toString())
 
 	def rc = p.exitValue();
 	if(rc!=0){
