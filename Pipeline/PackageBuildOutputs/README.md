@@ -182,8 +182,8 @@ PackageBuildOutputs console output
      Copying JENKINS.ZDAT.RETIRE.LOAD(EBUD01) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.LOAD/EBUD01 with DBB Copymode LOAD
      Copying JENKINS.ZDAT.RETIRE.COBOL(EBUD02) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.COBOL/EBUD02 with DBB Copymode TEXT
      Copying JENKINS.ZDAT.RETIRE.COPY(LINPUT) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.COPY/LINPUT with DBB Copymode TEXT
-** Copying /var/pipeline/retirementCalculator/BuildReport_1.json to temporary package dir.executing [sh, -c, cp /var/pipeline/retirementCalculator/BuildReport_1.json /var/pipeline/work/tempPackageDir]:
-** Copying /var/pipeline/retirementCalculator/BuildReport_2.json to temporary package dir.executing [sh, -c, cp /var/pipeline/retirementCalculator/BuildReport_2.json /var/pipeline/work/tempPackageDir]:
+** Copying /var/pipeline/retirementCalculator/BuildReport_1.json to temporary package dir as 001_BuildReport_1.json. Executing [sh, -c, cp /var/pipeline/retirementCalculator/BuildReport_1.json /var/pipeline/work/tempPackageDir/001_BuildReport_1.json]:
+** Copying /var/pipeline/retirementCalculator/BuildReport_2.json to temporary package dir as 002_BuildReport_2.json. Executing [sh, -c, cp /var/pipeline/retirementCalculator/BuildReport_2.json /var/pipeline/work/tempPackageDir/002_BuildReport_2.json]:
 ** Copying /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.executing [sh, -c, cp /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties /var/pipeline/work/tempPackageDir]:
 ** Creating tar file at /var/pipeline/work/rel-1.0.0.tar.
 executing [sh, -c, tar cUXf /var/pipeline/work/rel-1.0.0.tar *]:
@@ -191,8 +191,8 @@ executing [sh, -c, tar cUXf /var/pipeline/work/rel-1.0.0.tar *]:
 ** Package successfully created at /var/pipeline/work/rel-1.0.0.tar.
 **   List package contents.
 executing [sh, -c, tar tvf /var/pipeline/work/rel-1.0.0.tar]:
--rw-------   1 BPXROOT  TIVUSR     22489 Sep  1 16:04 BuildReport_1.json
--rw-------   1 BPXROOT  TIVUSR     18708 Sep  1 16:04 BuildReport_2.json
+-rw-------   1 BPXROOT  TIVUSR     22489 Sep  1 16:04 001_BuildReport_1.json
+-rw-------   1 BPXROOT  TIVUSR     18708 Sep  1 16:04 002_BuildReport_2.json
 drwxr-xr-x   1 BPXROOT  TIVUSR         0 Sep  1 16:04 JENKINS.ZDAT.RETIRE.COBOL/
 -rw-r--r--   1 BPXROOT  TIVUSR      2107 Sep  1 16:04 JENKINS.ZDAT.RETIRE.COBOL/EBUD02
 drwxr-xr-x   1 BPXROOT  TIVUSR         0 Sep  1 16:04 JENKINS.ZDAT.RETIRE.COPY/

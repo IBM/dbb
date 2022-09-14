@@ -260,24 +260,31 @@ if (buildOutputsMap.size() == 0) {
 	File buildReportOrder = new File("$tempLoadDir/buildReportOrder.txt")
 	buildReportOrder.write('')	
 	String logEncoding = 'UTF-8'
+	String buildReportFileName
+	int counter = 0
 	
 	buildReportOrder.withWriter(logEncoding) { writer ->
 		props.buildReportOrder.each{ buildReportFile ->
-
-			// copy the build report file over before modifying the string 
-			print("** Copying $buildReportFile to temporary package dir.")
-			processCmd = [
-		        "sh",
-				"-c",
-				"cp $buildReportFile $tempLoadDir"
-			]
-			rc = runProcess(processCmd, tempLoadDir)
+			counter++
 			
-			// remove unneeded leading file path, so just the build report file name remains 
+			// remove unneeded leading file path, so just the build report file name remains
 			while(buildReportFile.indexOf('/')!= -1) {
 				buildReportFile = buildReportFile.substring(buildReportFile.indexOf('/') + 1)
 			}
+			// prefixing the buildreport with the sequence number 
+			buildReportFileName = "$counter".padLeft("0") + buildReportFile
 			writer.write("$buildReportFile\n")
+			
+			uildreport
+			
+			// copy the build report file over before modifying the string 
+			print("** Copying $buildReportFile to temporary package dir as $buildReportFileName.")
+			processCmd = [
+		        "sh",
+				"-c",
+				"cp $buildReportFile $tempLoadDir/$buildReportFileName"
+			]
+			rc = runProcess(processCmd, tempLoadDir)
 		
 		}
 	}
