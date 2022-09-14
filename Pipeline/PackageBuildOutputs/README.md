@@ -57,7 +57,7 @@ PackageBuildOutputs console output
    addExtension -> false
 ** Read build report data from /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
 ** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
-**  Files detected in /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
+** Files detected in /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
    GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMORT), MAPLOAD
    GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIS), MAPLOAD
    GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRT), CICSLOAD
@@ -109,7 +109,7 @@ PackageBuildOutputs console output
    addExtension -> true
 ** Read build report data from /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
 ** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
-**  Files detected in /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
+** Files detected in /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
    GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMORT), MAPLOAD
    GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIS), MAPLOAD
    GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRT), CICSLOAD
@@ -294,20 +294,17 @@ ArtifactoryHelpers console output
                                                  packaging details. 
                                                                                                                                           
   Optional:
-  -boFile,--buildReportOrderFile <file> 	     Name of the buildReportOrder file, used to specify
-  						                         buildReport.json files to be processed.
-						 
-  -bO,--buildReportOrder <buildReports> 	     Additional build reports to be processed. If -boFile and -bO 
-  						                         are used together, the build reports from -bO are 
-						                         appended to the build reports from -boFile.
-						 
+  -boFile,--buildReportOrderFile <file>          Name of the buildReportOrder file, used to specify
+                                                 buildReport.json files to be processed.
+  -bO,--buildReportOrder <buildReports>          Additional build reports to be processed. If -boFile and -bO 
+                                                 are used together, the build reports from -bO are 
+                                                 appended to the build reports from -boFile.
   -t,--tarFileName <filename>                    Name of the package tar file.
                                                  (Optional unless using --buildReportOrder or --buildReportOrderFile)
   -d,--deployTypes <deployTypes>                 Comma-seperated list of deployTypes
                                                  to filter on the scope of the tar
                                                  file. (Optional)
-  -verb,--verbose                                Flag to provide more log output.
-                                                 (Optional)
+  -verb,--verbose                                Flag to provide more log output. (Optional)
   -il,--includeLogs                              Comma-separated list of files/patterns
                                                  from the USS build workspace                                               
                                         

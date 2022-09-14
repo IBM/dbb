@@ -160,11 +160,11 @@ props.buildReportOrder.each{ buildReportFile ->
 	}
 	
 	if ( count == 0 ) {
-		println("**  No items to package in $buildReportFile.")
+		println("** No items to package in $buildReportFile.")
 	} else {
 		// Log files
 		if (count != 0) {
-			println("**  Files detected in $buildReportFile")
+			println("** Files detected in $buildReportFile")
 			buildRecords.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
 		}
 	}
