@@ -308,7 +308,7 @@ ArtifactoryHelpers console output
   -il,--includeLogs                              Comma-separated list of files/patterns
                                                  from the USS build workspace
   -ae,--addExtension                             Flag to add the deploy type extension to the member
-                                                in the package tar file. (Optional)                                                                                              
+                                                 in the package tar file. (Optional)                                                                                              
                                         
   Optional Artifactory Upload opts:
  
