@@ -1,6 +1,6 @@
 # Simple Deploy (Deploy the package to target libraries)
 ## Description
-This "SimpleDeploy.groovy" sample script is capable of untaring the tar produced by [PackageBuildOutputs](../PackageBuildOutputs/) and deploy the tar package contents to the target libraries. 
+This "SimpleDeploy.groovy" sample script is capable of untaring the tar package produced by [PackageBuildOutputs](../PackageBuildOutputs/) and deploy the tar package contents to the target libraries. 
 
 Potential scenarios include:
 * Deploying the tar package to the target environment libraries.
