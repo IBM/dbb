@@ -14,7 +14,7 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 
 /************************************************************************************
- * NAME: SimpleDeploy.groovy
+ * NAME: SimpleBuildReportDeploy.groovy
  * 
  * DESCRIPTION: Deploy the package created by PackageBuildOutputs.groovy to target 
  * libraries
@@ -26,22 +26,24 @@ import groovy.json.JsonSlurper
  * As of now, this script does not perform any activation activities like a CICS 
  * NEWCOPY or a DB2 BIND.  
  * 
- * INVOCATION: groovyz SimpleDeploy.groovy [parameters]
+ * INVOCATION: groovyz SimpleBuildReportDeploy.groovy [parameters]
  *
  * PARAMETERS:
  *
  * --workDir <dir>             Absolute path to the package untar temporary folder
  * --tarFileName <filename>    Name of the package tar file with path
  * --hlq <hlq>                 HLQ of the target environment libraries for the deployment 
+ * --packageWithExtension      Flag to show the package contains extension (Optional) 
  * 
- * simpleDeploy.properties:
+ * simpleBuildReportDeploy.properties:
  * copyModeMap                 JSON string of deploy type and copy mode pairs
  * targetLibLLQMap             JSON string of deploy type and target LLQ pairs 
  *
  * INTERNALS: 
  *
- *  1) Reads the options --workDir, --tarFileName, and --hlq from the command line.
- *  2) Reads the options copyModeMap and targetLibLLQMap from the simpleDeploy.properties 
+ *  1) Reads the options --workDir, --tarFileName, and --hlq from the command line. Pass the optional 
+ *     parm --packageWithExtension if the build package is created with addExtension option. 
+ *  2) Reads the options copyModeMap and targetLibLLQMap from the simpleBuildReportDeploy.properties 
  *     file.
  *  3) Creates a temporary package extract folder in the path provided using the 
  *     --workDir option.
@@ -69,7 +71,7 @@ props = parseInput(args)
 
 def startTime = new Date()
 props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
-println("** SimpleDeploy start at $props.startTime")
+println("** SimpleBuildReportDeploy start at $props.startTime")
 
 // Map of last level dataset qualifier to DBB CopyToPDS CopyMode.
 def copyModeMap = parseJSONStringToMap(props.copyModeMap)
@@ -100,80 +102,112 @@ def processCmd = ["sh", "-c", "tar -C $tarExtractDirName -xvf $tarFile"]
 
 def rc = runProcess(processCmd)
 if (rc == 0) println("Package untar done to $tarExtractDirName")
-else println("Failed to untar $tarFile")
+else {
+	println("Failed to untar $tarFile")
+	System.exit(1)
+}
 
-// read build report data
-println("** Read build report data from $tarExtractDirName/BuildReport.json")
-def buildReportFile = new File("${tarExtractDirName}/BuildReport.json")
 
-if(!buildReportFile.exists()){
+// Read build report data
+def listDirFiles = new File("$tarExtractDirName")
+def buildReportFlag = 0
+
+// Find the BuildReport.json file for deployment 
+listDirFiles.eachFile {
+   if(it.getName().contains("BuildReport.json")) {
+	   if(!it.exists()){
+		    println("** Build report data at ${it} not found")
+		    System.exit(1)
+	   }
+	   buildReportFlag = 1
+	   deployFromBuildReport(it,tarExtractDirName,targetLibLLQMap,copyModeMap)
+   }
+}
+
+// If BuidlReport.json not found in the build output package
+if(!buildReportFlag){
     println("** Build report data at $tarExtractDirName/BuildReport.json not found")
-    System.exit(1)
-}
-
-def buildReport= BuildReport.parse(new FileInputStream(buildReportFile))
-
-// finds all the build outputs with a deployType
-def executes= buildReport.getRecords().findAll{
-    try {
-        (it.getType()==DefaultRecordFactory.TYPE_EXECUTE &&
-                !it.getOutputs().isEmpty())
-    } catch (Exception e){}
-}
-
-
-// New CopyToPDS instance 
-CopyToPDS copy = new CopyToPDS()
-
-// Copy the extracted files to the corresponding target PDS
-executes.each { 
-    it.getOutputs().each {
-        if (it.deployType != null) {
-            def (dataset, member) = it.dataset.split("\\(|\\)")
-            def srcFilePath = tarExtractDirName + "/" + dataset + "/" + member
-            def targetPDS = "${props.hlq}" + "." + targetLibLLQMap["${it.deployType}"]
-            println("\nExtracted file $dataset/$member is of type ${it.deployType}") 
-            if (copyModeMap["${it.deployType}"] != null) {
-                copy.setCopyMode(DBBConstants.CopyMode.valueOf(copyModeMap["${it.deployType}"]))
-            
-                def srcFile = new File("$srcFilePath")
-                if(!srcFile.exists()){
-                    println("** Source file not found at $srcFilePath")
-                    System.exit(1)
-                }
-                copy.setFile(srcFile);
-
-                copy.setDataset("$targetPDS");
-                copy.setMember("$member");
-                copy.copy()
-            
-                println("Copied source file - $dataset/$member to Target PDS - $targetPDS")
-            } else {
-                println("ERROR: DEPLOYMENT FAILED")
-                println("ERROR: SOURCE FILE NOT DEPLOYED : $dataset/$member")
-                println("ERROR: DBB COPY MODE NOT DEFINED FOR DEPLOY TYPE : ${it.deployType}\n")
-                
-                if (tarExtractDir.exists()) tarExtractDir.deleteDir()
-                println("\nDeleted the temporary folder - ${tarExtractDirName}\n")
-
-                System.exit(1)
-            }
-        }    
-    }
 }
 
 if (tarExtractDir.exists()) tarExtractDir.deleteDir()
 println("\nDeleted the temporary folder - ${tarExtractDirName}\n")
 
 /**********************************************************************************
+ **** Deploy from the BuildReport                  
+ **********************************************************************************/
+def deployFromBuildReport (File buildReportFile, String tarExtractDirName,Map targetLibLLQMap,Map copyModeMap) {
+	
+	println("\n** Deploying the contents in ${buildReportFile}")
+	
+	def buildReport= BuildReport.parse(new FileInputStream(buildReportFile))
+	def tarExtractDir = new File("${tarExtractDirName}")
+
+	//finds all the build outputs with a deployType
+	def executes= buildReport.getRecords().findAll{
+	 try {
+	     (it.getType()==DefaultRecordFactory.TYPE_EXECUTE &&
+	             !it.getOutputs().isEmpty())
+	 } catch (Exception e){}
+	}
+
+
+	//New CopyToPDS instance 
+	CopyToPDS copy = new CopyToPDS()
+
+	//Copy the extracted files to the corresponding target PDS
+	executes.each { 
+	 it.getOutputs().each {
+	     if (it.deployType != null) {
+	         def (dataset, member) = it.dataset.split("\\(|\\)")
+	         def srcFilePath = tarExtractDirName + "/" + dataset + "/" + member		
+	         if (props.packageWithExtension && props.packageWithExtension.toBoolean()) {	
+	         	srcFilePath = srcFilePath + ".${it.deployType}"
+	         }
+	         
+	         def targetPDS = "${props.hlq}" + "." + targetLibLLQMap["${it.deployType}"]
+	         println("\nExtracted file $srcFilePath is of type ${it.deployType}") 
+	         if (copyModeMap["${it.deployType}"] != null) {
+	             copy.setCopyMode(DBBConstants.CopyMode.valueOf(copyModeMap["${it.deployType}"]))
+	         
+	             def srcFile = new File("$srcFilePath")
+	             if(!srcFile.exists()){
+	                 println("** Source file not found at $srcFilePath")
+	                 println("** Validate if the package was generated with addExtension option. If yes, use option: -e or --packageWithExtension to deploy")
+	                 System.exit(1)
+	             }
+	             copy.setFile(srcFile);
+
+	             copy.setDataset("$targetPDS");
+	             copy.setMember("$member");
+	             copy.copy()
+	         
+	             println("Copied source file - $dataset/$member to Target PDS - $targetPDS")
+	         } else {
+	             println("ERROR: DEPLOYMENT FAILED")
+	             println("ERROR: SOURCE FILE NOT DEPLOYED : $dataset/$member")
+	             println("ERROR: DBB COPY MODE NOT DEFINED FOR DEPLOY TYPE : ${it.deployType}\n")
+	             
+	             if (tarExtractDir.exists()) tarExtractDir.deleteDir()
+	             println("\nDeleted the temporary folder - ${tarExtractDirName}\n")
+
+	             System.exit(1)
+	         }
+	     }    
+	 }
+  }	
+}
+
+
+/**********************************************************************************
  **** read cliArgs                  
  **********************************************************************************/
 def parseInput(String[] cliArgs){
-    def cli = new CliBuilder(usage: "SimpleDeploy.groovy [options]")
+    def cli = new CliBuilder(usage: "SimpleBuildReportDeploy.groovy [options]")
     // required packaging options
     cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the package untar temporary folder')
     cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file with path')
     cli.q(longOpt:'hlq', args:1, 'HLQ of the target environment libraries for the deployment')
+    cli.e(longOpt:'packageWithExtension', 'Flag to show the package contains extension (Optional)')
     cli.h(longOpt:'help', 'Prints this message')
 
     def opts = cli.parse(cliArgs)
@@ -186,6 +220,7 @@ def parseInput(String[] cliArgs){
     if (opts.w) props.workDir = opts.w
     if (opts.t) props.tarFileName = opts.t
     if (opts.q) props.hlq = opts.q
+    props.packageWithExtension = (opts.e) ? 'true' : 'false'
          
     // read properties file
     if (opts.properties){
@@ -195,7 +230,7 @@ def parseInput(String[] cliArgs){
         }
     } else { // read default properties file shipped with the script
         def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
-        def defaultPackagePropFile = new File("$scriptDir/simpleDeploy.properties")
+        def defaultPackagePropFile = new File("$scriptDir/simpleBuildReportDeploy.properties")
         if (defaultPackagePropFile.exists()){
             defaultPackagePropFile.withInputStream { props.load(it) }
         }
@@ -248,7 +283,7 @@ def parseJSONStringToMap(String packageProperty) {
 		JsonSlurper slurper = new groovy.json.JsonSlurper()
 		map = slurper.parseText(packageProperty)
 	} catch (Exception e) {
-		String errorMsg = "*! SimpleDeploy.parseStringToMap - Failed to parse setting $packageProperty from String into a Map object. Process exiting."
+		String errorMsg = "*! SimpleBuildReportDeploy.parseStringToMap - Failed to parse setting $packageProperty from String into a Map object. Process exiting."
 		println errorMsg
 		println e.getMessage()
 		System.exit(1)

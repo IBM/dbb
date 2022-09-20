@@ -10,5 +10,5 @@ DeployUCDComponentVersion | This sample can be use to deploy an application comp
 PackageBuildOutputs | This sample creates a TAR file with the build outputs referenced in a DBB Build Report. Additionally, it contains a sample to Upload/Download to Artifactory. | [PackageBuildOutputs/README.md](PackageBuildOutputs/README.md)
 PublishSharedInterfaces | This sample script implements a publishing mechanism of interfaces to a common git repository for shared interfaces. | [PublishSharedInterfaces/README.md](PublishSharedInterfaces/README.md)
 RunIDZCodeReview | This sample reads the DBB Build Report, assembles an JCL to run IDZ Code Review on Z/OS in Batch. | [RunIDZCodeReview/README.md](RunIDZCodeReview/README.md)
-SimpleDeploy | This sample script is capable of untaring the tar package produced by [PackageBuildOutputs](PackageBuildOutputs) and deploy the tar package contents to the target libraries. | [SimpleDeploy/README.md](SimpleDeploy/README.md)
+SimpleBuildReportDeploy | This sample script is capable of untaring the tar package produced by [PackageBuildOutputs](PackageBuildOutputs) and deploy the tar package contents to the target libraries. | [SimpleBuildReportDeploy/README.md](SimpleBuildReportDeploy/README.md)
 
