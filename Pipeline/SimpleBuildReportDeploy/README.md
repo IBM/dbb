@@ -23,7 +23,7 @@ As of now, this script does not perform any activation activities like a CICS NE
 
 ### Sample invocation
 
-### Deploy from Package only output from [PackageBuildOutputs](../PackageBuildOutputs/)
+### Deploy from package only output from [PackageBuildOutputs](../PackageBuildOutputs/)
 ```
 groovyz SimpleBuildReportDeploy.groovy --workDir /u/anupra/workspace/zAppBuild_Hogan/out --tarFileName /u/anupra/workspace/zAppBuild_Hogan/out/build.20220920.053231.032/packageWithoutExtn.tar --hlq ANUPRA.SIT.MORTGAGE
 ```
@@ -70,7 +70,7 @@ Deleted the temporary folder - /u/anupra/workspace/zAppBuild_Hogan/out/DeployFil
 </details>
 
 
-### Deploy from Package only including adding deployType to files in tar output from [PackageBuildOutputs](../PackageBuildOutputs/)
+### Deploy from package only including adding deployType to files in tar output from [PackageBuildOutputs](../PackageBuildOutputs/)
 ```
 groovyz SimpleBuildReportDeploy.groovy --workDir /u/anupra/workspace/zAppBuild_Hogan/out --tarFileName /u/anupra/workspace/zAppBuild_Hogan/out/build.20220920.053231.032/packageWithExtn.tar --hlq ANUPRA.SIT.MORTGAGE --packageWithExtension
 ```
@@ -117,7 +117,7 @@ Deleted the temporary folder - /u/anupra/workspace/zAppBuild_Hogan/out/DeployFil
 </details>
 
 
-### Deploy from Package only processing multiple build reports output from [PackageBuildOutputs](../PackageBuildOutputs/)
+### Deploy from package only processing multiple build reports output from [PackageBuildOutputs](../PackageBuildOutputs/)
 ```
 groovyz SimpleBuildReportDeploy.groovy --workDir /u/anupra/workspace/zAppBuild_Hogan/out --tarFileName /u/anupra/workspace/zAppBuild_Hogan/out/multiBuildPackageWithoutExtn.tar --hlq ANUPRA.SIT.MORTGAGE
 ```
@@ -175,7 +175,7 @@ Deleted the temporary folder - /u/anupra/workspace/zAppBuild_Hogan/out/DeployFil
 </details>
 
 
-### Deploy from Package only processing multiple build reports including adding deployType to files in tar output from [PackageBuildOutputs](../PackageBuildOutputs/)
+### Deploy from package only processing multiple build reports including adding deployType to files in tar output from [PackageBuildOutputs](../PackageBuildOutputs/)
 ```
 groovyz SimpleBuildReportDeploy.groovy --workDir /u/anupra/workspace/zAppBuild_Hogan/out --tarFileName /u/anupra/workspace/zAppBuild_Hogan/out/multiBuildPackageWithExtn.tar --hlq ANUPRA.SIT.MORTGAGE --packageWithExtension
 ```
