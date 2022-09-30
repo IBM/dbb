@@ -14,10 +14,8 @@ For instructions on how to contribute new samples and bug fixes, please read the
 ## Content
 Sample | Description
 --- | ---
-[Build/BuildReport](Build/BuildReport) | Sample showing how to extend the BuildReport to provide additional functionality
 [Build/HelloWorld](Build/HelloWorld) | The HelloWorld sample provides simple source file types and the Groovy build scripts to compile them
 [Build/IDE](Build/IDE) | A collection of 3 samples from PLI, COBOL, and ASM created by the IDz/ZOD team with instructions to run them on IDz/ZOD.
-[Build/MortgageApplication](Build/MortgageApplication) | Sample application demonstrating many of the  build functions provided by DBB.
 Build/MortgageApplicationV2 | MortgageApplicationV2 has been moved to the new zAppBuild repository at https://github.com/IBM/dbb-zappbuild.
 [Build/MultiThreadMVSJob](Build/MultiThreadMVSJob) | Sample showing how to modilfy a compilation script to run in a multi-thread environment.
 Build/PublishLoadModules | Sample demonstrating how to publish load modules to Artifactory after a successful build. Removed and superseded by [Pipeline/PackageBuildOutputs](Pipeline/PackageBuildOutputs).
