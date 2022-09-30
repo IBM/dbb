@@ -27,7 +27,6 @@ Build/zAppBuild | zAppBuild has been moved to its own stand alone repository at 
 [Pipeline/PackageBuildOutputs](Pipeline/PackageBuildOutputs) | Post-build script to create a generic package with the produced build outputs, optionally uploads results to an Artifactory repository. Artifactory deploy/download sample script.    
 [Pipeline/PublishSharedInterfaces](Pipeline/PublishSharedInterfaces) | Post-build script to publish shared copybooks to a shared git repository managing all shared copybooks. 
 [Pipeline/RunIDZCodeReview](Pipeline/RunIDZCodeReview) | Post-build script to integrate IBM IDz Code Review application into a pipeline.
-[Utilities/BuildManager](Utilities/BuildManager) | Background process for queueing and managing build scripts without additional JVM start-up overhead.
 [Utilities/BuildReportPruner](Utilities/BuildReportPruner) | Utility scripts demonstating rule based BuildReport pruning and preserving.
 [Utilities/Jenkins](Utilities/Jenkins) | Utility shell scripts supplied to address issues when running Jenkins remote agents on z/OS UNIX System Services (USS).
 [Utilities/ReadSMFRecords](Utilities/ReadSMFRecords) | Groovy scripts to read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities.
