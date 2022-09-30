@@ -1,1 +1,0 @@
-           DISPLAY "Hello world!".
