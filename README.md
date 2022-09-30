@@ -14,8 +14,6 @@ For instructions on how to contribute new samples and bug fixes, please read the
 ## Content
 Sample | Description
 --- | ---
-[Automation/idManagement](Automation/idManagement) | Create and delete ids on a z/OS system.
-[Automation/Merge](Automation/Merge) | A set of three samples to demonstrate how to use the Z Open Automation Utilities (ZOAU) to merge two datasets using shell commands, Java APIs and Python APIs.
 [Build/BuildReport](Build/BuildReport) | Sample showing how to extend the BuildReport to provide additional functionality
 [Build/HelloWorld](Build/HelloWorld) | The HelloWorld sample provides simple source file types and the Groovy build scripts to compile them
 [Build/IDE](Build/IDE) | A collection of 3 samples from PLI, COBOL, and ASM created by the IDz/ZOD team with instructions to run them on IDz/ZOD.
