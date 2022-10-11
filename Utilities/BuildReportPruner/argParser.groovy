@@ -1,6 +1,6 @@
 import com.ibm.dbb.build.*
 import com.ibm.dbb.build.report.*
-import com.ibm.dbb.repository.*
+import com.ibm.dbb.metadata.*
 import com.ibm.dbb.dependency.*
 import groovy.cli.commons.*
 
