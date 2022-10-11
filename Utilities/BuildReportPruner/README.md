@@ -33,9 +33,9 @@ Optional specifiers:
 -c,--cleanBuildsToKeep <number of clean builds to keep>
 :will save the most recent specified number of clean builds, the rest will be pruned
 -e,--errorBuildsToKeep <number of error builds to keep>
-:will save the most recent specified number of error builds, the rest will be pruned
+: will save the most recent specified number of error builds, the rest will be pruned
 -w,--warningBuildsToKeep <number of warning builds to keep>
-:will save the most recent specified number of warning builds, the rest will be pruned
+: will save the most recent specified number of warning builds, the rest will be pruned
 Note that if -c, -e, or -w is used, then no number needs to be entered with the -o option
 
 -i,--interactive
@@ -61,16 +61,16 @@ Optional specifiers:
 : will save the build in the specified group with the specified label
 
 -o,--oldest <number of builds to keep>
-:will save the most recent specified number of builds
+: will save the most recent specified number of builds
 Optional specifiers:
 -g,--group <group name>
 : will limit save to the specified group
 -c,--cleanBuildsToKeep <number of clean builds to keep>
 :will save the most recent specified number of clean builds
 -e,--errorBuildsToKeep <number of error builds to keep>
-:will save the most recent specified number of error builds
+: will save the most recent specified number of error builds
 -w,--warningBuildsToKeep <number of warning builds to keep>
-:will save the most recent specified number of warning builds
+: will save the most recent specified number of warning builds
 Note that if -c, -e, or -w is used, then no number needs to be entered with the -o option
 
 -i,--interactive
