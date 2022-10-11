@@ -66,7 +66,7 @@ Optional specifiers:
 -g,--group <group name>
 : will limit save to the specified group
 -c,--cleanBuildsToKeep <number of clean builds to keep>
-:will save the most recent specified number of clean builds
+: will save the most recent specified number of clean builds
 -e,--errorBuildsToKeep <number of error builds to keep>
 : will save the most recent specified number of error builds
 -w,--warningBuildsToKeep <number of warning builds to keep>
