@@ -3,9 +3,10 @@ Welcome to the IBM Dependency Based Build (DBB) community repository. The helpfu
 
 ## Resources
 * [IBM Dependency Based Build Product Page](https://www.ibm.com/products/dependency-based-build)
-* [IBM DBB Knowledge Center](https://www.ibm.com/docs/en/dbb/1.1.0)
+* [IBM DBB Documentation](https://www.ibm.com/docs/en/dbb)
 * [IBM zDevOps Community](https://community.ibm.com/community/user/ibmz-and-linuxone/groups/topic-home?CommunityKey=f36c1ced-7e79-43cd-897c-e798acfef4a4)
 * [IBM DBB Community](https://community.ibm.com/community/user/ibmz-and-linuxone/groups/topic-home/blog-entries?communitykey=20c9b889-9450-4ab6-8f11-8a5eb2b3342d)
+* [IBM DBB zAppBuild](https://github.com/IBM/dbb-zappbuild)
 
 
 ## Contributing
@@ -15,9 +16,7 @@ For instructions on how to contribute new samples and bug fixes, please read the
 Sample | Description
 --- | ---
 [Build/HelloWorld](Build/HelloWorld) | The HelloWorld sample provides simple source file types and the Groovy build scripts to compile them
-Build/MortgageApplicationV2 | MortgageApplicationV2 has been moved to the new zAppBuild repository at https://github.com/IBM/dbb-zappbuild.
 [Build/MultiThreadMVSJob](Build/MultiThreadMVSJob) | Sample showing how to modilfy a compilation script to run in a multi-thread environment.
-Build/zAppBuild | zAppBuild has been moved to its own stand alone repository at https://github.com/IBM/dbb-zappbuild. 
 [IDE/GitISPFClient](IDE/GitISPFClient) | An ISPF interface that interacts with a Git repository to allow cloning, staging, checking in, pushing and pulling as well as other git commands.
 [Migration/jcl](Migration/jcl) | Sample script to migrate JCL from a Z/OS dataset to a local Groovy script.
 [Migration/sclm](Migration/sclm) | This sample provides scripts to migrate source members to local Git repository and convert the build information in SCLM into build Groovy scripts.
