@@ -1,5 +1,8 @@
 # Sample Script to publish shared interfaces to a central Git Repository
 
+**NOTE: Reqires DBB 2.0**\
+This sample has been updated for DBB 2.0 in conjunction with [zAppBuild](https://github.com/IBM/dbb-zappbuild).
+
 In our publication about managing the build scope across multiple repositories ([Managing the build scope in IBM DBB builds with IBM zAppBuild](https://www.ibm.com/support/pages/node/6381788)), a scenario is described, which publishes shared interfaces to a central Git repository.
 
 These sample scripts are intended to provide guidance how-to implement this strategy. Overview of provided scripts:
