@@ -1,6 +1,4 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
-import com.ibm.dbb.repository.*
-import com.ibm.dbb.dependency.*
 import com.ibm.dbb.build.*
 import com.ibm.dbb.build.report.*
 import com.ibm.dbb.build.report.records.*
@@ -62,10 +60,6 @@ if(!jsonOutputFile.exists()){
 }
 
 def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
-
-// parse build report to find the build result meta info
-def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0];
-def dependencies = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET};
 
 // parse build report to find the build outputs to be deployed.
 println("** Find source code processed in the build report.")
