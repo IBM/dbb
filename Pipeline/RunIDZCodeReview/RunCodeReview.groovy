@@ -133,10 +133,33 @@ else
 			// Ok, the string can be splitted because it contains the keyword CC : Splitting by CC the second record contains the actual RC
 			rc = jobRcStringArray[1].toInteger()
 			// manage processing the RC, up to your logic. You might want to flag the build as failed.
-			if (rc <= codeReview_maxRC){
-				println   "** Job '${codeRev.submittedJobId}' completed with RC=$rc "}
-			else {
+			if (rc <= codeReview_maxRC) {
+				println   "** Job '${codeRev.submittedJobId}' completed with RC=$rc "
+			} else {
 				println   "** Job '${codeRev.submittedJobId}' failed with RC=$rc "
+			}
+			
+			println "** Saving spool output to ${props.workDir}"
+			def logFile = new File("${props.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
+			codeRev.saveOutput(logFile, props.logEncoding)
+	
+			codeRev.getAllDDNames().each({ ddName ->
+				if (ddName == 'XML') {
+					def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
+					saveJobOutput(codeRev, ddName, ddfile, false)
+				}
+				if (ddName == 'JUNIT') {
+					def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
+					saveJobOutput(codeRev, ddName, ddfile, false)
+				}
+				if (ddName == 'CSV') {
+					def ddfile = new File("${props.workDir}/CodeReview${ddName}.csv")
+					saveJobOutput(codeRev, ddName, ddfile, false)
+				}
+			})
+	
+			
+			if (rc > codeReview_maxRC) {
 				System.exit(1)
 			}
 		}
@@ -145,34 +168,15 @@ else
 			println   "***  Job ${codeRev.submittedJobId} failed with ${codeRev.maxRC}"
 			System.exit(1)
 		}
-
-		println "** Saving spool output to ${props.workDir}"
-		def logFile = new File("${props.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
-		codeRev.saveOutput(logFile, props.logEncoding)
-
-		codeRev.getAllDDNames().each({ ddName ->
-			if (ddName == 'XML') {
-				def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
-				saveJobOutput(codeRev, ddName, ddfile)
-			}
-			if (ddName == 'JUNIT') {
-				def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
-				saveJobOutput(codeRev, ddName, ddfile)
-			}
-			if (ddName == 'CSV') {
-				def ddfile = new File("${props.workDir}/CodeReview${ddName}.csv")
-				saveJobOutput(codeRev, ddName, ddfile)
-			}
-		})
 	}
 }
 
 /*
  * Ensures backward compatibility
  */
-def saveJobOutput ( JCLExec codeRev, String ddName, File file) {
+def saveJobOutput ( JCLExec codeRev, String ddName, File file, boolean removeASA) {
 	try {
-		codeRev.saveOutput(ddName, file, props.logEncoding, true)
+		codeRev.saveOutput(ddName, file, props.logEncoding, removeASA)
 	} catch ( Exception ex ) {
 		println "*? Warning the output file $file\n*? will have an extra space at the beginning of each line.\n*? Updating DBB to the latest PTF with ASA control characters API for JCLExec is highly recommended."
 		codeRev.saveOutput(ddName, file, props.logEncoding)
