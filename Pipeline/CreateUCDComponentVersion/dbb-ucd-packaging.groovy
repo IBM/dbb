@@ -477,7 +477,7 @@ def getContainerAttributes(String ds, Properties properties) {
 		def lastLevelQual = ds.tokenize('.').last()
 		if (properties.containerMapping) {
 			// obtain the deployType setting from the property
-			cMapping = parseJSONStringToMap(properties.containerMapping)
+			def cMapping = parseJSONStringToMap(properties.containerMapping)
 			containerDeployType = cMapping[lastLevelQual]
 			if (containerDeployType == null) {
 				println "*!* UCD Packaging v2 formar requires a mapping for the copymode for $lastLevelQual through the containerMapping property - see $properties.containerMapping."
