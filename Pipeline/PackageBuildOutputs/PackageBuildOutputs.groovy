@@ -1,12 +1,10 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
 import java.io.File
-import java.io.UnsupportedEncodingException
-import java.security.MessageDigest
-import org.apache.http.entity.FileEntity
-import com.ibm.dbb.build.*
+import com.ibm.dbb.build.CopyToHFS
+import com.ibm.dbb.build.BuildProperties
+import com.ibm.dbb.build.DBBConstants
 import com.ibm.dbb.build.DBBConstants.CopyMode
 import com.ibm.dbb.build.report.BuildReport
-import com.ibm.dbb.build.report.records.DefaultRecordFactory
 import com.ibm.dbb.build.report.records.*
 import groovy.transform.*
 import groovy.cli.commons.*
@@ -77,10 +75,10 @@ props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
 println("** PackageBuildOutputs start at $props.startTime")
 println("** Properties at startup:")
 props.each{k,v->
-        if ( k == "artifactory.password" )
-            println "   $k -> xxxxxx "
-        else
-            println "   $k -> $v"
+	if ( k == "artifactory.password" )
+		println "   $k -> xxxxxx "
+	else
+		println "   $k -> $v"
 }
 
 // Enable file tagging
@@ -90,13 +88,13 @@ BuildProperties.setProperty("dbb.file.tagging", "true") // Enable dbb file taggi
 def copyModeMap = evaluate(props.copyModeMap)
 
 // Hashmap of BuildOutput to Record
-Map<String, Record> buildOutputsMap = new HashMap<String, Record>() 
+Map<String, Record> buildOutputsMap = new HashMap<String, Record>()
 
 // Field to store default tarFileLabel (buildInfo.label) when cli argument tarFileName is not passed.
 def String tarFileLabel = "Default"
 
 // iterate over all build reports to obtain build output
-props.buildReportOrder.each{ buildReportFile -> 
+props.buildReportOrder.each{ buildReportFile ->
 	println("** Read build report data from $buildReportFile")
 	def jsonOutputFile = new File(buildReportFile)
 
@@ -106,7 +104,7 @@ props.buildReportOrder.each{ buildReportFile ->
 	}
 
 	def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
-	
+
 	// Read buildInfo to obtain build information
 	def buildInfo = buildReport.getRecords().findAll{
 		try {
@@ -116,15 +114,15 @@ props.buildReportOrder.each{ buildReportFile ->
 	if (buildInfo.size() != 0) {
 		tarFileLabel = buildInfo[0].label
 	}
-	
+
 	// finds all the build outputs with a deployType
 	def buildRecords = buildReport.getRecords().findAll{
 		try {
 			(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
-			!it.getOutputs().isEmpty()
+					!it.getOutputs().isEmpty()
 		} catch (Exception e){}
 	}
-	
+
 	if (props.deployTypeFilter){
 		println("** Filtering Output Records on following deployTypes: ${props.deployTypeFilter}")
 		buildRecords.each {
@@ -146,9 +144,9 @@ props.buildReportOrder.each{ buildReportFile ->
 			it.getOutputs().removeAll(unwantedOutputs)
 		}
 	}
-	
+
 	def count = 0
-	
+
 	// adding files and executes with outputs to Hashmap to remove redundant data
 	buildRecords.each{ buildRecord ->
 		if (buildRecord.getOutputs().size() != 0) {
@@ -158,7 +156,7 @@ props.buildReportOrder.each{ buildReportFile ->
 			}
 		}
 	}
-	
+
 	if ( count == 0 ) {
 		println("** No items to package in $buildReportFile.")
 	} else {
@@ -173,9 +171,9 @@ props.buildReportOrder.each{ buildReportFile ->
 if (buildOutputsMap.size() == 0) {
 	println("*!* There are no outputs found in all provided build reports")
 } else {
-			
+
 	def String tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
-	
+
 	//Create a temporary directory on zFS to copy the load modules from data sets to
 	def tempLoadDir = new File("$props.workDir/tempPackageDir")
 	!tempLoadDir.exists() ?: tempLoadDir.deleteDir()
@@ -184,14 +182,14 @@ if (buildOutputsMap.size() == 0) {
 	println "*** Number of build outputs to package: ${buildOutputsMap.size()}"
 
 	println("** Copying BuildOutputs to temporary package dir.")
-		
+
 	// reformat the map to have (dataset, members)
 	def loadDatasetToMembersMap = [:]
 	buildOutputsMap.each { entry ->
 		// key value pair from HashMap
 		String buildOutput = entry.key
 		Record record = entry.value
-		
+
 		// Obtain outputs but avoid duplicates
 		record.outputs.each { output ->
 			if (buildOutput == output.dataset) {
@@ -202,7 +200,7 @@ if (buildOutputsMap.size() == 0) {
 			}
 		}
 	}
-	
+
 	// Copy outputs to HFS
 	CopyToHFS copy = new CopyToHFS()
 
@@ -211,25 +209,25 @@ if (buildOutputsMap.size() == 0) {
 			def fullyQualifiedDsn = "$dataset($member)"
 			def filePath = "$tempLoadDir/$dataset"
 			new File(filePath).mkdirs()
-			
+
 			// define file name in USS
 			// default : member
 			def fileName = member
-			
+
 			// add deployType to file name
 			if (props.addExtension && props.addExtension.toBoolean()) {
 				buildRecord = buildOutputsMap.getAt(fullyQualifiedDsn)
-				// retrieve the output definition 
+				// retrieve the output definition
 				outputDefintion = buildRecord.getOutputs().find{
 					it.dataset == fullyQualifiedDsn
 				}
 				fileName = fileName + '.' + outputDefintion.deployType
 			}
 			def file = new File(filePath, fileName)
-			
 
-			
-			
+
+
+
 			// set copyMode based on last level qualifier
 			currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
 			if (currentCopyMode != null) {
@@ -239,8 +237,8 @@ if (buildOutputsMap.size() == 0) {
 				println "     Copying $dataset($member) to $filePath/$fileName with DBB Copymode $currentCopyMode"
 				copy.dataset(dataset).member(member).file(file).execute()
 
-				// Workaround DBB 1.1.1 toolkit
-				if 	(currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD){
+				// Tagging binary files
+				if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD){
 					StringBuffer stdout = new StringBuffer()
 					StringBuffer stderr = new StringBuffer()
 					Process process = "chtag -b $file".execute()
@@ -255,14 +253,14 @@ if (buildOutputsMap.size() == 0) {
 			}
 		}
 	}
-	
+
 	// log buildReportOrder file and add build reports to tar file
 	File buildReportOrder = new File("$tempLoadDir/buildReportOrder.txt")
-	buildReportOrder.write('')	
+	buildReportOrder.write('')
 	String logEncoding = 'UTF-8'
 	String buildReportFileName
 	int counter = 0
-	
+
 	buildReportOrder.withWriter(logEncoding) { writer ->
 		props.buildReportOrder.each{ buildReportFile ->
 			counter++
@@ -274,19 +272,19 @@ if (buildOutputsMap.size() == 0) {
 			// prefixing the buildreport with sequence number when having multiple
 			if(props.buildReportOrder.size() > 1) buildReportFileName = "$counter".padLeft(3, "0") + "_" + buildReportFileName
 			writer.write("$buildReportFileName\n")
-			
-			// copy the build report file over before modifying the string 
+
+			// copy the build report file over before modifying the string
 			println("** Copying $buildReportFile to temporary package dir as $buildReportFileName.")
 			processCmd = [
-		        "sh",
+				"sh",
 				"-c",
 				"cp $buildReportFile $tempLoadDir/$buildReportFileName"
 			]
 			rc = runProcess(processCmd, tempLoadDir)
-		
+
 		}
 	}
-	
+
 	// copy the build report file over before modifying the string
 	println("** Copying $props.packagingPropertiesFile to temporary package dir.")
 	processCmd = [
@@ -295,7 +293,7 @@ if (buildOutputsMap.size() == 0) {
 		"cp $props.packagingPropertiesFile $tempLoadDir"
 	]
 	rc = runProcess(processCmd, tempLoadDir)
-	
+
 	def tarFile = new File("$props.workDir/${tarFileName}")
 
 	println("** Creating tar file at $tarFile.")
@@ -318,27 +316,27 @@ if (buildOutputsMap.size() == 0) {
 			"-c",
 			"tar rUXf $tarFile $logPattern"
 		]
-				
+
 		rc = runProcess(processCmd, new File(props.workDir))
 		assert rc == 0 : "Failed to append $logPattern"
 	}
-			
+
 	println ("** Package successfully created at $tarFile.")
-			
+
 	if(props.verbose && props.verbose.toBoolean()) {
 		println ("**   List package contents.")
-		
+
 		processCmd = [
 			"sh",
 			"-c",
 			"tar tvf $tarFile"
 		]
-				
+
 		rc = runProcess(processCmd, new File(props.workDir))
 		assert rc == 0 : "Failed to list contents of tarfile $tarFile."
-			
+
 	}
-	
+
 	//Set up the artifactory information to publish the tar file
 	if (props.publish && props.publish.toBoolean()){
 		// Configuring ArtifactoryHelper parms
@@ -359,7 +357,7 @@ if (buildOutputsMap.size() == 0) {
 		println ("** Uploading package to Artifactory $url.")
 		artifactoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
 	}
-			
+
 }
 
 
@@ -406,27 +404,27 @@ def parseInput(String[] cliArgs){
 	// required packaging options
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
 	cli.properties(longOpt:'packagingPropertiesFile', args:1, argName:'packagingPropertiesFile', 'Path of a property file containing application specific packaging details.')
-	
+
 	// optional packaging options
 	cli.d(longOpt:'deployTypes', args:1, argName:'deployTypes','Comma-seperated list of deployTypes to filter on the scope of the tar file. (Optional)')
 	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional unless using --buildReportOrder or --buildReportOrderFile)')
 	cli.il(longOpt:'includeLogs', args:1, argName:'includeLogs', 'Comma-separated list of files/patterns from the USS build workspace. (Optional)')
 	cli.ae(longOpt:'addExtension', 'Flag to add the deploy type extension to the member in the package tar file. (Optional)')
-	
+
 	// Artifactory Options:
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifactory server. (Optional)')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the Artifactory version. (Optional)')
 	cli.artifactory(longOpt:'artifactoryPropertiesFile', args:1, argName:'artifactoryPropertiesFile', 'Path of a property file containing application specific Artifactory details. (Optional)')
 	// old prop option (deprecated)
 	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFile', 'Path of a property file containing application specific Artifactory details. (Optional) ** (Deprecated)')
-	
+
 	cli.verb(longOpt:'verbose', 'Flag to provide more log output. (Optional)')
 
-	// multiple build reports 
+	// multiple build reports
 	cli.boFile(longOpt:'buildReportOrderFile', args:1, argName:'buildReportOrderFile', 'A file that lists build reports in order of processing')
-   	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'List of build reports in order of processing ')
-   	
-	
+	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'List of build reports in order of processing ')
+
+
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
 	if (opts.h) { // if help option used, print usage and exit
@@ -451,7 +449,7 @@ def parseInput(String[] cliArgs){
 			defaultPackagePropFile.withInputStream { props.load(it) }
 		}
 	}
-	
+
 	// set command line arguments
 	if (opts.w) props.workDir = opts.w
 	if (opts.d) props.deployTypeFilter = opts.d
@@ -472,7 +470,7 @@ def parseInput(String[] cliArgs){
 			propertyFile.withInputStream { props.load(it) }
 		}
 	}
-	
+
 	// ** Deprecated ** Read of artifactory properties
 	if (opts.prop){
 		def propertyFile = new File(opts.prop)
@@ -482,23 +480,23 @@ def parseInput(String[] cliArgs){
 	}
 
 	//add any build reports from the file first, then add any from a CLI after.
-	//if no file or CLI, go to default build report 
+	//if no file or CLI, go to default build report
 	def buildReports = []
 	if (opts.boFile) {
 		new File (opts.boFile).eachLine { line ->
-	    	buildReports.add(line)
+			buildReports.add(line)
 		}
-		
+
 		if(opts.t == false) {
 			println("*! Error: tarFilename is only optional when no build report order is specified")
 			System.exit(3)
 		}
-		
-   	}
+
+	}
 	if (opts.bO) {
 		opts.bO.split(',').each{
-			buildReports.add(it)       			
-	    }
+			buildReports.add(it)
+		}
 		if(opts.t == false) {
 			println("*! Error: tarFilename is only optional when no build report order is specified")
 			System.exit(3)
@@ -507,9 +505,9 @@ def parseInput(String[] cliArgs){
 		buildReports = [opts.w + "/BuildReport.json"]
 	}
 	props.buildReportOrder = buildReports
-	
-			
-			
+
+
+
 	// validate required props
 	try {
 		assert props.workDir : "Missing property build work directory"
