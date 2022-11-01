@@ -207,7 +207,9 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			println "   Storing DBB Build result properties as general component version properties due to single build report."
 			
 			// Url to DBB Build result
-			property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+			if (buildResult != null) {
+				property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+			}
 			// Populate build result properties
 			if (buildResultProperties != null) {
 				buildResultProperties.each{
@@ -240,7 +242,9 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 							if (properties.buildReportOrder.size() != 1) {
 
 								// Url to DBB Build result
-								property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+								if (buildResult != null) {
+									property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+								}	
 								// Populate build result properties
 								if (buildResultProperties != null) {
 									buildResultProperties.each{
