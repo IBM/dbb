@@ -1,6 +1,4 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
-import com.ibm.dbb.repository.*
-import com.ibm.dbb.dependency.*
 import com.ibm.dbb.build.*
 import com.ibm.dbb.build.report.*
 import com.ibm.dbb.build.report.records.*
@@ -18,11 +16,22 @@ import java.nio.file.Path
  * usage: RunCodeReview.groovy --workDir <path-to-dbb-buildreport> [options]
  *
  * 	options:
- *  	-w,--workDir <dir>			Absolute path to the DBB build output directory
- *  	-l,--logEncoding			(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8
- *  	-props,--properties			(Optional) Absolute path to the codereview.properties file
- *  	-p,--preview				(Optional) Preview JCL, do not submit it
- *  	-h,--help					(Optional) Prints this message
+ *  	-w,--workDir <dir>					Absolute path to the DBB build output directory
+ *  	-l,--logEncoding					(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8
+ *  	-props,--properties					(Optional) Absolute path to the codereview.properties file
+ *  	-p,--preview						(Optional) Preview JCL, do not submit it
+ *  	-h,--help							(Optional) Prints this message
+ *  	-ccr,--ccrRulesFile <arg>   		(Optional) Absolute path of the custom rules file.
+ *  										If not provided, will look for it in the codereview.properties file.
+ *  	-cp,--codepage <arg>        		(Optional) Code Page of the source  members to be processed.
+ *  										By default, IBM-037 is used by Code Review if none is specified.
+ *  										If not provided, will look for it in the codereview.properties file.
+ *  	-cr,--crRulesFile <arg>     		(Optional) Absolute path of the rules file.
+ *  										If not provided, will look for it in the codereview.properties file.
+ *  	-pgFile,--propertyGroupFile <arg>   Absolute path of the Property Group file. This file has to be a Local Property Group file.
+ *  										Optional if SYSLIB concatenation is found by the script, otherwise required.
+ *  	-rc,--maxRC <arg>           		(Optional) Maximum acceptable return code.
+ *  										If not provided, will look for it in the codereview.properties file.
  *
  * 	requires:
  * 		codeview.properties file - externalizes the JCL jobcard, RuleFile and Mappings.
@@ -51,10 +60,6 @@ if(!jsonOutputFile.exists()){
 }
 
 def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
-
-// parse build report to find the build result meta info
-def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0];
-def dependencies = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET};
 
 // parse build report to find the build outputs to be deployed.
 println("** Find source code processed in the build report.")
@@ -89,9 +94,15 @@ else
 	}
 	syslib = syslib.toUnique()
 
+	//If no SYSLIB found and no SYSLIB passed in codereview_syslib and no Property Group file passed, fails and exits
+	if (syslib.size() == 0 && !props.codereview_syslib && !props.codereview_PropertyGroupFile) {
+		println "*** SYSLIB Concatenation is empty and no Property Group file was provided. Exiting..."
+		System.exit(2)
+	}
+	
 	println("** Create JCL Stream for IDZ Code Review")
 	String jobcard = props.codereview_jobcard.replace("\\n", "\n")
-	JCLExec codeRev=createCodeReviewExec(jobcard, props.codereview_crRulesFile, props.codereview_ccrRulesFile, sources, syslib)
+	JCLExec codeRev=createCodeReviewExec(jobcard, props.codereview_crRulesFile, props.codereview_ccrRulesFile, props.codereview_PropertyGroupFile, sources, syslib)
 
 	if (props.preview.toBoolean()){
 		println "** Preview only."
@@ -122,10 +133,33 @@ else
 			// Ok, the string can be splitted because it contains the keyword CC : Splitting by CC the second record contains the actual RC
 			rc = jobRcStringArray[1].toInteger()
 			// manage processing the RC, up to your logic. You might want to flag the build as failed.
-			if (rc <= codeReview_maxRC){
-				println   "** Job '${codeRev.submittedJobId}' completed with RC=$rc "}
-			else{
+			if (rc <= codeReview_maxRC) {
+				println   "** Job '${codeRev.submittedJobId}' completed with RC=$rc "
+			} else {
 				println   "** Job '${codeRev.submittedJobId}' failed with RC=$rc "
+			}
+			
+			println "** Saving spool output to ${props.workDir}"
+			def logFile = new File("${props.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
+			codeRev.saveOutput(logFile, props.logEncoding)
+	
+			codeRev.getAllDDNames().each({ ddName ->
+				if (ddName == 'XML') {
+					def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
+					saveJobOutput(codeRev, ddName, ddfile, false)
+				}
+				if (ddName == 'JUNIT') {
+					def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
+					saveJobOutput(codeRev, ddName, ddfile, false)
+				}
+				if (ddName == 'CSV') {
+					def ddfile = new File("${props.workDir}/CodeReview${ddName}.csv")
+					saveJobOutput(codeRev, ddName, ddfile, false)
+				}
+			})
+	
+			
+			if (rc > codeReview_maxRC) {
 				System.exit(1)
 			}
 		}
@@ -134,35 +168,15 @@ else
 			println   "***  Job ${codeRev.submittedJobId} failed with ${codeRev.maxRC}"
 			System.exit(1)
 		}
-
-		println "** Saving spool output to ${props.workDir}"
-		def logFile = new File("${props.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
-		codeRev.saveOutput(logFile, props.logEncoding)
-
-		codeRev.getAllDDNames().each({ ddName ->
-			if (ddName == 'XML') {
-				def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
-				saveJobOutput(codeRev, ddName, ddfile)
-			}
-			if (ddName == 'JUNIT') {
-				def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
-				saveJobOutput(codeRev, ddName, ddfile)
-			}
-			if (ddName == 'CSV') {
-				def ddfile = new File("${props.workDir}/CodeReview${ddName}.csv")
-				saveJobOutput(codeRev, ddName, ddfile)
-			}
-		})
 	}
-
 }
 
 /*
  * Ensures backward compatibility
  */
-def saveJobOutput ( JCLExec codeRev, String ddName, File file) {
+def saveJobOutput ( JCLExec codeRev, String ddName, File file, boolean removeASA) {
 	try {
-		codeRev.saveOutput(ddName, file, props.logEncoding, true)
+		codeRev.saveOutput(ddName, file, props.logEncoding, removeASA)
 	} catch ( Exception ex ) {
 		println "*? Warning the output file $file\n*? will have an extra space at the beginning of each line.\n*? Updating DBB to the latest PTF with ASA control characters API for JCLExec is highly recommended."
 		codeRev.saveOutput(ddName, file, props.logEncoding)
@@ -173,7 +187,7 @@ def saveJobOutput ( JCLExec codeRev, String ddName, File file) {
  * CodeReviewExec - creates a JCLExec command for CodeReview
  * TODO: Externalize SYSLIB
  */
-def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile, List memberList, List syslib) {
+def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile, String PropertyGroupFile, List memberList, List syslib) {
 	// Execute JCL from a String value in the script
 	def jcl = jobcard
 	jcl += """\
@@ -191,7 +205,12 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 	if (props.codereview_syslib){
 		props.codereview_syslib.split(',').each { jcl+="//         DD DISP=SHR,DSN=${it} \n" }
 	}
-	
+
+	if ( PropertyGroupFile ) {
+		def lines = formatJCLPath("//PROPERTY  DD PATH='$PropertyGroupFile'")
+		lines.each{ jcl += it + "\n" }
+	}
+		
 	if ( customRuleFile  ) {
 		def lines = formatJCLPath("//CUSTRULE  DD PATH='$customRuleFile'")
 		lines.each{ jcl += it + "\n" }
@@ -208,6 +227,13 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 			jcl += "  L=COBOL M=$hfsFile D=$pdsMember \n"
 		if (languageMapping.isMapped("PLI", it.getSource().getAbsolutePath()))
 			jcl += "  L=PL/1 M=$hfsFile D=$pdsMember \n"
+	}
+
+	if ( props.codereview_codepage  ) {
+		jcl += """\
+//CODEPAGE DD *
+  $props.codereview_codepage
+"""
 	}
 
 	jcl += """\
@@ -233,6 +259,8 @@ def parseInput(String[] cliArgs){
 	cli.props(longOpt:'properties', args:1, '(Optional) Absolute path to the codereview.properties file. If not provided, will look for it at the location of this script.')
 	cli.cr(longOpt:'crRulesFile', args:1, '(Optional) Absolute path of the rules file. If not provided, will look for it in the codereview.properties file.')
 	cli.ccr(longOpt:'ccrRulesFile', args:1, '(Optional) Absolute path of the custom rules file. If not provided, will look for it in the codereview.properties file.')
+	cli.pgFile(longOpt:'propertyGroupFile', args:1, 'Absolute path of the Property Group file. Optional if SYSLIB concatenation is found by the script, otherwise required.')
+	cli.cp(longOpt:'codepage', args:1, '(Optional) Code Page of the source members to be processed. By default, IBM-037 is used by Code Review if none is specified.')
 	cli.l(longOpt:'logEncoding', args:1, '(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8')
 	cli.p(longOpt:'preview', '(Optional) Preview JCL for CR, do not submit it')
 	cli.rc(longOpt:'maxRC', args:1, '(Optional) Maximum acceptable return code. If not provided, will look for it in the codereview.properties file.')
@@ -272,6 +300,12 @@ def parseInput(String[] cliArgs){
 	if ( opts.ccr )
 		props.codereview_ccrRulesFile = opts.ccr
 
+	if ( opts.pgFile )
+		props.codereview_PropertyGroupFile = opts.pgFile
+
+	if ( opts.cp )
+		props.codereview_codepage = opts.cp
+	
 	if ( opts.rc )
 		props.codereview_maxRC = opts.rc
 

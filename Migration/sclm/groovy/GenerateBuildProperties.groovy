@@ -2,6 +2,7 @@ import java.nio.file.*
 import com.ibm.dbb.*
 import groovy.transform.*
 import groovy.cli.commons.*
+import groovy.xml.*
 
 //******************************************************************************
 //* Retrieves DBB environments

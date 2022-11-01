@@ -1,7 +1,7 @@
 
 # JCL Migration Sample
 ### Overview
-This sample provides ascript to migrate JCL from a Z/OS dataset to a local Groovy script. The sample is a combination of Unix shell scripts, Apache Groovy scripts, templates, and configuration files.
+This sample provides a script to migrate JCL from a Z/OS dataset to a local Groovy script. The sample is a combination of Unix shell scripts, Apache Groovy scripts, templates, and configuration files.
 
 ### Prerequisites
 * DBB Toolkit
