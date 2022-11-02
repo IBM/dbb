@@ -2,3 +2,4 @@ Build/.classpath
 Build/.project
 Build/.settings/**
 **/bin/
+.DS_Store*
