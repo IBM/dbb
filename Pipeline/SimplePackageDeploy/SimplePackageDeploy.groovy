@@ -106,15 +106,11 @@ else {
 // Check if BuildReport.json exists, deploy files if exists and if not stop deploy 
 
 def buildReportFile = new File("${tarExtractDirName}/BuildReport.json")
-if (buildReportFile.exists()) {
-	
+if (buildReportFile.exists()) {	
 	deployFromBuildReport(buildReportFile,tarExtractDirName,targetLibLLQMap,copyModeMap)
-
 } else {
-
 	println("** Build report data at $tarExtractDirName/BuildReport.json not found")
 	println("** Deployment stopped")
-
 }
 
 if (tarExtractDir.exists()) tarExtractDir.deleteDir()
