@@ -103,29 +103,22 @@ else {
 }
 
 
-// Read build report data
-def listDirFiles = new File("$tarExtractDirName")
-def buildReportFlag = 0
+// Check if BuildReport.json exists, deploy files if exists and if not stop deploy 
 
-// Find the BuildReport.json file for deployment 
-listDirFiles.eachFile {
-   if(it.getName().contains("BuildReport.json")) {
-	   if(!it.exists()){
-		    println("** Build report data at ${it} not found")
-		    System.exit(1)
-	   }
-	   buildReportFlag = 1
-	   deployFromBuildReport(it,tarExtractDirName,targetLibLLQMap,copyModeMap)
-   }
-}
+def buildReportFile = new File("${tarExtractDirName}/BuildReport.json")
+if (buildReportFile.exists()) {
+	
+	deployFromBuildReport(buildReportFile,tarExtractDirName,targetLibLLQMap,copyModeMap)
 
-// If BuidlReport.json not found in the build output package
-if(!buildReportFlag){
-    println("** Build report data at $tarExtractDirName/BuildReport.json not found")
+} else {
+
+	println("** Build report data at $tarExtractDirName/BuildReport.json not found")
+	println("** Deployment stopped")
+
 }
 
 if (tarExtractDir.exists()) tarExtractDir.deleteDir()
-println("\nDeleted the temporary folder - ${tarExtractDirName}\n")
+println("\nCleaning up the temporary folder - ${tarExtractDirName}\n")
 
 /**********************************************************************************
  **** Deploy from the BuildReport                  
@@ -183,7 +176,7 @@ def deployFromBuildReport (File buildReportFile, String tarExtractDirName,Map ta
 	             println("ERROR: DBB COPY MODE NOT DEFINED FOR DEPLOY TYPE : ${it.deployType}\n")
 	             
 	             if (tarExtractDir.exists()) tarExtractDir.deleteDir()
-	             println("\nDeleted the temporary folder - ${tarExtractDirName}\n")
+	             println("\nCleaning up the temporary folder - ${tarExtractDirName}\n")
 
 	             System.exit(1)
 	         }
