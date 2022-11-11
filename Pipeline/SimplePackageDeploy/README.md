@@ -1,4 +1,4 @@
-# Simple Build Report Deploy (Deploy the package to target libraries)
+# Simple Package Deploy (Deploy the package to target libraries)
 ## Description
 This "SimplePackageDeploy.groovy" sample script is capable of untaring the tar package produced by [PackageBuildOutputs](../PackageBuildOutputs/) and deploy the tar package contents to the target libraries. The deployment is done based on the contents in BuildReport.json file.
 
