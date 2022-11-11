@@ -7,7 +7,7 @@ Potential scenarios include:
 * If the user wants to do shift-left testing using IBM Z Virtual Test Platform, and subsystem updates are not required.
 
 As of now, this script does not perform any activation activities like a CICS NEWCOPY or a DB2 BIND. Also, it does not support any type of rollback process.
-This script works only for packages of PackageBuildOutputs based on a single BuildReport.json and does not support cumulative packages based on multiple build reports.
+This script works only for packages of [PackageBuildOutputs](../PackageBuildOutputs/) based on a single BuildReport.json and does not support cumulative packages based on multiple build reports.
 
 ### Prerequisites
 
