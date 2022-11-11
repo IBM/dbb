@@ -6,6 +6,9 @@ import groovy.time.*
 import groovy.cli.commons.*
 import com.ibm.dbb.build.VersionInfo
 import groovy.xml.MarkupBuilder
+import groovy.json.JsonParserType
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 /**
  * This script creates a version in UrbanCode Deploy based on the build result.
  *
@@ -478,7 +481,7 @@ def getContainerAttributes(String ds, Properties properties) {
 		def lastLevelQual = ds.tokenize('.').last()
 		if (properties.containerMapping) {
 			// obtain the deployType setting from the property
-			cMapping = evaluate(properties.containerMapping)
+			def cMapping = parseJSONStringToMap(properties.containerMapping)
 			containerDeployType = cMapping[lastLevelQual]
 			if (containerDeployType == null) {
 				println "*!* UCD Packaging v2 formar requires a mapping for the copymode for $lastLevelQual through the containerMapping property - see $properties.containerMapping."
@@ -599,4 +602,24 @@ def parseInput(String[] cliArgs){
 		throw e
 	}
 	return properties
+}
+
+
+/*
+ *  This is a helper method which parses a JSON String representing a map of key value pairs to a proper map
+ *  e.q. cobol_dependenciesAlternativeLibraryNameMapping = {"MYFILE": "cobol_myfilePDS", "DCLGEN" : "cobol_dclgenPDS"}
+ */
+
+def parseJSONStringToMap(String packageProperty) {
+	Map map = [:]
+	try {
+		JsonSlurper slurper = new groovy.json.JsonSlurper()
+		map = slurper.parseText(packageProperty)
+	} catch (Exception e) {
+		errorMsg = "*! dbb-ucd-packaging.parseStringToMap - Failed to parse setting $packageProperty from String into a Map object. Process exiting."
+		println errorMsg
+		println e.getMessage()
+		System.exit(3)
+	}
+	return map
 }
