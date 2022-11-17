@@ -67,6 +67,10 @@ props = parseInput(args)
 def startTime = new Date()
 props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
 println("** SimplePackageDeploy start at $props.startTime")
+println("** Properties at startup:")
+props.each{k,v->
+	println "     $k -> $v"
+}
 
 // Map of last level dataset qualifier to DBB CopyToPDS CopyMode.
 def copyModeMap = parseJSONStringToMap(props.copyModeMap)
@@ -79,7 +83,7 @@ def tarExtractDir = new File("${tarExtractDirName}")
 
 !tarExtractDir.exists() ?: tarExtractDir.deleteDir()
 tarExtractDir.mkdirs()
-println("** Created tar file extract directory $tarExtractDirName")       
+println("\n** Created tar file extract directory $tarExtractDirName")       
 
 // Check if the tar file provided is existing 
 def tarFile = new File("${props.tarFileName}")
@@ -91,13 +95,12 @@ if(!tarFile.exists()){
 
 
 // Untar the tar file
-println("** Untar file at $tarFile.")
+println("** Untarring file $tarFile to $tarExtractDirName.")
 
 def processCmd = ["sh", "-c", "tar -C $tarExtractDirName -xvf $tarFile"]
 
 def rc = runProcess(processCmd)
-if (rc == 0) println("Package untar done to $tarExtractDirName")
-else {
+if (rc != 0) {
 	println("Failed to untar $tarFile")
 	System.exit(1)
 }
@@ -114,14 +117,14 @@ if (buildReportFile.exists()) {
 }
 
 if (tarExtractDir.exists()) tarExtractDir.deleteDir()
-println("\nCleaning up the temporary folder - ${tarExtractDirName}\n")
+println("** Cleaning up the temporary folder - ${tarExtractDirName} \n")
 
 /**********************************************************************************
  **** Deploy from the BuildReport                  
  **********************************************************************************/
 def deployFromBuildReport (File buildReportFile, String tarExtractDirName,Map targetLibLLQMap,Map copyModeMap) {
 	
-	println("\n** Deploying the contents in ${buildReportFile}")
+	println("** Deploying the contents in ${buildReportFile}")
 	
 	def buildReport= BuildReport.parse(new FileInputStream(buildReportFile))
 	def tarExtractDir = new File("${tarExtractDirName}")
@@ -149,7 +152,7 @@ def deployFromBuildReport (File buildReportFile, String tarExtractDirName,Map ta
 	         }
 	         
 	         def targetPDS = "${props.hlq}" + "." + targetLibLLQMap["${it.deployType}"]
-	         println("\nExtracted file $srcFilePath is of type ${it.deployType}") 
+	      
 	         if (copyModeMap["${it.deployType}"] != null) {
 	             copy.setCopyMode(DBBConstants.CopyMode.valueOf(copyModeMap["${it.deployType}"]))
 	         
@@ -165,14 +168,14 @@ def deployFromBuildReport (File buildReportFile, String tarExtractDirName,Map ta
 	             copy.setMember("$member");
 	             copy.copy()
 	         
-	             println("Copied source file - $dataset/$member to Target PDS - $targetPDS")
+	             println("     Copied file $dataset/$member to target library $targetPDS using DBB CopyMode ${copyModeMap["${it.deployType}"]}")
 	         } else {
-	             println("ERROR: DEPLOYMENT FAILED")
-	             println("ERROR: SOURCE FILE NOT DEPLOYED : $dataset/$member")
-	             println("ERROR: DBB COPY MODE NOT DEFINED FOR DEPLOY TYPE : ${it.deployType}\n")
+	             println("     !ERROR: DEPLOYMENT FAILED")
+	             println("     !ERROR: SOURCE FILE NOT DEPLOYED : $dataset/$member")
+	             println("     !ERROR: DBB COPY MODE NOT DEFINED FOR DEPLOY TYPE : ${it.deployType}")
 	             
 	             if (tarExtractDir.exists()) tarExtractDir.deleteDir()
-	             println("\nCleaning up the temporary folder - ${tarExtractDirName}\n")
+	             println("** Cleaning up the temporary folder - ${tarExtractDirName} \n")
 
 	             System.exit(1)
 	         }

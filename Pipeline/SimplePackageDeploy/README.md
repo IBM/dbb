@@ -35,36 +35,28 @@ groovyz SimplePackageDeploy.groovy --workDir /u/ibmuser/workspace/MortgageApplic
 SimplePackageDeploy console output
 
 ```
-** SimplePackageDeploy start at 20221111.064802.048
-** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048
-** Untar file at /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithoutExtn.tar.
+** SimplePackageDeploy start at 20221117.051945.019
+** Properties at startup:
+     targetLibLLQMap -> {"JCL": "JCL", "DBRM": "DBRM", "LOAD": "LOAD", "CICSLOAD": "CICSLOAD", "MAPLOAD": "MAPLOAD", "IMSLOAD": "IMSLOAD"}
+     packageWithExtension -> false
+     tarFileName -> /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithoutExtn.tar
+     copyModeMap -> {"JCL": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "CICSLOAD": "LOAD", "MAPLOAD": "LOAD", "IMSLOAD": "LOAD"}
+     startTime -> 20221117.051945.019
+     hlq -> IBMUSER.SIT.MORTGAGE
+     workDir -> /u/ibmuser/workspace/MortgageApplication/out
 
-Package untar done to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048
+** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.051945.019
+** Untarring file /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithoutExtn.tar to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.051945.019.
 
-** Deploying the contents in /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048/BuildReport.json
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048/IBMUSER.MORT0001.LOAD/EPSMORT is of type MAPLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSMORT to Target PDS - IBMUSER.SIT.MORTGAGE.MAPLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048/IBMUSER.MORT0001.LOAD/EPSMLIS is of type MAPLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSMLIS to Target PDS - IBMUSER.SIT.MORTGAGE.MAPLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048/IBMUSER.MORT0001.LOAD/EPSCSMRT is of type CICSLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSCSMRT to Target PDS - IBMUSER.SIT.MORTGAGE.CICSLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048/IBMUSER.MORT0001.DBRM/EPSCMORT is of type DBRM
-Copied source file - IBMUSER.MORT0001.DBRM/EPSCMORT to Target PDS - IBMUSER.SIT.MORTGAGE.DBRM
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048/IBMUSER.MORT0001.LOAD/EPSCMORT is of type CICSLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSCMORT to Target PDS - IBMUSER.SIT.MORTGAGE.CICSLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048/IBMUSER.MORT0001.LOAD/DATEVAL is of type LOAD
-Copied source file - IBMUSER.MORT0001.LOAD/DATEVAL to Target PDS - IBMUSER.SIT.MORTGAGE.LOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048/IBMUSER.MORT0001.LOAD/LENPGM is of type LOAD
-Copied source file - IBMUSER.MORT0001.LOAD/LENPGM to Target PDS - IBMUSER.SIT.MORTGAGE.LOAD
-
-Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064802.048
+** Deploying the contents in /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.051945.019/BuildReport.json
+     Copied file IBMUSER.MORT0001.LOAD/EPSMORT to target library IBMUSER.SIT.MORTGAGE.MAPLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/EPSMLIS to target library IBMUSER.SIT.MORTGAGE.MAPLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/EPSCSMRT to target library IBMUSER.SIT.MORTGAGE.CICSLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.DBRM/EPSCMORT to target library IBMUSER.SIT.MORTGAGE.DBRM using DBB CopyMode BINARY
+     Copied file IBMUSER.MORT0001.LOAD/EPSCMORT to target library IBMUSER.SIT.MORTGAGE.CICSLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/DATEVAL to target library IBMUSER.SIT.MORTGAGE.LOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/LENPGM to target library IBMUSER.SIT.MORTGAGE.LOAD using DBB CopyMode LOAD
+** Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.051945.019 
 
 ** Build finished
 ```
@@ -82,36 +74,28 @@ groovyz SimplePackageDeploy.groovy --workDir /u/ibmuser/workspace/MortgageApplic
 SimplePackageDeploy console output
 
 ```
-** SimplePackageDeploy start at 20221111.064958.049
-** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049
-** Untar file at /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithExtn.tar.
+** SimplePackageDeploy start at 20221117.052226.022
+** Properties at startup:
+     targetLibLLQMap -> {"JCL": "JCL", "DBRM": "DBRM", "LOAD": "LOAD", "CICSLOAD": "CICSLOAD", "MAPLOAD": "MAPLOAD", "IMSLOAD": "IMSLOAD"}
+     packageWithExtension -> true
+     tarFileName -> /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithExtn.tar
+     copyModeMap -> {"JCL": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "CICSLOAD": "LOAD", "MAPLOAD": "LOAD", "IMSLOAD": "LOAD"}
+     startTime -> 20221117.052226.022
+     hlq -> IBMUSER.SIT.MORTGAGE
+     workDir -> /u/ibmuser/workspace/MortgageApplication/out
 
-Package untar done to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049
+** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052226.022
+** Untarring file /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithExtn.tar to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052226.022.
 
-** Deploying the contents in /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049/BuildReport.json
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049/IBMUSER.MORT0001.LOAD/EPSMORT.MAPLOAD is of type MAPLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSMORT to Target PDS - IBMUSER.SIT.MORTGAGE.MAPLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049/IBMUSER.MORT0001.LOAD/EPSMLIS.MAPLOAD is of type MAPLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSMLIS to Target PDS - IBMUSER.SIT.MORTGAGE.MAPLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049/IBMUSER.MORT0001.LOAD/EPSCSMRT.CICSLOAD is of type CICSLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSCSMRT to Target PDS - IBMUSER.SIT.MORTGAGE.CICSLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049/IBMUSER.MORT0001.DBRM/EPSCMORT.DBRM is of type DBRM
-Copied source file - IBMUSER.MORT0001.DBRM/EPSCMORT to Target PDS - IBMUSER.SIT.MORTGAGE.DBRM
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049/IBMUSER.MORT0001.LOAD/EPSCMORT.CICSLOAD is of type CICSLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSCMORT to Target PDS - IBMUSER.SIT.MORTGAGE.CICSLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049/IBMUSER.MORT0001.LOAD/DATEVAL.LOAD is of type LOAD
-Copied source file - IBMUSER.MORT0001.LOAD/DATEVAL to Target PDS - IBMUSER.SIT.MORTGAGE.LOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049/IBMUSER.MORT0001.LOAD/LENPGM.LOAD is of type LOAD
-Copied source file - IBMUSER.MORT0001.LOAD/LENPGM to Target PDS - IBMUSER.SIT.MORTGAGE.LOAD
-
-Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.064958.049
+** Deploying the contents in /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052226.022/BuildReport.json
+     Copied file IBMUSER.MORT0001.LOAD/EPSMORT to target library IBMUSER.SIT.MORTGAGE.MAPLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/EPSMLIS to target library IBMUSER.SIT.MORTGAGE.MAPLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/EPSCSMRT to target library IBMUSER.SIT.MORTGAGE.CICSLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.DBRM/EPSCMORT to target library IBMUSER.SIT.MORTGAGE.DBRM using DBB CopyMode BINARY
+     Copied file IBMUSER.MORT0001.LOAD/EPSCMORT to target library IBMUSER.SIT.MORTGAGE.CICSLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/DATEVAL to target library IBMUSER.SIT.MORTGAGE.LOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/LENPGM to target library IBMUSER.SIT.MORTGAGE.LOAD using DBB CopyMode LOAD
+** Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052226.022 
 
 ** Build finished
 ```
@@ -125,15 +109,22 @@ Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/
 SimplePackageDeploy console output
 
 ```
-** SimplePackageDeploy start at 20221111.065624.056
-** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065624.056
-** Untar file at /u/ibmuser/workspace/MortgageApplication/out/multiBuildPackageWithoutExtn.tar.
+** SimplePackageDeploy start at 20221117.052620.026
+** Properties at startup:
+     targetLibLLQMap -> {"JCL": "JCL", "DBRM": "DBRM", "LOAD": "LOAD", "CICSLOAD": "CICSLOAD", "MAPLOAD": "MAPLOAD", "IMSLOAD": "IMSLOAD"}
+     packageWithExtension -> false
+     tarFileName -> /u/ibmuser/workspace/MortgageApplication/out/multiBuildPackageWithoutExtn.tar
+     copyModeMap -> {"JCL": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "CICSLOAD": "LOAD", "MAPLOAD": "LOAD", "IMSLOAD": "LOAD"}
+     startTime -> 20221117.052620.026
+     hlq -> IBMUSER.SIT.MORTGAGE
+     workDir -> /u/ibmuser/workspace/MortgageApplication/out
 
-Package untar done to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065624.056
-** Build report data at /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065624.056/BuildReport.json not found
+** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026
+** Untarring file /u/ibmuser/workspace/MortgageApplication/out/multiBuildPackageWithoutExtn.tar to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026.
+
+** Build report data at /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026/BuildReport.json not found
 ** Deployment stopped
-
-Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065624.056
+** Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026 
 
 ** Build finished
 ```
@@ -148,27 +139,26 @@ Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/
 SimplePackageDeploy console output
 
 ```
-** SimplePackageDeploy start at 20221111.065252.052
-** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065252.052
-** Untar file at /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithoutExtn.tar.
+** SimplePackageDeploy start at 20221117.052757.027
+** Properties at startup:
+     targetLibLLQMap -> {"JCL": "JCL", "DBRM": "DBRM", "LOAD": "LOAD", "CICSLOAD": "CICSLOAD", "MAPLOAD": "MAPLOAD", "IMSLOAD": "IMSLOAD"}
+     packageWithExtension -> false
+     tarFileName -> /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithoutExtn.tar
+     copyModeMap -> {"JCL": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "MAPLOAD": "LOAD", "IMSLOAD": "LOAD"}
+     startTime -> 20221117.052757.027
+     hlq -> IBMUSER.SIT.MORTGAGE
+     workDir -> /u/ibmuser/workspace/MortgageApplication/out
 
-Package untar done to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065252.052
+** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052757.027
+** Untarring file /u/ibmuser/workspace/MortgageApplication/out/build.20220920.053231.032/packageWithoutExtn.tar to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052757.027.
 
-** Deploying the contents in /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065252.052/BuildReport.json
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065252.052/IBMUSER.MORT0001.LOAD/EPSMORT is of type MAPLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSMORT to Target PDS - IBMUSER.SIT.MORTGAGE.MAPLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065252.052/IBMUSER.MORT0001.LOAD/EPSMLIS is of type MAPLOAD
-Copied source file - IBMUSER.MORT0001.LOAD/EPSMLIS to Target PDS - IBMUSER.SIT.MORTGAGE.MAPLOAD
-
-Extracted file /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065252.052/IBMUSER.MORT0001.LOAD/EPSCSMRT is of type CICSLOAD
-ERROR: DEPLOYMENT FAILED
-ERROR: SOURCE FILE NOT DEPLOYED : IBMUSER.MORT0001.LOAD/EPSCSMRT
-ERROR: DBB COPY MODE NOT DEFINED FOR DEPLOY TYPE : CICSLOAD
-
-
-Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221111.065252.052
+** Deploying the contents in /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052757.027/BuildReport.json
+     Copied file IBMUSER.MORT0001.LOAD/EPSMORT to target library IBMUSER.SIT.MORTGAGE.MAPLOAD using DBB CopyMode LOAD
+     Copied file IBMUSER.MORT0001.LOAD/EPSMLIS to target library IBMUSER.SIT.MORTGAGE.MAPLOAD using DBB CopyMode LOAD
+     !ERROR: DEPLOYMENT FAILED
+     !ERROR: SOURCE FILE NOT DEPLOYED : IBMUSER.MORT0001.LOAD/EPSCSMRT
+     !ERROR: DBB COPY MODE NOT DEFINED FOR DEPLOY TYPE : CICSLOAD
+** Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052757.027 
 
 ** Build finished
 ```
