@@ -122,8 +122,8 @@ SimplePackageDeploy console output
 ** Created tar file extract directory /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026
 ** Untarring file /u/ibmuser/workspace/MortgageApplication/out/multiBuildPackageWithoutExtn.tar to /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026.
 
-** Build report data at /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026/BuildReport.json not found
-** Deployment stopped
+*! Build report data at /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026/BuildReport.json not found
+*! Deployment stopped
 ** Cleaning up the temporary folder - /u/ibmuser/workspace/MortgageApplication/out/DeployFiles_20221117.052620.026 
 
 ** Build finished

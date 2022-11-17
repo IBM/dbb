@@ -111,13 +111,13 @@ if (rc != 0) {
 def buildReportFile = new File("${tarExtractDirName}/BuildReport.json")
 if (buildReportFile.exists()) {	
 	deployFromBuildReport(buildReportFile,tarExtractDirName,targetLibLLQMap,copyModeMap)
+	cleanTempFolder(tarExtractDir)
 } else {
-	println("** Build report data at $tarExtractDirName/BuildReport.json not found")
-	println("** Deployment stopped")
+	println("*! Build report data at $tarExtractDirName/BuildReport.json not found")
+	println("*! Deployment stopped")
+	cleanTempFolder(tarExtractDir)
+	System.exit(1)
 }
-
-if (tarExtractDir.exists()) tarExtractDir.deleteDir()
-println("** Cleaning up the temporary folder - ${tarExtractDirName} \n")
 
 /**********************************************************************************
  **** Deploy from the BuildReport                  
@@ -158,8 +158,8 @@ def deployFromBuildReport (File buildReportFile, String tarExtractDirName,Map ta
 	         
 	             def srcFile = new File("$srcFilePath")
 	             if(!srcFile.exists()){
-	                 println("** Source file not found at $srcFilePath")
-	                 println("** Validate if the package was generated with addExtension option. If yes, use option: -e or --packageWithExtension to deploy")
+	                 println("*! Source file not found at $srcFilePath")
+	                 println("*! Validate if the package was generated with addExtension option. If yes, use option: -e or --packageWithExtension to deploy")
 	                 System.exit(1)
 	             }
 	             copy.setFile(srcFile);
@@ -173,10 +173,7 @@ def deployFromBuildReport (File buildReportFile, String tarExtractDirName,Map ta
 	             println("     !ERROR: DEPLOYMENT FAILED")
 	             println("     !ERROR: SOURCE FILE NOT DEPLOYED : $dataset/$member")
 	             println("     !ERROR: DBB COPY MODE NOT DEFINED FOR DEPLOY TYPE : ${it.deployType}")
-	             
-	             if (tarExtractDir.exists()) tarExtractDir.deleteDir()
-	             println("** Cleaning up the temporary folder - ${tarExtractDirName} \n")
-
+	             cleanTempFolder(tarExtractDir)
 	             System.exit(1)
 	         }
 	     }    
@@ -276,4 +273,13 @@ def parseJSONStringToMap(String packageProperty) {
 		System.exit(1)
 	}
 	return map
+}
+
+/**********************************************************************************
+ *  Clean the temporary folder before exit
+ **********************************************************************************/
+ 
+def cleanTempFolder(File tarExtractDir) {
+	if (tarExtractDir.exists()) tarExtractDir.deleteDir()
+    println("** Cleaning up the temporary folder - ${tarExtractDir.getAbsolutePath()} \n")
 }
