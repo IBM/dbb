@@ -30,7 +30,7 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
     1. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
 
 1. **(Optional) Publish to Artifactory**
-    1. Publishes the tar file to the Artifactory repository based on the given configuration using the ArtifactoryHelpers.
+    1. Publishes the tar file to the Artifactory repository based on the given configuration using the ArtifactoryHelpers. **Please note**: The ArtifactoryHelper script is updated for DBB 2.0 and requires to run on JAVA 11.
 
 ## Invocation samples 
 
