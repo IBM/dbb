@@ -1,150 +1,139 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
 import groovy.transform.*
+import javax.net.ssl.SSLContext
 import groovy.cli.commons.*
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.entity.FileEntity;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
+import java.net.http.*
+import java.net.http.HttpRequest.BodyPublishers
+import java.net.http.HttpResponse.BodyHandlers
 
-// Very basic script to upload/download from artifactory (replacement of curl)
-@Field int retryCount = 50
-@Field int conPoolSize = 10
-@Field int timeout = 300 // 5 Minutes in seconds
-@Field int timeoutMilliSeconds = timeout * 1000;
+import java.nio.file.Paths
 
-class CustomRetryHandler extends DefaultHttpRequestRetryHandler {
-	boolean verbose = false
-	CustomRetryHandler(int connectionRetries, boolean verbose) {
-		super(connectionRetries, true);
-		this.verbose = verbose
-	}
 
-	@Override
-	public boolean retryRequest(IOException exception, int totalCount, HttpContext context) {
-		HttpClientContext clientContext = HttpClientContext.adapt(context);
-		if ( verbose) println("*? WARNING: Error occurred for request " + clientContext.getRequest().getRequestLine().toString() + ": " + exception.getMessage() + ".");
-		if (totalCount > retryCount) {
-			println("*? Error occurred for request " + clientContext.getRequest().getRequestLine().toString() + ": " + exception.getMessage() + ".");
-			return false;
-		}
-		Thread.sleep(1000);
-		boolean shouldRetry = super.retryRequest(exception, totalCount, context);
-		if (shouldRetry) {
-			if ( verbose) println("*? WARNING: Attempting retry #" + totalCount);
-			return true;
-		}
-		return false;
-	}
-}
+/** Basic script to upload/download from artifactory
+ *
+ * Version 1 - 2022
+ *
+ * This script requires JAVA 11 because it uses java.net.http.* APIs to create
+ * the HTTPClient and HTTPRequest, so requires DBB 2.0
+ *
+ */
 
 run(args)
 
 def upload(String url, String fileName, String user, String password, boolean verbose) throws IOException {
 
-	RequestConfig requestConfig = RequestConfig
-		.custom()
-		.setSocketTimeout(timeoutMilliSeconds)
-		.setConnectTimeout(timeoutMilliSeconds)
-		.setCircularRedirectsAllowed(true)
-		.setExpectContinueEnabled(true)
-		.build();
+	println( "** ArtifactoryHelper started for upload of $fileName to $url" );
 	
-	HttpPut httpPut = new HttpPut(url);
-	httpPut.setConfig(requestConfig);
-	httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
-	httpPut.addHeader(HTTP.CONN_DIRECTIVE,HTTP.CONN_KEEP_ALIVE);
 	
-	if ( verbose ) println( "** Headers: " + httpPut.getAllHeaders());
-	if ( verbose ) println( "** Request: " + httpPut );
+	// create http client
+	HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+	.authenticator(new Authenticator() {
+		@Override
+		protected PasswordAuthentication getPasswordAuthentication() {
+			return new PasswordAuthentication(
+			"$user",
+			"$password".toCharArray());
+		}
+	});
+
+//	if ( disableSSLVerify ) {
+//		SSLContext sc = SSLContext.getInstance(DEFAULT_SSL_PROTOCOLS);
+//		sc.init(null, trustAllCertsTrustManager(), null);
+//		httpClientBuilder.sslContext(sc)
+//	}
+
+	HttpClient httpClient = httpClientBuilder.build();
 	
-	FileEntity fileEntity = new FileEntity(new File(fileName));
-	fileEntity.setContentType("binary/octet-stream");
-	httpPut.setEntity(fileEntity);
+	// build http request
+	HttpRequest request = HttpRequest.newBuilder()
+	.uri(URI.create("$url"))
+	.header("Content-Type", "binary/octet-stream")
+	.PUT(BodyPublishers.ofFile(Paths.get(fileName)))
+	.build();
 
-	HttpClientContext clientContext = HttpClientContext.create();
-
-	CredentialsProvider provider = new BasicCredentialsProvider();
-	UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(user, password);
-	provider.setCredentials(AuthScope.ANY, credentials);
-	clientContext.setCredentialsProvider(provider);
-
-	PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-	connectionManager.setMaxTotal(conPoolSize);
-	connectionManager.setDefaultMaxPerRoute(conPoolSize);
-
-	HttpClientBuilder builder = HttpClientBuilder.create().setConnectionManager(connectionManager).setDefaultRequestConfig(requestConfig).useSystemProperties()
-	builder.setRetryHandler(new CustomRetryHandler(retryCount, verbose));
-
-
-	CloseableHttpClient httpClient = builder.build()
+	// submit request
 	
-	HttpResponse response = httpClient.execute(httpPut, clientContext);
+	println( "** Uploading $fileName to $url" );
+	HttpResponse response = httpClient.send(request, BodyHandlers.ofString())
 	
 	if ( verbose ) println( "** Response: " + response );
-		
-	int statusCode = response.getStatusLine().getStatusCode();
-
-	if ((statusCode != HttpStatus.SC_CREATED) && (statusCode != HttpStatus.SC_OK)) {
-		if (response.getEntity() != null) {
-			InputStream source = response.getEntity().getContent();
-			byte[] buffer = new byte[8192];
-			int read;
-			while ((read = source.read(buffer)) != -1) {
-				System.err.write(buffer, 0, read);
-			}
-		}
-		throw new RuntimeException("Artifactory upload failed: " + statusCode);
+	
+	def rc = evaluateHttpResponse(response, "upload", verbose)
+	
+	if (rc == 0 ) {
+		println("** Upload completed");
 	}
-	httpClient.close();
+	else {
+		println("** Upload failed");
+	}
+
 }
 
-def download(String url, String fileName, String user, String password, boolean verbose) throws ClientProtocolException, IOException  {
-	RequestConfig requestConfig = RequestConfig
-		.custom()
-		.setSocketTimeout(timeoutMilliSeconds)
-		.setConnectTimeout(timeoutMilliSeconds)
-		.setCircularRedirectsAllowed(true)
-		.setExpectContinueEnabled(true)
-		.build();
-
-	HttpGet get = new HttpGet(url);
-	get.setConfig(requestConfig);
-
-	HttpClientContext clientContext = HttpClientContext.create();
-	CredentialsProvider provider = new BasicCredentialsProvider();
-	UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(user, password);
-	provider.setCredentials(AuthScope.ANY, credentials);
-	clientContext.setCredentialsProvider(provider);
-
-	CloseableHttpClient httpClient = HttpClients.custom().useSystemProperties().build()
+def download(String url, String fileName, String user, String password, boolean verbose) throws IOException  {
 	
-	HttpResponse response = httpClient.execute(get, clientContext);
-	InputStream source = response.getEntity().getContent();
-	FileOutputStream out = new FileOutputStream(fileName);
-	byte[] buffer = new byte[8192];
-	int read;
-	while ((read = source.read(buffer)) != -1) {
-		out.write(buffer, 0, read);
+	println( "** ArtifactoryHelper started for download of $url to $fileName" );
+	
+	
+	// create http client
+	HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+	.authenticator(new Authenticator() {
+		@Override
+		protected PasswordAuthentication getPasswordAuthentication() {
+			return new PasswordAuthentication(
+			"$user",
+			"$password".toCharArray());
+		}
+	});
+
+//	if ( disableSSLVerify ) {
+//		SSLContext sc = SSLContext.getInstance(DEFAULT_SSL_PROTOCOLS);
+//		sc.init(null, trustAllCertsTrustManager(), null);
+//		httpClientBuilder.sslContext(sc)
+//	}
+
+	HttpClient httpClient = httpClientBuilder.build();
+	
+	// build http request
+	HttpRequest request = HttpRequest.newBuilder()
+	.uri(URI.create("$url"))
+	.GET()
+	.build();
+	
+	// submit request
+	println( "** Downloading $url to $fileName " );
+	HttpResponse response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream())
+	
+	// evalulate response
+	rc = evaluateHttpResponse(response, "download", verbose)
+	
+	if (rc == 0) {
+		// write file to output 
+		def responseBody = response.body()
+		println("** Writing to file to $fileName")
+		FileOutputStream fos = new FileOutputStream(fileName);
+		fos.write(responseBody.readAllBytes());
+		fos.close();
+	} else {
+		println("** Download failed");
 	}
-	out.close();
-	httpClient.close();
+
+}
+
+def evaluateHttpResponse (HttpResponse response, String action, boolean verbose) {
+	int rc = 0
+	def statusCode = response.statusCode()
+	if ( verbose) println "*** HTTP-Status Code: $statusCode"
+	def responseString = response.body()
+	if ( (statusCode != 201) && (statusCode != 200)  ) {
+		rc = 1
+		println("** Artifactory $action failed with statusCode : $statusCode ")
+		println( "** Response: " + response );
+		throw new RuntimeException("Exception : Artifactory $action failed: "
+			 + statusCode);
+	}
+	
+	return rc
 }
 
 
