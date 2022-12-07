@@ -3,36 +3,16 @@ import groovy.transform.*
 import groovy.json.JsonSlurper
 import groovy.cli.commons.*
 
-import java.security.KeyManagementException
-import java.security.NoSuchAlgorithmException
-import java.security.SecureRandom
-import java.security.cert.CertificateException
-import java.security.cert.X509Certificate
-
-import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.client.methods.HttpPut
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory
-import org.apache.http.conn.ssl.SSLContextBuilder
-import org.apache.http.conn.ssl.TrustStrategy
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.Header
-import org.apache.http.message.BasicHeader
-import org.apache.http.entity.StringEntity
-import org.apache.http.util.EntityUtils
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.protocol.HttpClientContext
-import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.client.CredentialsProvider
-import org.apache.http.auth.AuthScope
+import java.security.cert.CertificateException
+import java.security.cert.X509Certificate
+
+import java.net.http.*
+import java.net.http.HttpRequest.BodyPublishers
+import java.net.http.HttpResponse.BodyHandlers
 
 // Very basic script to perform UCD application process deployment
 enum Status {
@@ -41,64 +21,74 @@ enum Status {
 
 @Field DEFAULT_SSL_PROTOCOLS = "TLSv1.2"
 @Field int timeout = 60000
-@Field requestConfig = RequestConfig.custom()
-				.setConnectionRequestTimeout(timeout)
-				.setConnectTimeout(timeout)
-				.setSocketTimeout(timeout)
-				.build()
 
-//@Field clientBuilder = HttpClients.custom()			
-@Field clientBuilder = HttpClients.custom().useSystemProperties()
+/** This script request an application process deployment
+ * 
+ * Version 1 - 2022
+ * 
+ *  Uplift for DBB 2.0
+ * 
+ *  This script requires JAVA 11 because it uses java.net.http.* APIs to create
+ *  the HTTPClient and HTTPRequest 
+ *
+ */
 
-// Can only run in the context of groovyz
-def getHttpClient(boolean disableSSLVerify, String sslProtocols) {
-	CloseableHttpClient httpClient = null
-	//Set up the HttpClient to bypass SSL certicate untrusted issue if needed.
-	SSLContextBuilder builder = new SSLContextBuilder()
-	if ( disableSSLVerify ) {
-		builder.loadTrustMaterial(null, new TrustStrategy()
-			{
-				@Override
-				public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException
-				{
-					return true
-				}
-			});
-	}
-	SSLConnectionSocketFactory sslConnectionSocketFactory = 
-		new SSLConnectionSocketFactory(builder.build(),
-			sslProtocols.split(","), 
-			null,
-			SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER )
-	clientBuilder.setSSLSocketFactory(sslConnectionSocketFactory)
-	httpClient = clientBuilder.build()
-	return httpClient
+// establish environment
+def opts = parseInput(args)
+
+// print
+def startTime = new Date().format("yyyyMMdd.hhmmss.mmm")
+println("** Request UCD Deployment start at $startTime")
+println("** Properties at startup:")
+opts.getOptions().each{option ->
+	if ( option.getLongOpt() == "password" )
+		println "   ${option.getLongOpt()} -> xxxxxx "
+	else
+		println "   ${option.getLongOpt()} -> ${(option.getValue() ? option.getValue() : 'true' )} "
 }
-	
-//* This script request an application process deployment
- run(args)
 
+def rc = requestDeployment(opts.url, opts.user, opts.password,
+	opts.application, opts.applicationProcess, opts.environment,
+	opts.deployVersions, opts.timeout ? opts.timeout : "300000",
+	opts.disableSSLVerify.toBoolean(), opts.verbose.toBoolean(),
+	opts.sslProtocols ? opts.sslProtocols : DEFAULT_SSL_PROTOCOLS)
 
- def deploy ( String url, String user, String password, String application,
-			 String applicationProcess, String environment, String deployVersions, String timeout, boolean disableSSLVerify, boolean verbose, String sslProtocols ) {
-	
+if  ( rc != 0 ) {
+	println("*** Deployment terminated with an error. ")
+	System.exit(rc)
+}
+
+// method to submit the request and poll for result
+
+def requestDeployment( String url, String user, String password, String application,
+String applicationProcess, String environment, String deployVersions, String timeout, boolean disableSSLVerify, boolean verbose, String sslProtocols ) {
+
 	println "**  Deploying component versions: $deployVersions"
 	println "*** Starting deployment process '$applicationProcess' of application '$application' in environment '$environment'"
 
 	def rc = 0
 	def urlString= "$url/cli/applicationProcessRequest/request"
-	def httpClient = getHttpClient(disableSSLVerify, sslProtocols)
-	def request = new HttpPut(urlString)
-	request.addHeader(new BasicHeader("Content-Type", "application/json"))
-	
-	
-	HttpClientContext clientContext = HttpClientContext.create();
-	
-	CredentialsProvider provider = new BasicCredentialsProvider();
-	UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("$user", "$password");
-	provider.setCredentials(AuthScope.ANY, credentials);
-	clientContext.setCredentialsProvider(provider);
-	
+
+	// create http client
+	HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+	.authenticator(new Authenticator() {
+		@Override
+		protected PasswordAuthentication getPasswordAuthentication() {
+			return new PasswordAuthentication(
+			"$user",
+			"$password".toCharArray());
+		}
+	});
+
+	if ( disableSSLVerify ) {
+		SSLContext sc = SSLContext.getInstance(DEFAULT_SSL_PROTOCOLS);
+		sc.init(null, trustAllCertsTrustManager(), null);
+		httpClientBuilder.sslContext(sc)
+	}
+
+	HttpClient httpClient = httpClientBuilder.build();
+
+	// build request including body
 	def jsonString = """
 {
   "application": "$application",
@@ -106,32 +96,38 @@ def getHttpClient(boolean disableSSLVerify, String sslProtocols) {
   "environment": "$environment",
   "versions": [
 """
-	
+
 	def deployVersionsList = deployVersions.split("\\n")
 	deployVersionsList.each { deployVersion ->
 		def items = deployVersion.split(":")
 		def component = items[0]
 		def version = items[1]
 		jsonString += """
-    {
-      "version": "$version",
-      "component": "$component"
-    },
+	{
+	  "version": "$version",
+	  "component": "$component"
+	},
 """
 	}
-	
+
 	jsonString += "    ]\n}"
-	
-	if ( verbose)
-		println "*** Request payload:\n$jsonString"
-	
-	def entity =  new StringEntity(new String (jsonString, "UTF-8"))
-	request.setEntity(entity)
-	def response = httpClient.execute(request,clientContext)
-	def statusCode = response.getStatusLine().getStatusCode()
-	if ( verbose)
-		println "*** Status Code: $statusCode"
-	def responseString = EntityUtils.toString(response.getEntity())
+
+	if (verbose) println "*** Request payload:\n$jsonString"
+
+
+	// build http request
+	HttpRequest request = HttpRequest.newBuilder()
+	.uri(URI.create("$urlString"))
+	.header("Content-Type", "application/json")
+	.POST(BodyPublishers.ofString(jsonString))
+	.build();
+
+
+	HttpResponse response = httpClient.send(request, BodyHandlers.ofString())
+
+	def statusCode = response.statusCode()
+	if ( verbose) println "*** HTTP-Status Code: $statusCode"
+	def responseString = response.body()
 	if ( statusCode != 200 ) {
 		rc = 1
 		println("*** Deployment failed:\n")
@@ -146,59 +142,67 @@ def getHttpClient(boolean disableSSLVerify, String sslProtocols) {
 		def json = slurper.parseText("$responseString")
 		def requestId = json["requestId"]
 		def requestUrl = "$url/#applicationProcessRequest/$requestId"
-		print "*** Follow Process Request: $requestUrl "
-		request = new HttpGet("$url/cli/applicationProcessRequest/requestStatus?request=$requestId")
+		println "*** Follow Process Request: $requestUrl "
+		print "Executing "
+	
+		// assemble a new request to obtain the status of the request:
+		request = HttpRequest.newBuilder()
+				.uri(URI.create("$url/cli/applicationProcessRequest/requestStatus?request=$requestId"))
+				.header("Content-Type", "application/json")
+				.GET()
+				.build();
+		
 		retry:
-		while ([Status.PENDING, Status.EXECUTING].contains(deployStatus) && after - before <= timeoutMilliseconds && statusCode == 200) {
-			after = System.currentTimeMillis()
-			response = httpClient.execute(request,clientContext)
-			statusCode = response.getStatusLine().getStatusCode()
-			responseString = EntityUtils.toString(response.getEntity())
-			json = slurper.parseText("$responseString")
-			if ( verbose ) {
-				println "*** Status Code: $statusCode"
-				println "*** Current status: " + json["status"]
-				println "*** $json"
+			while ([Status.PENDING, Status.EXECUTING].contains(deployStatus) && after - before <= timeoutMilliseconds && statusCode == 200) {
+				after = System.currentTimeMillis()
+				response = httpClient.send(request, BodyHandlers.ofString())
+				statusCode = response.statusCode()
+				if ( verbose ) println "*** Status Code: $statusCode"
+				responseString = response.body()
+				if ( verbose ) println "*** Response String: $responseString"
+				json = slurper.parseText("$responseString")
+				if ( verbose ) 	println "*** Current status: " + json["status"]
+				if ( verbose ) 	println "*** $json"
+				
+				switch (json["status"]) {
+					case "PENDING":
+						deployStatus = Status.PENDING
+						break
+					case "EXECUTING":
+						deployStatus = Status.EXECUTING
+						break
+					case "CLOSED":
+						switch (json["result"]) {
+							case "SUCCEEDED":
+								deployStatus = Status.SUCCEEDED
+								break retry
+							case "FAULTED":
+								deployStatus = Status.FAULTED
+								rc=1
+								break retry
+							default:
+								rc=1
+								break retry
+						}
+					default:
+						rc=1
+						break retry
+				}
+				print "."
+				sleep(retryPeriodMilliseconds)
 			}
-			switch (json["status"]) {
-				case "PENDING":
-					deployStatus = Status.PENDING
-					break
-				case "EXECUTING":
-					deployStatus = Status.EXECUTING
-					break
-				case "CLOSED":
-					switch (json["result"]) {
-						case "SUCCEEDED":
-							deployStatus = Status.SUCCEEDED
-							break retry
-						case "FAULTED":
-							deployStatus = Status.FAULTED
-							rc=1
-							break retry
-						default:
-							rc=1
-							break retry
-					}
-				default:
-					rc=1
-					break retry
+			println "\n*** The deployment result is " + json["result"] + ". See the UrbanCode Deploy deployment logs for details."
+			if ( statusCode != 200 ||  json["result"] != "SUCCEEDED" ) {
+				rc = 1
+				println("*** Deployment failed:\n")
+				println "$responseString"
 			}
-			print "."
-			sleep(retryPeriodMilliseconds)
 		}
-		println "\n*** The deployment result is " + json["result"] + ". See the UrbanCode Deploy deployment logs for details."
-		if ( statusCode != 200 ||  json["result"] != "SUCCEEDED" ) {
-			rc = 1
-			println("*** Deployment failed:\n")
-			println "$responseString"
-		}
-	}
 	return rc
 }
 
-//Parsing the command line
-def run(String[] cliArgs)
+// parsing the command line and return the options
+def parseInput(String[] cliArgs)
 {
 	def cli = new CliBuilder(usage: "ucd-deploy.groovy [options]", header: '', stopAtNonOption: false)
 	cli.h(longOpt:'help', 'Prints this message')
@@ -213,7 +217,7 @@ def run(String[] cliArgs)
 	cli.s(longOpt:'sslProtocols', args:1, required:false, 'The SSL protocols to handle in the format "TLSv1.2,TLSv1.3". Default is TLSv1.2')
 	cli.k(longOpt:'disableSSLVerify', 'Disable SSL verification')
 	cli.v(longOpt:'verbose', 'Flag to turn on script trace')
-	
+
 	def opts = cli.parse(cliArgs)
 
 	// if opt parse fail exit.
@@ -221,15 +225,35 @@ def run(String[] cliArgs)
 		System.exit(1)
 	}
 
+	// print help
 	if (opts.h)
 	{
 		cli.usage()
 		System.exit(0)
 	}
-	
-	def rc = deploy (opts.u, opts.U, opts.P, opts.a, opts.p, opts.e, opts.d, opts.t ? opts.t : "300000", opts.k, opts.v, opts.s ? opts.s : DEFAULT_SSL_PROTOCOLS)
-	
-	if  ( rc != 0 ) {
-		System.exit(1)
-	}
+
+	return opts
+}
+
+// returns a TrustManager which skips SSL verification
+def trustAllCertsTrustManager() {
+	println "*** SSL Verification disabled"
+	TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+			@Override
+			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+				return null;
+			}
+
+			@Override
+			public void checkClientTrusted(X509Certificate[] certs,
+			String authType) {
+			}
+
+			@Override
+			public void checkServerTrusted(X509Certificate[] certs,
+			String authType) {
+			}
+		} };
+
+	return trustAllCerts
 }
