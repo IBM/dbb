@@ -4,8 +4,8 @@
 
 This sample shows how to create a tar-file with the build outputs based on the DBB Build Report after a successful build.
 
-The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and to pull them into the build process. The `ArtifactoryHelpers.groovy` allow you to upload and download packages from Artifactory. 
-The `ArtifactoryHelpers` script is a very simple implementation sufficient for a show case, **_we recommend_** to use the Artifactory publishers which are available with your CI pipeline coordinator.
+The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and to pull them into the build process. The `ArtifactRepositoryHelpers.groovy` allow you to upload and download packages from Artifactory. 
+The `ArtifactRepositoryHelpers` script is a very simple implementation sufficient for a show case, **_we recommend_** to use the Artifactory publishers which are available with your CI pipeline coordinator.
 
 This sample Groovy script to package build outputs:
 
@@ -29,14 +29,15 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
     1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
     1. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
 
-1. **(Optional) Publish to Artifactory**
-    1. Publishes the tar file to the Artifactory repository based on the given configuration using the ArtifactoryHelpers. **Please note**: The ArtifactoryHelper script is updated for DBB 2.0 and requires to run on JAVA 11.
+1. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
+    1. Publishes the tar file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
 
 ## Invocation samples 
 
 ### Package only
 ```
-groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949
+groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \ 
+        --workDir /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949
 ```
 
 <details>
@@ -87,7 +88,9 @@ PackageBuildOutputs console output
 ### Package only including adding deployType to files in tar
 
 ```
-+ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949 --addExtension
++ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
+        --workDir /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949 \
+        --addExtension
 ```
 
 <details>
@@ -140,7 +143,12 @@ PackageBuildOutputs console output
 ### Package only processing multiple build reports
 
 ```
-+ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /var/pipeline/work --buildReportOrder /var/pipeline/retirementCalculator/BuildReport_1.json,/var/pipeline/retirementCalculator/BuildReport_2.json --tarFileName rel-1.0.0.tar --packagingPropertiesFile /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties --verbose
++ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
+        --workDir /var/pipeline/work \
+        --buildReportOrder /var/pipeline/retirementCalculator/BuildReport_1.json,/var/pipeline/retirementCalculator/BuildReport_2.json \
+        --tarFileName rel-1.0.0.tar \
+        --packagingPropertiesFile /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties \
+        --verbose
 ```
 
 <details>
@@ -211,9 +219,26 @@ drwxr-xr-x   1 BPXROOT  TIVUSR         0 Sep  1 16:04 JENKINS.ZDAT.RETIRE.LOAD/
 </details>
 
 
-### Package and Publish to Artifactory
+### Package and Publish to Artifactory / Nexus
+
+Overview of the various ways to specify the structure within the repository: 
+
+* When not no version or directory name, the package will be uploaded into `(buildLabel)/(tarFileName)`
+* Specifying `version (-v)` uploads the package into  `(version)/(tarFileName)`
+* Specifying `directory (-ad)` uploads the package into `(directory)/(buildLabel)/(tarFileName)`
+* Specifying `version (-v)` and `directory (-ad)` uploads the package into `(directory)/(versionName)/(tarFileName)`
+
+The password for the artifact repository can also represent the APIKey. It is recommended to store that inside the secret store of your pipeline orchestrator.
+
 ```
-groovyz /var/jenkins/pipeline/PublishLoadModule.groovy --workDir /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034 --artifactoryPropertiesFile publish.properties -v MortgageRelease_1.0 -t myPackage.tar --verbose --publish
+groovyz /var/jenkins/pipeline/PublishLoadModule.groovy \
+        --workDir /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025 \
+        -p \
+        -aprop appArtifactRepository.properties \
+        -au http://10.3.20.231:8081/artifactory \
+        -ar example-repo-local \
+        -aU admin \
+        -aP xxxxxxxxxxx
 ```
 
 <details>
@@ -223,62 +248,42 @@ PackageBuildOutputs console output
 
 ```
 
-** PackageBuildOutputs start at 20210727.042032.020
+PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025 -p -aprop appArtifactRepository.properties -au http://10.3.20.96:28081/repository -ar testMD -aU admin -aP nexusadmin
+** PackageBuildOutputs start at 20221207.050641.006
 ** Properties at startup:
-   workDir -> /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034
-   startTime -> 20210727.042032.020
+   addExtension -> false
+   artifactRepository.directory ->
+   artifactRepository.password -> xxxxxx
+   artifactRepository.repo -> testMD
+   artifactRepository.url -> http://10.3.20.96:28081/repository
+   artifactRepository.user -> admin
+   buildReportOrder -> [/var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/BuildReport.json]
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT"]
+   packagingPropertiesFile -> /u/ibmuser/groovy/PublishingScript/packageBuildOutputs.properties
    publish -> true
-   versionName -> MortgageRelease_1.0
+   startTime -> 20221207.050641.006
    verbose -> false
-   artifactory.password -> xxxxx
-   artifactory.user -> xxxxx
-   artifactory.repo -> basicRepository
-   tarFileName -> myPackage.tar
-   artifactory.url -> http://10.3.20.231:8081/artifactory
-** Read build report data from /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/BuildReport.json
+   workDir -> /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025
+** Read build report data from /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/BuildReport.json
 ** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
+** Files detected in /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/BuildReport.json
+   GITLAB.PROG.EPSM.LOAD(EPSMLIS), LOAD
+   GITLAB.PROG.EPSM.LOAD(EPSMPMT), LOAD
+   GITLAB.PROG.EPSM.LOAD(EPSMLIST), LOAD
+*** Number of build outputs to package: 3
 ** Copying BuildOutputs to temporary package dir.
-*** Number of build outputs to publish: 10
-     Copying JENKINS.DBB.SAMP.BUILD.BMS.COPY(EPSMORT) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.BMS.COPY with DBB Copymode TEXT
-     Copying JENKINS.DBB.SAMP.BUILD.BMS.COPY(EPSMLIS) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.BMS.COPY with DBB Copymode TEXT
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMORT) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMLIS) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCSMRT) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMPMT) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCMORT) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSCSMRD) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.LOAD(EPSMLIST) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.LOAD with DBB Copymode LOAD
-     Copying JENKINS.DBB.SAMP.BUILD.DBRM(EPSCMORT) to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/tempPackageDir/JENKINS.DBB.SAMP.BUILD.DBRM with DBB Copymode BINARY
-** Creating tar file at /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/myPackage.tar.
-
-** Adding BuildReport.json to /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/myPackage.tar.
-
-** Package successfully created at /var/jenkins/workspace/MortgageApplication/build.20210727.073406.034/myPackage.tar.
-** Uploading package to Artifactory http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.0/myPackage.tar.
-** Headers: [Expect: 100-continue, Connection: Keep-Alive]
-** Request: PUT http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.0/myPackage.tar HTTP/1.1
-** Response: HttpResponseProxy{HTTP/1.1 201 Created [Server: Artifactory/6.6.5, X-Artifactory-Id: 6e0b564c45b20ed4:-57a85152:1783ac71376:-8000, Location: http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.0/myPackage.tar, Content-Type: application/vnd.org.jfrog.artifactory.storage.ItemCreated+json;charset=ISO-8859-1, Transfer-Encoding: chunked, Date: Tue, 27 Jul 2021 15:20:34 GMT] ResponseEntityProxy{[Content-Type: application/vnd.org.jfrog.artifactory.storage.ItemCreated+json;charset=ISO-8859-1,Chunked: true]}}
+     Copying GITLAB.PROG.EPSM.LOAD(EPSMLIS) to /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/tempPackageDir/GITLAB.PROG.EPSM.LOAD/EPSMLIS with DBB Copymode LOAD
+     Copying GITLAB.PROG.EPSM.LOAD(EPSMPMT) to /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/tempPackageDir/GITLAB.PROG.EPSM.LOAD/EPSMPMT with DBB Copymode LOAD
+     Copying GITLAB.PROG.EPSM.LOAD(EPSMLIST) to /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/tempPackageDir/GITLAB.PROG.EPSM.LOAD/EPSMLIST with DBB Copymode LOAD
+** Copying /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/BuildReport.json to temporary package dir as BuildReport.json.
+** Copying /u/ibmuser/groovy/PublishingScript/packageBuildOutputs.properties to temporary package dir.
+** Creating tar file at /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/build.20221206.032531.025.tar.
+** Package successfully created at /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/build.20221206.032531.025.tar.
+** Uploading package to Artifact Repository http://10.3.20.96:28081/repository/testMD/build.20221206.032531.025/build.20221206.032531.025.tar.
+** ArtifactRepositoryHelper started for upload of /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/build.20221206.032531.025.tar to http://10.3.20.96:28081/repository/testMD/build.20221206.032531.025/build.20221206.032531.025.tar
+** Uploading /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/build.20221206.032531.025.tar to http://10.3.20.96:28081/repository/testMD/build.20221206.032531.025/build.20221206.032531.025.tar
+** Upload completed
 ** Build finished
-
-```
-</details>
-
-### Only Upload or Download to/from Artifactory
-
-```
-groovyz  /var/jenkins/pipeline/ArtifactoryHelpers.groovy --url http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.1/build.20210727.073406.034.tar --user xxxxx --password xxxxx --fileToUpload /var/jenkins/workspace/MortgageApplication//build.20210727.073406.034.tar --verbose
-```
-<details>
-  <summary>Console log</summary>
-
-ArtifactoryHelpers console output
-
-```
-** Headers: [Expect: 100-continue, Connection: Keep-Alive]
-** Request: PUT http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.1/build.20210727.073406.034.tar HTTP/1.1
-** Response: HttpResponseProxy{HTTP/1.1 201 Created [Server: Artifactory/6.6.5, X-Artifactory-Id: 6e0b564c45b20ed4:-57a85152:1783ac71376:-8000, Location: http://10.3.20.231:8081/artifactory/basicRepository/MortgageRelease_1.1/build.20210727.073406.034.tar, Content-Type: application/vnd.org.jfrog.artifactory.storage.ItemCreated+json;charset=ISO-8859-1, Transfer-Encoding: chunked, Date: Tue, 27 Jul 2021 06:37:30 GMT] ResponseEntityProxy{[Content-Type: application/vnd.org.jfrog.artifactory.storage.ItemCreated+json;charset=ISO-8859-1,Chunked: true]}}
-** Build finished
- 
 ```
 </details>
 
@@ -289,6 +294,7 @@ ArtifactoryHelpers console output
  
   -w,--workDir <dir>                             Absolute path to the DBB build
                                                  output directory
+ 
   -properties,--packagingPropertiesFile <file>   Absolute path of a property file
                                                  containing application specific
                                                  packaging details. 
@@ -296,40 +302,69 @@ ArtifactoryHelpers console output
   Optional:
   -boFile,--buildReportOrderFile <file>          Name of the buildReportOrder file, used to specify
                                                  buildReport.json files to be processed.
+
   -bO,--buildReportOrder <buildReports>          Additional build reports to be processed. If -boFile and -bO 
                                                  are used together, the build reports from -bO are 
                                                  appended to the build reports from -boFile.
+
   -t,--tarFileName <filename>                    Name of the package tar file.
                                                  (Optional unless using --buildReportOrder or --buildReportOrderFile)
+
   -d,--deployTypes <deployTypes>                 Comma-seperated list of deployTypes
                                                  to filter on the scope of the tar
                                                  file. (Optional)
+
   -verb,--verbose                                Flag to provide more log output. (Optional)
+
   -il,--includeLogs                              Comma-separated list of files/patterns
                                                  from the USS build workspace
+
   -ae,--addExtension                             Flag to add the deploy type extension to the member
                                                  in the package tar file. (Optional)                                                                                              
-                                        
-  Optional Artifactory Upload opts:
- 
-  -p,--publish                                   Flag to indicate package upload to
-                                                 the provided Artifactory server.
-                                                 (Optional)
-  -artifactory,
-    --artifactoryPropertiesFile <propertyFile>   Absolute path of a property file
-                                                 containing application specific
-                                                 Artifactory details. (Optional)
-  -v,--versionName <versionName>                 Name of the Artifactory version.
-                                                 (Optional)
- 
- 
+
   -h,--help                                      Prints this message
+
+  Optional Artifact Repsository upload opts:
+ 
+  -p,--publish
+                     Flag to indicate package upload to
+                     the provided Artifactory server.
+                     (Optional)
+ 
+  -v,--versionName <versionName>                 
+                     Name of the Artifactory version. (Optional)
+
+  -ad,--artifactRepositoryDirectory <repoDirectory>
+                     Directory path in the repository to store the build . (Optional)
+ 
+  -aprop,--artifactRepositoryPropertyFile <propertyFile>
+                     Path of a property file containing application specific artifact
+                     repository details. (Optional)
+
+  -ar,--artifactRepositoryName <repoName>
+                     Artifact repository name to store the build. (Optional)
+ 
+  -au,--artifactRepositoryUrl <url>
+                     URL to the Artifact repository server. (Optional)
+
+  -aU,--artifactRepositoryUser <user>
+                     User to connect to the Artifact repository server. (Optional)
+  
+  -aP,--artifactRepositoryPassword <password>
+                     Password to connect to the Artifact repository server. (Optional)
+
+ -artifactory,--artifact repositoryPropertiesFile <Artifactory
+ repositoryPropertiesFile>  
+                     Path of a property file containing
+                     application specific Artifactory repository details. (Optional) ** (Deprecated)
+ 
+
 ```
 
-## Command Line Options Summary - ArtifactoryHelpers
+## Command Line Options Summary - ArtifactRepositoryHelpers
 
 ```
-usage: ArtifactoryHelpers.groovy [options]
+usage: ArtifactRepositoryHelpers.groovy [options]
 
  -fD,--fileToDownload <arg>   The full path of the file to download
  -fU,--fileToUpload <arg>     The full path of the file to upload

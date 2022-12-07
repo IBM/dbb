@@ -10,44 +10,10 @@ import groovy.transform.*
 import groovy.cli.commons.*
 
 /************************************************************************************
- * This script creates a simplified package with the outputs generated from a DBB build 
- * Optionally, it publishes it to an Artifactory repository.
+ * This script creates a simplified package with the outputs generated from a DBB build
+ * Optionally, it publishes it to an Artifact repository.
  *
- * usage: PackageBuildOutputs.groovy [options]
- *
- * -w,--workDir <dir>                             Absolute path to the DBB build
- *                                                output directory
- * -properties,--packagingPropertiesFile <file>   Absolute path of a property file
- *                                                containing application specific
- *                                                packaging details. 
- *                                                                                                                                         
- * Optional:
- * -t,--tarFileName <filename>                    Name of the package tar file.
- *                                                (Optional)
- * -d,--deployTypes <deployTypes>                 Comma-seperated list of deployTypes
- *                                                to filter on the scope of the tar
- *                                                file. (Optional)
- * -verb,--verbose                                Flag to provide more log output.
- *                                                (Optional)
- * -il,--includeLogs                              Comma-separated list of files/patterns
- *                                                from the USS build workspace                                               
- *                                       
- * Optional Artifactory Upload opts:
- *
- * -p,--publish                                   Flag to indicate package upload to
- *                                                the provided Artifactory server.
- *                                                (Optional)
- * -artifactory,
- *   --artifactoryPropertiesFile <propertyFile>   Absolute path of a property file
- *                                                containing application specific
- *                                                Artifactory details. (Optional)
- * -v,--versionName <versionName>                 Name of the Artifactory version.
- *                                                (Optional)
- * -prop,--propertyFile <propertyFile>            ** Deprecated ** Absolute path of a
- *                                                property file containing application
- *                                                specific Artifactory details. (Optional)
- *                                                
- * -h,--help                                      Prints this message
+ * usage: see help command or README
  *
  * Version 0 - 2019
  *  called PublishLoadModule.groovy and located in Build/PublishLoadModules
@@ -57,12 +23,17 @@ import groovy.cli.commons.*
  *
  * Version 2 - 2022-02
  *  - Externalize the Map of LLQ to CopyMode
- *  - Add capablity to add additional files from build workspace 
+ *  - Add capablity to add additional files from build workspace
  *  - Verbose logging will print tar contents
  *
  * Version 3 - 2022-08
  *  - Ability to pass multiple build reports to build a cumulative package
  *  - Add an optional option to add the deploy type extension to the member
+ * 
+ * Version 4 - 2022-12
+ *  - Generalized the options to publish package to artifact repository
+ *  - Script is supporting both JFrog Artifactory and SonarType Nexus    
+ *  - Added additional CLI option to pass artifact repository parameters
  *  
  ************************************************************************************/
 
@@ -74,8 +45,8 @@ def startTime = new Date()
 props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
 println("** PackageBuildOutputs start at $props.startTime")
 println("** Properties at startup:")
-props.each{k,v->
-	if ( k == "artifactory.password" )
+props.sort().each{k,v->
+	if ( k == "artifactRepository.password" )
 		println "   $k -> xxxxxx "
 	else
 		println "   $k -> $v"
@@ -337,25 +308,25 @@ if (buildOutputsMap.size() == 0) {
 
 	}
 
-	//Set up the artifactory information to publish the tar file
+	//Set up the artifact repository information to publish the tar file
 	if (props.publish && props.publish.toBoolean()){
-		// Configuring ArtifactoryHelper parms
+		// Configuring artifact repositoryHelper parms
 		def String remotePath = (props.versionName) ? (props.versionName + "/" + tarFileName) : (tarFileLabel + "/" + tarFileName)
-		def url = new URI(props.get('artifactory.url') + "/" + props.get('artifactory.repo') + "/" + remotePath ).normalize().toString() // Normalized URL
+		def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + props.'artifactRepository.directory' + "/" + remotePath ).normalize().toString() // Normalized URL
 
-		def apiKey = props.'artifactory.user'
-		def user = props.'artifactory.user'
-		def password = props.'artifactory.password'
-		def repo = props.get('artifactory.repo') as String
+		def apiKey = props.'artifactRepository.user'
+		def user = props.'artifactRepository.user'
+		def password = props.'artifactRepository.password'
+		def repo = props.get('artifactRepository.repo') as String
 
-		//Call the ArtifactoryHelpers to publish the tar file
+		//Call the artifactRepositoryHelpers to publish the tar file
 		def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
-		File artifactoryHelpersFile = new File("$scriptDir/ArtifactoryHelpers.groovy")
-		Class artifactoryHelpersClass = new GroovyClassLoader(getClass().getClassLoader()).parseClass(artifactoryHelpersFile)
-		GroovyObject artifactoryHelpers = (GroovyObject) artifactoryHelpersClass.newInstance()
+		File artifactRepoHelpersFile = new File("$scriptDir/ArtifactRepositoryHelpers.groovy")
+		Class artifactRepositoryHelpersClass = new GroovyClassLoader(getClass().getClassLoader()).parseClass(artifactRepoHelpersFile)
+		GroovyObject artifactRepositoryHelpers = (GroovyObject) artifactRepositoryHelpersClass.newInstance()
 
-		println ("** Uploading package to Artifactory $url.")
-		artifactoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
+		println ("** Uploading package to Artifact Repository $url.")
+		artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
 	}
 
 }
@@ -411,12 +382,21 @@ def parseInput(String[] cliArgs){
 	cli.il(longOpt:'includeLogs', args:1, argName:'includeLogs', 'Comma-separated list of files/patterns from the USS build workspace. (Optional)')
 	cli.ae(longOpt:'addExtension', 'Flag to add the deploy type extension to the member in the package tar file. (Optional)')
 
-	// Artifactory Options:
-	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifactory server. (Optional)')
-	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the Artifactory version. (Optional)')
-	cli.artifactory(longOpt:'artifactoryPropertiesFile', args:1, argName:'artifactoryPropertiesFile', 'Path of a property file containing application specific Artifactory details. (Optional)')
+	// Artifact repository options ::
+	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifact Repository server. (Optional)')
+	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package on the Artifact repository server. (Optional)')
+	
+	// Artifact repository info
+	cli.au(longOpt:'artifactRepositoryUrl', args:1, argName:'url', 'URL to the Artifact repository server. (Optional)')
+	cli.ar(longOpt:'artifactRepositoryName', args:1, argName:'repoName', 'Artifact repository name to store the build. (Optional)')
+	cli.ad(longOpt:'artifactRepositoryDirectory', args:1, argName:'repoDirectory', 'Directory path in the repository to store the build . (Optional)')
+	cli.aU(longOpt:'artifactRepositoryUser', args:1, argName:'user', 'User to connect to the Artifact repository server. (Optional)')
+	cli.aP(longOpt:'artifactRepositoryPassword', args:1, argName:'password', 'Password to connect to the Artifact repository server. (Optional)')
+	cli.aprop(longOpt:'artifactRepositoryPropertyFile', args:1, argName:'propertyFile', 'Path of a property file containing application specific artifact repository details. (Optional) ** (Deprecated)')
+	
 	// old prop option (deprecated)
-	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFile', 'Path of a property file containing application specific Artifactory details. (Optional) ** (Deprecated)')
+	cli.artifactory(longOpt:'artifact repositoryPropertiesFile', args:1, argName:'Artifactory repositoryPropertiesFile', 'Path of a property file containing application specific Artifactory repository details. (Optional) ** (Deprecated)')
+	cli.prop(longOpt:'propertyFile', args:1, argName:'propertyFile', 'Path of a property file containing application specific artifact repository details. (Optional) ** (Deprecated)')
 
 	cli.verb(longOpt:'verbose', 'Flag to provide more log output. (Optional)')
 
@@ -459,11 +439,32 @@ def parseInput(String[] cliArgs){
 
 	props.verbose = (opts.verb) ? 'true' : 'false'
 
-	// Optional Artifactory to publish
+	// Optional Artifact repository info to deploy package
+	
 	if (opts.v) props.versionName = opts.v
 	props.publish = (opts.p) ? 'true' : 'false'
+	
+	// read of artifact repository file
+	if (opts.aprop){
+		def propertyFile = new File(opts.aprop)
+		if (propertyFile.exists()){
+			propertyFile.withInputStream { props.load(it) }
+		}
+	}
+	
+	// read the artifact repo cli options, which take precedence over
+	// the properties file
 
-	// Optional artifactory properties
+	if (opts.aU) props.'artifactRepository.user' = opts.aU
+	if (opts.aP) props.'artifactRepository.password' = opts.aP
+	if (opts.au) props.'artifactRepository.url' = opts.au
+	if (opts.ar) props.'artifactRepository.repo' = opts.ar
+	if (opts.ad) props.'artifactRepository.directory' = opts.ad
+	
+	
+	
+	//  ** Deprecated ** Optional artifact repository properties
+	// properties require to follow new naming conventions artifactRepository.* 
 	if (opts.artifactory){
 		def propertyFile = new File(opts.artifactory)
 		if (propertyFile.exists()){
@@ -471,7 +472,7 @@ def parseInput(String[] cliArgs){
 		}
 	}
 
-	// ** Deprecated ** Read of artifactory properties
+	// ** Deprecated ** Read of artifact repository properties
 	if (opts.prop){
 		def propertyFile = new File(opts.prop)
 		if (propertyFile.exists()){
@@ -512,11 +513,12 @@ def parseInput(String[] cliArgs){
 	try {
 		assert props.workDir : "Missing property build work directory"
 		assert props.copyModeMap : "Missing property package.copyModeMap"
+		
 		if (props.publish && props.publish.toBoolean()){
-			assert props.get("artifactory.url") : "Missing Artifactory URL"
-			assert props.get("artifactory.repo") : "Missing Artifactory Repository"
-			assert props.get("artifactory.user") : "Missing Artifactory Username"
-			assert props.get("artifactory.password") : "Missing Artifactory Password"
+			assert props.get("artifactRepository.url") : "Missing artifact repository URL"
+			assert props.get("artifactRepository.repo") : "Missing artifact repository name"
+			assert props.get("artifactRepository.user") : "Missing artifact repository Username"
+			assert props.get("artifactRepository.password") : "Missing artifact repository Password"
 		}
 
 	} catch (AssertionError e) {
