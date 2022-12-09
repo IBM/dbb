@@ -30,7 +30,7 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
     1. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
 
 1. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
-    1. Publishes the tar file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
+    1. Publishes the tar file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. Consider a Nexus RAW, or a Artifactory Generic as the repository type. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
 
 ## Invocation samples 
 
