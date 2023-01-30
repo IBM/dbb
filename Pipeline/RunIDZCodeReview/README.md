@@ -1,6 +1,6 @@
 # Run IBM IDz Code Review in Batch based on the DBB Build Report
 
-This sample groovy script lets you embed the IBM Developer for z/OS (IDz, formerly RDz) Code Review Application, also known as IDz Software Analyzer, into your CI/CD pipeline. It requires that the IDZ code analysis tool is installed via FMID HAKGxxx. Please see the documentation at [https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=review-code-application-zos](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=review-code-application-zos)
+This sample groovy script lets you embed the IBM Developer for z/OS (IDz, formerly Rational Developer for System z or RDz) Code Review Application, also known as IDz Software Analyzer, into your CI/CD pipeline. It requires that the IDZ code analysis tool is installed via FMID HAKGxxx. Please see the documentation at [https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=review-code-application-zos](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=review-code-application-zos)
 
 This sample groovy `RunCodeReview.groogy` script
 - extracts information about the processed source code (Record Type TYPE_COPY_TO_PDS) from the DBB BuildReport.json
