@@ -51,6 +51,7 @@ class StaticReportMigrationTests {
             // Report data is labled with the version used to create it, in case of differences between versions
             result.setBuildReportData(new FileInputStream(new File(testDir, samplesFolder + "result-data-1.1.3.json")));
             result.setBuildReport(new FileInputStream(new File(testDir, samplesFolder + "report.html")));
+            result.save();
         }
 
         @Test
