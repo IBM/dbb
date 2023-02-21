@@ -159,5 +159,8 @@ class StaticReportMigrationTests {
         assertEquals(0, rc, errorMessage);
         String errorString = error.toString();
         assertTrue(errorString.trim().isEmpty(), String.format("Error stream is not empty: %s", errorString));
+
+        System.out.println(String.format("OUTPUT: %s", output));
+        System.out.println(String.format("ERROR: %s", errorString));
     }
 }
