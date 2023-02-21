@@ -156,6 +156,7 @@ class StaticReportMigrationTests {
         int rc = process.exitValue();
         String errorMessage = String.format("Script return code is not equal to 0\nOUT:\n%s\n\nERR:\n%s", output, error);
         assertEquals(0, rc, errorMessage);
-        assertTrue(error.toString().trim().isEmpty());
+        String errorString = error.toString();
+        assertTrue(errorString.trim().isEmpty(), String.format("Error stream is not empty: %s", errorString));
     }
 }
