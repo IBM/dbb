@@ -108,7 +108,7 @@ class StaticReportMigrationTests {
 
     private void validateResults() {
         System.out.println("Validating results.");
-        for (BuildResult result : client.getBuildResults(Collections.singletonMap(RepositoryClient.GROUP, GROUP))) {
+        for (BuildResult result : client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, GROUP))) {
             assertFalse(Utils.readFromStream(result.fetchBuildReport(), "UTF-8").contains("</script>"), String.format("Result '%s:%s' not converted.", result.getGroup(), result.getLabel()));
         }
     }
