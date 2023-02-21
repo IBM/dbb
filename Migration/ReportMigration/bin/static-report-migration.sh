@@ -23,3 +23,4 @@ fi
 SCRIPT_DIR=$(dirname "$0")
 
 $DBB_HOME/bin/groovyz $SCRIPT_DIR/../groovy/static-report-migration.groovy "$@"
+exit $?
