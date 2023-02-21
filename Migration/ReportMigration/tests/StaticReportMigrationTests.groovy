@@ -146,7 +146,8 @@ class StaticReportMigrationTests {
 
         StringBuilder error = new StringBuilder();
         BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-        while ((String line = stdError.readLine()) != null) {
+        String line;
+        while ((line = stdError.readLine()) != null) {
             error.append(line);
             error.append("\n");
         }
