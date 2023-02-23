@@ -40,8 +40,8 @@ boolean parseArgsInstantiate(String[] args, String version) {
 
     OptionGroup groupGroup = new OptionGroup();
     groupGroup.setRequired(true);
-    groupGroup.addOption(parser.option("grp", [longOpt:"groups", args:Option.UNLIMITED_VALUES, valueSeparator:','], "A comma seperated list of groups."));
-    groupGroup.addOption(parser.option("grpf", [type:File, longOpt:"groupsFile", args:1], "A file containing groups seperated by new lines."));
+    groupGroup.addOption(parser.option("grp", [longOpt:"grp", args:Option.UNLIMITED_VALUES, valueSeparator:','], "A comma seperated list of groups."));
+    groupGroup.addOption(parser.option("grpf", [type:File, longOpt:"grpf", args:1], "A file containing groups seperated by new lines."));
     
     parser.help(longOpt:'help', 'Prints this message.');
     
@@ -60,7 +60,7 @@ boolean parseArgsInstantiate(String[] args, String version) {
     if (options.pw) {
         setClient(options.url, options.id, options.pw);
     } else {
-        setClient(options.url, options.id, options.pwFile);
+        setClient(options.url, options.id, options.pwFile as File);
     }
 
     return true;
