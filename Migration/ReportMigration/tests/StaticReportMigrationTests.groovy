@@ -52,6 +52,32 @@ class StaticReportMigrationTests {
             result.setBuildReportData(new FileInputStream(new File(testDir, samplesFolder + "result-data-1.1.3.json")));
             result.setBuildReport(new FileInputStream(new File(testDir, samplesFolder + "report.html")));
             result.save();
+
+            /*
+             * try (FileInputStream fileStream = new FileInputStream(new File(testDir, samplesFolder + "result-data-1.1.3.json"))) {
+                Path data = Files.createTempFile("result", ".json")
+                String content = Utils.readFromStream(fileStream, "ISO8859-1");
+                
+                content = content.replace("<url>", url);
+                System.out.println(content);
+                Files.write(data, content.getBytes())
+                result.setBuildReportData(new FileInputStream(data.toFile()))
+                result.setBuildReport(new FileInputStream(new File(testDir, samplesFolder + "report.html")));
+                result.save();
+                Files.delete(data);
+            }
+             */
+        }
+
+        @Test
+        void testUploaded() {
+            System.out.println("TEST UPLOADED")
+            for (BuildResult uploadedResult : client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, GROUP))) {
+                assertEquals(GROUP, uploadedResult.getGroup())
+                assertEquals(LABEL, uploadedResult.getLabel())
+                System.out.println(result.fetchBuildReport())
+                System.out.println(result.fetchBuildReportData())
+            }
         }
 
         @Test
