@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+
 class StaticReportMigrationTests {
     private static final String GROUP = "Static-Report-Migration-Test";
     private static final String LABEL = "buildresult";
@@ -27,36 +28,38 @@ class StaticReportMigrationTests {
     private static final String ID_KEY = "test-id";
     private static final String PW_FILE_KEY = "test-pwFile";
 
-    private File testDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+    private static File testDir = new File(StaticReportMigrationTests.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+    private static String script = new File(testDir, "../bin/static-report-migration.sh").getPath();
 
     private static String url;
     private static String id;
     private static File passwordFile;
     private static RepositoryClient client;
 
+    private static final int maxNormError = 202;
+    private static final int maxDeleteError = 405;
+
     @Nested
     @TestInstance(Lifecycle.PER_CLASS)
     class IntegrationTests {
-        @BeforeEach
-        void setupCollection() throws IOException {
+        @BeforeAll
+        static void setupCollection() throws Exception {
             System.out.println("Setting up collection.");
+            client.setErrorStatusCode(maxDeleteError);
             client.deleteBuildResults(GROUP);
             client.deleteCollection(GROUP);
-
+            client.setErrorStatusCode(maxNormError);
+            
             client.createCollection(GROUP);
-            BuildResult result = client.createBuildResult(GROUP, LABEL);
-            result.setState(BuildResult.COMPLETE);
+            BuildResult newResult = client.createBuildResult(GROUP, LABEL);
+            newResult.setState(BuildResult.COMPLETE);
 
             String samplesFolder = "samples/";
             // Report data is labled with the version used to create it, in case of differences between versions
-            result.setBuildReportData(new FileInputStream(new File(testDir, samplesFolder + "result-data-1.1.3.json")));
-            result.setBuildReport(new FileInputStream(new File(testDir, samplesFolder + "report.html")));
-            result.save();
-        }
+            newResult.setBuildReportData(new FileInputStream(new File(testDir, samplesFolder + "result-data-1.1.3.json")));
+            newResult.setBuildReport(new FileInputStream(new File(testDir, samplesFolder + "report.html")));
+            newResult.save();
 
-        @Test
-        void testUploaded() {
-            // A test case used to validate the successful upload of sample files for tests to catch errors from encoding
             System.out.println("Asserting test file content.");
             String metadataString = '{"date":"28-Feb-2022 17:26:26","build":"151","id":"DBB API Version","type":"VERSION","version":"1.1.3"}';
             List<BuildResult> results = client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, GROUP));
@@ -72,8 +75,6 @@ class StaticReportMigrationTests {
         @Test
         void migrationTest() {
             System.out.println("Running migration test.");
-            String script = new File(testDir, "../bin/static-report-migration.sh").getPath();
-
             List<String> command = new ArrayList<>();
             command.add(script);
             command.add("--url");
@@ -84,8 +85,43 @@ class StaticReportMigrationTests {
             command.add(passwordFile.getPath());
             command.add("--grp");
             command.add(GROUP);
-            runMigrationScript(command);
+            Map<String, String> output = runMigrationScript(command, 0);
+            assertTrue(output.get("err").trim().isEmpty(), String.format("Error stream is not empty\nOUT:\n%s\n\nERR:\n%s", output.get("out"), output.get("err")));
             validateResults();
+        }
+
+        @Test
+        void badPasswordFileTest() {
+            System.out.println("Running bad password file test.");
+            List<String> command = new ArrayList<>();
+            command.add(script);
+            command.add("--url");
+            command.add(url);
+            command.add("--id");
+            command.add(id);
+            command.add("--pwFile");
+            command.add("~/nonexistantfile");
+            command.add("--grp");
+            command.add(GROUP);
+            Map<String, String> output = runMigrationScript(command, 2);
+            assertTrue(output.get("out").contains("There was an issue reading your password file"));
+        }
+
+        @Test
+        void badPasswordTest() {
+            System.out.println("Running bad password test.");
+            List<String> command = new ArrayList<>();
+            command.add(script);
+            command.add("--url");
+            command.add(url);
+            command.add("--id");
+            command.add(id);
+            command.add("--pw");
+            command.add("BADPASSWORD");
+            command.add("--grp");
+            command.add(GROUP);
+            Map<String, String> output = runMigrationScript(command, 2);
+            assertTrue(output.get("out").contains("There was an issue connecting to the Repository Client"));
         }
     }
 
@@ -111,11 +147,13 @@ class StaticReportMigrationTests {
         client.setUrl(url);
         client.setUserId(id);
         client.setPasswordFile(passwordFile);
+        client.setErrorStatusCode(maxNormError);
     }
 
     @AfterAll
     static void cleanupStore() {
         System.out.println("Cleaning up store.");
+        client.setErrorStatusCode(maxDeleteError);
         client.deleteBuildResults(GROUP);
         client.deleteCollection(GROUP);
     }
@@ -123,16 +161,18 @@ class StaticReportMigrationTests {
     private void validateResults() {
         // Checks for script tags in the collections build report html
         System.out.println("Validating results.");
+        String metadataString = ',"build":"151","id":"DBB API Version","type":"VERSION","version":"1.1.3"}';
         for (BuildResult result : client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, GROUP))) {
+            assertTrue(Utils.readFromStream(result.fetchBuildReportData(), "UTF-8").contains(metadataString), String.format("Result data '%s%s' not readable, bad encoding likely.", result.getGroup(), result.getLabel()));
             assertFalse(Utils.readFromStream(result.fetchBuildReport(), "UTF-8").contains("</script>"), String.format("Result '%s:%s' not converted.", result.getGroup(), result.getLabel()));
         }
     }
 
-    private void runMigrationScript(String command) throws IOException, InterruptedException {
+    private void runMigrationScript(String command, int expectedRC) throws IOException, InterruptedException {
         runMigrationScript(Arrays.asList(command.split(" ")));
     }
 
-    private void runMigrationScript(List<String> command) throws IOException, InterruptedException {
+    private Map<String, String> runMigrationScript(List<String> command, int expectedRC) throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.environment().put("DBB_HOME", EnvVars.getHome());
         
@@ -170,8 +210,14 @@ class StaticReportMigrationTests {
         
         int rc = process.exitValue();
         String errorString = error.toString();
-        String errorMessage = String.format("Script return code is not equal to 0\nOUT:\n%s\n\nERR:\n%s", output, errorString);
-        assertEquals(0, rc, errorMessage);
-        assertTrue(errorString.trim().isEmpty(), String.format("Error stream is not empty: %s", errorString));
+        String outputString = output.toString();
+
+        assertEquals(expectedRC, rc, String.format("Script return code is not equal to %s\nOUT:\n%s\n\nERR:\n%s", expectedRC, outputString, errorString));
+        
+        Map<String, String> returnMap = new HashMap<>();
+        returnMap.put("rc", rc);
+        returnMap.put("out", outputString);
+        returnMap.put("err", errorString);
+        return returnMap;
     }
 }

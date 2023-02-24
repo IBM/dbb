@@ -6,6 +6,8 @@ import com.ibm.dbb.repository.internal.PasswordUtil;
 import com.ibm.dbb.build.internal.Utils;
 import com.ibm.dbb.build.BuildProperties;
 import com.ibm.dbb.build.report.BuildReport;
+import com.ibm.dbb.repository.ConnectionException;
+import org.apache.http.client.ClientProtocolException;
 
 import groovy.transform.Field;
 import java.nio.file.Path;
@@ -15,8 +17,14 @@ import groovy.cli.commons.CliBuilder;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 
+
 @Field RepositoryClient client = null;
 @Field List<String> groups = new ArrayList<>();
+@Field boolean debug = false;
+@Field Class ScriptException;
+GroovyClassLoader cloader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
+File testDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+ScriptException = cloader.parseClass(new File(testDir, "ScriptException.groovy"));
 
 /****************************
 **  Argument Parsing       **
@@ -44,6 +52,7 @@ boolean parseArgsInstantiate(String[] args, String version) {
     groupGroup.addOption(parser.option("grpf", [type:File, longOpt:"grpf", args:1], "A file containing groups seperated by new lines."));
     
     parser.help(longOpt:'help', 'Prints this message.');
+    parser.debug(longOpt:'debug', 'Prints entries that are skipped.');
     
     parser.options.addOptionGroup(passwordGroup);
     parser.options.addOptionGroup(groupGroup);
@@ -55,6 +64,8 @@ boolean parseArgsInstantiate(String[] args, String version) {
         parser.usage();
         return false;
     }
+
+    if (options.debug) debug = true;
     
     setGroups(options.grps ?: null, options.grpf ? options.grpf as File : null);
     if (options.pw) {
@@ -98,6 +109,7 @@ void setClient(String url, String id, String password) {
     client.setUrl(url);
     client.setUserId(id);
     client.setPassword(password);
+    client.setErrorStatusCode(201);
 }
 
 void setClient(String url, String id, File passwordFile) {
@@ -106,6 +118,7 @@ void setClient(String url, String id, File passwordFile) {
     client.setUrl(url);
     client.setUserId(id);
     client.setPasswordFile(passwordFile);
+    client.setErrorStatusCode(201);
 }
 
 /****************************
@@ -121,23 +134,69 @@ List<BuildResult> getBuildResults() {
     // Multiple requests to avoid excess memory usage by returning all and then filtering
     List<BuildResult> results = new ArrayList<>();
     for (String group : groups) {
-        results.addAll(client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, group)));
+        results.addAll( exceptionClosure { client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, group)) } );
     }
     return results;
 }
 
 void filterBuildResults(List<BuildResult> results) {
-    results.removeIf(result->!Utils.readFromStream(result.fetchBuildReport(), "UTF-8").contains("</script>"));
+    results.removeIf(result-> {
+        String content = exceptionClosure {Utils.readFromStream(result.fetchBuildReport(), "UTF-8") };
+        if (content == null) {
+            if (debug) {
+                System.out.println(String.format("Result '%s:%s' has no content... Skipping.", result.getGroup(), result.getLabel()));
+            }
+            return true;
+        } else if (content.contains("</script>") == false) {
+            if (debug) {
+                System.out.println(String.format("Result '%s:%s' has no script tag... Skipping.", result.getGroup(), result.getLabel()));
+            }
+            return true;
+        }
+        return false;
+    });
 }
 
 void convertBuildReports(List<BuildResult> results) {
     for (BuildResult result : results) {
         Path html = Files.createTempFile("dbb-report-mig", ".html");
-        BuildReport report = BuildReport.parse(result.fetchBuildReportData());
-        report.generateHTML(html.toFile());
-        result.setBuildReport(new FileInputStream(html.toFile()));
-        result.save();
-        println("${result.getGroup()}:${result.getLabel()} converted.");
+        exceptionClosure {
+            BuildReport report = BuildReport.parse(result.fetchBuildReportData());
+            report.generateHTML(html.toFile());
+            result.setBuildReport(new FileInputStream(html.toFile()));
+            result.save();
+        }
+        System.out.println(String.format("Result '%s:%s' converted.", result.getGroup(), result.getLabel()));
         Files.delete(html);
     }
+}
+
+/****************************
+**  Utilities              **
+*****************************/
+
+def exceptionClosure(Closure closure) {
+    try {
+        closure()
+    } catch(ConnectionException error) {
+        String message;
+        Throwable root = getRootCause(error);
+        if (root instanceof FileNotFoundException) {
+            message = String.format("There was an issue reading your password file: '%s'", root.getMessage());
+        } else {
+            message = String.format("There was an issue connecting to the Repository Client: '%s'", error.getMessage());
+        }
+        throw new ScriptException(message);
+    } catch (IOException | ClientProtocolException error) {
+        // Unexplained because exceptions have no one discernable source/cause
+        String message = String.format("There was an unexpected exception: '%s'", error.getMessage());
+        throw new ScriptException(message);
+    }
+}
+
+Throwable getRootCause(Throwable rootCause) {
+    while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+        rootCause = rootCause.getCause();
+    }
+    return rootCause;
 }

@@ -2,6 +2,7 @@
 
 import com.ibm.dbb.build.VersionInfo;
 import groovy.transform.Field;
+import groovy.lang.GroovyClassLoader
 
 @Field def versionUtils = loadScript(new File("check-version.groovy"));
 
@@ -18,29 +19,48 @@ if (!versionUtils.isVersionOver(version, mostAcceptableVersion)) {
 }
 
 
-def connectionScript = loadScript(new File("connection-1.x.groovy"));
+@Field Class ScriptException;
+GroovyClassLoader cloader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
+File testDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
+ScriptException = cloader.parseClass(new File(testDir, "ScriptException.groovy"));
 
-// Parse arguments and instantiate client
-if (!connectionScript.parseArgsInstantiate(args, version)) {
+try {
+    main(version);
+} catch (ScriptException error) {
+    // Exceptions from internal APIs
+    println(error.getMessage());
     System.exit(2);
+} catch (Exception error) {
+    // Exceptions from script functions
+    println(error.getMessage());
+    System.exit(1);
 }
 
-// Ensure tagging on generated html files
-connectionScript.enableFileTagging();
+void main(String version) {
+    def connectionScript = loadScript(new File("connection-1.x.groovy"));
 
-def results = connectionScript.getBuildResults();
-connectionScript.filterBuildResults(results);
+    // Parse arguments and instantiate client
+    if (!connectionScript.parseArgsInstantiate(args, version)) {
+        System.exit(1);
+    }
 
-if (results.size() == 0) {
-    println("No non-static build reports found.")
-} else {
-    println("You are about to convert ${results.size()} reports. Would you like to proceed ('y' or 'n'): ")
-    // Works where there is no Console instance
-    String response = System.in.newReader().readLine().trim().toLowerCase();
-    if (response.equals("y") || response.equals("yes")) {
-        connectionScript.convertBuildReports(results);
-        println("Finished conversion.");
+    // Ensure tagging on generated html files
+    connectionScript.enableFileTagging();
+
+    def results = connectionScript.getBuildResults();
+    connectionScript.filterBuildResults(results);
+
+    if (results.size() == 0) {
+        println("No non-static build reports found.")
     } else {
-        println("Conversion skipped.");
+        println("You are about to convert ${results.size()} reports. Would you like to proceed ('y' or 'n'): ")
+        // Works where there is no Console instance
+        String response = System.in.newReader().readLine().trim().toLowerCase();
+        if (response.equals("y") || response.equals("yes")) {
+            connectionScript.convertBuildReports(results);
+            println("Finished conversion.");
+        } else {
+            println("Conversion skipped.");
+        }
     }
 }
