@@ -163,7 +163,7 @@ class StaticReportMigrationTests {
         System.out.println("Validating results.");
         for (BuildResult result : client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, GROUP))) {
             String content = Utils.readFromStream(result.fetchBuildReport(), "UTF-8");
-            assertTrue(content.contains('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">'), String.format("Result data '%s%s' not readable, bad encoding likely.", result.getGroup(), result.getLabel()));
+            assertTrue(content.contains('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us" style="scroll-behavior: smooth;">'), String.format("Result data '%s:%s' not readable, bad encoding likely.", result.getGroup(), result.getLabel()));
             assertFalse(content.contains("</script>"), String.format("Result '%s:%s' not converted.", result.getGroup(), result.getLabel()));
         }
     }
