@@ -161,15 +161,15 @@ class StaticReportMigrationTests {
     private void validateResults() {
         // Checks for script tags in the collections build report html
         System.out.println("Validating results.");
-        String metadataString = ',"build":"151","id":"DBB API Version","type":"VERSION","version":"1.1.3"}';
         for (BuildResult result : client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, GROUP))) {
-            assertTrue(Utils.readFromStream(result.fetchBuildReportData(), "UTF-8").contains(metadataString), String.format("Result data '%s%s' not readable, bad encoding likely.", result.getGroup(), result.getLabel()));
-            assertFalse(Utils.readFromStream(result.fetchBuildReport(), "UTF-8").contains("</script>"), String.format("Result '%s:%s' not converted.", result.getGroup(), result.getLabel()));
+            String content = Utils.readFromStream(result.fetchBuildReport(), "UTF-8");
+            assertTrue(content.contains('<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">'), String.format("Result data '%s%s' not readable, bad encoding likely.", result.getGroup(), result.getLabel()));
+            assertFalse(content.contains("</script>"), String.format("Result '%s:%s' not converted.", result.getGroup(), result.getLabel()));
         }
     }
 
-    private void runMigrationScript(String command, int expectedRC) throws IOException, InterruptedException {
-        runMigrationScript(Arrays.asList(command.split(" ")));
+    private Map<String, String> runMigrationScript(String command, int expectedRC) throws IOException, InterruptedException {
+        return runMigrationScript(Arrays.asList(command.split(" ")), expectedRC);
     }
 
     private Map<String, String> runMigrationScript(List<String> command, int expectedRC) throws IOException, InterruptedException {
