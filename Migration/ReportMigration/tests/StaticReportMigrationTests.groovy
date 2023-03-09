@@ -259,7 +259,7 @@ class StaticReportMigrationTests {
             Map<String, List<String>> expected  = new HashMap<>();
             expected.put(GROUP, Arrays.asList(LABEL));
             expected.put(GROUP2, Arrays.asList(LABEL));
-            System.out.println(expected.get("out"));
+            System.out.println(output.get("out"));
             validateMigrationList(jsonFile, expected);
         }
     }
