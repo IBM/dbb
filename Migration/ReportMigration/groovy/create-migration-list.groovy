@@ -42,11 +42,14 @@ try {
     } else {
         connectionScript.setClient(options.url, options.id, options.pwFile as File);
     }
-    
+    println("GROUPS")
     List<String> groups = collectGroups(options.grps ?: null, options.grpf ? options.grpf as File : null);
+    println(groups)
     List<String> resultGroups = connectionScript.getBuildResultGroups();
+    println(resultGroups)
     // Match input groups to collection groups
     groups = matchGroups(resultGroups, groups);
+    println(groups)
     if (groups.size() == 0) {
         println("No groups matched.");
         System.exit(0);
