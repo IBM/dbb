@@ -5,6 +5,8 @@ import com.ibm.dbb.repository.BuildResult;
 import com.ibm.dbb.build.internal.Utils;
 import com.ibm.dbb.build.BuildProperties;
 import com.ibm.dbb.build.report.BuildReport;
+import com.ibm.json.java.JSONArray;
+import com.ibm.json.java.JSONObject;
 
 import groovy.transform.Field;
 import java.nio.file.Path;
