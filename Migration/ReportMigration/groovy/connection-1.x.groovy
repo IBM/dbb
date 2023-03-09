@@ -19,91 +19,20 @@ import org.apache.commons.cli.OptionGroup;
 
 
 @Field RepositoryClient client = null;
-@Field List<String> groups = new ArrayList<>();
 @Field boolean debug = false;
-@Field Class ScriptException;
-GroovyClassLoader cloader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
-File testDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile();
-ScriptException = cloader.parseClass(new File(testDir, "ScriptException.groovy"));
-
-/****************************
-**  Argument Parsing       **
-*****************************/
-
-boolean parseArgsInstantiate(String[] args, String version) {
-    // Parse arguments and choose proper initialization method
-    // Returns true if options are successfully parsed and false if not
-    String usage = "static-report-migration.groovy [options]";
-    String header = "Using DBB version ${version}";
-    CliBuilder parser = new CliBuilder(usage:usage, header:header);
-
-    parser.url(type:String, longOpt:'url', args:1, required:true, 'Repository Client URL. Example: https:<Repository Client location>');
-    parser.id(type:String, longOpt:'id', args:1, required:true, 'Repository Client user id.');
-
-    // Mutually exclusive
-    OptionGroup passwordGroup = new OptionGroup();
-    passwordGroup.setRequired(true);
-    passwordGroup.addOption(parser.option("pw", [type:String, longOpt:'pw', args:1], 'Repository Client password.'));
-    passwordGroup.addOption(parser.option("pwFile", [type:File, longOpt:'pwFile', args:1], 'Repository Client password file.'));
-
-    OptionGroup groupGroup = new OptionGroup();
-    groupGroup.setRequired(true);
-    groupGroup.addOption(parser.option("grp", [longOpt:"grp", args:Option.UNLIMITED_VALUES, valueSeparator:','], "A comma seperated list of groups."));
-    groupGroup.addOption(parser.option("grpf", [type:File, longOpt:"grpf", args:1], "A file containing groups seperated by new lines."));
-    
-    parser.help(longOpt:'help', 'Prints this message.');
-    parser.debug(longOpt:'debug', 'Prints entries that are skipped.');
-    
-    parser.options.addOptionGroup(passwordGroup);
-    parser.options.addOptionGroup(groupGroup);
-    def options = parser.parse(args);
-    
-    if (options == null) return false;
-    
-    if (options.help) {
-        parser.usage();
-        return false;
-    }
-
-    if (options.debug) debug = true;
-    
-    setGroups(options.grps ?: null, options.grpf ? options.grpf as File : null);
-    if (options.pw) {
-        setClient(options.url, options.id, options.pw);
-    } else {
-        setClient(options.url, options.id, options.pwFile as File);
-    }
-
-    return true;
-}
-
-void setGroups(List<String> groupsArg, File groupsFileArg) {
-    // Parses from both items
-    if (groupsArg != null) {
-        for (String group : groupsArg) {
-            groups.add(group.trim());
-        }
-    }
-    
-    if (groupsFileArg != null) {
-        groupsFileArg.eachLine { group ->
-            group = group.trim();
-            if (group.isEmpty()) return;
-            // Remove trailing comma in case a CSV is passed in.
-            if (group.endsWith(",")) group = group.substring(0, group.length()-1);
-            if (groups.contains(group) == false) {
-                groups.add(group);
-            }
-        }
-    }
-}
 
 /****************************
 **  Client Instantiation   **
 *****************************/
 
-// Repository client instantiation
-void setClient(String url, String id, String password) {
+/**
+ * Instantiates a Repository Client.
+ * 
+ * @param url   The url of the repository client instance.
+ * @param id    The id of the repository client instance.
+ * @param password  The password for the repository client instance user.
+ */
+public void setClient(String url, String id, String password) {
     client = new RepositoryClient();
     client.forceSSLTrusted(true);
     client.setUrl(url);
@@ -112,7 +41,15 @@ void setClient(String url, String id, String password) {
     client.setErrorStatusCode(201);
 }
 
-void setClient(String url, String id, File passwordFile) {
+/**
+ * Instantiates a Repository Client.
+ * {@link #setClient(String, String, String)}
+ * 
+ * @param url   The url of the repository client instance.
+ * @param id    The id of the repository client instance.
+ * @param password  The password for the repository client instance user.
+ */
+public void setClient(String url, String id, File passwordFile) {
     client = new RepositoryClient();
     client.forceSSLTrusted(true);
     client.setUrl(url);
@@ -125,23 +62,109 @@ void setClient(String url, String id, File passwordFile) {
 **  Command Execution      **
 *****************************/
 
-void enableFileTagging() {
+/**
+ * Enables file tagging to ensure proper saving and parsing of the generated temporary report files.
+ */
+public void enableFileTagging() {
     // Set tagging for proper encoding on generated html files
     BuildProperties.setProperty(Utils.FILE_TAGGING_OPTION_NAME, "true");
 }
 
-List<BuildResult> getBuildResults() {
+/**
+ * Retrieves build results for a list of groups and removes items that are missing a build report or a '</script>' tag in their html content.
+ * 
+ * @param groups    The groups to retrieve build results for.
+ * @return          A list of non-static build results.
+ */
+public List<BuildResult> getNonStaticBuildResults(List<String> groups) {
+    List<BuildResult> results = retrieveBuildResults(groups);
+    filterBuildResults(results);
+    return results;
+}
+
+/**
+ * Retrieves build results from a group that match the input labels.
+ * 
+ * @param group     The group to retrieve build results for.
+ * @param labels    The build results to retrieve.
+ * @return          A list of build results.
+ */
+public List<BuildResult> getBuildResultsFromGroup(String group, List<String> labels) {
+    List<BuildResult> results = retrieveBuildResults(group);
+    results.removeIf(result -> {
+        return !labels.contains(result.getLabel());
+    });
+    return results;
+}
+
+/**
+ * Regenerates the HTML for the input build results.
+ * 
+ * @param results   A list of build results to regenerate HTML for.
+ */
+public void convertBuildReports(List<BuildResult> results) {
+    for (BuildResult result : results) {
+        Path html = Files.createTempFile("dbb-report-mig", ".html");
+        
+        BuildReport report = BuildReport.parse(result.fetchBuildReportData());
+        report.generateHTML(html.toFile());
+        result.setBuildReport(new FileInputStream(html.toFile()));
+        result.save();
+        
+        System.out.println(String.format("Result '%s:%s' converted.", result.getGroup(), result.getLabel()));
+        Files.delete(html);
+    }
+}
+
+/**
+ * Returns all of the build result groups from the repository client instance.
+ */
+public List<String> getBuildResultGroups() {
+    return client.listBuildResultGroups();
+}
+
+/**
+ * Retrieves and collects a list of build results from multiple groups.
+ * {@link #retrieveBuildResults(String)}
+ * @param groups    The list of groups to retrieve results for.
+ * @return          The collected list of build results.
+ */
+private List<BuildResult> retrieveBuildResults(List<String> groups) {
     // Multiple requests to avoid excess memory usage by returning all and then filtering
     List<BuildResult> results = new ArrayList<>();
     for (String group : groups) {
-        results.addAll( exceptionClosure { client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, group)) } );
+        results.addAll(retrieveBuildResults(group));
     }
     return results;
 }
 
-void filterBuildResults(List<BuildResult> results) {
+/**
+ * Retrieves build results from a single group.
+ * 
+ * @param group     The group to retrieve results for.
+ * @return          The collected list of build results.
+ */
+private List<BuildResult> retrieveBuildResults(String group) {
+    return client.getAllBuildResults(Collections.singletonMap(RepositoryClient.GROUP, group));
+}
+
+/**
+ * Filters out build results inplace that are missing report content, or a '</script>' tag from their HTML.
+ * This is to create a build result list only including non-static Build Reports.
+ * 
+ * @param results   The results to filter.
+ */
+private void filterBuildResults(List<BuildResult> results) {
     results.removeIf(result-> {
-        String content = exceptionClosure {Utils.readFromStream(result.fetchBuildReport(), "UTF-8") };
+        InputStream buildReport = result.fetchBuildReport();
+        if (buildReport == null) {
+            if (debug) {
+                System.out.println(String.format("Result '%s:%s' has no report... Skipping.", result.getGroup(), result.getLabel()));
+            }
+            return true;
+        }
+
+        String content = Utils.readFromStream(buildReport, "UTF-8");
         if (content == null) {
             if (debug) {
                 System.out.println(String.format("Result '%s:%s' has no content... Skipping.", result.getGroup(), result.getLabel()));
@@ -157,46 +180,56 @@ void filterBuildResults(List<BuildResult> results) {
     });
 }
 
-void convertBuildReports(List<BuildResult> results) {
-    for (BuildResult result : results) {
-        Path html = Files.createTempFile("dbb-report-mig", ".html");
-        exceptionClosure {
-            BuildReport report = BuildReport.parse(result.fetchBuildReportData());
-            report.generateHTML(html.toFile());
-            result.setBuildReport(new FileInputStream(html.toFile()));
-            result.save();
-        }
-        System.out.println(String.format("Result '%s:%s' converted.", result.getGroup(), result.getLabel()));
-        Files.delete(html);
-    }
-}
-
 /****************************
 **  Utilities              **
 *****************************/
 
-def exceptionClosure(Closure closure) {
-    try {
-        closure()
-    } catch(ConnectionException error) {
-        String message;
-        Throwable root = getRootCause(error);
-        if (root instanceof FileNotFoundException) {
-            message = String.format("There was an issue reading your password file: '%s'", root.getMessage());
+/**
+ * Sets the debug state of this script.
+ * 
+ * @param on    The desired debug state.
+ */
+public void setDebug(boolean on) {
+    this.debug = on;
+}
+
+/**
+ * Creates a json formatted migration list with the input arguments.
+ * 
+ * @param jsonFile  The location to create the migration list at.
+ * @param results   The results to include in the list.
+ */
+public void createMigrationList(File jsonFile, List<BuildResult> results) {
+    // Create JSON Object
+    JSONObject json = new JSONObject();
+    for (BuildResult result : results) {
+        if (json.containsKey(result.getGroup())) {
+            JSONArray list = json.get(result.getGroup());
+            list.add(result.getLabel());
         } else {
-            message = String.format("There was an issue connecting to the Repository Client: '%s'", error.getMessage());
+            JSONArray list = new JSONArray();
+            list.add(result.getLabel());
+            json.put(result.getGroup(), list);
         }
-        throw new ScriptException(message);
-    } catch (IOException | ClientProtocolException error) {
-        // Unexplained because exceptions have no one discernable source/cause
-        String message = String.format("There was an unexpected exception: '%s'", error.getMessage());
-        throw new ScriptException(message);
+    }
+    // Write JSON to file
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(jsonFile))) {
+        writer.write(json.serialize(true));
     }
 }
 
-Throwable getRootCause(Throwable rootCause) {
-    while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
-        rootCause = rootCause.getCause();
+/**
+ * Returns a Map reflecting the state of the input migration list.
+ * 
+ * @param jsonFile  The migration list to read.
+ * @return          A Map containing the info from the input json file.
+ */
+public Map<String, List<String>> readMigrationList(File jsonFile) {
+    JSONObject json;
+    try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+        json = JSONObject.parse(reader);
     }
-    return rootCause;
+
+    Map<String, List<String>> list = json.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    return list;
 }
