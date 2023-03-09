@@ -11,6 +11,7 @@ import com.ibm.json.java.JSONObject;
 import groovy.transform.Field;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.util.stream.Collectors;
 
 @Field RepositoryClient client = null;
 @Field boolean debug = false;
