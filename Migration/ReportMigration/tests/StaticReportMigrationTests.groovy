@@ -259,6 +259,7 @@ class StaticReportMigrationTests {
             Map<String, List<String>> expected  = new HashMap<>();
             expected.put(GROUP, Arrays.asList(LABEL));
             expected.put(GROUP2, Arrays.asList(LABEL));
+            System.out.println("OUT:");
             System.out.println(output.get("out"));
             validateMigrationList(jsonFile, expected);
         }
@@ -336,6 +337,7 @@ class StaticReportMigrationTests {
         try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
             json = JSONObject.parse(reader);
         }
+        System.out.println("JSON");
         System.out.println(json);
         expected.forEach((key, value) -> {
             assertTrue(json.containsKey(key), String.format("Group key '%s' not found in file.", key));
