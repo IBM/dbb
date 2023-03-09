@@ -33,25 +33,11 @@ try {
 
     File jsonFile = options.arguments()[0] as File;
 
-    // Intantiate Metadata Store
-    if (options.props) {
-        Properties props = new Properties();
-        props.load(options.props);
-        // Override url if its passed in
-        if (options.url) {
-            props.setProperty("url", options.url);
-        }
-        if (options.pw) {
-            connectionScript.setStore(options.id, options.pw, props);
-        } else {
-            connectionScript.setStore(options.id, options.pwFile as File, props);
-        }
+    // Instantiate RepositoryClient
+    if (options.pw) {
+        connectionScript.setClient(options.url, options.id, options.pw);
     } else {
-        if (options.pw) {
-            connectionScript.setStore(options.url, options.id, options.pw);
-        } else {
-            connectionScript.setStore(options.url, options.id, options.pwFile as File);
-        }
+        connectionScript.setClient(options.url, options.id, options.pwFile as File);
     }
 
     Map<String, List<String>> migrationList = connectionScript.readMigrationList(jsonFile);
@@ -78,6 +64,16 @@ try {
     System.exit(1);
 }
 
+/****************************
+**  Argument Parsing       **
+*****************************/
+
+/**
+ * Parses arguments, printing help and exiting if required.
+ * 
+ * @param args  The input arguments to parse.
+ * @return      An OptionAccessor at which to access the parsed options.
+ */
 private OptionAccessor getOptions(String[] args) {
     String usage = "migrate-list.sh <json-file> [options] [--help]";
     String header = "Using DBB version ${versionUtils.getVersion()}";
