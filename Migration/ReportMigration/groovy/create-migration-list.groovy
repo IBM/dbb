@@ -31,7 +31,7 @@ try {
         connectionScript.setDebug(true);
     }
 
-    File jsonFile = options.argument()[0] as File;
+    File jsonFile = options.arguments()[0] as File;
     if (jsonFile.getParentFile() != null && jsonFile.getParentFile().exists() == false) {
         jsonFile.getParentFile().mkdirs();
     }
