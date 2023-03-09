@@ -251,6 +251,7 @@ class StaticReportMigrationTests {
             command.add(id);
             command.add("--pwFile");
             command.add(passwordFile.getPath());
+            command.add("--debug");
             command.add("--grpf");
             command.add(new File(testDir, "samples/groups.txt").getPath());
 
@@ -258,6 +259,7 @@ class StaticReportMigrationTests {
             Map<String, List<String>> expected  = new HashMap<>();
             expected.put(GROUP, Arrays.asList(LABEL));
             expected.put(GROUP2, Arrays.asList(LABEL));
+            System.out.println(expected.get("out"));
             validateMigrationList(jsonFile, expected);
         }
     }
