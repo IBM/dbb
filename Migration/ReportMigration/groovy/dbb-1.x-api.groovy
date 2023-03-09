@@ -226,6 +226,5 @@ public Map<String, List<String>> readMigrationList(File jsonFile) {
     }
 
     Map<String, List<String>> list = json.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    System.out.println(list);
     return list;
 }

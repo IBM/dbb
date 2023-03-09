@@ -334,7 +334,7 @@ class StaticReportMigrationTests {
         try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
             json = JSONObject.parse(reader);
         }
-
+        System.out.println(json);
         expected.forEach((key, value) -> {
             assertTrue(json.containsKey(key), String.format("Group key '%s' not found in file.", key));
             assertIterableEquals(value, json.get(key), String.format("Results in group '%s' do not match: %s", key, json.get(key)));
