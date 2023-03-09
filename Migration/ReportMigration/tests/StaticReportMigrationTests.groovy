@@ -2,6 +2,8 @@ import com.ibm.dbb.repository.RepositoryClient;
 import com.ibm.dbb.repository.BuildResult;
 import com.ibm.dbb.EnvVars;
 import com.ibm.dbb.build.internal.Utils;
+import com.ibm.json.java.JSONObject;
+import com.ibm.dbb.build.VersionInfo;
 
 import java.util.concurrent.TimeUnit;
 import java.lang.Thread;
@@ -303,7 +305,7 @@ class StaticReportMigrationTests {
         newResult.save();
 
         client.createCollection(GROUP2);
-        BuildResult newResult = client.createBuildResult(GROUP2, LABEL);
+        newResult = client.createBuildResult(GROUP2, LABEL);
         newResult.setState(BuildResult.COMPLETE);
 
         // Report data is labled with the version used to create it, in case of differences between versions
