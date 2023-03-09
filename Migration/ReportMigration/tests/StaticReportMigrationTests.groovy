@@ -336,6 +336,7 @@ class StaticReportMigrationTests {
             assertTrue(json.containsKey(key));
             assertIterableEquals(value, json.get(key));
         });
+        assertTrue(json.size() == expected.size());
     }
 
     private void validateResults() {
