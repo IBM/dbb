@@ -2,21 +2,13 @@
 
 import com.ibm.dbb.repository.RepositoryClient;
 import com.ibm.dbb.repository.BuildResult;
-import com.ibm.dbb.repository.internal.PasswordUtil;
 import com.ibm.dbb.build.internal.Utils;
 import com.ibm.dbb.build.BuildProperties;
 import com.ibm.dbb.build.report.BuildReport;
-import com.ibm.dbb.repository.ConnectionException;
-import org.apache.http.client.ClientProtocolException;
 
 import groovy.transform.Field;
 import java.nio.file.Path;
 import java.nio.file.Files;
-import groovy.cli.commons.CliBuilder;
-
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionGroup;
-
 
 @Field RepositoryClient client = null;
 @Field boolean debug = false;
