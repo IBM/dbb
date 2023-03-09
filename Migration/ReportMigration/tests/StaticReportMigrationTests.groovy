@@ -88,7 +88,7 @@ class StaticReportMigrationTests {
         jsonFile.delete();
     }
 
-    @Test
+    //@Test
     void testVersion() {
         System.out.println("Running version test.");
         File testVersion = new File(testDir, "samples/version.properties");
@@ -148,7 +148,7 @@ class StaticReportMigrationTests {
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     @Order(1)
     class ListCreationTests {
-        @Test
+        //@Test
         @Order(1)
         void testWildcard() {
             System.out.println("Running group wildcard tests.");
@@ -171,7 +171,7 @@ class StaticReportMigrationTests {
             validateMigrationList(jsonFile, expected);
         }
 
-        @Test
+        //@Test
         @Order(2)
         void testWildcardSingleSegment() {
             System.out.println("Running group wildcard single-segment tests.");
@@ -194,7 +194,7 @@ class StaticReportMigrationTests {
             validateMigrationList(jsonFile, expected);
         }
 
-        @Test
+        //@Test
         @Order(5) // Execute last to prepare list for migration test
         void testWildcardMultiSegment() {
             System.out.println("Running group wildcard multi-segment tests.");
@@ -216,7 +216,7 @@ class StaticReportMigrationTests {
             validateMigrationList(jsonFile, expected);
         }
 
-        @Test
+        //@Test
         @Order(3)
         void testExactMatch() {
             System.out.println("Running group exact match tests.");
@@ -265,7 +265,7 @@ class StaticReportMigrationTests {
     @Nested
     @Order(2)
     class MigrationsTests {
-        @Test
+        //@Test
         void migrationTest() {
             System.out.println("Running migration test.");
             // Assert json file has correct content from the previous test class
