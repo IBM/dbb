@@ -78,7 +78,7 @@ try {
     System.exit(1);
 }
 
-public OptionAccessor getOptions(String[] args) {
+private OptionAccessor getOptions(String[] args) {
     String usage = "migrate-list.sh <json-file> [options] [--help]";
     String header = "Using DBB version ${versionUtils.getVersion()}";
     CliBuilder parser = new CliBuilder(usage:usage, header:header, stopAtNonOption:false);
