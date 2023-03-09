@@ -261,6 +261,8 @@ class StaticReportMigrationTests {
             expected.put(GROUP2, Arrays.asList(LABEL));
             System.out.println("OUT:");
             System.out.println(output.get("out"));
+            System.out.println("ERR:");
+            System.out.println(output.get("err"));
             validateMigrationList(jsonFile, expected);
         }
     }
