@@ -83,6 +83,9 @@ class StaticReportMigrationTests {
         client.setErrorStatusCode(maxDeleteError);
         client.deleteBuildResults(GROUP);
         client.deleteCollection(GROUP);
+        client.deleteBuildResults(GROUP2);
+        client.deleteCollection(GROUP2);
+        jsonFile.delete();
     }
 
     @Test
