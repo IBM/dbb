@@ -80,8 +80,7 @@ try {
  */
 private OptionAccessor getOptions(String[] args) {
     // Parse arguments and choose proper initialization method
-    // Returns true if options are successfully parsed and false if not
-    String usage = "create-migration-list.sh <json-file> [options] [--help]";
+    String usage = "create-migration-list.sh <json-list> [options] [--help]";
     String header = "Using DBB version ${versionUtils.getVersion()}";
     CliBuilder parser = new CliBuilder(usage:usage, header:header, stopAtNonOption:false);
 
@@ -98,17 +97,17 @@ private OptionAccessor getOptions(String[] args) {
 
     OptionGroup groupGroup = new OptionGroup();
     groupGroup.setRequired(true);
-    groupGroup.addOption(parser.option("grp", [longOpt:"grp", args:Option.UNLIMITED_VALUES, valueSeparator:','], "A comma seperated list of groups."));
-    groupGroup.addOption(parser.option("grpf", [type:File, longOpt:"grpf", args:1], "A file containing groups seperated by new lines."));
+    groupGroup.addOption(parser.option("grp", [longOpt:"grp", args:Option.UNLIMITED_VALUES, valueSeparator:','], "A comma seperated list of build groups with support for wildcard '*' matching."));
+    groupGroup.addOption(parser.option("grpf", [type:File, longOpt:"grpf", args:1], "A file containing build groups seperated by new lines with support for wildcard '*' matching."));
     parser.options.addOptionGroup(groupGroup);
     
     parser.help(longOpt:'help', 'Prints this message.');
-    parser.debug(longOpt:'debug', 'Prints entries that are skipped.');
+    parser.debug(longOpt:'debug', 'Prints groups and reports that are skipped.');
     
     OptionAccessor options = parser.parse(args);
     if (options == null) System.exit(1);
     if (options.arguments().size() == 0) {
-        println("error: Positional argument, 'json-file', must be specified.");
+        println("error: Positional argument, 'json-list', must be specified.");
         parser.usage();
         System.exit(1);
     }
