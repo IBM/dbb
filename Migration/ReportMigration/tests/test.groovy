@@ -2,10 +2,10 @@ import groovy.lang.GroovyClassLoader
 import groovy.junit5.plugin.JUnit5Runner
 import groovy.cli.commons.CliBuilder
 
-CliBuilder parser = new CliBuilder(usage:"\$DBB_HOME/bin/groovyz test.groovy [options] [--help]")
-parser.url(type:String, longOpt:'url', args:1, required:true, 'Test Db2 Metadata Store URL.')
-parser.id(type:String, longOpt:'id', args:1, required:true, 'Test Db2 user id.')
-parser.pwFile(type:File, longOpt:'pwFile', args:1, required:true, 'Test Db2 user password file.')
+CliBuilder parser = new CliBuilder(usage:"\$DBB_HOME/bin/groovyz test.groovy --id CLIENT-ID --url CLIENT-URL --pwFile CLIENT-PASSWORD-FILE [--help]")
+parser.url(type:String, longOpt:'url', args:1, required:true, 'Test Repository Client URL.')
+parser.id(type:String, longOpt:'id', args:1, required:true, 'Test Repository Client user id.')
+parser.pwFile(type:File, longOpt:'pwFile', args:1, required:true, 'Test Repository Client user password file.')
 parser.help(longOpt:"help", "Prints this message.")
 
 def options = parser.parse(args)
