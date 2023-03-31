@@ -3,7 +3,7 @@
 This sample provides a script to migrate DBB Build Reports containing javascript to static versions. This script is a combination of Unix shell scripts and Apache Groovy scripts. 
 
 ### Prerequisites
-* DBB Toolkit >V1.1.3
+* DBB Toolkit V1.1.4
     * DBB_HOME environment variable must be set
 * IBM Java v8 64bit
     * JAVA_HOME environment variable must be set
