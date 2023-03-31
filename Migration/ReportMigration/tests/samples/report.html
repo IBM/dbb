@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<!--
+    Licensed Materials - Property of IBM
+    (c) Copyright IBM Corporation 2017, 2019. All Rights Reserved.
+
+    Note to U.S. Government Users Restricted Rights:
+    Use, duplication or disclosure restricted by GSA ADP Schedule
+    Contract with IBM Corp.
+ -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+<title>IBM Dependency Based Build</title>
+<style type="text/css">
+
+body {
+    font: 12px Arial, sans-serif;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #A9A9A9;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+tr.even {
+	background-color: #f2f2f2
+}
+
+th {
+    background-color: #ddd;
+    color: black !important;
+}
+
+td.label {
+	font-weight: bold;
+}
+
+span.vlabel {
+	float: left;
+	font-weight: bold;
+	width: 5em;
+	margin-left: 20px;
+}
+.bottomRight {
+   float:right;
+   text-align:right;
+   font: 10px Arial, sans-serif;
+}
+
+.dep {
+	font: 11px Arial, sans-serif;
+}
+
+.depType {
+	font: 9px Arial, sans-serif;
+	background-color: #81C4E8;
+}
+
+
+</style>
+</head>
+
+<body>
+<p id="main"><a class="offleft" href="#main">Main Content</a>
+</p>
+
+<script type="application/json" id="BuildReportData">
+
+{"records":[{"date":"28-Feb-2022 17:26:26","build":"151","id":"DBB API Version","type":"VERSION","version":"1.1.3"},{"build-mode":"NORMAL","id":"DBB Build Mode","type":"BUILD_MODE"},{"id":"BUILD_RESULT_1","label":"build.20230201.010630.006","type":"BUILD_RESULT","url":"jdbc:db2:DBB1","group":"Static-Report-Migration-Test"},{"options":"cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)","exists":true,"id":"CREATE_PDS_1","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.BMS"},{"options":"cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)","exists":true,"id":"CREATE_PDS_2","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.BMS.COPY"},{"options":"cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)","exists":true,"id":"CREATE_PDS_3","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.LOAD"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.BMS(EPSMORT)","id":"COPY_TO_PDS_1","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/bms\/epsmort.bms","type":"COPY_TO_PDS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.BMS.COPY(EPSMORT)"}],"rc":0,"file":"MortgageApplication\/bms\/epsmort.bms","options":"SYSPARM(DSECT),DECK,NOOBJECT","id":"EXECUTE_1","datasets":["KMCGREG.ZAPP.BMS(EPSMORT)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMORT.bms.log"],"command":"ASMA90"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMORT.bms.log","id":"COPY_TO_HFS_1","source":"SYSPRINT","type":"COPY_TO_HFS"},{"rc":0,"file":"MortgageApplication\/bms\/epsmort.bms","options":"SYSPARM(MAP),DECK,NOOBJECT","id":"EXECUTE_2","type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMORT.bms.log"],"command":"ASMA90"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMORT.bms.log","id":"COPY_TO_HFS_2","source":"SYSPRINT","type":"COPY_TO_HFS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.LOAD(EPSMORT)","deployType":"MAPLOAD"}],"rc":0,"file":"MortgageApplication\/bms\/epsmort.bms","options":"MAP,RENT,COMPAT(PM5),SSI=8a5ad1d0","id":"EXECUTE_3","type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMORT.bms.log"],"command":"IEWBLINK"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMORT.bms.log","id":"COPY_TO_HFS_3","source":"SYSPRINT","type":"COPY_TO_HFS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.BMS(EPSMLIS)","id":"COPY_TO_PDS_2","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/bms\/epsmlis.bms","type":"COPY_TO_PDS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.BMS.COPY(EPSMLIS)"}],"rc":0,"file":"MortgageApplication\/bms\/epsmlis.bms","options":"SYSPARM(DSECT),DECK,NOOBJECT","id":"EXECUTE_4","datasets":["KMCGREG.ZAPP.BMS(EPSMLIS)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIS.bms.log"],"command":"ASMA90"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIS.bms.log","id":"COPY_TO_HFS_4","source":"SYSPRINT","type":"COPY_TO_HFS"},{"rc":0,"file":"MortgageApplication\/bms\/epsmlis.bms","options":"SYSPARM(MAP),DECK,NOOBJECT","id":"EXECUTE_5","type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIS.bms.log"],"command":"ASMA90"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIS.bms.log","id":"COPY_TO_HFS_5","source":"SYSPRINT","type":"COPY_TO_HFS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.LOAD(EPSMLIS)","deployType":"MAPLOAD"}],"rc":0,"file":"MortgageApplication\/bms\/epsmlis.bms","options":"MAP,RENT,COMPAT(PM5),SSI=8a5ad1d0","id":"EXECUTE_6","type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIS.bms.log"],"command":"IEWBLINK"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIS.bms.log","id":"COPY_TO_HFS_6","source":"SYSPRINT","type":"COPY_TO_HFS"},{"options":"cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)","exists":true,"id":"CREATE_PDS_4","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.COBOL"},{"options":"cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)","exists":true,"id":"CREATE_PDS_5","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.COPY"},{"options":"cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)","exists":true,"id":"CREATE_PDS_6","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.OBJ"},{"options":"cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)","exists":true,"id":"CREATE_PDS_7","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.DBRM"},{"options":"cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)","exists":true,"id":"CREATE_PDS_8","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.LOAD"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COBOL(EPSNBRVL)","id":"COPY_TO_PDS_3","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/cobol\/epsnbrvl.cbl","type":"COPY_TO_PDS"},{"file":"MortgageApplication\/cobol\/epsnbrvl.cbl","dependencySet":[{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSNBRPM","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsnbrpm.cpy","category":"COPY","resolved":true}],"id":"DEPENDENCY_SET_1","type":"DEPENDENCY_SET"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COPY(EPSNBRPM)","id":"COPY_TO_PDS_4","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/copybook\/epsnbrpm.cpy","type":"COPY_TO_PDS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.OBJ(EPSNBRVL)"}],"rc":0,"file":"MortgageApplication\/cobol\/epsnbrvl.cbl","options":"LIB","id":"EXECUTE_7","datasets":["KMCGREG.ZAPP.COBOL(EPSNBRVL)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSNBRVL.cobol.log"],"command":"IGYCRCTL"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSNBRVL.cobol.log","id":"COPY_TO_HFS_7","source":"SYSPRINT","type":"COPY_TO_HFS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COBOL(EPSCSMRT)","id":"COPY_TO_PDS_5","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/cobol\/epscsmrt.cbl","type":"COPY_TO_PDS"},{"file":"MortgageApplication\/cobol\/epscsmrt.cbl","dependencySet":[{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTINP","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtinp.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTOUT","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtout.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTCOM","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtcom.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSPDATA","library":"SYSLIB","file":"MortgageApplication\/copybook\/epspdata.cpy","category":"COPY","resolved":true}],"id":"DEPENDENCY_SET_2","type":"DEPENDENCY_SET"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COPY(EPSMTINP)","id":"COPY_TO_PDS_6","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/copybook\/epsmtinp.cpy","type":"COPY_TO_PDS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COPY(EPSMTOUT)","id":"COPY_TO_PDS_7","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/copybook\/epsmtout.cpy","type":"COPY_TO_PDS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COPY(EPSMTCOM)","id":"COPY_TO_PDS_8","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/copybook\/epsmtcom.cpy","type":"COPY_TO_PDS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COPY(EPSPDATA)","id":"COPY_TO_PDS_9","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/copybook\/epspdata.cpy","type":"COPY_TO_PDS"},{"rc":4,"file":"MortgageApplication\/cobol\/epscsmrt.cbl","options":"LIB,CICS","id":"EXECUTE_8","datasets":["KMCGREG.ZAPP.COBOL(EPSCSMRT)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCSMRT.cobol.log"],"command":"IGYCRCTL"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCSMRT.cobol.log","id":"COPY_TO_HFS_8","source":"SYSPRINT","type":"COPY_TO_HFS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.LOAD(EPSCSMRT)","deployType":"CICSLOAD"}],"rc":0,"file":"MortgageApplication\/cobol\/epscsmrt.cbl","options":"MAP,RENT,COMPAT(PM5),SSI=8a5ad1d0","id":"EXECUTE_9","type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCSMRT.cobol.log"],"command":"IEWBLINK"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCSMRT.cobol.log","id":"COPY_TO_HFS_9","source":"SYSPRINT","type":"COPY_TO_HFS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COBOL(EPSMLIST)","id":"COPY_TO_PDS_10","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/cobol\/epsmlist.cbl","type":"COPY_TO_PDS"},{"file":"MortgageApplication\/cobol\/epsmlist.cbl","dependencySet":[{"excluded":false,"lname":"DFHAID","library":"SYSLIB","category":"COPY","resolved":false},{"excluded":false,"lname":"EPSMLIS","library":"SYSLIB","category":"COPY","resolved":false},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMORTF","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmortf.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTINP","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtinp.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTOUT","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtout.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTCOM","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtcom.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSNBRPM","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsnbrpm.cpy","category":"COPY","resolved":true}],"id":"DEPENDENCY_SET_3","type":"DEPENDENCY_SET"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COPY(EPSMORTF)","id":"COPY_TO_PDS_11","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/copybook\/epsmortf.cpy","type":"COPY_TO_PDS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.OBJ(EPSMLIST)"}],"rc":0,"file":"MortgageApplication\/cobol\/epsmlist.cbl","options":"LIB,SOURCE,CICS","id":"EXECUTE_10","datasets":["KMCGREG.ZAPP.COBOL(EPSMLIST)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIST.cobol.log"],"command":"IGYCRCTL"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIST.cobol.log","id":"COPY_TO_HFS_10","source":"SYSPRINT","type":"COPY_TO_HFS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COBOL(EPSMPMT)","id":"COPY_TO_PDS_12","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/cobol\/epsmpmt.cbl","type":"COPY_TO_PDS"},{"file":"MortgageApplication\/cobol\/epsmpmt.cbl","dependencySet":[{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSPDATA","library":"SYSLIB","file":"MortgageApplication\/copybook\/epspdata.cpy","category":"COPY","resolved":true}],"id":"DEPENDENCY_SET_4","type":"DEPENDENCY_SET"},{"rc":4,"file":"MortgageApplication\/cobol\/epsmpmt.cbl","options":"LIB","id":"EXECUTE_11","datasets":["KMCGREG.ZAPP.COBOL(EPSMPMT)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMPMT.cobol.log"],"command":"IGYCRCTL"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMPMT.cobol.log","id":"COPY_TO_HFS_11","source":"SYSPRINT","type":"COPY_TO_HFS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.LOAD(EPSMPMT)","deployType":"LOAD"}],"rc":0,"file":"MortgageApplication\/cobol\/epsmpmt.cbl","options":"MAP,RENT,COMPAT(PM5),SSI=8a5ad1d0","id":"EXECUTE_12","type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMPMT.cobol.log"],"command":"IEWBLINK"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMPMT.cobol.log","id":"COPY_TO_HFS_12","source":"SYSPRINT","type":"COPY_TO_HFS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COBOL(EPSCMORT)","id":"COPY_TO_PDS_13","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/cobol\/epscmort.cbl","type":"COPY_TO_PDS"},{"file":"MortgageApplication\/cobol\/epscmort.cbl","dependencySet":[{"excluded":false,"lname":"DFHAID","library":"SYSLIB","category":"COPY","resolved":false},{"excluded":false,"lname":"EPSMORT","library":"SYSLIB","category":"COPY","resolved":false},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTINP","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtinp.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTOUT","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtout.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSMTCOM","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsmtcom.cpy","category":"COPY","resolved":true},{"excluded":false,"sourceDir":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/","lname":"EPSNBRPM","library":"SYSLIB","file":"MortgageApplication\/copybook\/epsnbrpm.cpy","category":"COPY","resolved":true},{"excluded":false,"lname":"SQLCA","library":"SYSLIB","category":"SQL INCLUDE","resolved":false},{"excluded":false,"lname":"EPSNBRVL","library":"KMCGREG.ZAPP.OBJ","file":"KMCGREG.ZAPP.OBJ(EPSNBRVL)","category":"LINK","resolved":true}],"id":"DEPENDENCY_SET_5","type":"DEPENDENCY_SET"},{"outputs":[{"dataset":"KMCGREG.ZAPP.DBRM(EPSCMORT)","deployType":"DBRM"}],"rc":4,"file":"MortgageApplication\/cobol\/epscmort.cbl","options":"LIB,CICS,SQL","id":"EXECUTE_13","datasets":["KMCGREG.ZAPP.COBOL(EPSCMORT)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCMORT.cobol.log"],"command":"IGYCRCTL"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCMORT.cobol.log","id":"COPY_TO_HFS_13","source":"SYSPRINT","type":"COPY_TO_HFS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.LOAD(EPSCMORT)","deployType":"CICSLOAD"}],"rc":0,"file":"MortgageApplication\/cobol\/epscmort.cbl","options":"MAP,RENT,COMPAT(PM5),SSI=8a5ad1d0","id":"EXECUTE_14","type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCMORT.cobol.log"],"command":"IEWBLINK"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCMORT.cobol.log","id":"COPY_TO_HFS_14","source":"SYSPRINT","type":"COPY_TO_HFS"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.COBOL(EPSCSMRD)","id":"COPY_TO_PDS_14","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/cobol\/epscsmrd.cbl","type":"COPY_TO_PDS"},{"file":"MortgageApplication\/cobol\/epscsmrd.cbl","id":"DEPENDENCY_SET_6","type":"DEPENDENCY_SET"},{"rc":0,"file":"MortgageApplication\/cobol\/epscsmrd.cbl","options":"LIB,CICS","id":"EXECUTE_15","datasets":["KMCGREG.ZAPP.COBOL(EPSCSMRD)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCSMRD.cobol.log"],"command":"IGYCRCTL"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCSMRD.cobol.log","id":"COPY_TO_HFS_15","source":"SYSPRINT","type":"COPY_TO_HFS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.LOAD(EPSCSMRD)","deployType":"CICSLOAD"}],"rc":0,"file":"MortgageApplication\/cobol\/epscsmrd.cbl","options":"MAP,RENT,COMPAT(PM5),SSI=8a5ad1d0","id":"EXECUTE_16","type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCSMRD.cobol.log"],"command":"IEWBLINK"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSCSMRD.cobol.log","id":"COPY_TO_HFS_16","source":"SYSPRINT","type":"COPY_TO_HFS"},{"options":"cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)","exists":true,"id":"CREATE_PDS_9","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.LINK"},{"options":"cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)","exists":true,"id":"CREATE_PDS_10","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.OBJ"},{"options":"cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)","exists":true,"id":"CREATE_PDS_11","type":"CREATE_PDS","dataset":"KMCGREG.ZAPP.LOAD"},{"mode":"TEXT","destination":"KMCGREG.ZAPP.LINK(EPSMLIST)","id":"COPY_TO_PDS_15","source":"\/u\/kmcgreg\/Repos\/dbb-zappbuild\/samples\/MortgageApplication\/link\/epsmlist.lnk","type":"COPY_TO_PDS"},{"outputs":[{"dataset":"KMCGREG.ZAPP.LOAD(EPSMLIST)","deployType":"CICSLOAD"}],"rc":0,"file":"MortgageApplication\/link\/epsmlist.lnk","options":"MAP,RENT,COMPAT(PM5),SSI=8a5ad1d0","id":"EXECUTE_17","datasets":["KMCGREG.ZAPP.LINK(EPSMLIST)"],"type":"EXECUTE","logs":["\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIST.linkedit.log"],"command":"IEWBLINK"},{"mode":"TEXT","destination":"\/u\/kmcgreg\/zAppBuild\/output\/build.20230201.010630.006\/EPSMLIST.linkedit.log","id":"COPY_TO_HFS_17","source":"SYSPRINT","type":"COPY_TO_HFS"},{"file":"MortgageApplication\/link\/epsmlist.lnk","dependencySet":[{"excluded":false,"lname":"EPSMPMT","library":"KMCGREG.ZAPP.LOAD","file":"KMCGREG.ZAPP.LOAD(EPSMPMT)","category":"LINK","resolved":true},{"excluded":false,"lname":"EPSMLIST","library":"KMCGREG.ZAPP.OBJ","file":"KMCGREG.ZAPP.OBJ(EPSMLIST)","category":"LINK","resolved":true}],"id":"DEPENDENCY_SET_7","type":"DEPENDENCY_SET"},{"id":"DBB.BuildResultProperties","type":"PROPERTIES","properties":{"filesProcessed":"9",":giturl:MortgageApplication":"git@github.com:IBM\/dbb-zappbuild.git",":githash:MortgageApplication":"8a5ad1d0d0d137b3289e1b106af6c8123a57c2f9","topicBranchBuild":"true","fullBuild":"true"}}]}
+
+</script>
+
+<script type="text/javascript">
+var buildReport = JSON.parse(document.getElementById('BuildReportData').innerHTML);
+render();
+
+function toggle(dep, text)
+{
+	if (document.getElementById(text).text == 'Show Dependencies')
+		document.getElementById(text).text = 'Hide Dependencies';
+	else
+		document.getElementById(text).text = 'Show Dependencies';
+
+	if (document.getElementById(dep).style.display == 'none')
+		document.getElementById(dep).style.display = 'block';
+	else
+		document.getElementById(dep).style.display = 'none';
+};
+
+
+
+/*******************************************************************************
+ * Licensed Materials - Property of IBM
+ * (c) Copyright IBM Corporation 2018, 2019. All Rights Reserved.
+ *
+ * Note to U.S. Government Users Restricted Rights:
+ * Use, duplication or disclosure restricted by GSA ADP Schedule
+ * Contract with IBM Corp.
+ *******************************************************************************/
+ function render()
+ {
+         var tableHtml = "";
+         var jenkinsBuildHtml = "";
+         var cRecords = new Object();
+         var jenkinsWorkspace;
+         var jenkinsJobUrl;
+         var versionInfoHtml = "";
+         var dependencySetCache = new Object();
+         tableHtml += "<table><tr><th id=\"sequence\"></th><th id=\"file\">File</th><th id=\"commands\">Commands</th><th id=\"rc\">RC</th><th id=\"dataSets\">Data Sets</th><th id=\"outputs\">Outputs</th><th id=\"deployType\">Deploy Type</th><th id=\"logs\">Logs</th></tr>";
+         for (x in buildReport.records)
+         {
+             var record = buildReport.records[x];
+             if (record.type == "EXECUTE" || (record.type == "COPY_TO_PDS" && record.outputs))
+             {
+                 var cRecord = cRecords[record.file];
+                 if (!cRecord)
+                 {
+                     //Create new consolidate record
+                     cRecord = new Object();
+                     cRecord.file = record.file;
+                     cRecord.executors = [];
+                     cRecord.rcs = [];
+                     cRecord.datasets = [];
+                     cRecord.outputs = [];
+                     cRecord.deployTypes = [];
+                     cRecord.logs = [];
+                     cRecord.logFiles = []; /* maintain this to avoid having duplicated log files for each file */
+                     cRecords[record.file] = cRecord;
+                 }
+                 var numExecutors = cRecord.executors.length;
+                 cRecord.executors[numExecutors] = record.command;
+                 cRecord.rcs[numExecutors] = record.rc;
+                 cRecord.outputs[numExecutors] = "";
+                 cRecord.deployTypes[numExecutors] = "";
+                 for (z in record.outputs)
+                 {
+                     var output = record.outputs[z];
+                     if (cRecord.outputs[numExecutors].length > 0)
+                     {
+                         cRecord.outputs[numExecutors] += "<br>";
+                         cRecord.deployTypes[numExecutors] += "<br>";
+                     }
+                     cRecord.outputs[numExecutors] += output.dataset;
+                     if (output.deployType != null)
+                         cRecord.deployTypes[numExecutors] += output.deployType;
+                     else cRecord.deployTypes[numExecutors] += "&nbsp;";
+ 
+                 }
+                 cRecord.datasets[numExecutors] = "";
+                 for (m in record.datasets)
+                 {
+                     var dataset = record.datasets[m];
+                     if (cRecord.datasets[numExecutors].length > 0)
+                         cRecord.datasets[numExecutors] += "<br>";
+                     cRecord.datasets[numExecutors] += dataset;
+                 }
+                 cRecord.logs[numExecutors] = "";
+                 for (n in record.logs)
+                 {
+                     var log = record.logs[n];
+                     var duplicateLog = false;
+                     for (p in cRecord.logFiles)
+                     {
+                         if (log == cRecord.logFiles[p])
+                         {
+                             duplicateLog = true;
+                             break;
+                         }
+                     }
+ 
+                     if (!duplicateLog)
+                     {
+                         if (cRecord.logs[numExecutors].length > 0)
+                             cRecord.logs[numExecutors] += "<br>";
+                             var logName = log.split(/[\\/]/g).pop();
+                             if (jenkinsJobUrl != null && jenkinsWorkspace != null && log.startsWith(jenkinsWorkspace))
+                             {
+                                 var logLink = "<a href='" + jenkinsJobUrl + "ws" + log.slice(jenkinsWorkspace.length) + "/*view*/' target='_blank'>" + logName + "</a>";
+                                 cRecord.logs[numExecutors] = logLink;
+                             }
+                             else
+                             {
+                                 cRecord.logs[numExecutors] += logName;
+                             }
+                             cRecord.logFiles[cRecord.logFiles.length] = log;
+                     }
+                 }
+             }
+             else if (record.type == 'JENKINS')
+             {
+                 jenkinsBuildHtml += "<div id='jenkins'><p><h3>Jenkins Build</h3>";
+                 jenkinsBuildHtml += "<p><table><tr><td class='label'>Project: </td><td><a href='" + record.jobUrl + "'>" + record.jobName + "</a></td></tr>";
+                 jenkinsBuildHtml += "<tr><td class='label'>Build: </td><td><a href='" + record.buildUrl + "'>" + record.buildNumber + "</a></td></tr>";
+                 jenkinsBuildHtml += "<tr><td class='label'>Workspace: </td><td>" + record.workspace + "</td></tr></table></div>";
+                 if (jenkinsWorkspace == null)
+                     jenkinsWorkspace = record.workspace;
+                 if (jenkinsJobUrl == null)
+                     jenkinsJobUrl = record.jobUrl;
+             }
+             else if (record.type == 'DEPENDENCY_SET')
+             {
+                 if (record.dependencySet != null && record.dependencySet.length > 0)
+                     dependencySetCache[record.file] = record.dependencySet;
+             }
+             else if (record.type == 'VERSION')
+             {
+                 versionInfoHtml = "<div id='VersionInfo'><p><h3>Toolkit Version:</h3></p>";
+                 versionInfoHtml += "<p><span class='vlabel'>Version: </span>" + record.version;
+                 versionInfoHtml += "<p><span class='vlabel'>Build: </span>" + record.build;
+                 versionInfoHtml += "<p><span class='vlabel'>Date: </span>" + record.date;
+                 versionInfoHtml += "</div>"
+             }
+         }
+ 
+         var counter = 1;
+         for (var file in cRecords)
+         {
+             var cRecord = cRecords[file];
+             tableHtml += renderExec(counter++, cRecord, dependencySetCache);
+         }
+ 
+         tableHtml += "</table>";
+         var mainHtml = "<a class=\"offleft\" href=\"#buildSummary\">Main Content</a>";
+         mainHtml += "<h2>Build Report</h2>"
+         var buildSummaryHtml = "<div id='buildSummary'>";
+         buildSummaryHtml += "<p><h3>Build Summary</h3><p>Number of files being built: " + (counter-1);
+         buildSummaryHtml += "<p>" + tableHtml + "</div>";
+         mainHtml += versionInfoHtml;
+         mainHtml += jenkinsBuildHtml;
+         mainHtml += buildSummaryHtml;
+         var oldmain = document.getElementById("main");
+         var newmain = document.createElement('div');
+         newmain.setAttribute("id", "main");
+         newmain.setAttribute("role", "main");
+         newmain.innerHTML = mainHtml;
+         oldmain.parentNode.replaceChild(newmain, oldmain);
+ }
+ 
+ function renderExec(counter, cRecord, dependencySetCache)
+ {
+     var tr  = "<tr>";
+     if (counter % 2 == 0)
+         tr = "<tr class='even'>";
+     var rowHtml = tr;
+     rowHtml += "<td headers=\"sequence\" rowspan='" + cRecord.executors.length + "'>" + counter + "</td><th id=\"" + cRecord.file + "\" headers=\"file\" rowspan='" + cRecord.executors.length + "'>" + cRecord.file;
+     var dependencySet = dependencySetCache[cRecord.file];
+     if (dependencySet != null)
+     {
+         var depId = "dep_" + counter;
+         var showDepId = "showDep_" + counter;
+         rowHtml += "<div>";
+         rowHtml += "<div id='" + depId + "' style='display:none' class='dep'>";
+         rowHtml += "<ul>";
+         for (q in dependencySet)
+         {
+             rowHtml += "<li>";
+             var dependency = dependencySet[q];
+             if (dependency.resolved)
+                 rowHtml += dependency.file;
+             else
+                 rowHtml += dependency.lname;
+             rowHtml += "&nbsp;<sub class='depType'>" + dependency.category + "</sub>";
+             rowHtml += "</li>";
+         }
+         rowHtml += "</div>";
+         rowHtml += "<a id='" + showDepId + "' class='bottomRight' href='javascript:onclick=toggle(\"" + depId + "\",\"" + showDepId + "\")'>Show Dependencies</a>";
+         rowHtml += "</div>";
+     }
+     rowHtml += "</th>";
+     var cRecordCount = 0;
+     for (y in cRecord.executors)
+     {
+         rowHtml += "<td headers=\""+cRecord.file+" commands\">" + cRecord.executors[y] + "</td>";
+         rowHtml += "<td headers=\""+cRecord.file+" rc\">" + cRecord.rcs[y] + "</td>";
+         rowHtml += "<td headers=\""+cRecord.file+" dataSets\">" + cRecord.datasets[y] + "</td>";
+         rowHtml += "<td headers=\""+cRecord.file+" outputs\">" + cRecord.outputs[y] + "</td>";
+         rowHtml += "<td headers=\""+cRecord.file+" deployType\">" + cRecord.deployTypes[y] + "</td>";
+         rowHtml += "<td headers=\""+cRecord.file+" logs\">" + cRecord.logs[y] + "</td>";
+         if (cRecordCount < cRecord.executors.length)
+             rowHtml += "</tr>" + tr;
+         cRecordCount++;
+     }
+     rowHtml += "</tr>";
+     return rowHtml;
+ } 
+
+
+
+
+</script>
+
+</body>
+</html>
+

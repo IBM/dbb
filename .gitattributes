@@ -35,6 +35,9 @@
 *.py zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.java zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 
+**/ReportMigration/tests/samples/*.html zos-working-tree-encoding=iso8859-1 git-encoding=utf-8
+**/ReportMigration/tests/samples/*.json zos-working-tree-encoding=iso8859-1 git-encoding=utf-8
+
 # binary files
 *.png binary
 *.penu binary
