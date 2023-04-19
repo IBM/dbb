@@ -66,7 +66,47 @@ import groovy.json.JsonSlurper
  *  Support for UCD packaging format v2 
  *  Ability to package deletions (requires DBB Toolkit 1.1.3 and zAppBuild 2.4.0)
  *  
+ * Version 8 - 2023-04 
+ *  Enhanced the multiple build reports feature to allow replacing the same artifact
+ *  if memberName and deployType are the same. The key in the HashMap is changed to
+ *  a DeployableArtifact object. 
+ *  
  */
+
+class DeployableArtifact {
+	private final String file;
+	private final String deployType;
+	
+	DeployableArtifact(String file, String deployType) {
+		this.file = file;
+		this.deployType = deployType;
+	}
+
+	@Override
+	public int hashCode() {
+		String concatenation = file + "." + deployType;
+		return concatenation.hashCode();
+	}
+
+	public boolean equals(DeployableArtifact other) {
+		return other.file.equals(file) & other.deployType.equals(deployType);
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof DeployableArtifact) {
+			return equals((DeployableArtifact) other)
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		return file + "." + deployType;
+	}
+}
+
 
 def properties = parseInput(args)
 def startTime = new Date()
@@ -83,7 +123,8 @@ properties.each{k,v->
  <Dataset, {buildReport:Executes}> 
  dataset as key, then buildReport and Executes as a key-value pair as value 
  */
-Map<String, Map> buildOutputsMap = new HashMap<String, Map>()
+Map<DeployableArtifact, Map> buildOutputsMap = new HashMap<String, Map>()
+
 
 dbbVersion = new VersionInfo().getVersion()
 println "* Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version $dbbVersion."
@@ -130,7 +171,8 @@ properties.buildReportOrder.each{ buildReportFile ->
 		if(executeRecord.getOutputs().isEmpty() != true) {
 			count += executeRecord.getOutputs().size()
 			executeRecord.getOutputs().each{ output ->
-				buildOutputsMap.put(output.dataset, [buildReport, executeRecord])
+				def (ds,member) = getDatasetName(output.dataset)
+				buildOutputsMap.put(new DeployableArtifact(member, output.deployType) , [ds, buildReport, executeRecord])
 			}
 		}
 	}
@@ -140,9 +182,9 @@ properties.buildReportOrder.each{ buildReportFile ->
 	deletions.each { deleteRecord ->
 		deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
 		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
-			buildOutputsMap.put(deletedFile, [buildReport, deleteRecord])
+			def (ds,member) = getDatasetName(deletedFile)
+			buildOutputsMap.put(new DeployableArtifact(member, "DELETE") , [ds, buildReport, deleteRecord])
 		}
-
 	}
 
 	if ( count + deletionCount == 0 ) {
@@ -189,9 +231,11 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 	boolean singleBuildReportReporting = true	
 	
 	// iterate over Hashmap to generate container entries for UCD shiplist.
-	buildOutputsMap.each{ dataset, info ->
-		buildReport = info[0]
-		record = info[1]
+	buildOutputsMap.each{ deployableArtifact, info ->
+		container = info[0]
+		buildReport = info[1]
+		record = info[2]
+	
 
 		// obtain build info from the build result record
 		def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0]
@@ -227,19 +271,18 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			singleBuildReportReporting = false
 		}
 		
-		println "   Creating shiplist record for build output $dataset with recordType $record.type."
+		println "   Creating shiplist record for build output $container(${deployableArtifact.file}) with recordType $record.type."
 		
 		// process TYPE_EXECUTE and TYPE_COPY_TO_PDS
 		if (record.getType()==DefaultRecordFactory.TYPE_EXECUTE || record.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) {
 
 			record.getOutputs().each{ output ->
 				// process only outputs of the key of the map
-				if (dataset == output.dataset) {
-					def (ds, member) = getDatasetName(output.dataset)
-					//println "    Defining container for $output.dataset."
-					def containerAttributes = getContainerAttributes(ds, properties)
+				def fullDatasetName = container + "(" + deployableArtifact.file + ")"
+				if (fullDatasetName == output.dataset) {
+					def containerAttributes = getContainerAttributes(container, properties)
 					container(containerAttributes){
-						resource(name:member, type:"PDSMember", deployType:output.deployType){
+						resource(name:deployableArtifact.file, type:"PDSMember", deployType:output.deployType){
 
 							// document dbb build result url and build properties on the element level when there are more than one buildReport processed
 							if (properties.buildReportOrder.size() != 1) {
@@ -329,16 +372,16 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			deletedFiles.each { deletedOutput ->
 
 				// process only outputs of the key of the map
-				if(dataset == deletedOutput) {
+				def fullDatasetName = container + "(" + deployableArtifact.file + ")"
+				if (fullDatasetName == deletedOutput) {
 
-					def (ds,member) = getDatasetName(deletedOutput)
 					println "   Defining shiplist delete container for $deletedOutput."
 
 					deleted{
 						// create container
-						def containerAttributes = getContainerAttributes(ds, properties)
+						def containerAttributes = getContainerAttributes(container, properties)
 						container(containerAttributes){
-							resource(name:member, type:"PDSMember")
+							resource(name:deployableArtifact.file, type:"PDSMember")
 
 							// document dbb build result url and build properties on the element level when there are more than one buildReport processed
 							if (properties.buildReportOrder.size() != 1) {
