@@ -8,6 +8,8 @@ import com.ibm.dbb.build.report.BuildReport
 import com.ibm.dbb.build.report.records.*
 import groovy.transform.*
 import groovy.cli.commons.*
+import java.nio.file.*
+import static java.nio.file.StandardCopyOption.*
 
 /************************************************************************************
  * This script creates a simplified package with the outputs generated from a DBB build
@@ -29,13 +31,52 @@ import groovy.cli.commons.*
  * Version 3 - 2022-08
  *  - Ability to pass multiple build reports to build a cumulative package
  *  - Add an optional option to add the deploy type extension to the member
- * 
+ *
  * Version 4 - 2022-12
  *  - Generalized the options to publish package to artifact repository
- *  - Script is supporting both JFrog Artifactory and SonarType Nexus    
+ *  - Script is supporting both JFrog Artifactory and SonarType Nexus
  *  - Added additional CLI option to pass artifact repository parameters
- *  
+ *
+ * Version 5 - 2023-04
+ *  - Enhanced the multiple build reports feature to allow replacing the same artifact
+ *  if memberName and deployType are the same. The key in the HashMap is changed to
+ *  a DeployableArtifact object. 
+
  ************************************************************************************/
+
+class DeployableArtifact {
+	private final String file;
+	private final String deployType;
+	
+	DeployableArtifact(String file, String deployType) {
+		this.file = file;
+		this.deployType = deployType;
+	}
+
+	@Override
+	public int hashCode() {
+		String concatenation = file + "." + deployType;
+		return concatenation.hashCode();
+	}
+
+	public boolean equals(DeployableArtifact other) {
+		return other.file.equals(file) & other.deployType.equals(deployType);
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof DeployableArtifact) {
+			return equals((DeployableArtifact) other)
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		return file + "." + deployType;
+	}
+}
 
 // start create & publish package
 @Field Properties props = null
@@ -59,18 +100,18 @@ BuildProperties.setProperty("dbb.file.tagging", "true") // Enable dbb file taggi
 def copyModeMap = evaluate(props.copyModeMap)
 
 // Hashmap of BuildOutput to Record
-Map<String, Record> buildOutputsMap = new HashMap<String, Record>()
+Map<DeployableArtifact, Map> buildOutputsMap = new HashMap<DeployableArtifact, Map>()
 
 // Field to store default tarFileLabel (buildInfo.label) when cli argument tarFileName is not passed.
 def String tarFileLabel = "Default"
 
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each{ buildReportFile ->
-	println("** Read build report data from $buildReportFile")
+	println("** Read build report data from ${buildReportFile}.")
 	def jsonOutputFile = new File(buildReportFile)
 
 	if(!jsonOutputFile.exists()){
-		println("*! Error: Build report data at $buildReportFile not found")
+		println("*! Error: Build report data at $buildReportFile not found.")
 		System.exit(1)
 	}
 
@@ -95,7 +136,7 @@ props.buildReportOrder.each{ buildReportFile ->
 	}
 
 	if (props.deployTypeFilter){
-		println("** Filtering Output Records on following deployTypes: ${props.deployTypeFilter}")
+		println("** Filtering Output Records on following deployTypes: ${props.deployTypeFilter}...")
 		buildRecords.each {
 			// filtered executes
 			def filteredOutputs =  it.getOutputs().findAll{ o ->
@@ -107,7 +148,7 @@ props.buildReportOrder.each{ buildReportFile ->
 		}
 	} else {
 		// Remove outputs without deployType + ZUNIT-TESTCASEs
-		println("** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE ")
+		println("** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE...")
 		buildRecords.each {
 			def unwantedOutputs =  it.getOutputs().findAll{ o ->
 				o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
@@ -123,26 +164,24 @@ props.buildReportOrder.each{ buildReportFile ->
 		if (buildRecord.getOutputs().size() != 0) {
 			buildRecord.getOutputs().each{ output ->
 				count++
-				buildOutputsMap.put(output.dataset, buildRecord)
+				def (dataset, member) = getDatasetName(output.dataset)
+				buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [dataset, buildRecord])
 			}
 		}
 	}
 
 	if ( count == 0 ) {
-		println("** No items to package in $buildReportFile.")
+		println("** No items to package in ${buildReportFile}.")
 	} else {
-		// Log files
-		if (count != 0) {
-			println("** Files detected in $buildReportFile")
-			buildRecords.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
-		}
+		println("** Files detected in ${buildReportFile}.")
+		buildRecords.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
 	}
 }
 
 if (buildOutputsMap.size() == 0) {
-	println("*!* There are no outputs found in all provided build reports")
+	println("*! There are no build outputs found in all provided build reports.")
+	System.exit(2)
 } else {
-
 	def String tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
 
 	//Create a temporary directory on zFS to copy the load modules from data sets to
@@ -150,79 +189,53 @@ if (buildOutputsMap.size() == 0) {
 	!tempLoadDir.exists() ?: tempLoadDir.deleteDir()
 	tempLoadDir.mkdirs()
 
-	println "*** Number of build outputs to package: ${buildOutputsMap.size()}"
+	println( "*** Number of build outputs to package: ${buildOutputsMap.size()}")
 
-	println("** Copying BuildOutputs to temporary package dir.")
+	println("** Copying build outputs to temporary package directory....")
 
-	// reformat the map to have (dataset, members)
-	def loadDatasetToMembersMap = [:]
-	buildOutputsMap.each { entry ->
-		// key value pair from HashMap
-		String buildOutput = entry.key
-		Record record = entry.value
+	buildOutputsMap.each { deployableArtifact, info ->
+		String dataset = info[0]
+		Record record = info[1]
+		
+		def filePath = "$tempLoadDir/$dataset"
+		new File(filePath).mkdirs()
 
-		// Obtain outputs but avoid duplicates
-		record.outputs.each { output ->
-			if (buildOutput == output.dataset) {
-				def (dataset, member) = output.dataset.split("\\(|\\)")
-				if (loadDatasetToMembersMap[dataset] == null)
-					loadDatasetToMembersMap[dataset] = []
-				loadDatasetToMembersMap[dataset].add(member)
-			}
+		// define file name in USS
+		// default : member
+		def fileName = deployableArtifact.file
+
+		// add deployType to file name
+		if (props.addExtension && props.addExtension.toBoolean()) {
+			fileName = fileName + '.' + deployableArtifact.deployType
 		}
-	}
+		def file = new File(filePath, fileName)
 
-	// Copy outputs to HFS
-	CopyToHFS copy = new CopyToHFS()
+		// set copyMode based on last level qualifier
+		currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
+		if (currentCopyMode != null) {
+			// Copy outputs to HFS
+			CopyToHFS copy = new CopyToHFS()
+			copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
+			copy.setDataset(dataset)
 
-	loadDatasetToMembersMap.each { dataset, members ->
-		members.each { member ->
-			def fullyQualifiedDsn = "$dataset($member)"
-			def filePath = "$tempLoadDir/$dataset"
-			new File(filePath).mkdirs()
+			println "     Copying $dataset(${deployableArtifact.file}) to $filePath/$fileName with DBB Copymode $currentCopyMode"
+			copy.dataset(dataset).member(deployableArtifact.file).file(file).execute()
 
-			// define file name in USS
-			// default : member
-			def fileName = member
-
-			// add deployType to file name
-			if (props.addExtension && props.addExtension.toBoolean()) {
-				buildRecord = buildOutputsMap.getAt(fullyQualifiedDsn)
-				// retrieve the output definition
-				outputDefintion = buildRecord.getOutputs().find{
-					it.dataset == fullyQualifiedDsn
+			// Tagging binary files
+			if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD){
+				StringBuffer stdout = new StringBuffer()
+				StringBuffer stderr = new StringBuffer()
+				Process process = "chtag -b $file".execute()
+				process.waitForProcessOutput(stdout, stderr)
+				if (stderr){
+					println ("*! stderr : $stderr")
+					println ("*! stdout : $stdout")
 				}
-				fileName = fileName + '.' + outputDefintion.deployType
 			}
-			def file = new File(filePath, fileName)
-
-
-
-
-			// set copyMode based on last level qualifier
-			currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
-			if (currentCopyMode != null) {
-				copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
-				copy.setDataset(dataset)
-
-				println "     Copying $dataset($member) to $filePath/$fileName with DBB Copymode $currentCopyMode"
-				copy.dataset(dataset).member(member).file(file).execute()
-
-				// Tagging binary files
-				if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD){
-					StringBuffer stdout = new StringBuffer()
-					StringBuffer stderr = new StringBuffer()
-					Process process = "chtag -b $file".execute()
-					process.waitForProcessOutput(stdout, stderr)
-					if (stderr){
-						println ("*! stderr : $stderr")
-						println ("*! stdout : $stdout")
-					}
-				}
-			} else {
-				println "     Copying $dataset($member) could not be copied due to missing mapping"
-			}
+		} else {
+			println "!    Copying $dataset(${deployableArtifact.file}) could not be copied due to missing mapping."
 		}
+
 	}
 
 	// log buildReportOrder file and add build reports to tar file
@@ -235,39 +248,26 @@ if (buildOutputsMap.size() == 0) {
 	buildReportOrder.withWriter(logEncoding) { writer ->
 		props.buildReportOrder.each{ buildReportFile ->
 			counter++
-			buildReportFileName = buildReportFile
-			// remove unneeded leading file path, so just the build report file name remains
-			while(buildReportFileName.indexOf('/')!= -1) {
-				buildReportFileName = buildReportFileName.substring(buildReportFileName.indexOf('/') + 1)
-			}
+			
+			Path buildReportFilePath = Paths.get(buildReportFile)
+			Path copiedBuildReportFilePath = Paths.get(tempLoadDir.getPath() + "/" + buildReportFilePath.getFileName().toString())
+			
 			// prefixing the buildreport with sequence number when having multiple
-			if(props.buildReportOrder.size() > 1) buildReportFileName = "$counter".padLeft(3, "0") + "_" + buildReportFileName
-			writer.write("$buildReportFileName\n")
+			if (props.buildReportOrder.size() > 1)
+				copiedBuildReportFilePath = Paths.get(tempLoadDir.getPath() + "/" + "$counter".padLeft(3, "0") + "_" + buildReportFilePath.getFileName().toString())
 
-			// copy the build report file over before modifying the string
-			println("** Copying $buildReportFile to temporary package dir as $buildReportFileName.")
-			processCmd = [
-				"sh",
-				"-c",
-				"cp $buildReportFile $tempLoadDir/$buildReportFileName"
-			]
-			rc = runProcess(processCmd, tempLoadDir)
-
+			Files.copy(buildReportFilePath, copiedBuildReportFilePath, COPY_ATTRIBUTES)
+			writer.write("${copiedBuildReportFilePath.toString()}\n")
 		}
 	}
 
-	// copy the build report file over before modifying the string
-	println("** Copying $props.packagingPropertiesFile to temporary package dir.")
-	processCmd = [
-		"sh",
-		"-c",
-		"cp $props.packagingPropertiesFile $tempLoadDir"
-	]
-	rc = runProcess(processCmd, tempLoadDir)
+	Path packagingPropertiesFilePath = Paths.get(props.packagingPropertiesFile)
+	Path copiedPackagingPropertiesFilePath = Paths.get(tempLoadDir.getPath() + "/" + packagingPropertiesFilePath.getFileName().toString())
+	Files.copy(packagingPropertiesFilePath, copiedPackagingPropertiesFilePath, COPY_ATTRIBUTES)
 
 	def tarFile = new File("$props.workDir/${tarFileName}")
 
-	println("** Creating tar file at $tarFile.")
+	println("** Creating tar file at ${tarFile}...")
 	// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
 	// To save all attributes to be restored on z/OS and non-z/OS systems : tar -UX
 	def processCmd = [
@@ -281,7 +281,7 @@ if (buildOutputsMap.size() == 0) {
 
 	//Package additional outputs to tar file.
 	if (props.includeLogs) (props.includeLogs).split(",").each { logPattern ->
-		println("** Adding $logPattern to $tarFile.")
+		println("** Adding $logPattern to ${tarFile}...")
 		processCmd = [
 			"sh",
 			"-c",
@@ -289,10 +289,10 @@ if (buildOutputsMap.size() == 0) {
 		]
 
 		rc = runProcess(processCmd, new File(props.workDir))
-		assert rc == 0 : "Failed to append $logPattern"
+		assert rc == 0 : "Failed to append $logPattern."
 	}
 
-	println ("** Package successfully created at $tarFile.")
+	println ("** Package successfully created at ${tarFile}.")
 
 	if(props.verbose && props.verbose.toBoolean()) {
 		println ("**   List package contents.")
@@ -325,7 +325,7 @@ if (buildOutputsMap.size() == 0) {
 		Class artifactRepositoryHelpersClass = new GroovyClassLoader(getClass().getClassLoader()).parseClass(artifactRepoHelpersFile)
 		GroovyObject artifactRepositoryHelpers = (GroovyObject) artifactRepositoryHelpersClass.newInstance()
 
-		println ("** Uploading package to Artifact Repository $url.")
+		println ("** Uploading package to Artifact Repository $url...")
 		artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
 	}
 
@@ -344,6 +344,7 @@ def getDatasetName(String fullname){
 	member = elements.size()>1? elements[1] : "";
 	return [ds, member];
 }
+
 
 /**
  * run process
@@ -464,7 +465,7 @@ def parseInput(String[] cliArgs){
 	
 	
 	//  ** Deprecated ** Optional artifact repository properties
-	// properties require to follow new naming conventions artifactRepository.* 
+	// properties require to follow new naming conventions artifactRepository.*
 	if (opts.artifactory){
 		def propertyFile = new File(opts.artifactory)
 		if (propertyFile.exists()){
@@ -503,7 +504,7 @@ def parseInput(String[] cliArgs){
 			System.exit(3)
 		}
 	} else if (buildReports.isEmpty()){
-		buildReports = [opts.w + "/BuildReport.json"]
+		buildReports = [props.workDir + "/BuildReport.json"]
 	}
 	props.buildReportOrder = buildReports
 

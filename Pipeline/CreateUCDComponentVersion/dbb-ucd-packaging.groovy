@@ -171,8 +171,8 @@ properties.buildReportOrder.each{ buildReportFile ->
 		if(executeRecord.getOutputs().isEmpty() != true) {
 			count += executeRecord.getOutputs().size()
 			executeRecord.getOutputs().each{ output ->
-				def (ds,member) = getDatasetName(output.dataset)
-				buildOutputsMap.put(new DeployableArtifact(member, output.deployType) , [ds, buildReport, executeRecord])
+				def (dataset, member) = getDatasetName(output.dataset)
+				buildOutputsMap.put(new DeployableArtifact(member, output.deployType) , [dataset, buildReport, executeRecord])
 			}
 		}
 	}
@@ -182,8 +182,8 @@ properties.buildReportOrder.each{ buildReportFile ->
 	deletions.each { deleteRecord ->
 		deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
 		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
-			def (ds,member) = getDatasetName(deletedFile)
-			buildOutputsMap.put(new DeployableArtifact(member, "DELETE") , [ds, buildReport, deleteRecord])
+			def (dataset, member) = getDatasetName(deletedFile)
+			buildOutputsMap.put(new DeployableArtifact(member, "DELETE") , [dataset, buildReport, deleteRecord])
 		}
 	}
 
