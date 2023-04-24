@@ -19,10 +19,6 @@ import java.nio.file.Paths
  * This script requires JAVA 11 because it uses java.net.http.* APIs to create
  * the HTTPClient and HTTPRequest, replacing the previous ArtifactoryHelper
  *
- * Version 2 - 2023-04
- * 
- * The script has been enhanced to support retries when uploading to an Artifact Repository
- * 
  */
 
 @Field int MAX_RESEND = 10;
@@ -41,7 +37,8 @@ def <T> CompletableFuture<HttpResponse<T>>
 run(args)
 
 def upload(String url, String fileName, String user, String password, boolean verbose) throws IOException {
-    println( "** ArtifactRepositoryHelper started for upload of $fileName to $url..." );
+	System.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection")
+    println( "** ArtifactRepositoryHelper started for upload of $fileName to $url" );
     
     // create http client
     HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
@@ -66,6 +63,7 @@ def upload(String url, String fileName, String user, String password, boolean ve
     HttpRequest request = HttpRequest.newBuilder()
     .uri(URI.create("$url"))
     .header("Content-Type", "binary/octet-stream")
+	.header("Connection","Keep-Alive")
     .PUT(BodyPublishers.ofFile(Paths.get(fileName)))
     .build();
 
@@ -79,6 +77,7 @@ def upload(String url, String fileName, String user, String password, boolean ve
     if ( verbose ) println( "** Response: " + finalResponse );
     
     def rc = evaluateHttpResponse(finalResponse, "upload", verbose)
+    
     if (rc == 0 ) {
         println("** Upload completed");
     }
@@ -88,8 +87,8 @@ def upload(String url, String fileName, String user, String password, boolean ve
 }
 
 def download(String url, String fileName, String user, String password, boolean verbose) throws IOException  {
-    println( "** ArtifactRepositoryHelper started for download of $url to $fileName..." );
-   
+    println( "** ArtifactRepositoryHelper started for download of $url to $fileName" );
+
     // create http client
     HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
     .authenticator(new Authenticator() {
@@ -116,8 +115,8 @@ def download(String url, String fileName, String user, String password, boolean 
     .build();
     
     // submit request
-    println( "** Downloading $url to $fileName..." );
-	HttpResponse.BodyHandler<String> handler = HttpResponse.BodyHandlers.ofString();
+    print( "** Downloading $url to $fileName." );
+	HttpResponse.BodyHandler<InputStream> handler = HttpResponse.BodyHandlers.ofInputStream();
 	CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request, handler).thenComposeAsync(r -> tryResend(httpClient, request, handler, 1, r));
 
 	HttpResponse finalResponse = response.get()
@@ -127,13 +126,13 @@ def download(String url, String fileName, String user, String password, boolean 
     
     if (rc == 0) {
         // write file to output 
-        def responseBody = finalResponse.body()
-        println("** Writing to file to $fileName...")
+        def responseBody = response.body()
+        println("** Writing to file to $fileName")
         FileOutputStream fos = new FileOutputStream(fileName);
         fos.write(responseBody.readAllBytes());
         fos.close();
     } else {
-        println("*! Download failed");
+        println("** Download failed");
     }
 }
 
@@ -148,15 +147,12 @@ def evaluateHttpResponse (HttpResponse response, String action, boolean verbose)
         println( "** Response: " + response );
         throw new RuntimeException("Exception : Artifactory $action failed: "
              + statusCode);
-    }
-    
+    }    
     return rc
 }
 
-
 //Parsing the command line
 def run(String[] cliArgs) {
-
     def cli = new CliBuilder(usage: "ArtifactRepositoryHelpers.groovy [options]", header: '', stopAtNonOption: false)
     cli.h(longOpt:'help', 'Prints this message')
     cli.u(longOpt:'url', args:1, required:true, 'Artifactory file uri location')
@@ -167,8 +163,8 @@ def run(String[] cliArgs) {
     cli.v(longOpt:'verbose', 'Flag to turn on script trace')
     def opts = cli.parse(cliArgs)
 
-    // if opt parse fail exit.
-    if (! opts) {
+    // if opt parsing fails, exit
+    if (opts == null || !opts) {
         System.exit(1)
     }
 
@@ -177,7 +173,7 @@ def run(String[] cliArgs) {
         System.exit(0)
     }
     
-    if (opts.fU) {
+    if ( opts.fU) {
         upload(opts.u, opts.fU, opts.U, opts.P, opts.v)
     } else {
         download(opts.u, opts.fD, opts.U, opts.P, opts.v)
