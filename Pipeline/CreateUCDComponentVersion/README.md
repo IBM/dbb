@@ -22,7 +22,7 @@ This section provides a more detailed explanation of how the CreateUCDComponentV
       1. Parse and extract the build output information for deleted build outputs of type *Delete_Record* written to the build report by [zAppBuild (release 2.4.0 onwards)](https://github.com/IBM/dbb-zappbuild/releases/tag/2.4.0). (Requires at least DBB 1.1.3, as the script uses the AnyTypeRecord API introduced in this version.)
       1. Remove output entries that have no `deployType` set and remove unwanted outputs such as outputs with the `deployType` equal to `ZUNIT-TESTCASE`.
    1. If processing multiple build reports, a cumulative list of output records is created to be able to combine outputs from multiple pipeline builds into one UCD component version.
-   	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type
+   	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type.
    	  1. Artifacts having the same member name and the same deploy type will be present only once in the generated UCD shiplist, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
 
 1. **Generate the UCD `shiplist.xml` file and invoke the UCD packaging step**

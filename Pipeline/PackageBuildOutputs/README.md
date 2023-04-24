@@ -24,7 +24,7 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
       1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*. (Requires at least DBB 1.0.8.)
       1. Remove output entries that have no `deployType` set and remove unwanted outputs such as outputs with the `deployType` equal to `ZUNIT-TESTCASE`.
    1. If processing multiple build reports, a cumulative hashmap of output records is created to be able to combine outputs from multiple pipeline builds into a single tar file.
-   	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type
+   	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type.
    	  1. Artifacts having the same member name and the same deploy type will be present only once in the generated package, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
    
 
