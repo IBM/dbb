@@ -70,27 +70,28 @@ def upload(String url, String fileName, String user, String password, boolean ve
     .PUT(BodyPublishers.ofFile(Paths.get(fileName)))
     .build();
 
-	println( "** Uploading $fileName to $url..." );
+	println("** Uploading $fileName to $url...");
 	
 	HttpResponse.BodyHandler<String> handler = HttpResponse.BodyHandlers.ofString();
     // submit request
 	CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request, handler).thenComposeAsync(r -> tryResend(httpClient, request, handler, 1, r));
 	HttpResponse finalResponse = response.get()
     
-    if ( verbose ) println( "** Response: " + finalResponse );
+    if (verbose)
+		println("** Response: " + finalResponse);
     
     def rc = evaluateHttpResponse(finalResponse, "upload", verbose)
     
     if (rc == 0 ) {
-        println("** Upload completed");
+        println("** Upload completed.");
     }
     else {
-        println("** Upload failed");
+        println("*! Upload failed.");
     }
 }
 
 def download(String url, String fileName, String user, String password, boolean verbose) throws IOException  {
-    println( "** ArtifactRepositoryHelper started for download of $url to $fileName" );
+    println("** ArtifactRepositoryHelper started for download of $url to $fileName.");
 
     // create http client
     HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
@@ -118,7 +119,7 @@ def download(String url, String fileName, String user, String password, boolean 
     .build();
     
     // submit request
-    print( "** Downloading $url to $fileName." );
+    println("** Downloading $url to $fileName...");
 	HttpResponse.BodyHandler<InputStream> handler = HttpResponse.BodyHandlers.ofInputStream();
 	CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request, handler).thenComposeAsync(r -> tryResend(httpClient, request, handler, 1, r));
 
@@ -130,12 +131,12 @@ def download(String url, String fileName, String user, String password, boolean 
     if (rc == 0) {
         // write file to output 
         def responseBody = finalResponse.body()
-        println("** Writing to file to $fileName")
+        println("** Writing to file to $fileName.")
         FileOutputStream fos = new FileOutputStream(fileName);
         fos.write(responseBody.readAllBytes());
         fos.close();
     } else {
-        println("** Download failed");
+        println("*! Download failed.");
     }
 }
 
@@ -146,10 +147,9 @@ def evaluateHttpResponse (HttpResponse response, String action, boolean verbose)
     def responseString = response.body()
     if ((statusCode != 201) && (statusCode != 200)) {
         rc = 1
-        println("** Artifactory $action failed with statusCode : $statusCode ")
-        println( "** Response: " + response );
-        throw new RuntimeException("Exception : Artifactory $action failed: "
-             + statusCode);
+        println("** Artifactory $action failed with statusCode : $statusCode")
+        println("** Response: " + response);
+        throw new RuntimeException("Exception : Artifactory $action failed:" + statusCode);
     }    
     return rc
 }
