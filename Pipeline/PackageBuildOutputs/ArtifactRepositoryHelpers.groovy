@@ -19,6 +19,9 @@ import java.nio.file.Paths
  * This script requires JAVA 11 because it uses java.net.http.* APIs to create
  * the HTTPClient and HTTPRequest, replacing the previous ArtifactoryHelper
  *
+ * Version 2 - 2023-04
+ * 
+ * Implemented a retry mechanism for upload and download (with Connection Keep-alive for upload)
  */
 
 @Field int MAX_RESEND = 10;
@@ -126,7 +129,7 @@ def download(String url, String fileName, String user, String password, boolean 
     
     if (rc == 0) {
         // write file to output 
-        def responseBody = response.body()
+        def responseBody = finalResponse.body()
         println("** Writing to file to $fileName")
         FileOutputStream fos = new FileOutputStream(fileName);
         fos.write(responseBody.readAllBytes());
@@ -139,9 +142,9 @@ def download(String url, String fileName, String user, String password, boolean 
 def evaluateHttpResponse (HttpResponse response, String action, boolean verbose) {
     int rc = 0
     def statusCode = response.statusCode()
-    if ( verbose) println "*** HTTP-Status Code: $statusCode"
+    if (verbose) println "*** HTTP-Status Code: $statusCode"
     def responseString = response.body()
-    if ( (statusCode != 201) && (statusCode != 200)  ) {
+    if ((statusCode != 201) && (statusCode != 200)) {
         rc = 1
         println("** Artifactory $action failed with statusCode : $statusCode ")
         println( "** Response: " + response );
