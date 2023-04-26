@@ -66,11 +66,6 @@ import groovy.json.JsonSlurper
  *  Support for UCD packaging format v2 
  *  Ability to package deletions (requires DBB Toolkit 1.1.3 and zAppBuild 2.4.0)
  *  
- * Version 8 - 2023-04 
- *  Enhanced the multiple build reports feature to allow replacing the same artifact
- *  if memberName and deployType are the same. The key in the HashMap is changed to
- *  a DeployableArtifact object. 
- *  
  */
 
 class DeployableArtifact {
@@ -120,10 +115,10 @@ properties.each{k,v->
 /*
  * HashMap to understand and *merge* the different build outputs from the various buildreports
  *  
- <Dataset, {buildReport:Executes}> 
- dataset as key, then buildReport and Executes as a key-value pair as value 
+ <DeployableArtifact, {container (optional),buildReport,record}> 
+ DeployableArtifact as key, then container (optional, not for DELETE records), buildReport and record as a key-value pair as value 
  */
-Map<DeployableArtifact, Map> buildOutputsMap = new HashMap<String, Map>()
+Map<DeployableArtifact, Map> tempBuildOutputsMap = new HashMap<String, Map>()
 
 
 dbbVersion = new VersionInfo().getVersion()
@@ -132,6 +127,7 @@ println "* Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8
 
 println("**  Reading provided build report(s).")
 
+def buildReportRank = 1
 properties.buildReportOrder.each{ buildReportFile ->
 	println("*** Parsing DBB build report $buildReportFile.")
 
@@ -171,8 +167,8 @@ properties.buildReportOrder.each{ buildReportFile ->
 		if(executeRecord.getOutputs().isEmpty() != true) {
 			count += executeRecord.getOutputs().size()
 			executeRecord.getOutputs().each{ output ->
-				def (dataset, member) = getDatasetName(output.dataset)
-				buildOutputsMap.put(new DeployableArtifact(member, output.deployType) , [dataset, buildReport, executeRecord])
+				def (ds,member) = getDatasetName(output.dataset)
+				tempBuildOutputsMap.put(new DeployableArtifact(member, output.deployType) , [ds, buildReport, executeRecord, buildReportRank])
 			}
 		}
 	}
@@ -182,8 +178,8 @@ properties.buildReportOrder.each{ buildReportFile ->
 	deletions.each { deleteRecord ->
 		deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
 		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
-			def (dataset, member) = getDatasetName(deletedFile)
-			buildOutputsMap.put(new DeployableArtifact(member, "DELETE") , [dataset, buildReport, deleteRecord])
+//			def (ds,member) = getDatasetName(deletedFile)
+			tempBuildOutputsMap.put(new DeployableArtifact(deletedFile, "DELETE") , [deletedFile, buildReport, deleteRecord, buildReportRank])
 		}
 	}
 
@@ -202,7 +198,42 @@ properties.buildReportOrder.each{ buildReportFile ->
 			deletions.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
 		}
 	}
+	buildReportRank++
 }
+
+
+println(tempBuildOutputsMap.keySet())
+
+// Remove duplicates
+// In case an EXECUTE or COPY_TO_PDS entry and a DELETE entry are found for the same 'dataset(member)'
+// BuildReportRank is compared, to take the last entry only based on the build results order
+
+Map<DeployableArtifact, Map> buildOutputsMap = tempBuildOutputsMap.clone()
+
+tempBuildOutputsMap.each{ deployableArtifact, info ->
+	container = info[0]
+	buildReport = info[1]
+	record = info[2]
+	artifactRank = info[3]
+	
+	if (record.getType() == DefaultRecordFactory.TYPE_EXECUTE || record.getType() == DefaultRecordFactory.TYPE_COPY_TO_PDS) {
+		DeployableArtifact deleteArtifact = new DeployableArtifact(container + "(" + deployableArtifact.file + ")", "DELETE")
+		if (tempBuildOutputsMap.containsKey(deleteArtifact)) {
+			deleteArtifactInfo = tempBuildOutputsMap.get(deleteArtifact)
+			deleteArtifactRank = deleteArtifactInfo[3]
+			if (artifactRank > deleteArtifactRank) {
+				buildOutputsMap.remove(deleteArtifact)
+			} else {
+				buildOutputsMap.remove(deployableArtifact)				
+			}
+		}
+	}
+}
+
+
+println(buildOutputsMap.keySet())
+
+	
 
 if (buildOutputsMap.size() == 0 ) {
 	println("** No items to package in the provided build reports (s). Process exiting.")
@@ -270,16 +301,15 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			// Shiplist entry created, no need to document it a second time 
 			singleBuildReportReporting = false
 		}
-		
-		println "   Creating shiplist record for build output $container(${deployableArtifact.file}) with recordType $record.type."
-		
+				
 		// process TYPE_EXECUTE and TYPE_COPY_TO_PDS
 		if (record.getType()==DefaultRecordFactory.TYPE_EXECUTE || record.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) {
-
+			
 			record.getOutputs().each{ output ->
 				// process only outputs of the key of the map
 				def fullDatasetName = container + "(" + deployableArtifact.file + ")"
 				if (fullDatasetName == output.dataset) {
+					println "   Creating shiplist record for build output $container(${deployableArtifact.file}) with recordType $record.type."
 					def containerAttributes = getContainerAttributes(container, properties)
 					container(containerAttributes){
 						resource(name:deployableArtifact.file, type:"PDSMember", deployType:output.deployType){
@@ -372,16 +402,16 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			deletedFiles.each { deletedOutput ->
 
 				// process only outputs of the key of the map
-				def fullDatasetName = container + "(" + deployableArtifact.file + ")"
-				if (fullDatasetName == deletedOutput) {
+				if (deployableArtifact.file == deletedOutput) {
 
 					println "   Defining shiplist delete container for $deletedOutput."
 
 					deleted{
 						// create container
-						def containerAttributes = getContainerAttributes(container, properties)
+						def (ds, member) = getDatasetName(deployableArtifact.file)
+						def containerAttributes = getContainerAttributes(ds, properties)
 						container(containerAttributes){
-							resource(name:deployableArtifact.file, type:"PDSMember")
+							resource(name:member, type:"PDSMember")
 
 							// document dbb build result url and build properties on the element level when there are more than one buildReport processed
 							if (properties.buildReportOrder.size() != 1) {
@@ -566,7 +596,7 @@ def parseInput(String[] cliArgs){
 
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
-	if (opts.h) { // if help option used, print usage and exit
+	if (opts == null || opts.h) { // if help option used, print usage and exit
 		cli.usage()
 		System.exit(0)
 	}
@@ -629,7 +659,7 @@ def parseInput(String[] cliArgs){
 	} 
 	
 	if (!opts.boFile && !opts.bO){ // default lookup in Workdir
-		buildReports.add(opts.w + "/BuildReport.json")
+		buildReports.add("" + opts.w + "/BuildReport.json")
 	}
 
 	properties.buildReportOrder = buildReports
