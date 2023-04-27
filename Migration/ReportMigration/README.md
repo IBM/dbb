@@ -2,7 +2,7 @@
 ### Overview
 This sample provides a script to migrate DBB Build Reports containing javascript to static versions. This script is a combination of Unix shell scripts and Apache Groovy scripts.
 
-<span style="background-color: #FFFF00">Any customizations added to the HTML transformer templates will be lost</span>
+`**Any customizations added to the HTML transformer templates will be lost**`
 
 NOTE: Due to a known defect, CopyToPDS records will not show up in the generated html. A fix will be available shortly.
 
