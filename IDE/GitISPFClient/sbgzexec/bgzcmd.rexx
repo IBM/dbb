@@ -18,8 +18,15 @@
 /* Who   When     What                                               */         
 /* ----- -------- -------------------------------------------------- */         
 /* XH    24/01/19 Initial version                                    */         
-/*                                                                   */         
-/*********************************************************************/         
+/* TLD   31/05/23 FIX: Added view of git command results to correct  */
+/*                CLIST variable value overflow exception.           */
+/*                                                                   */
+/*********************************************************************/
+  Parse Source ENVIR CALLTYPE PGM SPECIFICS;                           
+  PGM = SUBSTR(PGM,1,8)                                                
+                                                                       
+  DEBUG = "N"           /* Enable Debug Messages (Y|N)               */
+  CLISTVarMax = 32000   /* Maximum Length a CLIST Variable can hold  */           
                                                                                 
   Parse Arg gitcmd shellcmd                                                     
   Address ISPEXEC                                                               
@@ -82,18 +89,38 @@ runShell :
     End                                                                         
     Else                                                                        
     Do                                                                          
-      Call BuildDYN                                                             
-      curline  = 1                                                              
-      "ISPEXEC ADDPOP"                                                          
-      panel = 'BGZMSG'                                                          
-      DispRc = DispPanel()                                                      
-      Do while (DispRc = 0)                                                     
-        Call Scroll                                                             
-  /*    Call BuildDYN */                                                        
-        panel = 'BGZMSG'                                                        
-        DispRc = DispPanel()                                                    
-      End                                                                       
-      "ISPEXEC REMPOP"                                                          
+      Call BuildDYN
+
+      /* If we are in Debug Mode, always view the command output that */
+      /* was written to the temporary work file.                      */
+      If (DEBUG = "Y") Then                                           
+        Do                                                            
+          rc = ViewWorkFile()                                         
+        End                                                           
+                                                                
+      /* Check the lenght of the dyndata variable data.  If greater */
+      /* then the CLIST maximum (32K), then we have to resort to    */
+      /* viewing the command output instead of using the Pop-Up     */
+      If (Length(dyndata) > CLISTVarMax) Then                                  
+        Do                                                               
+          If (DEBUG = "N") Then                                           
+            rc = ViewWorkFile() /* If Debug = Y, Skip the view of   */
+                                /* the temporary work file as it    */
+                                /* was already been done.           */               
+        End                                                              
+      Else /* Proceed with Pop-Up Display */                             
+        Do                                                               
+          curline  = 1                                                              
+          "ISPEXEC ADDPOP"                                                          
+          panel = 'BGZMSG'                                                          
+          DispRc = DispPanel()                                                      
+          Do while (DispRc = 0)                                                     
+            Call Scroll                                                             
+            panel = 'BGZMSG'                                                        
+            DispRc = DispPanel()                                                    
+          End                                                                       
+          "ISPEXEC REMPOP"
+        End                                                            
     End                                                                         
   End                                                                           
                                                                                 
@@ -438,6 +465,87 @@ ReadOutput :
     'VGET (BGZFLOG) SHARED'                                                     
     confile  = BGZFLOG                                                          
     Address syscall "writefile (confile) 755 gitline."                          
-  End                                                                           
-                                                                                
+  End 
+                                                                          
+/* Write the git command output collected in gitline to the temporary work  */
+/* file. We are doing this because sometimes the returned data may exceed   */
+/* the CLIST Variable Value length of 32,756.  If it does exceed this       */
+/* length, the ISPF Pop-Up to display the git command output cannot be used.*/
+/* By capturing the results in a temporary file, the ISPEXEC VIEW will be   */
+/* used to display the output. NOTE: If trunacation occurs (EXECIO RC=1),   */
+/* update the WrkAtr variable in BGZGIT with a larger LRECL/BLKSIZE and/or  */
+/* SPACE.                                                                   */
+                                                                              
+Do WLCV = 1 to gitLine.0 While (rc = 0)                                       
+                                                                              
+  /* Remove the hex character from beginning of the line */                   
+  wrkLine.WLCV = SUBSTR(gitLine.WLCV,2)                                       
+                                                                              
+  Address TSO("EXECIO "WLCV" DISKW SBGZWRK" ,                                 
+    " (STEM wrkLine. FINIS)")                                                
+    If (rc > 0) then                                                          
+      Say PGM": Error writing to work file. rc="rc                            
+                                                                              
+End 
+                                                                                                                                                         
 Return                                                                          
+/****************************************************************************/
+/* VIEW WORK FILE                                                           */
+/*                                                                          */
+/*   This function is use to view the work file that was created for the    */
+/* command data output extracted from stderr and stdout.                    */
+/*                                                                          */
+/* Linkage:                                                                 */
+/*                                                                          */
+/*   rc = ViewWorkFile()                                                    */
+/*                                                                          */
+/* Returns:                                                                 */
+/*                                                                          */
+/*     rc      - as defined the Services.                                   */
+/*                                                                          */
+/****************************************************************************/
+ViewWorkFile:                                                                 
+                                                                              
+rc         = 0                                                                
+LMINITDone = 0                                                                
+                                                                              
+"LMINIT DATAID(GZWORK) DDNAME(SBGZWRK)"                                       
+                                                                              
+If (rc = 0) Then                                                              
+  Do                                                                          
+    LMINITDone = 1                                                            
+                                                                              
+    "VIEW DATAID(&GZWORK)"                                                    
+                                                                              
+    If (rc <> 0) Then                                                         
+      Do;                                                                     
+        Say PGM": VIEW of Work File Failed. rc="rc                            
+        Say PGM":   "ZERRLM                                                   
+      End                                                                     
+  End                                                                         
+Else                                                                          
+  Do                                                                          
+    Say PGM": LMINIT of Work File Failed. rc="rc                              
+    Say PGM":   "ZERRLM                                                       
+  End                                                                         
+                                                                              
+Save_rc = rc  
+
+If (LMINIT_Done <> 0) Then                        
+  Do                                              
+                                                  
+    "LMFREE DATAID(&GZWORK)"                      
+                                                  
+    If (rc <> 0) Then                             
+      Do                                          
+        Say PGM": LMFREE Work File Failed. rc="rc 
+        Say PGM":   "ZERRLM                       
+      End                                         
+    Else                                          
+      LMINITDone = 0                              
+                                                  
+  End                                             
+                                                  
+rc = MAX(Save_rc,rc)                              
+                                                  
+Return rc                                                                                                         
