@@ -24,8 +24,19 @@
 /* Who   When     What                                               */         
 /* ----- -------- -------------------------------------------------- */         
 /* XH    14/02/19 Initial version                                    */         
-/*                                                                   */         
-/*********************************************************************/         
+/* TLD   31/05/23 FIX: Added view of git command results to correct  */
+/*                CLIST variable value overflow exception.           */
+/*                                                                   */
+/*********************************************************************/
+  Parse Source ENVIR CALLTYPE PGM SPECIFICS;                           
+  PGM = SUBSTR(PGM,1,8)                                                
+                                                                       
+  DEBUG = "N"           /* (Y|N) Always view the temporary work file */
+  ShowRemotes = "Y"     /* Toggle flag to control whether remote     */
+                        /* branchs are to appear in the git branch   */
+                        /* dialogue. This was added to preserve a    */
+                        /* code block that was previously commented  */
+                        /* out. Default=Y, N to suppress.            */
                                                                                 
    Parse Arg BGZREPOS BGZUSDIR NoDisp                                           
                                                                                 
@@ -51,21 +62,22 @@
        shellcmd = shellcmd || 'cd' BGZUSDIR';' ||,                              
               'git branch -a'                                                   
        Git_rc = BGZCMD('branch' shellcmd)                                       
-                                                                                
-       /* NO Delete keep the full list returned from git branch -a              
-       /* Now read the Branch list */                                           
-       /* we need to delete rows starting by remotes/origin/  */                
-       'TBTOP BGZTEMP'                                                          
-       'TBSKIP BGZTEMP'                                                         
-       Do While RC = 0                                                          
-         branch = Substr(BGZLINE,1,17)                                          
-         If Verify(branch,'  remotes/origin/') = 0 Then                         
-         Do                                                                     
-           'TBDELETE BGZTEMP'                                                   
-         End                                                                    
-         'TBSKIP BGZTEMP'                                                       
-       End                                                                      
-       --------------------------- */                                           
+       
+       If (ShowRemotes = "N") Then
+         Do                                                                         
+           /* Delete rows that start with remotes/origin/  */                
+           'TBTOP BGZTEMP'                                                          
+           'TBSKIP BGZTEMP'                                                         
+           Do While RC = 0                                                          
+             branch = Substr(BGZLINE,1,17)                                          
+             If Verify(branch,'  remotes/origin/') = 0 Then                         
+               Do                                                                     
+                 'TBDELETE BGZTEMP'                                                   
+               End                                                                    
+             'TBSKIP BGZTEMP'                                                       
+           End                                                                      
+         End /* Of If (ShowRemotes = "N") Then ... */ 
+                                          
        /* Just using this module to get the current branch */                   
        If NoDisp = 'noDisplay' Then                                             
          Return Git_rc                                                          
@@ -155,7 +167,19 @@
            shellcmd  = ''                                                       
            shellcmd = shellcmd || BGZENVIR                                      
                                                                                 
-           Parse var BGZBRAN 'remotes/origin/'Branch                            
+           /* Check to see if working with a Remote Branch. */
+           /* If true, isolate the branch name. Otherise    */
+           /* assume local branch.                          */
+           If (DEBUG = "Y") Then
+             Say PGM": BGZBRAN = "BGZBRAN
+                 
+           Parse var BGZBRAN 'remotes/origin/'Branch          
+                                                   
+           If (Strip(Branch) = "") Then                       
+             Branch = BGZBRAN                                 
+
+           If (DEBUG = "Y") Then
+             Say PGM": Branch = "Branch
                                                                                 
            shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,                            
                   'git checkout ' ||'"'Branch'"'                                
