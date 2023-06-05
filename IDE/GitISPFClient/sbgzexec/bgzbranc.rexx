@@ -31,12 +31,12 @@
   Parse Source ENVIR CALLTYPE PGM SPECIFICS;                           
   PGM = SUBSTR(PGM,1,8)                                                
                                                                        
-  DEBUG = "N"           /* (Y|N) Always view the temporary work file */
+  DEBUG = "N"           /* Enable Debug Messages (Y|N)               */
   ShowRemotes = "Y"     /* Toggle flag to control whether remote     */
                         /* branchs are to appear in the git branch   */
-                        /* dialogue. This was added to preserve a    */
-                        /* code block that was previously commented  */
-                        /* out. Default=Y, N to suppress.            */
+                        /* dialogue and processed. This was added to */
+                        /* preserve a code block that was previously */
+                        /* commented out. Default=Y, N to suppress.  */
                                                                                 
    Parse Arg BGZREPOS BGZUSDIR NoDisp                                           
                                                                                 
@@ -168,7 +168,7 @@
            shellcmd = shellcmd || BGZENVIR                                      
                                                                                 
            /* Check to see if working with a Remote Branch. */
-           /* If true, isolate the branch name. Otherise    */
+           /* If true, isolate the branch name. Otherwise   */
            /* assume local branch.                          */
            If (DEBUG = "Y") Then
              Say PGM": BGZBRAN = "BGZBRAN

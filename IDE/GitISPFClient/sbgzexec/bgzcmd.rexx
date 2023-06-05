@@ -25,7 +25,7 @@
   Parse Source ENVIR CALLTYPE PGM SPECIFICS;                           
   PGM = SUBSTR(PGM,1,8)                                                
                                                                        
-  Debug = "N"           /* (Y|N) Always view the temporary work file */
+  DEBUG = "N"           /* Enable Debug Messages (Y|N)               */
   CLISTVarMax = 32000   /* Maximum Length a CLIST Variable can hold  */           
                                                                                 
   Parse Arg gitcmd shellcmd                                                     
@@ -93,7 +93,7 @@ runShell :
 
       /* If we are in Debug Mode, always view the command output that */
       /* was written to the temporary work file.                      */
-      If (Debug = "Y") Then                                           
+      If (DEBUG = "Y") Then                                           
         Do                                                            
           rc = ViewWorkFile()                                         
         End                                                           
@@ -103,8 +103,10 @@ runShell :
       /* viewing the command output instead of using the Pop-Up     */
       If (Length(dyndata) > CLISTVarMax) Then                                  
         Do                                                               
-          If (Debug = "N") Then                                           
-            rc = ViewWorkFile() /* If Debug = Y, we already displayed */ 
+          If (DEBUG = "N") Then                                           
+            rc = ViewWorkFile() /* If Debug = Y, Skip the view of   */
+                                /* the temporary work file as it    */
+                                /* already been done.               */               
         End                                                              
       Else /* Proceed with Pop-Up Display */                             
         Do                                                               

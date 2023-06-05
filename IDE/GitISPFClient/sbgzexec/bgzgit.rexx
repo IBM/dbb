@@ -74,7 +74,7 @@
      "LIBDEF ISPTABL DATASET ID("PROFDSN")"  
 
      /* Allocate a temporary work file for the git command output */
-     Address TSO "ALLOC F(SBGZWRK) NEW REU UNIT(VIO)" WrkAtr         
+     Address TSO "ALLOC F(SBGZWRK) NEW REU UNIT(VIO) "WrkAtr         
                                    
    End                                                                          
    Else                                                                         
