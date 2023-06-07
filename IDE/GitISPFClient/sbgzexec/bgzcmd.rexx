@@ -106,7 +106,7 @@ runShell :
           If (DEBUG = "N") Then                                           
             rc = ViewWorkFile() /* If Debug = Y, Skip the view of   */
                                 /* the temporary work file as it    */
-                                /* already been done.               */               
+                                /* was already been done.           */               
         End                                                              
       Else /* Proceed with Pop-Up Display */                             
         Do                                                               
