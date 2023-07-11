@@ -37,46 +37,10 @@ import static java.nio.file.StandardCopyOption.*
  *  - Script is supporting both JFrog Artifactory and SonarType Nexus
  *  - Added additional CLI option to pass artifact repository parameters
  *
- * Version 5 - 2023-04
- *  - Enhanced the multiple build reports feature to allow replacing the same artifact
- *  if memberName and deployType are the same. The key in the HashMap is changed to
- *  a DeployableArtifact object. 
-
+ * Version 5 - 2023-07
+ *  - Added support for DeployableArtifact, to manage the correct stacking
+ *    of duplicates artifacts
  ************************************************************************************/
-
-class DeployableArtifact {
-	private final String file;
-	private final String deployType;
-	
-	DeployableArtifact(String file, String deployType) {
-		this.file = file;
-		this.deployType = deployType;
-	}
-
-	@Override
-	public int hashCode() {
-		String concatenation = file + "." + deployType;
-		return concatenation.hashCode();
-	}
-
-	public boolean equals(DeployableArtifact other) {
-		return other.file.equals(file) & other.deployType.equals(deployType);
-	}
-
-	@Override
-	public boolean equals(Object other) {
-		if (other instanceof DeployableArtifact) {
-			return equals((DeployableArtifact) other)
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public String toString() {
-		return file + "." + deployType;
-	}
-}
 
 // start create & publish package
 @Field Properties props = null
@@ -179,8 +143,8 @@ props.buildReportOrder.each{ buildReportFile ->
 }
 
 if (buildOutputsMap.size() == 0) {
-	println("*! There are no build outputs found in all provided build reports.")
-	System.exit(2)
+	println("** There are no build outputs found in all provided build reports. Exiting.")
+	System.exit(0)
 } else {
 	def String tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
 
@@ -218,11 +182,11 @@ if (buildOutputsMap.size() == 0) {
 			copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
 			copy.setDataset(dataset)
 
-			println "     Copying $dataset(${deployableArtifact.file}) to $filePath/$fileName with DBB Copymode $currentCopyMode"
+			println "     Copying $dataset(${deployableArtifact.file}) to $filePath/$fileName with DBB Copymode $currentCopyMode..."
 			copy.dataset(dataset).member(deployableArtifact.file).file(file).execute()
 
 			// Tagging binary files
-			if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD){
+			if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
 				StringBuffer stdout = new StringBuffer()
 				StringBuffer stderr = new StringBuffer()
 				Process process = "chtag -b $file".execute()
@@ -233,9 +197,8 @@ if (buildOutputsMap.size() == 0) {
 				}
 			}
 		} else {
-			println "!    Copying $dataset(${deployableArtifact.file}) could not be copied due to missing mapping."
+			println "*! Copying $dataset(${deployableArtifact.file}) could not be copied due to missing mapping."
 		}
-
 	}
 
 	// log buildReportOrder file and add build reports to tar file
@@ -540,4 +503,43 @@ def relativizePath(String path) {
 	if (relPath.endsWith('/'))
 		relPath = relPath.take(relPath.length()-1)
 	return relPath
+}
+
+/*
+ * The DeployableArtifact class represent an artifact that can be deployed
+ * It defines a file (typically the member name of a dataset (the container) or a file in a zFS directory)
+ * and a deployType. Instances of this class are used in the main Map object to represent unique artifacts.
+ */
+class DeployableArtifact {
+	private final String file;
+	private final String deployType;
+	
+	DeployableArtifact(String file, String deployType) {
+		this.file = file;
+		this.deployType = deployType;
+	}
+
+	@Override
+	public int hashCode() {
+		String concatenation = file + "." + deployType;
+		return concatenation.hashCode();
+	}
+
+	public boolean equals(DeployableArtifact other) {
+		return other.file.equals(file) & other.deployType.equals(deployType);
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof DeployableArtifact) {
+			return equals((DeployableArtifact) other)
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		return file + "." + deployType;
+	}
 }

@@ -66,42 +66,10 @@ import groovy.json.JsonSlurper
  *  Support for UCD packaging format v2 
  *  Ability to package deletions (requires DBB Toolkit 1.1.3 and zAppBuild 2.4.0)
  *  
+ * Version 8 - 2023-07
+ *  Added support for DeployableArtifact, to manage the correct stacking of duplicates artifacts
+ *  
  */
-
-class DeployableArtifact {
-	private final String file;
-	private final String deployType;
-	
-	DeployableArtifact(String file, String deployType) {
-		this.file = file;
-		this.deployType = deployType;
-	}
-
-	@Override
-	public int hashCode() {
-		String concatenation = file + "." + deployType;
-		return concatenation.hashCode();
-	}
-
-	public boolean equals(DeployableArtifact other) {
-		return other.file.equals(file) & other.deployType.equals(deployType);
-	}
-
-	@Override
-	public boolean equals(Object other) {
-		if (other instanceof DeployableArtifact) {
-			return equals((DeployableArtifact) other)
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public String toString() {
-		return file + "." + deployType;
-	}
-}
-
 
 def properties = parseInput(args)
 def startTime = new Date()
@@ -202,11 +170,10 @@ properties.buildReportOrder.each{ buildReportFile ->
 }
 
 
-println(tempBuildOutputsMap.keySet())
-
-// Remove duplicates
-// In case an EXECUTE or COPY_TO_PDS entry and a DELETE entry are found for the same 'dataset(member)'
-// BuildReportRank is compared, to take the last entry only based on the build results order
+// Manage scenario with ADD/UPDATE and DELETE entries for the same artifact with multiple build reports.
+//
+// This can lead to duplicate entries in the Hashmap and requires to evaluate order in which the build reports got specified.
+// It needs to take only the last entry, that can be the add/update or the delete entry.
 
 Map<DeployableArtifact, Map> buildOutputsMap = tempBuildOutputsMap.clone()
 
@@ -230,16 +197,10 @@ tempBuildOutputsMap.each{ deployableArtifact, info ->
 	}
 }
 
-
-println(buildOutputsMap.keySet())
-
-	
-
 if (buildOutputsMap.size() == 0 ) {
-	println("** No items to package in the provided build reports (s). Process exiting.")
-	System.exit(2)
+	println("** No items to package in the provided build reports. Exiting.")
+	System.exit(0)
 }
-
 
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
@@ -543,7 +504,7 @@ def getDatasetName(String fullname){
  */
 
 /**
- * calcualte the container attributes for default package or package v2 
+ * calculate the container attributes for default package or package v2 
  */
 // define container attributes
 def getContainerAttributes(String ds, Properties properties) {
@@ -557,7 +518,7 @@ def getContainerAttributes(String ds, Properties properties) {
 			def cMapping = parseJSONStringToMap(properties.containerMapping)
 			containerDeployType = cMapping[lastLevelQual]
 			if (containerDeployType == null) {
-				println "*!* UCD Packaging v2 formar requires a mapping for the copymode for $lastLevelQual through the containerMapping property - see $properties.containerMapping."
+				println "*! UCD v2 Package format requires a mapping for the copymode for $lastLevelQual through the containerMapping property - Current mapping is '$properties.containerMapping'."
 			}
 		} else {
 			// set the last level qualifier as deployType
@@ -695,4 +656,44 @@ def parseJSONStringToMap(String packageProperty) {
 		System.exit(3)
 	}
 	return map
+}
+
+/*
+ * The DeployableArtifact class represent an artifact that can be deployed
+ * It defines a file (typically the member name of a dataset (the container) or a file in a zFS directory)
+ * and a deployType. Instances of this class are used in the main Map object to represent unique artifacts.
+ */
+
+class DeployableArtifact {
+	private final String file;
+	private final String deployType;
+	
+	DeployableArtifact(String file, String deployType) {
+		this.file = file;
+		this.deployType = deployType;
+	}
+
+	@Override
+	public int hashCode() {
+		String concatenation = file + "." + deployType;
+		return concatenation.hashCode();
+	}
+
+	public boolean equals(DeployableArtifact other) {
+		return other.file.equals(file) & other.deployType.equals(deployType);
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof DeployableArtifact) {
+			return equals((DeployableArtifact) other)
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		return file + "." + deployType;
+	}
 }
