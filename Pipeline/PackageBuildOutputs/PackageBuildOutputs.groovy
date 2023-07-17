@@ -10,6 +10,7 @@ import groovy.transform.*
 import groovy.cli.commons.*
 import java.nio.file.*
 import static java.nio.file.StandardCopyOption.*
+import com.ibm.jzos.ZFile;
 
 /************************************************************************************
  * This script creates a simplified package with the outputs generated from a DBB build
@@ -177,24 +178,28 @@ if (buildOutputsMap.size() == 0) {
 		// set copyMode based on last level qualifier
 		currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
 		if (currentCopyMode != null) {
-			// Copy outputs to HFS
-			CopyToHFS copy = new CopyToHFS()
-			copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
-			copy.setDataset(dataset)
-
-			println "     Copying $dataset(${deployableArtifact.file}) to $filePath/$fileName with DBB Copymode $currentCopyMode..."
-			copy.dataset(dataset).member(deployableArtifact.file).file(file).execute()
-
-			// Tagging binary files
-			if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
-				StringBuffer stdout = new StringBuffer()
-				StringBuffer stderr = new StringBuffer()
-				Process process = "chtag -b $file".execute()
-				process.waitForProcessOutput(stdout, stderr)
-				if (stderr){
-					println ("*! stderr : $stderr")
-					println ("*! stdout : $stdout")
+			if (ZFile.exists("//'$dataset(${deployableArtifact.file})'")) {
+				// Copy outputs to HFS
+				CopyToHFS copy = new CopyToHFS()
+				copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
+				copy.setDataset(dataset)
+	
+				println "     Copying $dataset(${deployableArtifact.file}) to $filePath/$fileName with DBB Copymode $currentCopyMode..."
+				copy.dataset(dataset).member(deployableArtifact.file).file(file).execute()
+	
+				// Tagging binary files
+				if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
+					StringBuffer stdout = new StringBuffer()
+					StringBuffer stderr = new StringBuffer()
+					Process process = "chtag -b $file".execute()
+					process.waitForProcessOutput(stdout, stderr)
+					if (stderr){
+						println ("*! stderr : $stderr")
+						println ("*! stdout : $stdout")
+					}
 				}
+			} else {
+				println "*! The file '$dataset(${deployableArtifact.file})' doesn't exist. Copy is skipped."
 			}
 		} else {
 			println "*! Copying $dataset(${deployableArtifact.file}) could not be copied due to missing mapping."
