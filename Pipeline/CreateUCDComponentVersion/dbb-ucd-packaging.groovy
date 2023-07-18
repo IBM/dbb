@@ -66,9 +66,6 @@ import groovy.json.JsonSlurper
  *  Support for UCD packaging format v2 
  *  Ability to package deletions (requires DBB Toolkit 1.1.3 and zAppBuild 2.4.0)
  *  
- * Version 8 - 2023-07
- *  Added support for DeployableArtifact, to manage the correct stacking of duplicates artifacts
- *  
  */
 
 def properties = parseInput(args)
@@ -147,7 +144,8 @@ properties.buildReportOrder.each{ buildReportFile ->
 		deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
 		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
 //			def (ds,member) = getDatasetName(deletedFile)
-			tempBuildOutputsMap.put(new DeployableArtifact(deletedFile, "DELETE") , [deletedFile, buildReport, deleteRecord, buildReportRank])
+			String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
+			tempBuildOutputsMap.put(new DeployableArtifact(cleansedDeletedFile, "DELETE") , [deletedFile, buildReport, deleteRecord, buildReportRank])
 		}
 	}
 
@@ -170,10 +168,9 @@ properties.buildReportOrder.each{ buildReportFile ->
 }
 
 
-// Manage scenario with ADD/UPDATE and DELETE entries for the same artifact with multiple build reports.
-//
-// This can lead to duplicate entries in the Hashmap and requires to evaluate order in which the build reports got specified.
-// It needs to take only the last entry, that can be the add/update or the delete entry.
+// Remove duplicates
+// In case an EXECUTE or COPY_TO_PDS entry and a DELETE entry are found for the same 'dataset(member)'
+// BuildReportRank is compared, to take the last entry only based on the build results order
 
 Map<DeployableArtifact, Map> buildOutputsMap = tempBuildOutputsMap.clone()
 
@@ -657,12 +654,6 @@ def parseJSONStringToMap(String packageProperty) {
 	}
 	return map
 }
-
-/*
- * The DeployableArtifact class represent an artifact that can be deployed
- * It defines a file (typically the member name of a dataset (the container) or a file in a zFS directory)
- * and a deployType. Instances of this class are used in the main Map object to represent unique artifacts.
- */
 
 class DeployableArtifact {
 	private final String file;
