@@ -9,6 +9,8 @@ import groovy.xml.MarkupBuilder
 import groovy.json.JsonParserType
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
+import com.ibm.jzos.ZFile;
+
 /**
  * This script creates a version in UrbanCode Deploy based on the build result.
  *
@@ -267,88 +269,93 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 				// process only outputs of the key of the map
 				def fullDatasetName = container + "(" + deployableArtifact.file + ")"
 				if (fullDatasetName == output.dataset) {
-					println "   Creating shiplist record for build output $container(${deployableArtifact.file}) with recordType $record.type."
-					def containerAttributes = getContainerAttributes(container, properties)
-					container(containerAttributes){
-						resource(name:deployableArtifact.file, type:"PDSMember", deployType:output.deployType){
-
-							// document dbb build result url and build properties on the element level when there are more than one buildReport processed
-							if (properties.buildReportOrder.size() != 1) {
-
-								// Url to DBB Build result
-								if (buildResult != null) {
-									property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
-								}	
-								// Populate build result properties
-								if (buildResultProperties != null) {
-									buildResultProperties.each{
-										//not all properties need to be included in the shiplist
-										//can ignore files processed
-										//can ignore full build / impact build
-										property(name:it.key, value:it.value)
+					if (ZFile.exists("//'$container(${deployableArtifact.file})'")) {
+							
+						println "   Creating shiplist record for build output $container(${deployableArtifact.file}) with recordType $record.type."
+						def containerAttributes = getContainerAttributes(container, properties)
+						container(containerAttributes){
+							resource(name:deployableArtifact.file, type:"PDSMember", deployType:output.deployType){
+	
+								// document dbb build result url and build properties on the element level when there are more than one buildReport processed
+								if (properties.buildReportOrder.size() != 1) {
+	
+									// Url to DBB Build result
+									if (buildResult != null) {
+										property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+									}	
+									// Populate build result properties
+									if (buildResultProperties != null) {
+										buildResultProperties.each{
+											//not all properties need to be included in the shiplist
+											//can ignore files processed
+											//can ignore full build / impact build
+											property(name:it.key, value:it.value)
+										}
 									}
 								}
-							}
-
-							property(name:"buildcommand", value:record.getCommand())
-
-							// Only TYPE_EXECUTE Records carry options
-							if (record.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:record.getOptions())
-							
-							// Sample to add additional artifact properties. Here: adding db2 properties for a DBRM
-							//   which where added to the build report through a basic PropertiesRecord.
-							//   see https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89
+	
+								property(name:"buildcommand", value:record.getCommand())
+	
+								// Only TYPE_EXECUTE Records carry options
+								if (record.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:record.getOptions())
 								
-							if (output.deployType.equals("DBRM")){
-								propertyRecord = buildReport.getRecords().findAll{
-									it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==record.getFile()
-								}
-								propertyRecord.each { propertyRec ->
-									// Iterate Properties
-									(propertyRec.getProperties()).each {
-										property(name:"$it.key", value:it.value)
+								// Sample to add additional artifact properties. Here: adding db2 properties for a DBRM
+								//   which where added to the build report through a basic PropertiesRecord.
+								//   see https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89
+									
+								if (output.deployType.equals("DBRM")){
+									propertyRecord = buildReport.getRecords().findAll{
+										it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==record.getFile()
+									}
+									propertyRecord.each { propertyRec ->
+										// Iterate Properties
+										(propertyRec.getProperties()).each {
+											property(name:"$it.key", value:it.value)
+										}
 									}
 								}
-							}
-							
-							// add githash to container
-							def githash = "" // set empty
-							if (buildResultProperties != null){
-								// get git references from build properties
-								def gitproperty = buildResultProperties.find{
-									it.key.contains(":githash:") && record.getFile().contains(it.key.substring(9))
-								}
-								if (gitproperty != null ) {
-									githash = gitproperty.getValue()
-									// set properties in shiplist
-									property(name:"githash", value:githash)
-									if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
-								}
-							}
-							
-							// add source information in the input column of UCD
-							inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ record.getFile() : ""
-							inputs(url : "${inputUrl}"){
-								input(name : record.getFile(), compileType : "Main", url : inputUrl)
 								
-								// adding dependencies
-								def dependencySets = buildReport.getRecords().findAll{
-									it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==record.getFile()
-								};
-								Set<String> dependencyCache = new HashSet<String>()
-								dependencySets.unique().each{
-									it.getAllDependencies().each{
-										if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=record.getFile()){
-											def displayName = it.getFile() ? it.getFile() : it.getLname()
-											def dependencyUrl =""
-											if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
-											input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
-											dependencyCache.add(it.getLname())
+								// add githash to container
+								def githash = "" // set empty
+								if (buildResultProperties != null){
+									// get git references from build properties
+									def gitproperty = buildResultProperties.find{
+										it.key.contains(":githash:") && record.getFile().contains(it.key.substring(9))
+									}
+									if (gitproperty != null ) {
+										githash = gitproperty.getValue()
+										// set properties in shiplist
+										property(name:"githash", value:githash)
+										if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
+									}
+								}
+								
+								// add source information in the input column of UCD
+								inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ record.getFile() : ""
+								inputs(url : "${inputUrl}"){
+									input(name : record.getFile(), compileType : "Main", url : inputUrl)
+									
+									// adding dependencies
+									def dependencySets = buildReport.getRecords().findAll{
+										it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==record.getFile()
+									};
+									Set<String> dependencyCache = new HashSet<String>()
+									dependencySets.unique().each{
+										it.getAllDependencies().each{
+											if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=record.getFile()){
+												def displayName = it.getFile() ? it.getFile() : it.getLname()
+												def dependencyUrl =""
+												if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
+												input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
+												dependencyCache.add(it.getLname())
+											}
 										}
 									}
 								}
 							}
 						}
+					} else {
+						println "*! The file '$container(${deployableArtifact.file})' doesn't exist. Copy is skipped."
 					}
 				}
 			}
@@ -358,6 +365,9 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			
 			deletedFiles = record.getAttributeAsList("deletedBuildOutputs")
 			deletedFiles.each { deletedOutput ->
+				
+				// remove any quotes
+				deletedOutput = ((String) deletedOutput).replace('"', '');
 
 				// process only outputs of the key of the map
 				if (deployableArtifact.file == deletedOutput) {
