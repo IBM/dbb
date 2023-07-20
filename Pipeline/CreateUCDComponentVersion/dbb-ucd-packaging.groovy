@@ -9,6 +9,8 @@ import groovy.xml.MarkupBuilder
 import groovy.json.JsonParserType
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
+import com.ibm.jzos.ZFile;
+
 /**
  * This script creates a version in UrbanCode Deploy based on the build result.
  *
@@ -80,10 +82,11 @@ properties.each{k,v->
 /*
  * HashMap to understand and *merge* the different build outputs from the various buildreports
  *  
- <Dataset, {buildReport:Executes}> 
- dataset as key, then buildReport and Executes as a key-value pair as value 
+ <DeployableArtifact, {container (optional),buildReport,record}> 
+ DeployableArtifact as key, then container (optional, not for DELETE records), buildReport and record as a key-value pair as value 
  */
-Map<String, Map> buildOutputsMap = new HashMap<String, Map>()
+Map<DeployableArtifact, Map> tempBuildOutputsMap = new HashMap<String, Map>()
+
 
 dbbVersion = new VersionInfo().getVersion()
 println "* Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version $dbbVersion."
@@ -91,6 +94,7 @@ println "* Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8
 
 println("**  Reading provided build report(s).")
 
+def buildReportRank = 1
 properties.buildReportOrder.each{ buildReportFile ->
 	println("*** Parsing DBB build report $buildReportFile.")
 
@@ -130,7 +134,8 @@ properties.buildReportOrder.each{ buildReportFile ->
 		if(executeRecord.getOutputs().isEmpty() != true) {
 			count += executeRecord.getOutputs().size()
 			executeRecord.getOutputs().each{ output ->
-				buildOutputsMap.put(output.dataset, [buildReport, executeRecord])
+				def (ds,member) = getDatasetName(output.dataset)
+				tempBuildOutputsMap.put(new DeployableArtifact(member, output.deployType) , [ds, buildReport, executeRecord, buildReportRank])
 			}
 		}
 	}
@@ -140,9 +145,10 @@ properties.buildReportOrder.each{ buildReportFile ->
 	deletions.each { deleteRecord ->
 		deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
 		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
-			buildOutputsMap.put(deletedFile, [buildReport, deleteRecord])
+//			def (ds,member) = getDatasetName(deletedFile)
+			String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
+			tempBuildOutputsMap.put(new DeployableArtifact(cleansedDeletedFile, "DELETE") , [deletedFile, buildReport, deleteRecord, buildReportRank])
 		}
-
 	}
 
 	if ( count + deletionCount == 0 ) {
@@ -160,13 +166,40 @@ properties.buildReportOrder.each{ buildReportFile ->
 			deletions.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
 		}
 	}
+	buildReportRank++
+}
+
+
+// Remove duplicates
+// In case an EXECUTE or COPY_TO_PDS entry and a DELETE entry are found for the same 'dataset(member)'
+// BuildReportRank is compared, to take the last entry only based on the build results order
+
+Map<DeployableArtifact, Map> buildOutputsMap = tempBuildOutputsMap.clone()
+
+tempBuildOutputsMap.each{ deployableArtifact, info ->
+	container = info[0]
+	buildReport = info[1]
+	record = info[2]
+	artifactRank = info[3]
+	
+	if (record.getType() == DefaultRecordFactory.TYPE_EXECUTE || record.getType() == DefaultRecordFactory.TYPE_COPY_TO_PDS) {
+		DeployableArtifact deleteArtifact = new DeployableArtifact(container + "(" + deployableArtifact.file + ")", "DELETE")
+		if (tempBuildOutputsMap.containsKey(deleteArtifact)) {
+			deleteArtifactInfo = tempBuildOutputsMap.get(deleteArtifact)
+			deleteArtifactRank = deleteArtifactInfo[3]
+			if (artifactRank > deleteArtifactRank) {
+				buildOutputsMap.remove(deleteArtifact)
+			} else {
+				buildOutputsMap.remove(deployableArtifact)				
+			}
+		}
+	}
 }
 
 if (buildOutputsMap.size() == 0 ) {
-	println("** No items to package in the provided build reports (s). Process exiting.")
-	System.exit(2)
+	println("** No items to package in the provided build reports. Exiting.")
+	System.exit(0)
 }
-
 
 // generate ship list file. specification of UCD ship list can be found at
 // https://www.ibm.com/support/knowledgecenter/SS4GSP_6.2.7/com.ibm.udeploy.doc/topics/zos_shiplistfiles.html
@@ -189,9 +222,11 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 	boolean singleBuildReportReporting = true	
 	
 	// iterate over Hashmap to generate container entries for UCD shiplist.
-	buildOutputsMap.each{ dataset, info ->
-		buildReport = info[0]
-		record = info[1]
+	buildOutputsMap.each{ deployableArtifact, info ->
+		container = info[0]
+		buildReport = info[1]
+		record = info[2]
+	
 
 		// obtain build info from the build result record
 		def buildResult = buildReport.getRecords().findAll{it.getType()==DefaultRecordFactory.TYPE_BUILD_RESULT}[0]
@@ -226,98 +261,101 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			// Shiplist entry created, no need to document it a second time 
 			singleBuildReportReporting = false
 		}
-		
-		println "   Creating shiplist record for build output $dataset with recordType $record.type."
-		
+				
 		// process TYPE_EXECUTE and TYPE_COPY_TO_PDS
 		if (record.getType()==DefaultRecordFactory.TYPE_EXECUTE || record.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) {
-
+			
 			record.getOutputs().each{ output ->
 				// process only outputs of the key of the map
-				if (dataset == output.dataset) {
-					def (ds, member) = getDatasetName(output.dataset)
-					//println "    Defining container for $output.dataset."
-					def containerAttributes = getContainerAttributes(ds, properties)
-					container(containerAttributes){
-						resource(name:member, type:"PDSMember", deployType:output.deployType){
-
-							// document dbb build result url and build properties on the element level when there are more than one buildReport processed
-							if (properties.buildReportOrder.size() != 1) {
-
-								// Url to DBB Build result
-								if (buildResult != null) {
-									property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
-								}	
-								// Populate build result properties
-								if (buildResultProperties != null) {
-									buildResultProperties.each{
-										//not all properties need to be included in the shiplist
-										//can ignore files processed
-										//can ignore full build / impact build
-										property(name:it.key, value:it.value)
+				def fullDatasetName = container + "(" + deployableArtifact.file + ")"
+				if (fullDatasetName == output.dataset) {
+					if (ZFile.exists("//'$container(${deployableArtifact.file})'")) {
+							
+						println "   Creating shiplist record for build output $container(${deployableArtifact.file}) with recordType $record.type."
+						def containerAttributes = getContainerAttributes(container, properties)
+						container(containerAttributes){
+							resource(name:deployableArtifact.file, type:"PDSMember", deployType:output.deployType){
+	
+								// document dbb build result url and build properties on the element level when there are more than one buildReport processed
+								if (properties.buildReportOrder.size() != 1) {
+	
+									// Url to DBB Build result
+									if (buildResult != null) {
+										property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+									}	
+									// Populate build result properties
+									if (buildResultProperties != null) {
+										buildResultProperties.each{
+											//not all properties need to be included in the shiplist
+											//can ignore files processed
+											//can ignore full build / impact build
+											property(name:it.key, value:it.value)
+										}
 									}
 								}
-							}
-
-							property(name:"buildcommand", value:record.getCommand())
-
-							// Only TYPE_EXECUTE Records carry options
-							if (record.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:record.getOptions())
-							
-							// Sample to add additional artifact properties. Here: adding db2 properties for a DBRM
-							//   which where added to the build report through a basic PropertiesRecord.
-							//   see https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89
+	
+								property(name:"buildcommand", value:record.getCommand())
+	
+								// Only TYPE_EXECUTE Records carry options
+								if (record.getType()==DefaultRecordFactory.TYPE_EXECUTE) property(name:"buildoptions", value:record.getOptions())
 								
-							if (output.deployType.equals("DBRM")){
-								propertyRecord = buildReport.getRecords().findAll{
-									it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==record.getFile()
-								}
-								propertyRecord.each { propertyRec ->
-									// Iterate Properties
-									(propertyRec.getProperties()).each {
-										property(name:"$it.key", value:it.value)
+								// Sample to add additional artifact properties. Here: adding db2 properties for a DBRM
+								//   which where added to the build report through a basic PropertiesRecord.
+								//   see https://github.com/IBM/dbb-zappbuild/blob/06ff114ee22b4e41a09aa0640ac75b7e56c70521/build-conf/build.properties#L79-L89
+									
+								if (output.deployType.equals("DBRM")){
+									propertyRecord = buildReport.getRecords().findAll{
+										it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getProperty("file")==record.getFile()
+									}
+									propertyRecord.each { propertyRec ->
+										// Iterate Properties
+										(propertyRec.getProperties()).each {
+											property(name:"$it.key", value:it.value)
+										}
 									}
 								}
-							}
-							
-							// add githash to container
-							def githash = "" // set empty
-							if (buildResultProperties != null){
-								// get git references from build properties
-								def gitproperty = buildResultProperties.find{
-									it.key.contains(":githash:") && record.getFile().contains(it.key.substring(9))
-								}
-								if (gitproperty != null ) {
-									githash = gitproperty.getValue()
-									// set properties in shiplist
-									property(name:"githash", value:githash)
-									if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
-								}
-							}
-							
-							// add source information in the input column of UCD
-							inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ record.getFile() : ""
-							inputs(url : "${inputUrl}"){
-								input(name : record.getFile(), compileType : "Main", url : inputUrl)
 								
-								// adding dependencies
-								def dependencySets = buildReport.getRecords().findAll{
-									it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==record.getFile()
-								};
-								Set<String> dependencyCache = new HashSet<String>()
-								dependencySets.unique().each{
-									it.getAllDependencies().each{
-										if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=record.getFile()){
-											def displayName = it.getFile() ? it.getFile() : it.getLname()
-											def dependencyUrl =""
-											if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
-											input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
-											dependencyCache.add(it.getLname())
+								// add githash to container
+								def githash = "" // set empty
+								if (buildResultProperties != null){
+									// get git references from build properties
+									def gitproperty = buildResultProperties.find{
+										it.key.contains(":githash:") && record.getFile().contains(it.key.substring(9))
+									}
+									if (gitproperty != null ) {
+										githash = gitproperty.getValue()
+										// set properties in shiplist
+										property(name:"githash", value:githash)
+										if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
+									}
+								}
+								
+								// add source information in the input column of UCD
+								inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ record.getFile() : ""
+								inputs(url : "${inputUrl}"){
+									input(name : record.getFile(), compileType : "Main", url : inputUrl)
+									
+									// adding dependencies
+									def dependencySets = buildReport.getRecords().findAll{
+										it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==record.getFile()
+									};
+									Set<String> dependencyCache = new HashSet<String>()
+									dependencySets.unique().each{
+										it.getAllDependencies().each{
+											if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=record.getFile()){
+												def displayName = it.getFile() ? it.getFile() : it.getLname()
+												def dependencyUrl =""
+												if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
+												input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
+												dependencyCache.add(it.getLname())
+											}
 										}
 									}
 								}
 							}
 						}
+					} else {
+						println "*! The file '$container(${deployableArtifact.file})' doesn't exist. Copy is skipped."
 					}
 				}
 			}
@@ -327,15 +365,18 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 			
 			deletedFiles = record.getAttributeAsList("deletedBuildOutputs")
 			deletedFiles.each { deletedOutput ->
+				
+				// remove any quotes
+				deletedOutput = ((String) deletedOutput).replace('"', '');
 
 				// process only outputs of the key of the map
-				if(dataset == deletedOutput) {
+				if (deployableArtifact.file == deletedOutput) {
 
-					def (ds,member) = getDatasetName(deletedOutput)
 					println "   Defining shiplist delete container for $deletedOutput."
 
 					deleted{
 						// create container
+						def (ds, member) = getDatasetName(deployableArtifact.file)
 						def containerAttributes = getContainerAttributes(ds, properties)
 						container(containerAttributes){
 							resource(name:member, type:"PDSMember")
@@ -470,7 +511,7 @@ def getDatasetName(String fullname){
  */
 
 /**
- * calcualte the container attributes for default package or package v2 
+ * calculate the container attributes for default package or package v2 
  */
 // define container attributes
 def getContainerAttributes(String ds, Properties properties) {
@@ -484,7 +525,7 @@ def getContainerAttributes(String ds, Properties properties) {
 			def cMapping = parseJSONStringToMap(properties.containerMapping)
 			containerDeployType = cMapping[lastLevelQual]
 			if (containerDeployType == null) {
-				println "*!* UCD Packaging v2 formar requires a mapping for the copymode for $lastLevelQual through the containerMapping property - see $properties.containerMapping."
+				println "*! UCD v2 Package format requires a mapping for the copymode for $lastLevelQual through the containerMapping property - Current mapping is '$properties.containerMapping'."
 			}
 		} else {
 			// set the last level qualifier as deployType
@@ -523,7 +564,7 @@ def parseInput(String[] cliArgs){
 
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
-	if (opts.h) { // if help option used, print usage and exit
+	if (opts == null || opts.h) { // if help option used, print usage and exit
 		cli.usage()
 		System.exit(0)
 	}
@@ -586,7 +627,7 @@ def parseInput(String[] cliArgs){
 	} 
 	
 	if (!opts.boFile && !opts.bO){ // default lookup in Workdir
-		buildReports.add(opts.w + "/BuildReport.json")
+		buildReports.add("" + opts.w + "/BuildReport.json")
 	}
 
 	properties.buildReportOrder = buildReports
@@ -622,4 +663,38 @@ def parseJSONStringToMap(String packageProperty) {
 		System.exit(3)
 	}
 	return map
+}
+
+class DeployableArtifact {
+	private final String file;
+	private final String deployType;
+	
+	DeployableArtifact(String file, String deployType) {
+		this.file = file;
+		this.deployType = deployType;
+	}
+
+	@Override
+	public int hashCode() {
+		String concatenation = file + "." + deployType;
+		return concatenation.hashCode();
+	}
+
+	public boolean equals(DeployableArtifact other) {
+		return other.file.equals(file) & other.deployType.equals(deployType);
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof DeployableArtifact) {
+			return equals((DeployableArtifact) other)
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		return file + "." + deployType;
+	}
 }

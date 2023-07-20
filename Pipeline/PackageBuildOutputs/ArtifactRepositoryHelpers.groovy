@@ -6,6 +6,8 @@ import groovy.cli.commons.*
 import java.net.http.*
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse.BodyHandlers
+import java.net.http.HttpResponse.BodyHandler
+import java.util.concurrent.CompletableFuture
 
 import java.nio.file.Paths
 
@@ -17,14 +19,29 @@ import java.nio.file.Paths
  * This script requires JAVA 11 because it uses java.net.http.* APIs to create
  * the HTTPClient and HTTPRequest, replacing the previous ArtifactoryHelper
  *
+ * Version 2 - 2023-04
+ * 
+ * Implemented a retry mechanism for upload and download (with Connection Keep-alive for upload)
  */
+
+@Field int MAX_RESEND = 10;
+
+def <T> CompletableFuture<HttpResponse<T>>
+		tryResend(HttpClient client, HttpRequest request, BodyHandler<T> handler,
+				 int count, HttpResponse<T> resp) {
+	if (resp.statusCode() == 200 || count >= MAX_RESEND) {
+		return CompletableFuture.completedFuture(resp);
+	} else {
+		return client.sendAsync(request, handler)
+				.thenComposeAsync(r -> tryResend(client, request, handler, count+1, r));
+	}
+}
 
 run(args)
 
 def upload(String url, String fileName, String user, String password, boolean verbose) throws IOException {
-
+	System.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection")
     println( "** ArtifactRepositoryHelper started for upload of $fileName to $url" );
-    
     
     // create http client
     HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
@@ -49,32 +66,33 @@ def upload(String url, String fileName, String user, String password, boolean ve
     HttpRequest request = HttpRequest.newBuilder()
     .uri(URI.create("$url"))
     .header("Content-Type", "binary/octet-stream")
+	.header("Connection","Keep-Alive")
     .PUT(BodyPublishers.ofFile(Paths.get(fileName)))
     .build();
 
+	println("** Uploading $fileName to $url...");
+	
+	HttpResponse.BodyHandler<String> handler = HttpResponse.BodyHandlers.ofString();
     // submit request
+	CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request, handler).thenComposeAsync(r -> tryResend(httpClient, request, handler, 1, r));
+	HttpResponse finalResponse = response.get()
     
-    println( "** Uploading $fileName to $url" );
-    HttpResponse response = httpClient.send(request, BodyHandlers.ofString())
+    if (verbose)
+		println("** Response: " + finalResponse);
     
-    if ( verbose ) println( "** Response: " + response );
-    
-    def rc = evaluateHttpResponse(response, "upload", verbose)
+    def rc = evaluateHttpResponse(finalResponse, "upload", verbose)
     
     if (rc == 0 ) {
-        println("** Upload completed");
+        println("** Upload completed.");
     }
     else {
-        println("** Upload failed");
+        println("*! Upload failed.");
     }
-
 }
 
 def download(String url, String fileName, String user, String password, boolean verbose) throws IOException  {
-    
-    println( "** ArtifactRepositoryHelper started for download of $url to $fileName" );
-    
-    
+    println("** ArtifactRepositoryHelper started for download of $url to $fileName.");
+
     // create http client
     HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
     .authenticator(new Authenticator() {
@@ -101,46 +119,43 @@ def download(String url, String fileName, String user, String password, boolean 
     .build();
     
     // submit request
-    println( "** Downloading $url to $fileName " );
-    HttpResponse response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream())
-    
+    println("** Downloading $url to $fileName...");
+	HttpResponse.BodyHandler<InputStream> handler = HttpResponse.BodyHandlers.ofInputStream();
+	CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request, handler).thenComposeAsync(r -> tryResend(httpClient, request, handler, 1, r));
+
+	HttpResponse finalResponse = response.get()
+	
     // evalulate response
-    rc = evaluateHttpResponse(response, "download", verbose)
+    rc = evaluateHttpResponse(finalResponse, "download", verbose)
     
     if (rc == 0) {
         // write file to output 
-        def responseBody = response.body()
-        println("** Writing to file to $fileName")
+        def responseBody = finalResponse.body()
+        println("** Writing to file to $fileName.")
         FileOutputStream fos = new FileOutputStream(fileName);
         fos.write(responseBody.readAllBytes());
         fos.close();
     } else {
-        println("** Download failed");
+        println("*! Download failed.");
     }
-
 }
 
 def evaluateHttpResponse (HttpResponse response, String action, boolean verbose) {
     int rc = 0
     def statusCode = response.statusCode()
-    if ( verbose) println "*** HTTP-Status Code: $statusCode"
+    if (verbose) println "*** HTTP-Status Code: $statusCode"
     def responseString = response.body()
-    if ( (statusCode != 201) && (statusCode != 200)  ) {
+    if ((statusCode != 201) && (statusCode != 200)) {
         rc = 1
-        println("** Artifactory $action failed with statusCode : $statusCode ")
-        println( "** Response: " + response );
-        throw new RuntimeException("Exception : Artifactory $action failed: "
-             + statusCode);
-    }
-    
+        println("** Artifactory $action failed with statusCode : $statusCode")
+        println("** Response: " + response);
+        throw new RuntimeException("Exception : Artifactory $action failed:" + statusCode);
+    }    
     return rc
 }
 
-
 //Parsing the command line
-def run(String[] cliArgs)
-{
-
+def run(String[] cliArgs) {
     def cli = new CliBuilder(usage: "ArtifactRepositoryHelpers.groovy [options]", header: '', stopAtNonOption: false)
     cli.h(longOpt:'help', 'Prints this message')
     cli.u(longOpt:'url', args:1, required:true, 'Artifactory file uri location')
@@ -151,13 +166,12 @@ def run(String[] cliArgs)
     cli.v(longOpt:'verbose', 'Flag to turn on script trace')
     def opts = cli.parse(cliArgs)
 
-    // if opt parse fail exit.
-    if (! opts) {
+    // if opt parsing fails, exit
+    if (opts == null || !opts) {
         System.exit(1)
     }
 
-    if (opts.h)
-    {
+    if (opts.h) {
         cli.usage()
         System.exit(0)
     }
