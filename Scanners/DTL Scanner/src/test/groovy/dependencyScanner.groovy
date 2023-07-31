@@ -1,4 +1,4 @@
-import com.dat.dtl.dbb.scanner.DTLDependencyScanner
+import com.ibm.dbb.extensions.scanners.dtl.DTLDependencyScanner
 import com.ibm.dbb.dependency.*
 
 /*
@@ -7,12 +7,12 @@ import com.ibm.dbb.dependency.*
  *
  * Invoke this script via groovyz:
  *
- * groovyz  -cp /u/dbehm/dbb-scanner/com.dat.dtl.dbb.scanner.jar dependencyScanner.groovy
+ * groovyz  -cp /u/ibmzser/dbb-scanner/com.dat.dtl.dbb.scanner.jar dependencyScanner.groovy
  *
  */
 
 String buildFile = "FLMB#P.dtlenu"
-String workspace = "/u/dbehm/userBuild"
+String workspace = "/u/ibmuser/userBuild"
 
 // creating own scanner
 def scanner = new DTLDependencyScanner()

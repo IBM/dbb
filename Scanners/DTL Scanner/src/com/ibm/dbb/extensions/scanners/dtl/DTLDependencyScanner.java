@@ -1,4 +1,4 @@
-package com.dat.dtl.dbb.scanner;
+package com.ibm.dbb.extensions.scanners.dtl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,7 +30,11 @@ public class DTLDependencyScanner extends AbstractDependencyScanner {
 		LogicalFile lfile = new LogicalFile(createLogicalName(file), file, "DTL", false, false, false, false);
 		
 		String ext = file.substring(file.lastIndexOf('.')+1);
+		
+		// Set library type to DTLINC
 		String library = "DTLINC";
+		
+		// Set a different library for Japanese dialogs includes
 		if (ext.equals("dtljpn")) {
 			library = "DTLINCJ";
 		}
@@ -75,8 +79,6 @@ public class DTLDependencyScanner extends AbstractDependencyScanner {
 			e.printStackTrace();
 		}
 
-		
-		
 		return lfile;
 	}
 
