@@ -9,7 +9,11 @@ You need to build the scanner and upload them to z/OS Unix System services
 * Upload the supplied sample dtl source [FLMB#P.dtlenu](dtl/FLMB#P.dtlenu) to a location in USS.
 * Upload the supplied sample groovy script to USS
 * Customize paths in [dependencyScanner.groovy](groovy/dependencyScanner.groovy) to the locations where you uploaded the sample source codes.
-* Execute 
+* Execute the test script like `groovyz -cp /var/dbb/dbb-extensions/dtlScanner_0.1.0.jar dependencyScanner.groovy`
+
+## Expected console log
+
+The test script is instantiating the DTLDependencyScanner, scans the file and prints the logical file.
 
 ```
 IBMUSER:/u/ibmuser: >/usr/lpp/dbb/v2r0/bin/groovyz -cp /var/dbb/dbb-extensions/dtlScanner_0.1.0.jar /u/ibmuser/userBuild/dependencyScanner.groovy
