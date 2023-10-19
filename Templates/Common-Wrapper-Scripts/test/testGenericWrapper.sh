@@ -32,48 +32,71 @@
 ## script configuration
 #====================================================================================
 # build workspace directory for test
-dbbBuildRootDir="/u/dbehm/backendWorkspace"
+# e.g. dbbBuildRootDir="/u/ibmuser/backendWorkspace"
+dbbBuildRootDir=""
+
 # ssh connection
-# e.q. ibmuser@dev-lpar
-sshConnection="dbehm@10.3.20.201"
+# e.g. sshConnection="ibmuser@dev-lpar"
+sshConnection=""
+
 # ssh environment profile to execute for non-conversational ssh sessions
-sshEnvironmentProfile="/u/dbehm/.profile"
+# e.g. sshEnvironmentProfile="/u/ibmuser/.profile"
+sshEnvironmentProfile=""
+
+
 # MortageApplication Artifact repository properties for UCD
-artifactRepoConfig="/var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
+# e.g. artifactRepoConfig="/var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
+artifactRepoConfig=""
+
+#====================================================================================
+# Test repository
+#====================================================================================
+repo="https://github.com/dennis-behm/MortgageApplication.git" # the test repo
+application="MortgageApplication"
 
 #====================================================================================
 # flags which pipeline steps should be executed in test process
-# e.q. for instance if you don't want to run a test for UCD
+# e.g. for instance if you don't want to run a test for UCD
 # please pay to attention to dependencies between steps -
-#  e.q. you cannot request a deployment without packaging
+# e.g. you cannot request a deployment without packaging
 #====================================================================================
 
-executeClone="true"                 # required
-executeBuild="true"                 # required
-executePackageBuildOutputs="true"   # optional
-executePublishLogs="true"           # optional
-executeUcdPackaging="true"          # optional
-executeUcdDeploy="true"             # optional
+executeClone="true"               # required
+executeBuild="true"               # required
+executePackageBuildOutputs="true" # optional
+executePublishLogs="true"         # optional
+executeUcdPackaging="true"        # optional
+executeUcdDeploy="true"           # optional
 
+#====================================================================================
+## script configuration - end
+#====================================================================================
 
 # local variables
 PGM=$(basename "$0")
-uniqueWorkspaceId=""    # calculated
-repo=""                 # repository path
-application=""          # application name
-pipelineType=""         # pipeline type - either build or release
-branch=""               # branch
-verbose=""              # Verbose logging flag
-buildTypeOverride=""    # Override of zAppBuild build type
-ucdVersionName=""       # UCD component version name
-timestamp=""            # timestamp for ucd version name or package build outputs
-testSummary=""          # String to collect the overall test summary
+uniqueWorkspaceId="" # calculated
+pipelineType=""      # pipeline type - either build or release
+branch=""            # branch
+verbose=""           # Verbose logging flag
+buildTypeOverride="" # Override of zAppBuild build type
+ucdVersionName=""    # UCD component version name
+timestamp=""         # timestamp for ucd version name or package build outputs
+testSummary=""       # String to collect the overall test summary
+rc=0                 # Internal RC
 
 commandInterface=$1 #
 
 if [ -z "${commandInterface}" ]; then
     ERRMSG=$PGM": [INFO] Command interface not specified. Ussing ssh configuruation".
     echo $ERRMSG
+fi
+
+
+if [ -z "${dbbBuildRootDir}" ]; then
+    rc=12
+    ERRMSG=$PGM": [ERROR] dbbBuildRootDir not specified. Please review configuration. Exiting. rc="$rc
+    echo $ERRMSG
+    exit $rc
 fi
 
 echo "$PGM: [INFO] Running test script using $commandInterface."
@@ -84,8 +107,23 @@ submitCmd() {
         echo "$PGM: [COMMAND] zowe zos-uss issue ssh \"${cmdStr}\""
         zowe zos-uss issue ssh "${cmdStr}"
     else
-        echo "$PGM: [COMMAND] ssh $sshConnection \". $sshEnvironmentProfile && ${cmdStr}\""
-        ssh $sshConnection ". $sshEnvironmentProfile && ${cmdStr}"
+        # Check configuration
+        if [ -z "${sshConnection}" ]; then
+            rc=12
+            ERRMSG=$PGM": [ERROR] SSH connection details not configured in test script. Exiting. rc="$rc
+            echo $ERRMSG
+        fi
+
+        if [ -z "${sshEnvironmentProfile}" ]; then
+            rc=12
+            ERRMSG=$PGM": [ERROR] SSH environment profiles not set. Required to run test script. Exiting. rc="$rc
+            echo $ERRMSG
+        fi
+
+        if [ $rc -eq 0 ]; then
+            echo "$PGM: [COMMAND] ssh $sshConnection \". $sshEnvironmentProfile && ${cmdStr}\""
+            ssh $sshConnection ". $sshEnvironmentProfile && ${cmdStr}"
+        fi
     fi
 }
 
@@ -98,15 +136,10 @@ resetWorkspace() {
     # cleanup
     cmdStr="rm -Rf $dbbBuildRootDir"
     submitCmd
-    #zowe zos-uss issue ssh "rm -Rf $prefix-zapp-app"
-    #zowe zos-uss issue ssh "rm -Rf $prefix-zapp-app-out"
 
-    # zappbuild
     cmdStr="mkdir $dbbBuildRootDir"
     submitCmd
-    #zowe zos-uss issue ssh "git -C $prefix-zapp clone https://github.com/ibm/dbb-zappbuild.git"
-    #zowe zos-uss issue ssh "mkdir $prefix-zapp-app"
-    #zowe zos-uss issue ssh "mkdir $prefix-zapp-app-out"
+
 
     echo "$PGM: Reset dbb collections in File Metadatastore."
 
@@ -268,10 +301,8 @@ testMortgageApplication-Main-Bld-Build-0() {
     # test configuration
     branch="main"
     uniqueWorkspaceId="MortApp/${branch}/build-0"
-    application="MortgageApplication"
     pipelineType="build"
     buildTypeOverride="--fullBuild"
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     # set timestamp
     setTimestamp
 
@@ -306,14 +337,12 @@ testMortgageApplication-Main-Bld-Build-0() {
 
 ############# MortgageApplication MortApp/build-1
 testMortgageApplication-Main-Bld-Build-1() {
-     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Main-Bld-Build-1."
+    echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Main-Bld-Build-1."
     # test configuration
     branch="main"
     uniqueWorkspaceId="MortApp/${branch}/build-1"
-    application="MortgageApplication"
     pipelineType="build"
     verbose="-v"
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     ucdVersionName="${application}.build-1"
     # set timestamp
     setTimestamp
@@ -372,13 +401,11 @@ testMortgageApplication-Main-Bld-Build-1() {
 }
 
 testMortgageApplication-Main-Rel-Build-2() {
-     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Main-Rel-Build-2."
+    echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Main-Rel-Build-2."
     ############# MortgageApplication MortApp/build-2
     branch="main"
     uniqueWorkspaceId="MortApp/${branch}/build-2"
-    application="MortgageApplication"
     pipelineType="release"
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     ucdVersionName="${application}.build-2"
     # set timestamp
     setTimestamp
@@ -426,12 +453,10 @@ testMortgageApplication-Main-Rel-Build-2() {
 }
 
 testMortgageApplication-Main-Prev-Build-3() {
-     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Main-Prev-Build-3."
+    echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Main-Prev-Build-3."
     branch="main"
     uniqueWorkspaceId="MortApp/${branch}/build-3"
-    application="MortgageApplication"
     pipelineType="preview"
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     #ucdVersionName="${application}.build-3"
     # set timestamp
     setTimestamp
@@ -473,12 +498,10 @@ testMortgageApplication-Main-Prev-Build-3() {
 }
 ############# MortgageApplication release maintenance leg MortApp/build-3
 testMortgageApplication-Release-Rel100-Build-1() {
-     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Release-Rel100-Build-1."
+    echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Release-Rel100-Build-1."
     branch="release/rel-1.0.0"
     uniqueWorkspaceId="MortApp/${branch}/build-1"
-    application="MortgageApplication"
     pipelineType=""
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     ucdVersionName="${application}.rel-1.0.0.fix-1.build-1"
     # set timestamp
     setTimestamp
@@ -527,11 +550,9 @@ testMortgageApplication-Release-Rel100-Build-1() {
 
 ############# MortgageApplication release maintenance leg MortApp/build-3
 testMortgageApplication-Hotfix-Release-Rel100-Build-1() {
-     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Hotfix-Release-Rel100-Build-1."
+    echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Hotfix-Release-Rel100-Build-1."
     branch="hotfix/rel-1.0.0/myfix"
     uniqueWorkspaceId="MortApp/${branch}/build-1"
-    application="MortgageApplication"
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     ucdVersionName="prelim_${application}.rel-1.0.0.myfix.build-1"
     # set timestamp
     setTimestamp
@@ -582,12 +603,10 @@ testMortgageApplication-Hotfix-Release-Rel100-Build-1() {
 
 ############# MortgageApplication contibution to the next release
 testMortgageApplication-Feature-Setmainbuildbranch-Build-1() {
-     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Feature-Setmainbuildbranch-Build-1."
+    echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Feature-Setmainbuildbranch-Build-1."
     branch="feature/setmainbuildbranch"
     uniqueWorkspaceId="MortApp/${branch}/build-1"
-    application="MortgageApplication"
     pipelineType=""
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     ucdVersionName="prelim_${application}.feature.setmainbuildbranch.build-1"
     # set timestamp
     setTimestamp
@@ -639,11 +658,9 @@ testMortgageApplication-Feature-Setmainbuildbranch-Build-1() {
 
 ############# MortgageApplication contibution to the next release
 testMortgageApplication-Epic-implementAI-Build-1() {
-     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Epic-implementAI-Build-1."
+    echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Epic-implementAI-Build-1."
     branch="epic/implementAI"
     uniqueWorkspaceId="MortApp/${branch}/build-1"
-    application="MortgageApplication"
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     ucdVersionName="prelim_${application}.epic.implementAI.build-1"
     # set timestamp
     setTimestamp
@@ -693,11 +710,9 @@ testMortgageApplication-Epic-implementAI-Build-1() {
 
 ############# MortgageApplication contibution to the next release
 testMortgageApplication-Epic-Feature-implementAI-Build-1() {
-     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Epic-Feature-implementAI-Build-1."
+    echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Epic-Feature-implementAI-Build-1."
     branch="implementAI/myFeatureImpl"
     uniqueWorkspaceId="MortApp/${branch}/build-1"
-    application="MortgageApplication"
-    repo="https://github.com/dennis-behm/MortgageApplication.git"
     ucdVersionName="prelim_${application}.epic.implementAI.build-1"
     # set timestamp
     setTimestamp
@@ -749,7 +764,6 @@ testMortgageApplication-Epic-Feature-implementAI-Build-1() {
 # Functions representing and controlling the various test scenarios
 #====================================================================================
 
-rc=0
 if [ $rc -eq 0 ]; then
     resetWorkspace
     rc=$?

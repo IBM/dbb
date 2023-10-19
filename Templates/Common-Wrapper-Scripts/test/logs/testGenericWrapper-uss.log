@@ -131,9 +131,9 @@ dbbBuild.sh: [INFO] ************************************************************
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
 dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/main/build-0 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/main/build-0/logs --hlq DBEHM.MORTGAGE.MAIN.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --fullBuild
 
-** Build start at 20231017.085455.054
+** Build start at 20231019.114904.049
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/main/build-0/logs
-** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20231017.085455.054
+** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20231019.114904.049
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --fullBuild option selected. Building all programs for application MortgageApplication
 ** Writing build list file to /u/dbehm/backendWorkspace/MortApp/main/build-0/logs/buildList.txt
@@ -154,11 +154,11 @@ dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/bu
 *** (1/1) Building file MortgageApplication/link/epsmlist.lnk
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/main/build-0/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/main/build-0/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20231017.085455.054
-** Build ended at Tue Oct 17 08:55:12 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20231019.114904.049
+** Build ended at Thu Oct 19 11:49:21 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 9
-** Total build time  : 17.477 seconds
+** Total build time  : 17.291 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/main/build-0/logs/buildList.txt
@@ -177,18 +177,18 @@ prepareLogs.sh: [INFO] **  Directory contents:
 prepareLogs.sh: [INFO] ls -RlTr logs
 logs:
 total 1424
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       684 Oct 17 09:54 buildList.txt
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18413 Oct 17 09:55 EPSNBRVL.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     25299 Oct 17 09:55 EPSMPMT.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      4152 Oct 17 09:54 EPSMORT.bms.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9521 Oct 17 09:55 EPSMLIST.linkedit.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     72967 Oct 17 09:55 EPSMLIST.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      4152 Oct 17 09:54 EPSMLIS.bms.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     19843 Oct 17 09:55 EPSCSMRT.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR    390073 Oct 17 09:55 EPSCSMRD.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     53983 Oct 17 09:55 EPSCMORT.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     27514 Oct 17 09:55 BuildReport.json
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     27662 Oct 17 09:55 BuildReport.html
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       684 Oct 19 12:49 buildList.txt
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18413 Oct 19 12:49 EPSNBRVL.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     25301 Oct 19 12:49 EPSMPMT.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      4154 Oct 19 12:49 EPSMORT.bms.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9523 Oct 19 12:49 EPSMLIST.linkedit.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     72967 Oct 19 12:49 EPSMLIST.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      4154 Oct 19 12:49 EPSMLIS.bms.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     19845 Oct 19 12:49 EPSCSMRT.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR    390075 Oct 19 12:49 EPSCSMRD.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     53985 Oct 19 12:49 EPSCMORT.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     27514 Oct 19 12:49 BuildReport.json
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     27662 Oct 19 12:49 BuildReport.html
 prepareLogs.sh: [INFO] tar -cf logs.tar logs
 prepareLogs.sh: [INFO] Logs successfully stored at /u/dbehm/backendWorkspace/MortApp/main/build-0/logs.tar
 USS file downloaded successfully.
@@ -250,7 +250,7 @@ dbbBuild.sh: [INFO] ************************************************************
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
 dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/main/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/main/build-1/logs --hlq DBEHM.MORTGAGE.MAIN.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml --verbose --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --baselineRef refs/tags/rel-1.0.0
 
-** Build start at 20231017.085535.055
+** Build start at 20231019.114945.049
 ** Input args = /u/dbehm/backendWorkspace/MortApp/main/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/main/build-1/logs --hlq DBEHM.MORTGAGE.MAIN.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml --verbose --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --baselineRef refs/tags/rel-1.0.0
 ** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/datasets.properties
 ** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/dependencyReport.properties
@@ -300,6 +300,7 @@ SDFHMAC=CICSTS.V5R4.CICS.SDFHMAC
 SDFHPL1=
 SDFSMAC=IMS.V15R1.SDFSMAC
 SDFSRESL=IMS.V15R1.SDFSRESL
+SDSNEXIT=DBC0CFG.SDSNEXIT
 SDSNLOAD=DBC0CFG.DB2.V12.SDSNLOAD
 SEQAMOD=DEBUG.V14R1.SEQAMOD
 SFANLMD=
@@ -318,7 +319,7 @@ acbgen_requiredBuildProperties=acbgen_psbPDS,acbgen_dbdPDS,acbgen_loadPDS, acbge
 acbgen_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
 application=MortgageApplication
 applicationBuildGroup=MortgageApplication-main
-applicationBuildLabel=build.20231017.085535.055
+applicationBuildLabel=build.20231019.114945.049
 applicationCollectionName=MortgageApplication-main
 applicationConfRootDir=
 applicationCurrentBranch=main
@@ -600,7 +601,7 @@ rexx_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
 rexx_srcPDS=DBEHM.MORTGAGE.MAIN.BLD.REXX
 rexx_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
 skipImpactCalculationList=
-startTime=20231017.085535.055
+startTime=20231019.114945.049
 topicBranchBuild=null
 transfer_dsOptions=cyl space(1,1) lrecl(144) dsorg(PO) recfm(F,B) dsntype(library)::transfer_xmlPDS
 transfer_dsOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)::transfer_srcPDS,transfer_jclPDS
@@ -626,7 +627,7 @@ zunit_srcOptions=cyl space(1,1) lrecl(27998) dsorg(PO) recfm(V,B) dsntype(librar
 required props = buildOrder,buildListFileExt
 ** File MetadataStore initialized
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/main/build-1/logs
-** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20231017.085535.055
+** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20231019.114945.049
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --impactBuild option selected. Building impacted programs for application MortgageApplication 
 ** Getting current hash for directory /u/dbehm/backendWorkspace/MortApp/main/build-1/MortgageApplication
@@ -797,11 +798,11 @@ Link-Edit parms for MortgageApplication/cobol/epscmort.cbl = MAP,RENT,COMPAT(PM5
 ** Setting property :gitchangedfiles:MortgageApplication : https://github.com/ibm/dbb-zappbuild/compare/f7380c46a60e7614539ceb4da6d3aa0dd531a238..f7380c46a60e7614539ceb4da6d3aa0dd531a238
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20231017.085535.055
-** Build ended at Tue Oct 17 08:55:41 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20231019.114945.049
+** Build ended at Thu Oct 19 11:49:52 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 2
-** Total build time  : 6.209 seconds
+** Total build time  : 6.315 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/buildList.txt
@@ -809,12 +810,12 @@ dbbBuild.sh: [INFO] DBB Build Complete. rc=0
 rc=0
 Package Step - UCD Packaging
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && ucdPackaging.sh -v MortgageApplication.build-1.2023-10-17_09-55-20 -c MortgageApplication -w /u/dbehm/backendWorkspace/MortApp/main/build-1  -b main -u http://acme.pipeline.org/MortgageApplication.build-1 -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && ucdPackaging.sh -v MortgageApplication.build-1.2023-10-19_12-49-29 -c MortgageApplication -w /u/dbehm/backendWorkspace/MortApp/main/build-1  -b main -u http://acme.pipeline.org/MortgageApplication.build-1 -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
 ucdPackaging.sh: [INFO] UCD Packaging Wrapper. Version=1.00
 ucdPackaging.sh: [INFO] **************************************************************
 ucdPackaging.sh: [INFO] ** Started - UCD Publish on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
 ucdPackaging.sh: [INFO] **                 WorkDir:
-ucdPackaging.sh: [INFO] **             UCD Version: MortgageApplication.build-1.2023-10-17_09-55-20
+ucdPackaging.sh: [INFO] **             UCD Version: MortgageApplication.build-1.2023-10-19_12-49-29
 ucdPackaging.sh: [INFO] **           UCD Component: MortgageApplication
 ucdPackaging.sh: [INFO] **      Artifacts Location: /u/dbehm/backendWorkspace/MortApp/main/build-1/logs
 ucdPackaging.sh: [INFO] **    PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy
@@ -828,17 +829,17 @@ ucdPackaging.sh: [INFO] **                DBB_HOME: /usr/lpp/dbb/v2r0
 ucdPackaging.sh: [INFO] **************************************************************
 
 ucdPackaging.sh: [INFO] Invoking the DBB UCD Packaging script.
-ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/dbehm/backendWorkspace/MortApp/main/build-1/logs --component MortgageApplication --versionName MortgageApplication.build-1.2023-10-17_09-55-20 --propertyFile /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties --pipelineURL http://acme.pipeline.org/MortgageApplication.build-1
-** Create version start at 20231017.085549.055
+ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/dbehm/backendWorkspace/MortApp/main/build-1/logs --component MortgageApplication --versionName MortgageApplication.build-1.2023-10-19_12-49-29 --propertyFile /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties --pipelineURL http://acme.pipeline.org/MortgageApplication.build-1
+** Create version start at 20231019.115000.050
 ** Properties at startup:
    preview -> false
    component -> MortgageApplication
    buztoolPath -> /var/ucd-agent/bin/buztool.sh
    buztoolPropertyFile -> /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
    buildReportOrder -> [/u/dbehm/backendWorkspace/MortApp/main/build-1/logs/BuildReport.json]
-   startTime -> 20231017.085549.055
+   startTime -> 20231019.115000.050
    workDir -> /u/dbehm/backendWorkspace/MortApp/main/build-1/logs
-   versionName -> MortgageApplication.build-1.2023-10-17_09-55-20
+   versionName -> MortgageApplication.build-1.2023-10-19_12-49-29
    pipelineURL -> http://acme.pipeline.org/MortgageApplication.build-1
    ucdV2PackageFormat -> false
 * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version 2.0.1.
@@ -854,13 +855,13 @@ ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDCom
    Creating shiplist record for build output DBEHM.MORTGAGE.MAIN.BLD.LOAD(EPSCMORT) with recordType EXECUTE.
 ** Write ship list file to  /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/shiplist.xml
 ** Following UCD buztool cmd will be invoked
-/var/ucd-agent/bin/buztool.sh createzosversion -c MortgageApplication -s /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/shiplist.xml -o /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/buztool.output -prop /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties -v "MortgageApplication.build-1.2023-10-17_09-55-20" 
+/var/ucd-agent/bin/buztool.sh createzosversion -c MortgageApplication -s /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/shiplist.xml -o /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/buztool.output -prop /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties -v "MortgageApplication.build-1.2023-10-19_12-49-29" 
 ** Create version by running UCD buztool
 ....Command : createzosversion
 Reading inputs from passed arguments:
 ....Component : MortgageApplication
 ....Shiplist file : /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/shiplist.xml
-....Version name : MortgageApplication.build-1.2023-10-17_09-55-20
+....Version name : MortgageApplication.build-1.2023-10-19_12-49-29
 ....Output File Path : /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/buztool.output
 ....Buztool Properties file : /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
 ....Reading inputs from properties file /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
@@ -869,36 +870,36 @@ zOS toolkit config   : /var/ucd-agent/ (7.3.2.0,20230525-0827)
 zOS toolkit binary   : /var/ucd-agent/ (7.3.2.0,20230525-0827)
 zOS toolkit data set : RATCFG.UCD.V7R3M2 (7.3.2.0,20230525-0827)
 Verifying version
-....Repository location : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-1.2023-10-17_09-55-20
+....Repository location : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-1.2023-10-19_12-49-29
 Pre-processing shiplist:
-....Shiplist after processing :/var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-1.2023-10-17_09-55-20/shiplist.xml
+....Shiplist after processing :/var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-1.2023-10-19_12-49-29/shiplist.xml
 Packaging data sets:
-....Location to store zip : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-1.2023-10-17_09-55-20
+....Location to store zip : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-1.2023-10-19_12-49-29
 ....Zip name : package.zip
 ....DBEHM.MORTGAGE.MAIN.BLD.DBRM.bin
 ....DBEHM.MORTGAGE.MAIN.BLD.LOAD.bin
-....Elapsed time for data set package or deploy operation : 1.513571 seconds.
+....Elapsed time for data set package or deploy operation : 2.057903 seconds.
 Post-processing package:
 PackageManifest file post-processing completed. 
 Create version and store package in external repository:
 ....Uploading artifacts to ARTIFACTORY
-....Executing request PUT http://10.3.20.231:8081/artifactory/dbb-zos-mortgage-local/httpUpload/MortgageApplication.build-1.2023-10-17_09-55-20.zip HTTP/1.1
+....Executing request PUT http://10.3.20.231:8081/artifactory/dbb-zos-mortgage-local/httpUpload/MortgageApplication.build-1.2023-10-19_12-49-29.zip HTTP/1.1
 ....Version artifacts stored in External Repository server
-Elapsed time: 6.026 seconds.
+Elapsed time: 6.154 seconds.
 
 ** buztool output properties
    component.name -> MortgageApplication
    version.shiplist -> /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/shiplist.xml
-   version.url -> https://10.3.20.96:8443/#version/b5fc36c9-f362-46f3-9745-a1862c38a741
-   version.id -> b5fc36c9-f362-46f3-9745-a1862c38a741
+   version.url -> https://10.3.20.96:8443/#version/98c4db19-508c-45bd-89f1-1b596cbd8b4d
+   version.id -> 98c4db19-508c-45bd-89f1-1b596cbd8b4d
    version.repository.type -> EXTERNAL REPOSITORY
-   version.name -> MortgageApplication.build-1.2023-10-17_09-55-20
+   version.name -> MortgageApplication.build-1.2023-10-19_12-49-29
 ** Build finished
 ucdPackaging.sh: [INFO] DBB UCD Packaging Complete. rc=0
 rc=0
 Package Step - PackageBuildOutputs
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && packageBuildOutputs.sh -w /u/dbehm/backendWorkspace/MortApp/main/build-1 -a MortgageApplication -t package.tar -b main -u -v MortgageApplication.2023-10-17_09-55-20 -p build"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && packageBuildOutputs.sh -w /u/dbehm/backendWorkspace/MortApp/main/build-1 -a MortgageApplication -t package.tar -b main -u -v MortgageApplication.2023-10-19_12-49-29 -p build"
 packageBuildOutputs.sh: [INFO] Package Build Outputs wrapper. Version=1.00
 packageBuildOutputs.sh: [INFO] **************************************************************
 packageBuildOutputs.sh: [INFO] ** Started - Package Build Outputs on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
@@ -911,7 +912,7 @@ packageBuildOutputs.sh: [INFO] **     BuildReport Location: /u/dbehm/backendWork
 packageBuildOutputs.sh: [INFO] **     PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy
 packageBuildOutputs.sh: [INFO] **     Packaging properties: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
 packageBuildOutputs.sh: [INFO] ** Publish to Artifact Repo: true
-packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-10-17_09-55-20
+packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-10-19_12-49-29
 packageBuildOutputs.sh: [INFO] **         ArtifactRepo Url: http://10.3.20.231:8081/artifactory
 packageBuildOutputs.sh: [INFO] **        ArtifactRepo User: admin
 packageBuildOutputs.sh: [INFO] **    ArtifactRepo Password: xxxxx
@@ -921,8 +922,8 @@ packageBuildOutputs.sh: [INFO] **                 DBB_HOME: /usr/lpp/dbb/v2r0
 packageBuildOutputs.sh: [INFO] **************************************************************
 
 packageBuildOutputs.sh: [INFO] Invoking the Package Build Outputs script.
-packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/dbehm/backendWorkspace/MortApp/main/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-10-17_09-55-20 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory main/build
-** PackageBuildOutputs start at 20231017.085604.056
+packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/dbehm/backendWorkspace/MortApp/main/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-10-19_12-49-29 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory main/build
+** PackageBuildOutputs start at 20231019.115019.050
 ** Properties at startup:
    addExtension -> true
    artifactRepository.directory -> main/build
@@ -934,10 +935,10 @@ packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/Packa
    copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT"]
    packagingPropertiesFile -> /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
    publish -> true
-   startTime -> 20231017.085604.056
+   startTime -> 20231019.115019.050
    tarFileName -> package.tar
    verbose -> false
-   versionName -> MortgageApplication.2023-10-17_09-55-20
+   versionName -> MortgageApplication.2023-10-19_12-49-29
    workDir -> /u/dbehm/backendWorkspace/MortApp/main/build-1/logs
 ** Read build report data from /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/BuildReport.json
 ** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE 
@@ -952,9 +953,9 @@ packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/Packa
 ** Copying /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.
 ** Creating tar file at /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/package.tar.
 ** Package successfully created at /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/package.tar.
-** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-10-17_09-55-20/package.tar.
-** ArtifactRepositoryHelper started for upload of /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-10-17_09-55-20/package.tar
-** Uploading /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-10-17_09-55-20/package.tar
+** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-10-19_12-49-29/package.tar.
+** ArtifactRepositoryHelper started for upload of /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-10-19_12-49-29/package.tar
+** Uploading /u/dbehm/backendWorkspace/MortApp/main/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-10-19_12-49-29/package.tar
 ** Upload completed
 ** Build finished
 packageBuildOutputs.sh: [INFO] Package Build Outputs Complete. rc=0
@@ -977,7 +978,7 @@ ucdDeploy.sh: [INFO] **       SSL Verification disabled: TRUE
 ucdDeploy.sh: [INFO] **************************************************************
 
 /usr/lpp/dbb/v2r0/bin/groovyz /var/dbb/extensions/dbb20/Pipeline/DeployUCDComponentVersion/ucd-deploy.groovy -a "MortgageApplication" -e "Integration-Test" -U admin -P ztecadmin -u https://ucd.dat.ibm.com:8443 -d "MortgageApplication:latest" -p appDeployment -k
-** Request UCD Deployment start at 20231017.085612.056
+** Request UCD Deployment start at 20231019.115027.050
 ** Properties at startup:
    application -> MortgageApplication 
    environment -> Integration-Test 
@@ -990,8 +991,8 @@ ucdDeploy.sh: [INFO] ***********************************************************
 **  Deploying component versions: MortgageApplication:latest
 *** Starting deployment process 'appDeployment' of application 'MortgageApplication' in environment 'Integration-Test'
 *** SSL Verification disabled
-*** Follow Process Request: https://ucd.dat.ibm.com:8443/#applicationProcessRequest/18b3ca26-2f16-1dbb-e81d-bad2452d685b 
-Executing ......
+*** Follow Process Request: https://ucd.dat.ibm.com:8443/#applicationProcessRequest/18b478e9-7f9c-0f09-cbe9-2ee9b94e320e 
+Executing .......
 *** The deployment result is SUCCEEDED. See the UrbanCode Deploy deployment logs for details.
 ** Build finished
 rc=0
@@ -1008,32 +1009,32 @@ prepareLogs.sh: [INFO] **  Directory contents:
 prepareLogs.sh: [INFO] ls -RlTr logs
 logs:
 total 416
-                    drwxr-xr-x   4 BPXROOT  TIVUSR      8192 Oct 17 09:56 tempPackageDir
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR      3125 Oct 17 09:55 shiplist.xml
-m IBM-1047    T=off -rw-r--r--   1 BPXROOT  TIVUSR     64512 Oct 17 09:56 package.tar
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        53 Oct 17 09:55 deletedFilesList.txt
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       440 Oct 17 09:55 buztool.output
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        78 Oct 17 09:55 buildList.txt
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18413 Oct 17 09:55 EPSNBRVL.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     53983 Oct 17 09:55 EPSCMORT.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 17 09:55 BuildReport.json
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      7861 Oct 17 09:55 BuildReport.html
+                    drwxr-xr-x   4 BPXROOT  TIVUSR      8192 Oct 19 12:50 tempPackageDir
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR      3125 Oct 19 12:50 shiplist.xml
+m IBM-1047    T=off -rw-r--r--   1 BPXROOT  TIVUSR     64512 Oct 19 12:50 package.tar
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        53 Oct 19 12:49 deletedFilesList.txt
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       440 Oct 19 12:50 buztool.output
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        78 Oct 19 12:49 buildList.txt
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18413 Oct 19 12:49 EPSNBRVL.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     53985 Oct 19 12:49 EPSCMORT.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 19 12:49 BuildReport.json
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      7861 Oct 19 12:49 BuildReport.html
 
 logs/tempPackageDir:
 total 82
-t IBM-1047    T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1015 Oct 17 09:56 packageBuildOutputs.properties
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        17 Oct 17 09:56 buildReportOrder.txt
-                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 17 09:56 DBEHM.MORTGAGE.MAIN.BLD.LOAD
-                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 17 09:56 DBEHM.MORTGAGE.MAIN.BLD.DBRM
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 17 09:56 BuildReport.json
+t IBM-1047    T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1015 Oct 19 12:50 packageBuildOutputs.properties
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        17 Oct 19 12:50 buildReportOrder.txt
+                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 19 12:50 DBEHM.MORTGAGE.MAIN.BLD.LOAD
+                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 19 12:50 DBEHM.MORTGAGE.MAIN.BLD.DBRM
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 19 12:50 BuildReport.json
 
 logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.BLD.LOAD:
 total 80
-- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR     40960 Oct 17 09:56 EPSCMORT.CICSLOAD
+- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR     40960 Oct 19 12:50 EPSCMORT.CICSLOAD
 
 logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.BLD.DBRM:
 total 16
-b binary      T=off -rw-r--r--   1 BPXROOT  TIVUSR       480 Oct 17 09:56 EPSCMORT.DBRM
+b binary      T=off -rw-r--r--   1 BPXROOT  TIVUSR       480 Oct 19 12:50 EPSCMORT.DBRM
 prepareLogs.sh: [INFO] tar -cf logs.tar logs
 prepareLogs.sh: [INFO] Logs successfully stored at /u/dbehm/backendWorkspace/MortApp/main/build-1/logs.tar
 USS file downloaded successfully.
@@ -1095,9 +1096,9 @@ dbbBuild.sh: [INFO] ************************************************************
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
 dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/main/build-2 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/main/build-2/logs --hlq DBEHM.MORTGAGE.MAIN.REL --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --baselineRef refs/tags/rel-1.0.0
 
-** Build start at 20231017.085703.057
+** Build start at 20231019.115123.051
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/main/build-2/logs
-** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20231017.085703.057
+** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20231019.115123.051
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --impactBuild option selected. Building impacted programs for application MortgageApplication 
 ** Writing build list file to /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/buildList.txt
@@ -1109,11 +1110,11 @@ dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/bu
 *** (2/2) Building file MortgageApplication/cobol/epscmort.cbl
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20231017.085703.057
-** Build ended at Tue Oct 17 08:57:09 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20231019.115123.051
+** Build ended at Thu Oct 19 11:51:29 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 2
-** Total build time  : 6.587 seconds
+** Total build time  : 6.060 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/buildList.txt
@@ -1121,12 +1122,12 @@ dbbBuild.sh: [INFO] DBB Build Complete. rc=0
 rc=0
 Package Step - UCD Packaging
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && ucdPackaging.sh -v MortgageApplication.build-2.2023-10-17_09-56-49 -c MortgageApplication -w /u/dbehm/backendWorkspace/MortApp/main/build-2  -b main -u http://acme.pipeline.org/MortgageApplication.build-2 -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && ucdPackaging.sh -v MortgageApplication.build-2.2023-10-19_12-51-10 -c MortgageApplication -w /u/dbehm/backendWorkspace/MortApp/main/build-2  -b main -u http://acme.pipeline.org/MortgageApplication.build-2 -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
 ucdPackaging.sh: [INFO] UCD Packaging Wrapper. Version=1.00
 ucdPackaging.sh: [INFO] **************************************************************
 ucdPackaging.sh: [INFO] ** Started - UCD Publish on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
 ucdPackaging.sh: [INFO] **                 WorkDir:
-ucdPackaging.sh: [INFO] **             UCD Version: MortgageApplication.build-2.2023-10-17_09-56-49
+ucdPackaging.sh: [INFO] **             UCD Version: MortgageApplication.build-2.2023-10-19_12-51-10
 ucdPackaging.sh: [INFO] **           UCD Component: MortgageApplication
 ucdPackaging.sh: [INFO] **      Artifacts Location: /u/dbehm/backendWorkspace/MortApp/main/build-2/logs
 ucdPackaging.sh: [INFO] **    PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy
@@ -1140,17 +1141,17 @@ ucdPackaging.sh: [INFO] **                DBB_HOME: /usr/lpp/dbb/v2r0
 ucdPackaging.sh: [INFO] **************************************************************
 
 ucdPackaging.sh: [INFO] Invoking the DBB UCD Packaging script.
-ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/dbehm/backendWorkspace/MortApp/main/build-2/logs --component MortgageApplication --versionName MortgageApplication.build-2.2023-10-17_09-56-49 --propertyFile /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties --pipelineURL http://acme.pipeline.org/MortgageApplication.build-2
-** Create version start at 20231017.085717.057
+ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/dbehm/backendWorkspace/MortApp/main/build-2/logs --component MortgageApplication --versionName MortgageApplication.build-2.2023-10-19_12-51-10 --propertyFile /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties --pipelineURL http://acme.pipeline.org/MortgageApplication.build-2
+** Create version start at 20231019.115137.051
 ** Properties at startup:
    preview -> false
    component -> MortgageApplication
    buztoolPath -> /var/ucd-agent/bin/buztool.sh
    buztoolPropertyFile -> /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
    buildReportOrder -> [/u/dbehm/backendWorkspace/MortApp/main/build-2/logs/BuildReport.json]
-   startTime -> 20231017.085717.057
+   startTime -> 20231019.115137.051
    workDir -> /u/dbehm/backendWorkspace/MortApp/main/build-2/logs
-   versionName -> MortgageApplication.build-2.2023-10-17_09-56-49
+   versionName -> MortgageApplication.build-2.2023-10-19_12-51-10
    pipelineURL -> http://acme.pipeline.org/MortgageApplication.build-2
    ucdV2PackageFormat -> false
 * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version 2.0.1.
@@ -1166,13 +1167,13 @@ ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDCom
    Creating shiplist record for build output DBEHM.MORTGAGE.MAIN.REL.DBRM(EPSCMORT) with recordType EXECUTE.
 ** Write ship list file to  /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/shiplist.xml
 ** Following UCD buztool cmd will be invoked
-/var/ucd-agent/bin/buztool.sh createzosversion -c MortgageApplication -s /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/shiplist.xml -o /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/buztool.output -prop /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties -v "MortgageApplication.build-2.2023-10-17_09-56-49" 
+/var/ucd-agent/bin/buztool.sh createzosversion -c MortgageApplication -s /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/shiplist.xml -o /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/buztool.output -prop /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties -v "MortgageApplication.build-2.2023-10-19_12-51-10" 
 ** Create version by running UCD buztool
 ....Command : createzosversion
 Reading inputs from passed arguments:
 ....Component : MortgageApplication
 ....Shiplist file : /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/shiplist.xml
-....Version name : MortgageApplication.build-2.2023-10-17_09-56-49
+....Version name : MortgageApplication.build-2.2023-10-19_12-51-10
 ....Output File Path : /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/buztool.output
 ....Buztool Properties file : /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
 ....Reading inputs from properties file /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
@@ -1181,36 +1182,36 @@ zOS toolkit config   : /var/ucd-agent/ (7.3.2.0,20230525-0827)
 zOS toolkit binary   : /var/ucd-agent/ (7.3.2.0,20230525-0827)
 zOS toolkit data set : RATCFG.UCD.V7R3M2 (7.3.2.0,20230525-0827)
 Verifying version
-....Repository location : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-2.2023-10-17_09-56-49
+....Repository location : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-2.2023-10-19_12-51-10
 Pre-processing shiplist:
-....Shiplist after processing :/var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-2.2023-10-17_09-56-49/shiplist.xml
+....Shiplist after processing :/var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-2.2023-10-19_12-51-10/shiplist.xml
 Packaging data sets:
-....Location to store zip : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-2.2023-10-17_09-56-49
+....Location to store zip : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.build-2.2023-10-19_12-51-10
 ....Zip name : package.zip
 ....DBEHM.MORTGAGE.MAIN.REL.LOAD.bin
 ....DBEHM.MORTGAGE.MAIN.REL.DBRM.bin
-....Elapsed time for data set package or deploy operation : 0.748915 seconds.
+....Elapsed time for data set package or deploy operation : 0.832231 seconds.
 Post-processing package:
 PackageManifest file post-processing completed. 
 Create version and store package in external repository:
 ....Uploading artifacts to ARTIFACTORY
-....Executing request PUT http://10.3.20.231:8081/artifactory/dbb-zos-mortgage-local/httpUpload/MortgageApplication.build-2.2023-10-17_09-56-49.zip HTTP/1.1
+....Executing request PUT http://10.3.20.231:8081/artifactory/dbb-zos-mortgage-local/httpUpload/MortgageApplication.build-2.2023-10-19_12-51-10.zip HTTP/1.1
 ....Version artifacts stored in External Repository server
-Elapsed time: 2.991 seconds.
+Elapsed time: 3.246 seconds.
 
 ** buztool output properties
    component.name -> MortgageApplication
    version.shiplist -> /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/shiplist.xml
-   version.url -> https://10.3.20.96:8443/#version/f3f0dd1d-47ba-405b-b9eb-7e5dfbc71061
-   version.id -> f3f0dd1d-47ba-405b-b9eb-7e5dfbc71061
+   version.url -> https://10.3.20.96:8443/#version/6c047c7d-7797-4c71-81ef-969652ddc152
+   version.id -> 6c047c7d-7797-4c71-81ef-969652ddc152
    version.repository.type -> EXTERNAL REPOSITORY
-   version.name -> MortgageApplication.build-2.2023-10-17_09-56-49
+   version.name -> MortgageApplication.build-2.2023-10-19_12-51-10
 ** Build finished
 ucdPackaging.sh: [INFO] DBB UCD Packaging Complete. rc=0
 rc=0
 Package Step - PackageBuildOutputs
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && packageBuildOutputs.sh -w /u/dbehm/backendWorkspace/MortApp/main/build-2 -a MortgageApplication -t package.tar -b main -u -v MortgageApplication.2023-10-17_09-56-49 -p release"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && packageBuildOutputs.sh -w /u/dbehm/backendWorkspace/MortApp/main/build-2 -a MortgageApplication -t package.tar -b main -u -v MortgageApplication.2023-10-19_12-51-10 -p release"
 packageBuildOutputs.sh: [INFO] Package Build Outputs wrapper. Version=1.00
 packageBuildOutputs.sh: [INFO] **************************************************************
 packageBuildOutputs.sh: [INFO] ** Started - Package Build Outputs on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
@@ -1223,7 +1224,7 @@ packageBuildOutputs.sh: [INFO] **     BuildReport Location: /u/dbehm/backendWork
 packageBuildOutputs.sh: [INFO] **     PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy
 packageBuildOutputs.sh: [INFO] **     Packaging properties: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
 packageBuildOutputs.sh: [INFO] ** Publish to Artifact Repo: true
-packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-10-17_09-56-49
+packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-10-19_12-51-10
 packageBuildOutputs.sh: [INFO] **         ArtifactRepo Url: http://10.3.20.231:8081/artifactory
 packageBuildOutputs.sh: [INFO] **        ArtifactRepo User: admin
 packageBuildOutputs.sh: [INFO] **    ArtifactRepo Password: xxxxx
@@ -1233,8 +1234,8 @@ packageBuildOutputs.sh: [INFO] **                 DBB_HOME: /usr/lpp/dbb/v2r0
 packageBuildOutputs.sh: [INFO] **************************************************************
 
 packageBuildOutputs.sh: [INFO] Invoking the Package Build Outputs script.
-packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/dbehm/backendWorkspace/MortApp/main/build-2/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-10-17_09-56-49 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory main/release
-** PackageBuildOutputs start at 20231017.085730.057
+packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/dbehm/backendWorkspace/MortApp/main/build-2/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-10-19_12-51-10 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory main/release
+** PackageBuildOutputs start at 20231019.115150.051
 ** Properties at startup:
    addExtension -> true
    artifactRepository.directory -> main/release
@@ -1246,10 +1247,10 @@ packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/Packa
    copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT"]
    packagingPropertiesFile -> /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
    publish -> true
-   startTime -> 20231017.085730.057
+   startTime -> 20231019.115150.051
    tarFileName -> package.tar
    verbose -> false
-   versionName -> MortgageApplication.2023-10-17_09-56-49
+   versionName -> MortgageApplication.2023-10-19_12-51-10
    workDir -> /u/dbehm/backendWorkspace/MortApp/main/build-2/logs
 ** Read build report data from /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/BuildReport.json
 ** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE 
@@ -1264,9 +1265,9 @@ packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/Packa
 ** Copying /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.
 ** Creating tar file at /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/package.tar.
 ** Package successfully created at /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/package.tar.
-** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/release/MortgageApplication.2023-10-17_09-56-49/package.tar.
-** ArtifactRepositoryHelper started for upload of /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/release/MortgageApplication.2023-10-17_09-56-49/package.tar
-** Uploading /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/release/MortgageApplication.2023-10-17_09-56-49/package.tar
+** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/release/MortgageApplication.2023-10-19_12-51-10/package.tar.
+** ArtifactRepositoryHelper started for upload of /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/release/MortgageApplication.2023-10-19_12-51-10/package.tar
+** Uploading /u/dbehm/backendWorkspace/MortApp/main/build-2/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/release/MortgageApplication.2023-10-19_12-51-10/package.tar
 ** Upload completed
 ** Build finished
 packageBuildOutputs.sh: [INFO] Package Build Outputs Complete. rc=0
@@ -1284,32 +1285,32 @@ prepareLogs.sh: [INFO] **  Directory contents:
 prepareLogs.sh: [INFO] ls -RlTr logs
 logs:
 total 416
-                    drwxr-xr-x   4 BPXROOT  TIVUSR      8192 Oct 17 09:57 tempPackageDir
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR      3125 Oct 17 09:57 shiplist.xml
-m IBM-1047    T=off -rw-r--r--   1 BPXROOT  TIVUSR     64512 Oct 17 09:57 package.tar
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        53 Oct 17 09:57 deletedFilesList.txt
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       440 Oct 17 09:57 buztool.output
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        78 Oct 17 09:57 buildList.txt
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18413 Oct 17 09:57 EPSNBRVL.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     53983 Oct 17 09:57 EPSCMORT.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 17 09:57 BuildReport.json
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      7861 Oct 17 09:57 BuildReport.html
+                    drwxr-xr-x   4 BPXROOT  TIVUSR      8192 Oct 19 12:51 tempPackageDir
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR      3125 Oct 19 12:51 shiplist.xml
+m IBM-1047    T=off -rw-r--r--   1 BPXROOT  TIVUSR     64512 Oct 19 12:51 package.tar
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        53 Oct 19 12:51 deletedFilesList.txt
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       440 Oct 19 12:51 buztool.output
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        78 Oct 19 12:51 buildList.txt
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18413 Oct 19 12:51 EPSNBRVL.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     53985 Oct 19 12:51 EPSCMORT.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 19 12:51 BuildReport.json
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      7861 Oct 19 12:51 BuildReport.html
 
 logs/tempPackageDir:
 total 82
-t IBM-1047    T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1015 Oct 17 09:57 packageBuildOutputs.properties
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        17 Oct 17 09:57 buildReportOrder.txt
-                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 17 09:57 DBEHM.MORTGAGE.MAIN.REL.LOAD
-                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 17 09:57 DBEHM.MORTGAGE.MAIN.REL.DBRM
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 17 09:57 BuildReport.json
+t IBM-1047    T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1015 Oct 19 12:51 packageBuildOutputs.properties
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        17 Oct 19 12:51 buildReportOrder.txt
+                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 19 12:51 DBEHM.MORTGAGE.MAIN.REL.LOAD
+                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 19 12:51 DBEHM.MORTGAGE.MAIN.REL.DBRM
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 19 12:51 BuildReport.json
 
 logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.REL.LOAD:
 total 80
-- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR     40960 Oct 17 09:57 EPSCMORT.CICSLOAD
+- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR     40960 Oct 19 12:51 EPSCMORT.CICSLOAD
 
 logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.REL.DBRM:
 total 16
-b binary      T=off -rw-r--r--   1 BPXROOT  TIVUSR       480 Oct 17 09:57 EPSCMORT.DBRM
+b binary      T=off -rw-r--r--   1 BPXROOT  TIVUSR       480 Oct 19 12:51 EPSCMORT.DBRM
 prepareLogs.sh: [INFO] tar -cf logs.tar logs
 prepareLogs.sh: [INFO] Logs successfully stored at /u/dbehm/backendWorkspace/MortApp/main/build-2/logs.tar
 USS file downloaded successfully.
@@ -1371,9 +1372,9 @@ dbbBuild.sh: [INFO] ************************************************************
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
 dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/main/build-3 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/main/build-3/logs --hlq DBEHM.MORTGAGE.MAIN.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --baselineRef refs/tags/rel-1.0.0
 
-** Build start at 20231017.085751.057
+** Build start at 20231019.115211.052
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/main/build-3/logs
-** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20231017.085751.057
+** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20231019.115211.052
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --impactBuild option selected. Building impacted programs for application MortgageApplication 
 ** Writing build list file to /u/dbehm/backendWorkspace/MortApp/main/build-3/logs/buildList.txt
@@ -1385,11 +1386,11 @@ dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/bu
 *** (2/2) Building file MortgageApplication/cobol/epscmort.cbl
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/main/build-3/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/main/build-3/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20231017.085751.057
-** Build ended at Tue Oct 17 08:57:57 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20231019.115211.052
+** Build ended at Thu Oct 19 11:52:17 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 2
-** Total build time  : 6.093 seconds
+** Total build time  : 5.979 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/main/build-3/logs/buildList.txt
@@ -1408,12 +1409,12 @@ prepareLogs.sh: [INFO] **  Directory contents:
 prepareLogs.sh: [INFO] ls -RlTr logs
 logs:
 total 240
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        53 Oct 17 09:57 deletedFilesList.txt
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        78 Oct 17 09:57 buildList.txt
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18413 Oct 17 09:57 EPSNBRVL.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     53983 Oct 17 09:57 EPSCMORT.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 17 09:57 BuildReport.json
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      7861 Oct 17 09:57 BuildReport.html
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        53 Oct 19 12:52 deletedFilesList.txt
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        78 Oct 19 12:52 buildList.txt
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18413 Oct 19 12:52 EPSNBRVL.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     53985 Oct 19 12:52 EPSCMORT.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      9098 Oct 19 12:52 BuildReport.json
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      7861 Oct 19 12:52 BuildReport.html
 prepareLogs.sh: [INFO] tar -cf logs.tar logs
 prepareLogs.sh: [INFO] Logs successfully stored at /u/dbehm/backendWorkspace/MortApp/main/build-3/logs.tar
 USS file downloaded successfully.
@@ -1453,7 +1454,7 @@ gitClone.sh: [INFO] Clone Repository Complete. rc=0
 rc=0
 Perform Build
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && dbbBuild.sh -w /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1 -a MortgageApplication -b feature/setmainbuildbranch -v"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && dbbBuild.sh -w /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1 -a MortgageApplication -b feature/setmainbuildbranch "
 dbbBuild.sh: [INFO] DBB Build Wrapper. Version=1.10
 dbbBuild.sh: [INFO] Set default Pipeline Type : build .
 dbbBuild.sh: [INFO] **************************************************************
@@ -1469,424 +1470,28 @@ dbbBuild.sh: [INFO] **     zAppBuild Path: /var/dbb/dbb-zappbuild_300
 dbbBuild.sh: [INFO] **           DBB_HOME: /usr/lpp/dbb/v2r0
 dbbBuild.sh: [INFO] **      DBB JDBC USER: DBEHM
 dbbBuild.sh: [INFO] **  DBB JDBC Pwd File: /var/dbb/config/db2-pwd-file.xml
-dbbBuild.sh: [INFO] **           Verbose : --verbose
+dbbBuild.sh: [INFO] **           Verbose : No
 dbbBuild.sh: [INFO] **         DBB Logger: No
 dbbBuild.sh: [INFO] **************************************************************
 
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
-dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs --hlq DBEHM.MORTGAGE.FEATURE.SETMAINB --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml --verbose --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --debug
+dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs --hlq DBEHM.MORTGAGE.FEATURE.SETMAINB --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --debug
 
-** Build start at 20231017.085815.058
-** Input args = /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs --hlq DBEHM.MORTGAGE.FEATURE.SETMAINB --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml --verbose --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --debug
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/datasets.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/dependencyReport.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/Assembler.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/BMS.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/MFS.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/PSBgen.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/DBDgen.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/ACBgen.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/Cobol.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/LinkEdit.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/PLI.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/REXX.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/ZunitConfig.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/Transfer.properties
-** Loading property file /ZT01/var/dbb/dbb-zappbuild_300/build-conf/defaultzAppBuildConf.properties
-** appConf = /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication/application-conf
-** Loading property file /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication/application-conf/file.properties
-** Loading property file /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication/application-conf/BMS.properties
-** Loading property file /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication/application-conf/Cobol.properties
-** Loading property file /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication/application-conf/LinkEdit.properties
-** Loading property file /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication/application-conf/CRB.properties
-** Loading property file /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication/application-conf/bind.properties
-** Loading property file /var/dbb/dbb-zappbuild-config/build.properties
-** Loading property file /var/dbb/dbb-zappbuild-config/datasets.properties
-** Loading property file /var/dbb/dbb-zappbuild-config/buildFolder.properties
-java.version=11.0.15+10
-java.home=/V2R4/usr/lpp/java/J11.0_64
-user.dir=/u/dbehm
-** Build properties at start up:
-IBMZPLI_V51=
-IBMZPLI_V52=PLI.V5R2.SIBMZCMP
-MACLIB=SYS1.MACLIB
-PDTCCMOD=PDTCC.V1R8.SIPVMODA
-REFERAL=IMSCFG.IMSC.REFERAL
-SASMMOD1=HLASM.SASMMOD1
-SBZUSAMP=RATCFG.ZUNIT.SBZUSAMP
-SCEELKED=CEE.SCEELKED
-SCEEMAC=CEE.SCEEMAC
-SCSQCOBC=WMQ.V9R2M4.SCSQCOBC
-SCSQLOAD=WMQ.V9R2M4.SCSQLOAD
-SCSQMACS=
-SCSQPLIC=WMQ.V9R2M4.SCSQPLIC
-SDFHCOB=CICSTS.V5R4.CICS.SDFHCOB
-SDFHLOAD=CICSTS.V5R4.CICS.SDFHLOAD
-SDFHMAC=CICSTS.V5R4.CICS.SDFHMAC
-SDFHPL1=
-SDFSMAC=IMS.V15R1.SDFSMAC
-SDFSRESL=IMS.V15R1.SDFSRESL
-SDSNLOAD=DBC0CFG.DB2.V12.SDSNLOAD
-SEQAMOD=DEBUG.V14R1.SEQAMOD
-SFANLMD=
-SFELLOAD=RDZ.V14R1.SFELLOAD
-SIGYCOMP_V4=
-SIGYCOMP_V6=COBOL.V6R1.SIGYCOMP
-acbgen_dbdPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBDLIB
-acbgen_deployType=ACBLIB
-acbgen_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.ACBLIB
-acbgen_loadOptions=cyl space(5,5) dir(40) dsorg(PO) recfm(U) blksize(32760) dsntype(PDS)
-acbgen_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.ACBLIB
-acbgen_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.ACBLIB
-acbgen_pgm=DFSRRC00
-acbgen_psbPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.PSBLIB
-acbgen_requiredBuildProperties=acbgen_psbPDS,acbgen_dbdPDS,acbgen_loadPDS, acbgen_pgm,acbgen_linkEditor,acbgen_tempOptions,acbgen_maxRC,   SDFSMAC,SCEEMAC
-acbgen_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-application=MortgageApplication
-applicationBuildGroup=MortgageApplication-feature/setmainbuildbranch
-applicationBuildLabel=build.20231017.085815.058
-applicationCollectionName=MortgageApplication-feature/setmainbuildbranch
-applicationConfRootDir=
-applicationCurrentBranch=feature/setmainbuildbranch
-applicationDefaultPropFiles=defaultzAppBuildConf.properties
-applicationOutputsCollectionName=MortgageApplication-feature/setmainbuildbranch-outputs
-applicationPropFiles=file.properties,BMS.properties,Cobol.properties,LinkEdit.properties,CRB.properties,bind.properties
-applicationSrcDirs=MortgageApplication
-assember_cicsprecompiler=DFHEAP1$
-assembler_compileErrorFeedbackXmlOptions=tracks space(200,40) dsorg(PS) blksize(27998) lrecl(16383) recfm(v,b) new keep
-assembler_db2precompiler=DSNHPC
-assembler_dbrmPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBRM
-assembler_debugPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.EQALANGX
-assembler_dependenciesDatasetMapping=assembler_macroPDS::**/*
-assembler_eqalangx=EQALANGX
-assembler_linkEditor=IEWBLINK
-assembler_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-assembler_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-assembler_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-assembler_macroPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.MACRO
-assembler_objPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-assembler_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD,DBEHM.MORTGAGE.FEATURE.SETMAINB.DBRM
-assembler_pgm=ASMA90
-assembler_requiredBuildProperties=assembler_srcPDS,assembler_macroPDS,assembler_objPDS,assembler_loadPDS, assembler_pgm,assembler_linkEditor,assembler_tempOptions,assembler_maxRC, SASMMOD1,SDFHLOAD,SDFHMAC,MACLIB,SCEELKED,SCEEMAC,   assembler_dependencySearch
-assembler_sidefileOptions=cyl dsorg(PO) dsntype(library) space(5,5) unit(vio) blksize(27998) lrecl(1562) recfm(v,b)
-assembler_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.ASM,DBEHM.MORTGAGE.FEATURE.SETMAINB.MACRO,DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ,DBEHM.MORTGAGE.FEATURE.SETMAINB.DBRM
-assembler_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-assembler_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.ASM
-assembler_sysadataOptions=cyl space(5,5) lrecl(32756) dsorg(PO) recfm(v,b) blksize(32760) dsntype(library)
-assembler_sysadataPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.SYSADATA
-assembler_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-bind_collectionID=MORTGAGE
-bind_db2Location=DBC1
-bind_maxRC=4
-bind_packageOwner=UCDAGNT
-bind_performBindPackage=false
-bind_qualifier=MORTGAGE
-bind_runIspfConfDir=
-bmsSearch=search:/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/?path=MortgageApplication/bms/*.bms
-bms_assembler=ASMA90
-bms_compileParms=SYSPARM(MAP),DECK,NOOBJECT
-bms_copyGenParms=SYSPARM(DSECT),DECK,NOOBJECT
-bms_copy_deployType=MAPCOPY
-bms_cpyPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.BMS.COPY
-bms_deployType=MAPLOAD
-bms_fileBuildRank=
-bms_impactPropertyList=bms_copyGenParms,bms_compileParms,bms_linkEditParms
-bms_linkEditParms=MAP,RENT,COMPAT(PM5)
-bms_linkEditor=IEWBLINK
-bms_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-bms_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-bms_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-bms_maxRC=0
-bms_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.BMS.COPY,DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-bms_requiredBuildProperties=bms_srcPDS,bms_cpyPDS,bms_loadPDS, bms_assembler,bms_linkEditor,bms_tempOptions,bms_maxRC,   SASMMOD1,SDFHLOAD,SDFHMAC,MACLIB,SCEELKED
-bms_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.BMS,DBEHM.MORTGAGE.FEATURE.SETMAINB.BMS.COPY
-bms_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-bms_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.BMS
-bms_storeSSI=true
-bms_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-buildListFileExt=txt
-buildOrder=BMS.groovy,Cobol.groovy,LinkEdit.groovy
-buildOutDir=/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs
-buildOutputTSformat=yyyyMMdd.HHmmss.mmm
-buildPropFiles=datasets.properties,Assembler.properties,BMS.properties,MFS.properties,PSBgen.properties,DBDgen.properties,ACBgen.properties,Cobol.properties,LinkEdit.properties,PLI.properties,ZunitConfig.properties
-cobol_BMS_PDS=${team}.BMS.COPY
-cobol_compileCICSParms=CICS
-cobol_compileDebugParms=TEST
-cobol_compileErrorFeedbackXmlOptions=tracks space(200,40) dsorg(PS) blksize(27998) lrecl(16383) recfm(v,b) new keep
-cobol_compileErrorPrefixParms=ADATA,EX(ADX(ELAXMGUX))
-cobol_compileMaxRC=4
-cobol_compileParms=LIB
-cobol_compileSQLParms=SQL
-cobol_compileSyslibConcatenation=DBEHM.MORTGAGE.MAIN.BLD.BMS.COPY
-cobol_compiler=IGYCRCTL
-cobol_compilerVersion=V6
-cobol_cpyPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.COPY
-cobol_dbrmPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBRM
-cobol_dependenciesAlternativeLibraryNameMapping=
-cobol_dependenciesDatasetMapping=cobol_cpyPDS::**/*
-cobol_dependencySearch=search:/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/?path=MortgageApplication/copybook/*.cpy
-cobol_deployType=LOAD
-cobol_deployTypeCICS=CICSLOAD
-cobol_deployTypeDLI=IMSLOAD
-cobol_fileBuildRank=
-cobol_fileBuildRank=1::**/cobol/epsnbrvl.cbl
-cobol_impactPropertyList=cobol_compilerVersion,cobol_compileParms
-cobol_impactPropertyListCICS=cobol_compileCICSParms
-cobol_impactPropertyListSQL=cobol_compileSQLParms
-cobol_linkDebugExit=
-cobol_linkEdit=false::**/cobol/epsnbrvl.cbl,**/cobol/epsmlist.cbl
-cobol_linkEdit=true
-cobol_linkEditMaxRC=4
-cobol_linkEditParms=MAP,RENT,COMPAT(PM5)
-cobol_linkEditStream=
-cobol_linkEditSyslibConcatenation=DBEHM.MORTGAGE.MAIN.BLD.OBJ
-cobol_linkEditor=IEWBLINK
-cobol_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-cobol_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-cobol_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-cobol_objPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-cobol_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-cobol_printTempOptions=cyl space(5,5) unit(vio) blksize(133) lrecl(133) recfm(f,b) new
-cobol_requiredBuildProperties=cobol_srcPDS,cobol_cpyPDS,cobol_objPDS,cobol_loadPDS,cobol_compiler,cobol_linkEditor,cobol_tempOptions,applicationOutputsCollectionName,SDFHCOB,SDFHLOAD,SDSNLOAD,SCEELKED,   cobol_dependencySearch
-cobol_scanLoadModule=true
-cobol_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.COBOL,DBEHM.MORTGAGE.FEATURE.SETMAINB.COPY,DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ,DBEHM.MORTGAGE.FEATURE.SETMAINB.DBRM
-cobol_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-cobol_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.COBOL
-cobol_storeSSI=true
-cobol_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-cobol_test_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.TEST.LOAD
-cobol_test_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-cobol_test_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.TEST.COBOL
-cobol_test_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-cobol_testcase_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.TEST.LOAD
-cobol_testcase_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.TEST.COBOL
-continueOnScanFailure=true
-copybookSearch=search:/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/?path=MortgageApplication/copybook/*.cpy
-crb_maxRC=4
-crb_zrbLocation=/var/crb-1.0.3/cics-resource-builder/bin/zrb
-createBuildOutputSubfolder=false
-createTestcaseDependency=true
-dbb.LinkEditScanner.excludeFilter=CICSTS.V5R4.CICS.SDFHLOAD.*, CEE.SCEELKED.*
-dbb.RepositoryClient.password=ADMIN
-dbb.RepositoryClient.passwordFile=/ZT01/var/dbb/dbb-zappbuild_300/utilities/ADMIN.pw
-dbb.RepositoryClient.url=https://10.3.20.96:10443/dbb
-dbb.RepositoryClient.userId=ADMIN
-dbb.file.tagging=true
-dbb.gateway.accountNumber=
-dbb.gateway.groupId=
-dbb.gateway.logLevel=2
-dbb.gateway.procedureName=
-dbb.gateway.regionSize=
-dbb.gateway.type=legacy
-dbb.scannerMapping="scannerClass":"DependencyScanner", "languageHint":"ASM"::asm,mac
-dbb.scannerMapping="scannerClass":"DependencyScanner", "languageHint":"C"::c,h
-dbb.scannerMapping="scannerClass":"DependencyScanner", "languageHint":"COB"::cbl,cpy,cob
-dbb.scannerMapping="scannerClass":"DependencyScanner", "languageHint":"CPP"::cpp,hpp
-dbb.scannerMapping="scannerClass":"DependencyScanner", "languageHint":"PLI"::pli,inc
-dbb.scannerMapping="scannerClass":"DependencyScanner", "languageHint":"REXX"::rexx
-dbb.scannerMapping="scannerClass":"ZUnitConfigScanner"::bzucfg
-dbb.scriptMapping=Assembler.groovy::**/*.asm
-dbb.scriptMapping=BMS.groovy::**/*.bms
-dbb.scriptMapping=CRB.groovy::**/crb/*.yaml
-dbb.scriptMapping=Cobol.groovy::**/*.cbl
-dbb.scriptMapping=LinkEdit.groovy::**/*.lnk
-dbb.scriptMapping=PLI.groovy::**/*.pli
-dbdgen_compileErrorFeedbackXmlOptions=tracks space(200,40) dsorg(PS) blksize(27998) lrecl(16383) recfm(v,b) new keep
-dbdgen_deployType=DBDLIB
-dbdgen_linkEditor=IEWBLINK
-dbdgen_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBDLIB
-dbdgen_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-dbdgen_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBDLIB
-dbdgen_objPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-dbdgen_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBDLIB
-dbdgen_pgm=ASMA90
-dbdgen_requiredBuildProperties=dbdgen_srcPDS,dbdgen_objPDS,dbdgen_loadPDS, dbdgen_pgm,dbdgen_linkEditor,dbdgen_tempOptions,dbdgen_assemblerMaxRC,   SDFSMAC,SCEEMAC
-dbdgen_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBD,DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-dbdgen_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-dbdgen_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBD
-dbdgen_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-debug=true
-documentDeleteRecords=false
-excludeFileList=.*,**/.*,**/*.properties,**/*.xml,**/*.groovy,**/*.json,**/*.md,**/application-conf/*.*
-formatConsoleOutput=false
-generateDb2BindInfoRecord=true
-generateDb2BindInfoRecordProperties=bind_collectionID,bind_packageOwner,bind_qualifier
-gitRepositoryCompareService=/compare/
-gitRepositoryURL=https://github.com/ibm/dbb-zappbuild/
-hlq=DBEHM.MORTGAGE.FEATURE.SETMAINB
-impactBuild=true
-impactBuildOnBuildPropertyChanges=false
-impactBuildOnBuildPropertyList=[${assembler_impactPropertyList},${assembler_impactPropertyListCICS},${assembler_impactPropertyListSQL},bms_copyGenParms,bms_compileParms,bms_linkEditParms,cobol_compilerVersion,cobol_compileParms,cobol_compileCICSParms,cobol_compileSQLParms,${dbdgen_impactPropertyList},linkEdit_parms,${mfs_impactPropertyList},${pli_impactPropertyList},${pli_impactPropertyListCICS},${pli_impactPropertyListSQL},${psbgen_impactPropertyList}]
-impactSearch=search:/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/?path=MortgageApplication/copybook/*.cpysearch:/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/?path=MortgageApplication/bms/*.bmssearch:[:LINK]/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/?path=MortgageApplication/cobol/*.cbl
-isCICS=true::**/cobol/epsmlist.cbl,**/link/epsmlist.lnk,**/cobol/epscsmrt.cbl
-linkEdit_parms=MAP,RENT,COMPAT(PM5)
-linkSearch=search:[:LINK]/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/?path=MortgageApplication/cobol/*.cbl
-linkedit_deployType=LOAD
-linkedit_deployTypeCICS=CICSLOAD
-linkedit_deployTypeDLI=IMSLOAD
-linkedit_fileBuildRank=
-linkedit_impactPropertyList=linkEdit_parms
-linkedit_linkEditSyslibConcatenation=
-linkedit_linkEditor=IEWBLINK
-linkedit_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-linkedit_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-linkedit_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-linkedit_maxRC=0
-linkedit_objPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-linkedit_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-linkedit_requiredBuildProperties=linkedit_srcPDS,linkedit_objPDS,linkedit_loadPDS,linkedit_linkEditor,linkedit_tempOptions,applicationOutputsCollectionName,  SDFHLOAD,SCEELKED
-linkedit_scanLoadModule=true
-linkedit_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LINK,DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-linkedit_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-linkedit_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.LINK
-linkedit_storeSSI=true
-linkedit_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-loadFileLevelProperties=false
-loadFileLevelProperties=true::**/cobol/epsmlist.cbl
-logEncoding=UTF-8
-mainBuildBranch=main
-metadataStoreType=file
-mfs_deployType=MFS
-mfs_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.TFORMAT
-mfs_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-mfs_phase1processor=DFSUPAA0
-mfs_phase2processor=DFSUNUB0
-mfs_requiredBuildProperties=mfs_srcPDS,mfs_tformatPDS, mfs_phase1processor,mfs_phase2processor,mfs_tempOptions,mfs_phase1MaxRC,mfs_phase2MaxRC,   SDFSMAC,SDFSRESL,REFERAL
-mfs_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.MFS
-mfs_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) blksize(32720) recfm(F,B) dsntype(library)
-mfs_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.MFS
-mfs_tempOptions=cyl space(5,5) unit(vio) new
-mfs_tformatPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.TFORMAT
-outDir=/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs
-pli_BMS_PDS=${team}.BMS.COPY
-pli_compileErrorFeedbackXmlOptions=tracks space(200,40) dsorg(PS) blksize(27998) lrecl(16383) recfm(v,b) new keep
-pli_compiler=IBMZPLI
-pli_dbrmPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.DBRM
-pli_dependenciesAlternativeLibraryNameMapping=
-pli_dependenciesDatasetMapping=pli_incPDS::**/*
-pli_incPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.PLI.INCLUDE
-pli_linkEditor=IEWBLINK
-pli_listOptions=cyl space(5,5) unit(vio) blksize(0) lrecl(137) recfm(v,b) new
-pli_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-pli_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-pli_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-pli_objPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-pli_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD,DBEHM.MORTGAGE.FEATURE.SETMAINB.DBRM
-pli_requiredBuildPropeties=pli_srcPDS,pli_incPDS,pli_objPDS,pli_loadPDS,pli_compiler,pli_linkEditor,pli_tempOptions,applicationOutputsCollectionName,SDFHCOB,SDFHLOAD,SDSNLOAD,SCEELKED,  pli_dependencySearch
-pli_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.PLI,DBEHM.MORTGAGE.FEATURE.SETMAINB.PLI.INCLUDE,DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ,DBEHM.MORTGAGE.FEATURE.SETMAINB.DBRM
-pli_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-pli_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.PLI
-pli_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-pli_test_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.TEST.LOAD
-pli_test_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-pli_test_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.TEST.PLI
-pli_test_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-pli_testcase_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.TEST.LOAD
-pli_testcase_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.TEST.PLI
-propFiles=/var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties
-propertyFileExtension=properties
-propertyFilePath=properties
-psbgen_compileErrorFeedbackXmlOptions=tracks space(200,40) dsorg(PS) blksize(27998) lrecl(16383) recfm(v,b) new keep
-psbgen_deployType=PSBLIB
-psbgen_linkEditor=IEWBLINK
-psbgen_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.PSBLIB
-psbgen_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-psbgen_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.PSBLIB
-psbgen_objPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-psbgen_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.PSBLIB
-psbgen_pgm=ASMA90
-psbgen_requiredBuildProperties=psbgen_srcPDS,psbgen_objPDS,psbgen_loadPDS, psbgen_pgm,psbgen_linkEditor,psbgen_tempOptions,psbgen_assemblerMaxRC,   SDFSMAC,SCEEMAC
-psbgen_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.PSB,DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-psbgen_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-psbgen_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.PSB
-psbgen_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-reportExternalImpacts=false
-reportExternalImpactsAnalysisDepths=simple
-reportExternalImpactsAnalysisFileFilter=**/*
-reportExternalImpactsCollectionPatterns=.*-master.*
-requiredBuildProperties=buildOrder,buildListFileExt
-requiredDBBToolkitVersion=2.0.0
-resolveSubsystems=false
-rexx_cexecDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.CEXEC
-rexx_cexecOptions=cyl space(1,1) lrecl(80) recfm(F,B) blksize(27920) DSORG(PO) dsntype(pds) dir(10)
-rexx_cexecPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.CEXEC
-rexx_compiler=REXXCOMP
-rexx_dependenciesDatasetMapping=rexx_srcPDS::**/*
-rexx_linkEditor=IEWBLINK
-rexx_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-rexx_loadOptions=cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
-rexx_loadPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-rexx_objPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-rexx_outputDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.CEXEC,DBEHM.MORTGAGE.FEATURE.SETMAINB.LOAD
-rexx_printTempOptions=cyl space(5,5) unit(vio) blksize(133) lrecl(133) recfm(f,b) new
-rexx_requiredBuildProperties=rexx_srcPDS,rexx_objPDS,rexx_loadPDS,rexx_cexecPDS, rexx_compiler,rexx_linkEditor,rexx_tempOptions, SFANLMD,   rexx_dependencySearch
-rexx_rexxPrintTempOptions=cyl space(5,5) unit(vio) blksize(121) lrecl(121) recfm(f,a) new
-rexx_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.REXX,DBEHM.MORTGAGE.FEATURE.SETMAINB.OBJ
-rexx_srcOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
-rexx_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.REXX
-rexx_tempOptions=cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
-skipImpactCalculationList=
-startTime=20231017.085815.058
-topicBranchBuild=true
-transfer_dsOptions=cyl space(1,1) lrecl(144) dsorg(PO) recfm(F,B) dsntype(library)::transfer_xmlPDS
-transfer_dsOptions=cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)::transfer_srcPDS,transfer_jclPDS
-transfer_jclPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.JCL
-transfer_requiredBuildProperties=transfer_srcPDS,transfer_dsOptions,  transfer_deployType
-transfer_srcPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.SOURCE
-transfer_xmlPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.XML
-verbose=true
-workspace=/u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1
-zAppBuildDir=/ZT01/var/dbb/dbb-zappbuild_300
-zunit_bzucfgPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.BZU.BZUCFG
-zunit_bzuplayPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.BZU.BZUPLAY
-zunit_bzureportPDS=DBEHM.MORTGAGE.FEATURE.SETMAINB.BZU.BZURPT
-zunit_dependenciesDatasetMapping=zunit_bzuplayPDS::**/*
-zunit_loadDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.BZU.BZUPLAY
-zunit_loadOptions=cyl space(1,1) dsorg(PO) lrecl(256) recfm(F,B) blksize(32512) dsntype(library)
-zunit_reportDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.BZU.BZURPT
-zunit_reportOptions=tracks space(200,40) dsorg(PO) blksize(32760) lrecl(16383) recfm(v,b) dsntype(library)
-zunit_requiredBuildProperties=zunit_srcDatasets,zunit_loadDatasets,zunit_reportDatasets,zunit_bzucfgPDS,zunit_bzureportPDS,zunit_bzuplayPDS,zunit_srcOptions,zunit_loadOptions,zunit_reportOptions,jobCard,zunit_maxPassRC,zunit_maxWarnRC,zunit_playbackFileExtension,zunit_bzuplayParms,zunit_userDebugSessionTestParm,   zunit_dependencySearch
-zunit_srcDatasets=DBEHM.MORTGAGE.FEATURE.SETMAINB.BZU.BZUCFG
-zunit_srcOptions=cyl space(1,1) lrecl(27998) dsorg(PO) recfm(V,B) dsntype(library)
-** zAppBuild running on DBB Toolkit Version 2.0.1 22-Jun-2023 14:29:33 
-required props = buildOrder,buildListFileExt
-** File MetadataStore initialized
+** Build start at 20231019.115235.052
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs
-** Build result created for BuildGroup:MortgageApplication-feature/setmainbuildbranch BuildLabel:build.20231017.085815.058
-** Cloned collection MortgageApplication-feature/setmainbuildbranch from MortgageApplication-main
-** Cloned collection MortgageApplication-feature/setmainbuildbranch-outputs from MortgageApplication-main-outputs
+** Build result created for BuildGroup:MortgageApplication-feature/setmainbuildbranch BuildLabel:build.20231019.115235.052
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --impactBuild option selected. Building impacted programs for application MortgageApplication 
-** No previous successful topic branch build result. Retrieving last successful main branch build result.
-** Getting current hash for directory /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication
-** Storing MortgageApplication : f7380c46a60e7614539ceb4da6d3aa0dd531a238
-** Getting baseline hash for directory /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication
-** Storing MortgageApplication : f7380c46a60e7614539ceb4da6d3aa0dd531a238
-** Calculating changed files for directory /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication
-** Diffing baseline f7380c46a60e7614539ceb4da6d3aa0dd531a238 -> current f7380c46a60e7614539ceb4da6d3aa0dd531a238
-*** Changed files for directory /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication :
-*** Deleted files for directory /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication :
-*** Renamed files for directory /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication :
-** Updating collections MortgageApplication-feature/setmainbuildbranch and MortgageApplication-feature/setmainbuildbranch-outputs
-** Storing 0 logical files in MetadataStore collection 'MortgageApplication-feature/setmainbuildbranch'
-*** Perform impacted analysis for changed files.
-** Calculation of impacted files by changed properties has been skipped due to configuration. 
 ** Writing build list file to /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs/buildList.txt
 ** Populating file level properties from individual artifact properties files.
-* Populating file level properties overrides.
 *! No files in build list.  Nothing to do.
-*** Obtaining hash for directory /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/MortgageApplication
-** Setting property :githash:MortgageApplication : f7380c46a60e7614539ceb4da6d3aa0dd531a238
-** Setting property :giturl:MortgageApplication : https://github.com/dennis-behm/MortgageApplication.git
-** No previous successful topic branch build result. Retrieving last successful main branch build result.
-** Setting property :gitchangedfiles:MortgageApplication : https://github.com/ibm/dbb-zappbuild/compare/f7380c46a60e7614539ceb4da6d3aa0dd531a238..f7380c46a60e7614539ceb4da6d3aa0dd531a238
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-feature/setmainbuildbranch BuildLabel:build.20231017.085815.058
-** Build ended at Tue Oct 17 08:58:16 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-feature/setmainbuildbranch BuildLabel:build.20231019.115235.052
+** Build ended at Thu Oct 19 11:52:37 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 0
-** Total build time  : 1.459 seconds
+** Total build time  : 1.403 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs/buildList.txt
@@ -1894,24 +1499,7 @@ dbbBuild.sh: [WARNING] DBB Build Error. No source changes detected. rc=4
 rc=4
 Pull Logs
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && prepareLogs.sh -w /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1"
-prepareLogs.sh: [INFO] Prepare Build logs script. Version=1.00
-prepareLogs.sh: [INFO] **************************************************************
-prepareLogs.sh: [INFO] ** Started - Prepare logs on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-prepareLogs.sh: [INFO] **          Workspace: /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1
-prepareLogs.sh: [INFO] **             LogDir: /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs
-prepareLogs.sh: [INFO] **************************************************************
-prepareLogs.sh: [INFO] **  Directory contents:
-prepareLogs.sh: [INFO] ls -RlTr logs
-logs:
-total 32
-t ISO8859-1   T=on  -rw-r--r--   1 BPXROOT  TIVUSR         0 Oct 17 09:58 buildList.txt
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1085 Oct 17 09:58 BuildReport.json
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      2472 Oct 17 09:58 BuildReport.html
-prepareLogs.sh: [INFO] tar -cf logs.tar logs
-prepareLogs.sh: [INFO] Logs successfully stored at /u/dbehm/backendWorkspace/MortApp/feature/setmainbuildbranch/build-1/logs.tar
-USS file downloaded successfully.
-Destination: ./logs/MortApp/feature/setmainbuildbranch/build-1/logs.tar
+[WARNING] Tar file containing the logs was not found. rc=4
 rc=0
 testGenericWrapper.sh: [TEST] Executing test scenario testMortgageApplication-Release-Rel100-Build-1.
 cloneApplicationRepository
@@ -1970,9 +1558,9 @@ dbbBuild.sh: [INFO] ************************************************************
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
 dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs --hlq DBEHM.MORTGAGE.RELEASE.REL100 --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
 
-** Build start at 20231017.085834.058
+** Build start at 20231019.115254.052
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs
-** Build result created for BuildGroup:MortgageApplication-release/rel-1.0.0 BuildLabel:build.20231017.085834.058
+** Build result created for BuildGroup:MortgageApplication-release/rel-1.0.0 BuildLabel:build.20231019.115254.052
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --impactBuild option selected. Building impacted programs for application MortgageApplication 
 ** Writing build list file to /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/buildList.txt
@@ -1987,11 +1575,11 @@ dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/bu
 *** (3/3) Building file MortgageApplication/cobol/epscsmrt.cbl
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-release/rel-1.0.0 BuildLabel:build.20231017.085834.058
-** Build ended at Tue Oct 17 08:58:43 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-release/rel-1.0.0 BuildLabel:build.20231019.115254.052
+** Build ended at Thu Oct 19 11:53:03 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 4
-** Total build time  : 9.259 seconds
+** Total build time  : 9.490 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/buildList.txt
@@ -1999,12 +1587,12 @@ dbbBuild.sh: [INFO] DBB Build Complete. rc=0
 rc=0
 Package Step - UCD Packaging
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && ucdPackaging.sh -v MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22 -c MortgageApplication -w /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1  -b release/rel-1.0.0 -u http://acme.pipeline.org/MortgageApplication.rel-1.0.0.fix-1.build-1 -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && ucdPackaging.sh -v MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39 -c MortgageApplication -w /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1  -b release/rel-1.0.0 -u http://acme.pipeline.org/MortgageApplication.rel-1.0.0.fix-1.build-1 -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
 ucdPackaging.sh: [INFO] UCD Packaging Wrapper. Version=1.00
 ucdPackaging.sh: [INFO] **************************************************************
 ucdPackaging.sh: [INFO] ** Started - UCD Publish on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
 ucdPackaging.sh: [INFO] **                 WorkDir:
-ucdPackaging.sh: [INFO] **             UCD Version: MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22
+ucdPackaging.sh: [INFO] **             UCD Version: MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39
 ucdPackaging.sh: [INFO] **           UCD Component: MortgageApplication
 ucdPackaging.sh: [INFO] **      Artifacts Location: /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs
 ucdPackaging.sh: [INFO] **    PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy
@@ -2018,17 +1606,17 @@ ucdPackaging.sh: [INFO] **                DBB_HOME: /usr/lpp/dbb/v2r0
 ucdPackaging.sh: [INFO] **************************************************************
 
 ucdPackaging.sh: [INFO] Invoking the DBB UCD Packaging script.
-ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs --component MortgageApplication --versionName MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22 --propertyFile /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties --pipelineURL http://acme.pipeline.org/MortgageApplication.rel-1.0.0.fix-1.build-1
-** Create version start at 20231017.085851.058
+ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs --component MortgageApplication --versionName MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39 --propertyFile /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties --pipelineURL http://acme.pipeline.org/MortgageApplication.rel-1.0.0.fix-1.build-1
+** Create version start at 20231019.115312.053
 ** Properties at startup:
    preview -> false
    component -> MortgageApplication
    buztoolPath -> /var/ucd-agent/bin/buztool.sh
    buztoolPropertyFile -> /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
    buildReportOrder -> [/u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/BuildReport.json]
-   startTime -> 20231017.085851.058
+   startTime -> 20231019.115312.053
    workDir -> /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs
-   versionName -> MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22
+   versionName -> MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39
    pipelineURL -> http://acme.pipeline.org/MortgageApplication.rel-1.0.0.fix-1.build-1
    ucdV2PackageFormat -> false
 * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version 2.0.1.
@@ -2048,13 +1636,13 @@ ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDCom
    Creating shiplist record for build output DBEHM.MORTGAGE.RELEASE.REL100.LOAD(EPSCSMRT) with recordType EXECUTE.
 ** Write ship list file to  /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/shiplist.xml
 ** Following UCD buztool cmd will be invoked
-/var/ucd-agent/bin/buztool.sh createzosversion -c MortgageApplication -s /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/shiplist.xml -o /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/buztool.output -prop /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties -v "MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22" 
+/var/ucd-agent/bin/buztool.sh createzosversion -c MortgageApplication -s /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/shiplist.xml -o /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/buztool.output -prop /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties -v "MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39" 
 ** Create version by running UCD buztool
 ....Command : createzosversion
 Reading inputs from passed arguments:
 ....Component : MortgageApplication
 ....Shiplist file : /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/shiplist.xml
-....Version name : MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22
+....Version name : MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39
 ....Output File Path : /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/buztool.output
 ....Buztool Properties file : /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
 ....Reading inputs from properties file /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
@@ -2063,37 +1651,37 @@ zOS toolkit config   : /var/ucd-agent/ (7.3.2.0,20230525-0827)
 zOS toolkit binary   : /var/ucd-agent/ (7.3.2.0,20230525-0827)
 zOS toolkit data set : RATCFG.UCD.V7R3M2 (7.3.2.0,20230525-0827)
 Verifying version
-....Repository location : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22
+....Repository location : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39
 Pre-processing shiplist:
-....Shiplist after processing :/var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22/shiplist.xml
+....Shiplist after processing :/var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39/shiplist.xml
 Packaging data sets:
 ....Location to store zip : /var/ucd-agent/var/repository/MortgageApplication/MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-1
-7_09-58-22
+9_12-52-39
 ....Zip name : package.zip
 ....DBEHM.MORTGAGE.RELEASE.REL100.DBRM.bin
 ....DBEHM.MORTGAGE.RELEASE.REL100.LOAD.bin
-....Elapsed time for data set package or deploy operation : 0.674877 seconds.
+....Elapsed time for data set package or deploy operation : 0.868245 seconds.
 Post-processing package:
 PackageManifest file post-processing completed. 
 Create version and store package in external repository:
 ....Uploading artifacts to ARTIFACTORY
-....Executing request PUT http://10.3.20.231:8081/artifactory/dbb-zos-mortgage-local/httpUpload/MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22.zip HTTP/1.1
+....Executing request PUT http://10.3.20.231:8081/artifactory/dbb-zos-mortgage-local/httpUpload/MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39.zip HTTP/1.1
 ....Version artifacts stored in External Repository server
-Elapsed time: 2.968 seconds.
+Elapsed time: 3.804 seconds.
 
 ** buztool output properties
    component.name -> MortgageApplication
    version.shiplist -> /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/shiplist.xml
-   version.url -> https://10.3.20.96:8443/#version/ac2c55f5-3614-41af-8d4d-0cfa33e79b6a
-   version.id -> ac2c55f5-3614-41af-8d4d-0cfa33e79b6a
+   version.url -> https://10.3.20.96:8443/#version/077abb24-5e88-4fc5-a1a7-b47d6fe351c0
+   version.id -> 077abb24-5e88-4fc5-a1a7-b47d6fe351c0
    version.repository.type -> EXTERNAL REPOSITORY
-   version.name -> MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-17_09-58-22
+   version.name -> MortgageApplication.rel-1.0.0.fix-1.build-1.2023-10-19_12-52-39
 ** Build finished
 ucdPackaging.sh: [INFO] DBB UCD Packaging Complete. rc=0
 rc=0
 Package Step - PackageBuildOutputs
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && packageBuildOutputs.sh -w /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1 -a MortgageApplication -t package.tar -b release/rel-1.0.0 -u -v MortgageApplication.2023-10-17_09-58-22"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && packageBuildOutputs.sh -w /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1 -a MortgageApplication -t package.tar -b release/rel-1.0.0 -u -v MortgageApplication.2023-10-19_12-52-39"
 packageBuildOutputs.sh: [INFO] Package Build Outputs wrapper. Version=1.00
 packageBuildOutputs.sh: [INFO] **************************************************************
 packageBuildOutputs.sh: [INFO] ** Started - Package Build Outputs on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
@@ -2105,7 +1693,7 @@ packageBuildOutputs.sh: [INFO] **     BuildReport Location: /u/dbehm/backendWork
 packageBuildOutputs.sh: [INFO] **     PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy
 packageBuildOutputs.sh: [INFO] **     Packaging properties: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
 packageBuildOutputs.sh: [INFO] ** Publish to Artifact Repo: true
-packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-10-17_09-58-22
+packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-10-19_12-52-39
 packageBuildOutputs.sh: [INFO] **         ArtifactRepo Url: http://10.3.20.231:8081/artifactory
 packageBuildOutputs.sh: [INFO] **        ArtifactRepo User: admin
 packageBuildOutputs.sh: [INFO] **    ArtifactRepo Password: xxxxx
@@ -2115,8 +1703,8 @@ packageBuildOutputs.sh: [INFO] **                 DBB_HOME: /usr/lpp/dbb/v2r0
 packageBuildOutputs.sh: [INFO] **************************************************************
 
 packageBuildOutputs.sh: [INFO] Invoking the Package Build Outputs script.
-packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-10-17_09-58-22 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory release/rel-1.0.0
-** PackageBuildOutputs start at 20231017.085902.059
+packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-10-19_12-52-39 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory release/rel-1.0.0
+** PackageBuildOutputs start at 20231019.115327.053
 ** Properties at startup:
    addExtension -> true
    artifactRepository.directory -> release/rel-1.0.0
@@ -2128,10 +1716,10 @@ packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/Packa
    copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT"]
    packagingPropertiesFile -> /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
    publish -> true
-   startTime -> 20231017.085902.059
+   startTime -> 20231019.115327.053
    tarFileName -> package.tar
    verbose -> false
-   versionName -> MortgageApplication.2023-10-17_09-58-22
+   versionName -> MortgageApplication.2023-10-19_12-52-39
    workDir -> /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs
 ** Read build report data from /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/BuildReport.json
 ** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE 
@@ -2150,9 +1738,9 @@ packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/Packa
 ** Copying /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.
 ** Creating tar file at /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/package.tar.
 ** Package successfully created at /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/package.tar.
-** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/release/rel-1.0.0/MortgageApplication.2023-10-17_09-58-22/package.tar.
-** ArtifactRepositoryHelper started for upload of /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/release/rel-1.0.0/MortgageApplication.2023-10-17_09-58-22/package.tar
-** Uploading /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/release/rel-1.0.0/MortgageApplication.2023-10-17_09-58-22/package.tar
+** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/release/rel-1.0.0/MortgageApplication.2023-10-19_12-52-39/package.tar.
+** ArtifactRepositoryHelper started for upload of /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/release/rel-1.0.0/MortgageApplication.2023-10-19_12-52-39/package.tar
+** Uploading /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/release/rel-1.0.0/MortgageApplication.2023-10-19_12-52-39/package.tar
 ** Upload completed
 ** Build finished
 packageBuildOutputs.sh: [INFO] Package Build Outputs Complete. rc=0
@@ -2170,36 +1758,36 @@ prepareLogs.sh: [INFO] **  Directory contents:
 prepareLogs.sh: [INFO] ls -RlTr logs
 logs:
 total 720
-                    drwxr-xr-x   4 BPXROOT  TIVUSR      8192 Oct 17 09:59 tempPackageDir
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR      4728 Oct 17 09:58 shiplist.xml
-m IBM-1047    T=off -rw-r--r--   1 BPXROOT  TIVUSR    161280 Oct 17 09:59 package.tar
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        53 Oct 17 09:58 deletedFilesList.txt
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       469 Oct 17 09:58 buztool.output
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       153 Oct 17 09:58 buildList.txt
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18444 Oct 17 09:58 EPSNBRVL.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      4158 Oct 17 09:58 EPSMORT.bms.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     24075 Oct 17 09:58 EPSCSMRT.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     59674 Oct 17 09:58 EPSCMORT.cobol.log
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     16197 Oct 17 09:58 BuildReport.json
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     14581 Oct 17 09:58 BuildReport.html
+                    drwxr-xr-x   4 BPXROOT  TIVUSR      8192 Oct 19 12:53 tempPackageDir
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR      4728 Oct 19 12:53 shiplist.xml
+m IBM-1047    T=off -rw-r--r--   1 BPXROOT  TIVUSR    161280 Oct 19 12:53 package.tar
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        53 Oct 19 12:52 deletedFilesList.txt
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       469 Oct 19 12:53 buztool.output
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR       153 Oct 19 12:52 buildList.txt
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     18444 Oct 19 12:52 EPSNBRVL.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      4160 Oct 19 12:52 EPSMORT.bms.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     24077 Oct 19 12:53 EPSCSMRT.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     59676 Oct 19 12:53 EPSCMORT.cobol.log
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     16197 Oct 19 12:53 BuildReport.json
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     14581 Oct 19 12:53 BuildReport.html
 
 logs/tempPackageDir:
 total 82
-t IBM-1047    T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1015 Oct 17 09:59 packageBuildOutputs.properties
-- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        17 Oct 17 09:59 buildReportOrder.txt
-                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 17 09:59 DBEHM.MORTGAGE.RELEASE.REL100.LOAD
-                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 17 09:59 DBEHM.MORTGAGE.RELEASE.REL100.DBRM
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     16197 Oct 17 09:59 BuildReport.json
+t IBM-1047    T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1015 Oct 19 12:53 packageBuildOutputs.properties
+- untagged    T=off -rw-r--r--   1 BPXROOT  TIVUSR        17 Oct 19 12:53 buildReportOrder.txt
+                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 19 12:53 DBEHM.MORTGAGE.RELEASE.REL100.LOAD
+                    drwxr-xr-x   2 BPXROOT  TIVUSR      8192 Oct 19 12:53 DBEHM.MORTGAGE.RELEASE.REL100.DBRM
+t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR     16197 Oct 19 12:53 BuildReport.json
 
 logs/tempPackageDir/DBEHM.MORTGAGE.RELEASE.REL100.LOAD:
 total 256
-- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR      4096 Oct 17 09:59 EPSMORT.MAPLOAD
-- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR     36864 Oct 17 09:59 EPSCSMRT.CICSLOAD
-- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR     69632 Oct 17 09:59 EPSCMORT.CICSLOAD
+- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR      4096 Oct 19 12:53 EPSMORT.MAPLOAD
+- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR     36864 Oct 19 12:53 EPSCSMRT.CICSLOAD
+- untagged    T=off -rwxr-xr-x   1 BPXROOT  TIVUSR     69632 Oct 19 12:53 EPSCMORT.CICSLOAD
 
 logs/tempPackageDir/DBEHM.MORTGAGE.RELEASE.REL100.DBRM:
 total 16
-b binary      T=off -rw-r--r--   1 BPXROOT  TIVUSR       480 Oct 17 09:59 EPSCMORT.DBRM
+b binary      T=off -rw-r--r--   1 BPXROOT  TIVUSR       480 Oct 19 12:53 EPSCMORT.DBRM
 prepareLogs.sh: [INFO] tar -cf logs.tar logs
 prepareLogs.sh: [INFO] Logs successfully stored at /u/dbehm/backendWorkspace/MortApp/release/rel-1.0.0/build-1/logs.tar
 USS file downloaded successfully.
@@ -2263,9 +1851,9 @@ dbbBuild.sh: [INFO] ************************************************************
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
 dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs --hlq DBEHM.MORTGAGE.HOTFIX.REL100.MYFIX --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --propOverwrites mainBuildBranch=release/rel-1.0.0 --impactBuild
 
-** Build start at 20231017.085923.059
+** Build start at 20231019.115352.053
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs
-** Build result created for BuildGroup:MortgageApplication-hotfix/rel-1.0.0/myfix BuildLabel:build.20231017.085923.059
+** Build result created for BuildGroup:MortgageApplication-hotfix/rel-1.0.0/myfix BuildLabel:build.20231019.115352.053
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --impactBuild option selected. Building impacted programs for application MortgageApplication 
 ** Writing build list file to /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs/buildList.txt
@@ -2273,11 +1861,11 @@ dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/bu
 *! No files in build list.  Nothing to do.
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-hotfix/rel-1.0.0/myfix BuildLabel:build.20231017.085923.059
-** Build ended at Tue Oct 17 08:59:24 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-hotfix/rel-1.0.0/myfix BuildLabel:build.20231019.115352.053
+** Build ended at Thu Oct 19 11:53:53 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 0
-** Total build time  : 1.454 seconds
+** Total build time  : 1.420 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs/buildList.txt
@@ -2285,24 +1873,7 @@ dbbBuild.sh: [WARNING] DBB Build Error. No source changes detected. rc=4
 rc=4
 Pull Logs
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && prepareLogs.sh -w /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1"
-prepareLogs.sh: [INFO] Prepare Build logs script. Version=1.00
-prepareLogs.sh: [INFO] **************************************************************
-prepareLogs.sh: [INFO] ** Started - Prepare logs on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-prepareLogs.sh: [INFO] **          Workspace: /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1
-prepareLogs.sh: [INFO] **             LogDir: /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs
-prepareLogs.sh: [INFO] **************************************************************
-prepareLogs.sh: [INFO] **  Directory contents:
-prepareLogs.sh: [INFO] ls -RlTr logs
-logs:
-total 32
-t ISO8859-1   T=on  -rw-r--r--   1 BPXROOT  TIVUSR         0 Oct 17 09:59 buildList.txt
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1081 Oct 17 09:59 BuildReport.json
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      2472 Oct 17 09:59 BuildReport.html
-prepareLogs.sh: [INFO] tar -cf logs.tar logs
-prepareLogs.sh: [INFO] Logs successfully stored at /u/dbehm/backendWorkspace/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs.tar
-USS file downloaded successfully.
-Destination: ./logs/MortApp/hotfix/rel-1.0.0/myfix/build-1/logs.tar
+[WARNING] Tar file containing the logs was not found. rc=4
 rc=0
 testGenericWrapper.sh: [TEST] Executing test scenario testMortgageApplication-Epic-implementAI-Build-1.
 cloneApplicationRepository
@@ -2361,9 +1932,9 @@ dbbBuild.sh: [INFO] ************************************************************
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
 dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs --hlq DBEHM.MORTGAGE.EPIC.IMPLEMEN --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
 
-** Build start at 20231017.085943.059
+** Build start at 20231019.115409.054
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs
-** Build result created for BuildGroup:MortgageApplication-epic/implementAI BuildLabel:build.20231017.085943.059
+** Build result created for BuildGroup:MortgageApplication-epic/implementAI BuildLabel:build.20231019.115409.054
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --impactBuild option selected. Building impacted programs for application MortgageApplication 
 ** Writing build list file to /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/buildList.txt
@@ -2375,11 +1946,11 @@ dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/bu
 *** (2/2) Building file MortgageApplication/cobol/epscmort.cbl
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-epic/implementAI BuildLabel:build.20231017.085943.059
-** Build ended at Tue Oct 17 08:59:50 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-epic/implementAI BuildLabel:build.20231019.115409.054
+** Build ended at Thu Oct 19 11:54:16 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 2
-** Total build time  : 7.647 seconds
+** Total build time  : 6.640 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/buildList.txt
@@ -2387,12 +1958,12 @@ dbbBuild.sh: [INFO] DBB Build Complete. rc=0
 rc=0
 Package Step - UCD Packaging
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && ucdPackaging.sh -v prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29 -c MortgageApplication -w /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1  -b epic/implementAI -u http://acme.pipeline.org/prelim_MortgageApplication.epic.implementAI.build-1 -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && ucdPackaging.sh -v prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56 -c MortgageApplication -w /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1  -b epic/implementAI -u http://acme.pipeline.org/prelim_MortgageApplication.epic.implementAI.build-1 -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
 ucdPackaging.sh: [INFO] UCD Packaging Wrapper. Version=1.00
 ucdPackaging.sh: [INFO] **************************************************************
 ucdPackaging.sh: [INFO] ** Started - UCD Publish on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
 ucdPackaging.sh: [INFO] **                 WorkDir:
-ucdPackaging.sh: [INFO] **             UCD Version: prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29
+ucdPackaging.sh: [INFO] **             UCD Version: prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56
 ucdPackaging.sh: [INFO] **           UCD Component: MortgageApplication
 ucdPackaging.sh: [INFO] **      Artifacts Location: /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs
 ucdPackaging.sh: [INFO] **    PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy
@@ -2406,17 +1977,17 @@ ucdPackaging.sh: [INFO] **                DBB_HOME: /usr/lpp/dbb/v2r0
 ucdPackaging.sh: [INFO] **************************************************************
 
 ucdPackaging.sh: [INFO] Invoking the DBB UCD Packaging script.
-ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs --component MortgageApplication --versionName prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29 --propertyFile /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties --pipelineURL http://acme.pipeline.org/prelim_MortgageApplication.epic.implementAI.build-1
-** Create version start at 20231017.085958.059
+ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy --buztool /var/ucd-agent/bin/buztool.sh --workDir /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs --component MortgageApplication --versionName prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56 --propertyFile /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties --pipelineURL http://acme.pipeline.org/prelim_MortgageApplication.epic.implementAI.build-1
+** Create version start at 20231019.120308.003
 ** Properties at startup:
    preview -> false
    component -> MortgageApplication
    buztoolPath -> /var/ucd-agent/bin/buztool.sh
    buztoolPropertyFile -> /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
    buildReportOrder -> [/u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/BuildReport.json]
-   startTime -> 20231017.085958.059
+   startTime -> 20231019.120308.003
    workDir -> /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs
-   versionName -> prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29
+   versionName -> prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56
    pipelineURL -> http://acme.pipeline.org/prelim_MortgageApplication.epic.implementAI.build-1
    ucdV2PackageFormat -> false
 * Buildrecord type TYPE_COPY_TO_PDS is supported with DBB toolkit 1.0.8 and higher. Extracting build records for TYPE_COPY_TO_PDS might not be available and skipped. Identified DBB Toolkit version 2.0.1.
@@ -2432,13 +2003,13 @@ ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDCom
    Creating shiplist record for build output DBEHM.MORTGAGE.EPIC.IMPLEMEN.LOAD(EPSCMORT) with recordType EXECUTE.
 ** Write ship list file to  /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/shiplist.xml
 ** Following UCD buztool cmd will be invoked
-/var/ucd-agent/bin/buztool.sh createzosversion -c MortgageApplication -s /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/shiplist.xml -o /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/buztool.output -prop /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties -v "prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29" 
+/var/ucd-agent/bin/buztool.sh createzosversion -c MortgageApplication -s /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/shiplist.xml -o /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/buztool.output -prop /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties -v "prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56" 
 ** Create version by running UCD buztool
 ....Command : createzosversion
 Reading inputs from passed arguments:
 ....Component : MortgageApplication
 ....Shiplist file : /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/shiplist.xml
-....Version name : prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29
+....Version name : prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56
 ....Output File Path : /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/buztool.output
 ....Buztool Properties file : /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
 ....Reading inputs from properties file /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties
@@ -2447,37 +2018,37 @@ zOS toolkit config   : /var/ucd-agent/ (7.3.2.0,20230525-0827)
 zOS toolkit binary   : /var/ucd-agent/ (7.3.2.0,20230525-0827)
 zOS toolkit data set : RATCFG.UCD.V7R3M2 (7.3.2.0,20230525-0827)
 Verifying version
-....Repository location : /var/ucd-agent/var/repository/MortgageApplication/prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29
+....Repository location : /var/ucd-agent/var/repository/MortgageApplication/prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56
 Pre-processing shiplist:
-....Shiplist after processing :/var/ucd-agent/var/repository/MortgageApplication/prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29/shiplist.xml
+....Shiplist after processing :/var/ucd-agent/var/repository/MortgageApplication/prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56/shiplist.xml
 Packaging data sets:
 ....Location to store zip : /var/ucd-agent/var/repository/MortgageApplication/prelim_MortgageApplication.epic.implementAI.build-1.2
-023-10-17_09-59-29
+023-10-19_12-53-56
 ....Zip name : package.zip
 ....DBEHM.MORTGAGE.EPIC.IMPLEMEN.DBRM.bin
 ....DBEHM.MORTGAGE.EPIC.IMPLEMEN.LOAD.bin
-....Elapsed time for data set package or deploy operation : 0.786422 seconds.
+....Elapsed time for data set package or deploy operation : 0.812655 seconds.
 Post-processing package:
 PackageManifest file post-processing completed. 
 Create version and store package in external repository:
 ....Uploading artifacts to ARTIFACTORY
-....Executing request PUT http://10.3.20.231:8081/artifactory/dbb-zos-mortgage-local/httpUpload/prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29.zip HTTP/1.1
+....Executing request PUT http://10.3.20.231:8081/artifactory/dbb-zos-mortgage-local/httpUpload/prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56.zip HTTP/1.1
 ....Version artifacts stored in External Repository server
-Elapsed time: 3.759 seconds.
+Elapsed time: 3.604 seconds.
 
 ** buztool output properties
    component.name -> MortgageApplication
    version.shiplist -> /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/shiplist.xml
-   version.url -> https://10.3.20.96:8443/#version/4de94b46-9c65-4e54-b920-620e452c8f5f
-   version.id -> 4de94b46-9c65-4e54-b920-620e452c8f5f
+   version.url -> https://10.3.20.96:8443/#version/26698469-b57d-4558-9e74-275d1f31d219
+   version.id -> 26698469-b57d-4558-9e74-275d1f31d219
    version.repository.type -> EXTERNAL REPOSITORY
-   version.name -> prelim_MortgageApplication.epic.implementAI.build-1.2023-10-17_09-59-29
+   version.name -> prelim_MortgageApplication.epic.implementAI.build-1.2023-10-19_12-53-56
 ** Build finished
 ucdPackaging.sh: [INFO] DBB UCD Packaging Complete. rc=0
 rc=0
 Package Step - PackageBuildOutputs
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && packageBuildOutputs.sh -w /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1 -a MortgageApplication -t package.tar -b epic/implementAI -u -v MortgageApplication.2023-10-17_09-59-29"
+testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && packageBuildOutputs.sh -w /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1 -a MortgageApplication -t package.tar -b epic/implementAI -u -v MortgageApplication.2023-10-19_12-53-56"
 packageBuildOutputs.sh: [INFO] Package Build Outputs wrapper. Version=1.00
 packageBuildOutputs.sh: [INFO] **************************************************************
 packageBuildOutputs.sh: [INFO] ** Started - Package Build Outputs on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
@@ -2489,7 +2060,7 @@ packageBuildOutputs.sh: [INFO] **     BuildReport Location: /u/dbehm/backendWork
 packageBuildOutputs.sh: [INFO] **     PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy
 packageBuildOutputs.sh: [INFO] **     Packaging properties: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
 packageBuildOutputs.sh: [INFO] ** Publish to Artifact Repo: true
-packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-10-17_09-59-29
+packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-10-19_12-53-56
 packageBuildOutputs.sh: [INFO] **         ArtifactRepo Url: http://10.3.20.231:8081/artifactory
 packageBuildOutputs.sh: [INFO] **        ArtifactRepo User: admin
 packageBuildOutputs.sh: [INFO] **    ArtifactRepo Password: xxxxx
@@ -2499,8 +2070,8 @@ packageBuildOutputs.sh: [INFO] **                 DBB_HOME: /usr/lpp/dbb/v2r0
 packageBuildOutputs.sh: [INFO] **************************************************************
 
 packageBuildOutputs.sh: [INFO] Invoking the Package Build Outputs script.
-packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-10-17_09-59-29 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory epic/implementAI
-** PackageBuildOutputs start at 20231017.090011.000
+packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-10-19_12-53-56 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory epic/implementAI
+** PackageBuildOutputs start at 20231019.120323.003
 ** Properties at startup:
    addExtension -> true
    artifactRepository.directory -> epic/implementAI
@@ -2512,10 +2083,10 @@ packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/Packa
    copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT"]
    packagingPropertiesFile -> /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
    publish -> true
-   startTime -> 20231017.090011.000
+   startTime -> 20231019.120323.003
    tarFileName -> package.tar
    verbose -> false
-   versionName -> MortgageApplication.2023-10-17_09-59-29
+   versionName -> MortgageApplication.2023-10-19_12-53-56
    workDir -> /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs
 ** Read build report data from /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/BuildReport.json
 ** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE 
@@ -2530,9 +2101,9 @@ packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/Packa
 ** Copying /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.
 ** Creating tar file at /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/package.tar.
 ** Package successfully created at /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/package.tar.
-** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/epic/implementAI/MortgageApplication.2023-10-17_09-59-29/package.tar.
-** ArtifactRepositoryHelper started for upload of /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/epic/implementAI/MortgageApplication.2023-10-17_09-59-29/package.tar
-** Uploading /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/epic/implementAI/MortgageApplication.2023-10-17_09-59-29/package.tar
+** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/epic/implementAI/MortgageApplication.2023-10-19_12-53-56/package.tar.
+** ArtifactRepositoryHelper started for upload of /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/epic/implementAI/MortgageApplication.2023-10-19_12-53-56/package.tar
+** Uploading /u/dbehm/backendWorkspace/MortApp/epic/implementAI/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/epic/implementAI/MortgageApplication.2023-10-19_12-53-56/package.tar
 ** Upload completed
 ** Build finished
 packageBuildOutputs.sh: [INFO] Package Build Outputs Complete. rc=0
@@ -2595,9 +2166,9 @@ dbbBuild.sh: [INFO] ************************************************************
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
 dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1 --application MortgageApplication --outDir /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1/logs --hlq DBEHM.MORTGAGE.IMPLEMEN.MYFEATUR --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties,/var/dbb/dbb-zappbuild-config/buildFolder.properties --propOverwrites mainBuildBranch=epic/implementAI --impactBuild --debug
 
-** Build start at 20231017.090029.000
+** Build start at 20231019.120345.003
 ** Build output located at /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1/logs
-** Build result created for BuildGroup:MortgageApplication-implementAI/myFeatureImpl BuildLabel:build.20231017.090029.000
+** Build result created for BuildGroup:MortgageApplication-implementAI/myFeatureImpl BuildLabel:build.20231019.120345.003
 ** Loading DBB scanner mapping configuration dbb.scannerMapping
 ** --impactBuild option selected. Building impacted programs for application MortgageApplication 
 ** Writing build list file to /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1/logs/buildList.txt
@@ -2605,11 +2176,11 @@ dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/bu
 *! No files in build list.  Nothing to do.
 ** Writing build report data to /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1/logs/BuildReport.json
 ** Writing build report to /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1/logs/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-implementAI/myFeatureImpl BuildLabel:build.20231017.090029.000
-** Build ended at Tue Oct 17 09:00:30 GMT+01:00 2023
+** Updating build result BuildGroup:MortgageApplication-implementAI/myFeatureImpl BuildLabel:build.20231019.120345.003
+** Build ended at Thu Oct 19 12:03:47 GMT+01:00 2023
 ** Build State : CLEAN
 ** Total files processed : 0
-** Total build time  : 1.405 seconds
+** Total build time  : 1.383 seconds
 
 ** Build finished
 dbbBuild.sh: [INFO} LastBuildLog = /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1/logs/buildList.txt
@@ -2617,24 +2188,7 @@ dbbBuild.sh: [WARNING] DBB Build Error. No source changes detected. rc=4
 rc=4
 Pull Logs
 -------------
-testGenericWrapper.sh: [COMMAND] ssh dbehm@10.3.20.201 ". /u/dbehm/.profile && prepareLogs.sh -w /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1"
-prepareLogs.sh: [INFO] Prepare Build logs script. Version=1.00
-prepareLogs.sh: [INFO] **************************************************************
-prepareLogs.sh: [INFO] ** Started - Prepare logs on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-prepareLogs.sh: [INFO] **          Workspace: /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1
-prepareLogs.sh: [INFO] **             LogDir: /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1/logs
-prepareLogs.sh: [INFO] **************************************************************
-prepareLogs.sh: [INFO] **  Directory contents:
-prepareLogs.sh: [INFO] ls -RlTr logs
-logs:
-total 32
-t ISO8859-1   T=on  -rw-r--r--   1 BPXROOT  TIVUSR         0 Oct 17 10:00 buildList.txt
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      1084 Oct 17 10:00 BuildReport.json
-t UTF-8       T=on  -rw-r--r--   1 BPXROOT  TIVUSR      2472 Oct 17 10:00 BuildReport.html
-prepareLogs.sh: [INFO] tar -cf logs.tar logs
-prepareLogs.sh: [INFO] Logs successfully stored at /u/dbehm/backendWorkspace/MortApp/implementAI/myFeatureImpl/build-1/logs.tar
-USS file downloaded successfully.
-Destination: ./logs/MortApp/implementAI/myFeatureImpl/build-1/logs.tar
+[WARNING] Tar file containing the logs was not found. rc=4
 rc=0
 Test Summary
 ============
