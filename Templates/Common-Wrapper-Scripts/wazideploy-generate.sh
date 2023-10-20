@@ -65,7 +65,7 @@ Help() {
   echo "                                           for the artifact repository    "
   echo "                                           Default=None, Optional         "
   echo "                                                                          "
-  echo "       -v                                - Verbose tracing flag           "
+  echo "       -d                                - Debug tracing flag             "
   echo " "
   exit 0
 }
@@ -96,7 +96,7 @@ DeploymentPlanReport=""
 PackageInputFile=""
 PackageOutputFile=""
 ConfigFile=""
-Verbose=""
+Debug=""
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -130,7 +130,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "hv:m:p:r:i:o:c:" opt; do
+  while getopts "hd:m:p:r:i:o:c:" opt; do
     case $opt in
     h)
       Help
@@ -209,9 +209,9 @@ if [ $rc -eq 0 ]; then
       ;;
 
 
-    v)
-      # Add command to produce verbose output with Wazi Deploy
-      Verbose=" -d"
+    d)
+      # Add command to produce debug output with Wazi Deploy
+      Debug=" -d"
       ;;
 
     \?)
@@ -295,10 +295,10 @@ if [ $rc -eq 0 ]; then
   fi
 
 
-  if [ ! -z "${Verbose}" ]; then
-    echo $PGM": [INFO] **       Verbose output is enabled."
+  if [ ! -z "${Debug}" ]; then
+    echo $PGM": [INFO] **         Debug output is enabled."
   else
-    echo $PGM": [INFO] **      Verbose output is disabled."
+    echo $PGM": [INFO] **        Debug output is disabled."
   fi
 
   echo $PGM": [INFO] **************************************************************"
@@ -318,8 +318,8 @@ if [ $rc -eq 0 ]; then
   if [ ! -z "${ConfigFile}" ]; then
     CommandLine+=" -cdf "${ConfigFile}  
   fi 
-  if [ ! -z "${Verbose}" ]; then
-    CommandLine+=${Verbose}  
+  if [ ! -z "${Debug}" ]; then
+    CommandLine+=${Debug}  
   fi 
   echo ${CommandLine} 2>&1 
   ${CommandLine} 2>&1

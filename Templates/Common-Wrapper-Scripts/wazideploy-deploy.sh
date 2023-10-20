@@ -59,7 +59,7 @@ Help() {
   echo "       -l <evidence file path>           - Path to the evidence file      "
   echo "                                           Default=None, Optional         "
   echo "                                                                          "
-  echo "       -v                       - Verbose tracing flag                    "
+  echo "       -d                                - Debug tracing flag             "
   echo " "
   exit 0
 }
@@ -89,7 +89,7 @@ DeploymentPlan=""
 EnvironmentFile=""
 PackageInputFile=""
 EvidenceFile=""
-Verbose=""
+Debug=""
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -123,7 +123,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "hv:w:p:e:i:l:" opt; do
+  while getopts "hd:w:p:e:i:l:" opt; do
     case $opt in
     h)
       Help
@@ -189,9 +189,9 @@ if [ $rc -eq 0 ]; then
       EvidenceFile="$argument"
       ;;
 
-    v)
-      # Add command to produce verbose output
-      Verbose=" -d"
+    d)
+      # Add command to produce debug output
+      Debug=" -d"
       ;;
 
     \?)
@@ -266,10 +266,10 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
   fi
 
-  if [ ! -z "${Verbose}" ]; then
-    echo $PGM": [INFO] **       Verbose output is enabled."
+  if [ ! -z "${Debug}" ]; then
+    echo $PGM": [INFO] **         Debug output is enabled."
   else
-    echo $PGM": [INFO] **      Verbose output is disabled."
+    echo $PGM": [INFO] **        Debug output is disabled."
   fi
 
   echo $PGM": [INFO] **************************************************************"
@@ -286,8 +286,8 @@ if [ $rc -eq 0 ]; then
   if [ ! -z "${EvidenceFile}" ]; then
     CommandLine+=" -efn "${EvidenceFile}  
   fi 
-  if [ ! -z "${Verbose}" ]; then
-    CommandLine+=${Verbose}  
+  if [ ! -z "${Debug}" ]; then
+    CommandLine+=${Debug}  
   fi   
   echo ${CommandLine} 2>&1 
   ${CommandLine} 2>&1

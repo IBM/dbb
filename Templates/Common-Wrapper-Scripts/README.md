@@ -607,7 +607,7 @@ CLI parameter | Description
 -i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
 -o `<packageOutputFile>` | (Optional) Absolute path to the **Package Output File** to be deployed to the UCD environment. Only required when a URL is specified for the **Package Input File**.
 -c `<configurationFile>` | (Optional) Absolute path to the **Configuration File** that contains information to connect to Artifactory. Only required when a URL is specified for **Package Input File**.
--v | (Optional) Verbose tracing flag. Used to produce additional tracing with Wazi Deploy.
+-d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
 
 #### Output
 
@@ -624,7 +624,7 @@ wazideploy-generate.sh: [INFO] **               Deployment Method: /var/WaziDepl
 wazideploy-generate.sh: [INFO] **       Generated Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
 wazideploy-generate.sh: [INFO] **          Deployment Plan Report: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html
 wazideploy-generate.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
-wazideploy-generate.sh: [INFO] **       Verbose output is enabled: FALSE
+wazideploy-generate.sh: [INFO] **        Debug output is disabled.
 wazideploy-generate.sh: [INFO] **************************************************************
 
 * Build the deployment plan from the deployment method with the deployment plan extension: WdDeploymentStateExtension
@@ -674,7 +674,7 @@ CLI parameter | Description
 -e `<environmentFile>` | Absolute path to **Environment File**, that describes the tarhet z/OS environment.
 -i `<packageInputFile>` | Absolute path to the **Package Input File** to be deployed with Wazi Deploy.
 -l `<evidenceFile>` | (Optional) Absolute path to the **Evidence File** that will contain the logs of all Wazi Deploy tasks.
--v | (Optional) Verbose tracing flag. Used to produce additional tracing with Wazi Deploy.
+-d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
 
 #### Output
 
@@ -693,7 +693,7 @@ wazideploy-deploy.sh: [INFO] **                 Deployment Plan: /u/ado/workspac
 wazideploy-deploy.sh: [INFO] **                Environment File: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml
 wazideploy-deploy.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
 wazideploy-deploy.sh: [INFO] **                   Evidence File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
-wazideploy-deploy.sh: [INFO] **       Verbose output is enabled: FALSE
+wazideploy-deploy.sh: [INFO] **        Debug output is disabled.
 wazideploy-deploy.sh: [INFO] **************************************************************
 wazideploy-deploy -wf /u/ado/workspace/MortgageApplication/main/build-20231019.13 -dp /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml -ef /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -pif /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -efn /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
 
