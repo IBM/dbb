@@ -104,7 +104,6 @@ Help() {
 # Central configuration file leveraged by the backend scripts
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
-scriptConfiguration="${SCRIPT_HOME}/packageBuildOutputs.config"
 # Path and File Name to the advanced debug options.
 #log4j2="-Dlog4j.configurationFile=file:/../log4j2.properties"
 
@@ -169,16 +168,6 @@ if [ $rc -eq 0 ]; then
     else
         source $pipelineConfiguration
     fi
-
-    # Read and import pipeline configuration
-    if [ ! -f "${scriptConfiguration}" ]; then
-        rc=8
-        ERRMSG=$PGM": [ERROR] Script Configuration File (${scriptConfiguration}) was not found. rc="$rc
-        echo $ERRMSG
-    else
-        source $scriptConfiguration
-    fi
-
 fi
 
 #
