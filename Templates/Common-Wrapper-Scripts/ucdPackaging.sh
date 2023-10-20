@@ -26,8 +26,8 @@
 #
 #   2. Review the Customization Section in the pipelineBackend.config file :
 #
-#        PackagingScript  - Location of the dbb-ucd-packaging.groovy
-#        BuzTool          - Location of the UCD buztool.sh
+#        ucdPackagingScript  - Location of the dbb-ucd-packaging.groovy
+#        BuzTool             - Location of the UCD buztool.sh
 #
 #===================================================================================
 Help() {
@@ -286,9 +286,9 @@ validateOptions() {
     fi
 
     # Validate Packaging script
-    if [ ! -f "${PackagingScript}" ]; then
+    if [ ! -f "${ucdPackagingScript}" ]; then
         rc=8
-        ERRMSG=$PGM": [ERR] Unable to locate ${PackagingScript}. rc="$rc
+        ERRMSG=$PGM": [ERR] Unable to locate ${ucdPackagingScript}. rc="$rc
         echo $ERRMSG
     fi
 
@@ -381,7 +381,7 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **             UCD Version:" ${UcdVers}
     echo $PGM": [INFO] **           UCD Component:" ${UcdComp}
     echo $PGM": [INFO] **      Artifacts Location:" ${logDir}
-    echo $PGM": [INFO] **    PackagingScript Path:" ${PackagingScript}
+    echo $PGM": [INFO] **    PackagingScript Path:" ${ucdPackagingScript}
     echo $PGM": [INFO] **            BuzTool Path:" ${BuzTool}
     echo $PGM": [INFO] ** External Repository cfg:" ${ExtRepoProp}
     echo $PGM": [INFO] **    Packaging properties:" ${PkgPropFile}
@@ -398,7 +398,7 @@ fi
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the DBB UCD Packaging script."
 
-    CMD="groovyz ${log4j2} ${PackagingScript} --buztool ${BuzTool} --workDir ${logDir} --component ${UcdComp} --versionName ${UcdVers}"
+    CMD="groovyz ${log4j2} ${ucdPackagingScript} --buztool ${BuzTool} --workDir ${logDir} --component ${UcdComp} --versionName ${UcdVers}"
 
     # external repository file
     if [ ! -z "${ExtRepoProp}" ]; then
