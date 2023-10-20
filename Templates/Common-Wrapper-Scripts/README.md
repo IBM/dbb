@@ -2,125 +2,127 @@
 
 ## 1 - Overview
 
-The Common Backend Scripts for Pipeline Implementations is an asset that is delivering central "services" and a simplified interface for pipeline configurations that implement a Git/DBB-based pipeline for Mainframe applications.
+The Common Backend Scripts for Pipeline Implementations is a collection of scripts that deliver central "services" and a simplified interface for pipeline configurations that implement a Git/DBB-based pipeline for Mainframe applications.
 
-Implementing the pipeline configurations such as an Azure pipeline, a JenkinsFile, or the gitlab-ci.yml file requires accommodation of the selected development workflow with Git. Rules must be implemented in pipeline code / configurations to address
+Implementing a pipeline configuration, such as an Azure pipeline, a JenkinsFile, or the .gitlab-ci.yml file, requires accommodation of the selected development workflow with Git. To achieve consistency across various applications, rules must be implemented in pipeline code or configurations to address:
 * naming conventions of build datasets,
 * configuration parameters of the build framework,
 * or naming conventions of the binary package
 
-to achieve consistency across the pipelines for the various applications.
 
-The community is providing a set of [pipeline tasks](../../Pipeline/) that implement the various stages of the pipeline orchestration. The tasks being implemented as groovy scripts accept/require various parameters within some being related to the application, while others represent a technical configuration that is required for the script to operate.
+
+The community is providing a set of [pipeline tasks](../../Pipeline/) that implement the various stages of the pipeline orchestration. The tasks (generally implemented as groovy scripts) accept/require various parameters; some are related to the application, while others represent a technical configuration that is required for the script to operate.
 
 The purpose of these common backend scripts is to reduce the necessary configuration and scripting within a concrete pipeline orchestration logic and let the application and pipeline teams focus on the application specific parameters.
 
-Instead of mixing **orchestration of tasks** and **implementation of the pipeline rules** (such as computation of build hlq, build type, etc) in the specific pipeline technology e.g. a Jenkinsfile or a gitlab-ci.yaml definition, the common backend scripts provide central services to the pipeline orchestrator - independent of the chosen orchestration technology.
+Instead of mixing **orchestration of tasks** and **implementation of the pipeline rules** (such as computation of build HLQ, build type, etc) in the specific pipeline technology (e.g. a Jenkinsfile or a .gitlab-ci.yaml definition), the common backend scripts provide central services to the pipeline orchestrator, independently from the chosen orchestration technology.
 
-By simplifying the invocation of the scripts, these scripts support the DevOps engineer to implement the pipeline configurations faster, especially for pipeline orchestrators that do not have a runner/agent available on Unix System Services.
+By simplifying the invocation of the [pipeline tasks](../../Pipeline/), these scripts help the DevOps engineer to implement the pipeline configuration, especially for pipeline orchestrators that do not have a runner/agent available on Unix System Services.
 
-In addition, this repository contains a [test driver](test/) to outline how the scripts can be remotely invoked from a x86 system. Additional templates for the various pipeline orchestrators (such as an azure-pipeline.yaml), is planned to be provided as well, that make use of the Common Backend Scripts.
+In addition, this repository contains a [test driver](test/) to outline how the scripts can be remotely invoked from non-z/OS systems. Additional templates for the various pipeline orchestrators (such as an azure-pipeline.yaml), is planned to be provided as well, to showcase how the Common Backend Scripts should be used.
 
 This asset implements the rules and conventions of the Git-based workflow outlined in IBMs documentation `The Git-based workflow you need for Mainframe development` with a defined Git branching, build and packaging strategy.
 
 ## 2 - Set up
 
-The provided scripts of this asset are implemented as bash scripts and need to be installed on UNIX System Services of the z/OS LPAR that is used for the pipeline. 
+The provided scripts of this asset are implemented as bash scripts and need to be installed on UNIX System Services of the z/OS system that is used to execute the pipeline's tasks.
 
 ### 2.1 - Pre-requisites
-The following are required to use these scripts.
+The following are required to use these scripts:
 * DBB v2.x toolkit is installed.
 * zAppBuild is set up on Unix Systems Services.
-* Git repository which follows the Git-based workflow outlined in IBMs documentation `The Git-based workflow for Mainframe development`.
+* Git repository which follows the Git-based workflow outlined in IBM's documentation `The Git-based workflow for Mainframe development`.
 * Build dependency information is available before performing the build run.
 
 
 ### 2.2 - Installation
 
-* Copy/Clone the backend wrapper scripts into Unix System Services files under a protected directory, E.q. `/usr/dbb/pipelineBackend`.
-  * Update the permission of these scripts to allow for `read/execute` to only those users, who will invoke the scripts. This is typically the technical user of the pipeline orchestrator. 
+* Copy/clone the Common Backend Scripts into Unix System Services under a protected directory, e.g. `/usr/dbb/pipelineBackend`.
+  * Update the permission of these scripts to allow for `read/execute` to only the users who will invoke the scripts. This is typically the technical user defined for the pipeline orchestrator. 
 
 * The following environment variables need to be defined (for instance within the `.profile`) for the mainframe users who will execute the scripts on UNIX System Services:
 
-  * `PIPELINE_SCRIPTS` - Environment variable to define the path to the common backend scripts. 
+  * `PIPELINE_SCRIPTS` - Environment variable to define the path to the Common Backend Scripts. 
   
-     Add the directory path where you stored the scripts to the PATH of the pipeline users profile, to make the scripts available to the consumers w/o referring to an absolute path within the pipeline configuration - most likely this is the MF technical user of the pipeline orchestrator. This avoids the need to change directory to the scripts to invoke them. In a non-interactive ssh setup, please make sure to initialize the environment variables for instance by executing the users .profile, or by running a environment setup script.
+     Add the directory path where you stored the scripts to the PATH of the pipeline user's profile, to make the scripts available to the consumers without referring to an absolute path within the pipeline configuration; most likely, this is the mainframe technical user used by the pipeline orchestrator. This avoids the need to set the working directory to the scripts when invoking them. In a non-interactive SSH setup, please make sure to initialize the environment variables for instance by executing the user's .profile, or by running a environment setup script.
 
-  * (Optional) `PIPELINE_WORKSPACE` - Environment variable to configure the root workspace directory to process pipeline activities.
+  * (Optional) `PIPELINE_WORKSPACE` - Environment variable to configure the root workspace directory to run pipeline activities.
 
-     Assumed to be a dedicated mounted zFS file system that is in control of the pipeline user. Can be used in pipeline orchestration implementations to locate the path of logs or outputs. If not configured, the pipeline configuration needs to provide an absolute path to the working directory.
+     Assumed to be a dedicated zFS filesystem that is in control of the pipeline user. Can be used in pipeline orchestration implementations to locate the path of logs or outputs. If not configured, the pipeline configuration needs to provide an absolute path to the working directory.
 
-The below shows an extract of the pipeline users `.profile`:
+The below shows an extract of the pipeline user's `.profile` file:
 
   ```sh
-  # extract of users .profile to add the pipeline_config
+  # extract of user's .profile to add the pipeline_config
   #
   # env variable to define the path to the backend scripts
   export PIPELINE_SCRIPTS=/var/dbb/common-wrapper-scripts
   export PATH=$PIPELINE_SCRIPTS:$PATH 
 
-  # env variable to define the pipeline root directory
+  # environment variable to define the pipeline root workspace directory
   export PIPELINE_WORKSPACE=/var/dbb/pipeline-workspace
   ```
 
 ### 2.3 - Script configuration
 
-The scripts are designed to be configurable through the [pipelineBackend.config](pipelineBackend.config) file. This configuration file is located on the same directory as all the backend script files. 
+The scripts are designed to be configurable through the [pipelineBackend.config](pipelineBackend.config) file. This configuration file is located in the same directory as all the backend script files. 
 
-Although, each script is designed to work independently of the other scripts, they share common properties such as the root directory for the pipeline scripts, and the directory for log files. These common properties are defined in the [pipelineBackend.config](pipelineBackend.config) file which are utilized across the backend scripts. 
+Although each script is designed to work independently of the other scripts, they share common properties such as the root workspace directory for the pipeline scripts, and the directory for log files. These common properties are defined in the [pipelineBackend.config](pipelineBackend.config) file which are used across the backend scripts. 
 
 The following are common properties in the [pipelineBackend.config](pipelineBackend.config) file. 
 
  
 Central configuration | Description
 ---------- | ----------------------------------------------------------------------------------------
-buildRootDir | Absolute path to define the root directory for pipeline executions, e.q. `/usr/pipeline/workspace`. Pipeline configurations can only pass a unique relative workspace.
+buildRootDir | Absolute path to define the root workspace directory for pipeline executions, e.q. `/usr/pipeline/workspace`. Pipeline configurations can only pass a unique relative workspace.
 logsDir | A relative directory name for logs and temporary outputs. Default: logs
-zAppBuild settings | multiple settings for zAppBuild - like path and credentials
-UCD settings | multiple settings for ucd server url or credentials
+zAppBuild settings | Multiple settings for zAppBuild, like path and credentials
+UCD settings | Multiple settings for UCD server, like URL and credentials
 
 Central function | Description
 ---------- | ----------------------------------------------------------------------------------------
-getWorkDirectory() | central function to calculate the absolute path of the working directory
-getLogDir() | central function to calculate the absolute path of the log directory
-getApplicationDir() | central function to calculate the absolute path of the application directory (where the application is stored)
+getWorkDirectory() | Central function to calculate the absolute path of the working directory
+getLogDir() | Central function to calculate the absolute path of the log directory
+getApplicationDir() | Central function to calculate the absolute path of the application directory (where the application is stored)
 
-The details of the configuration settings are provided in the notes section of the configuration file.
+The details of the configuration settings are provided in the comments of the configuration file.
 
 
 ### 2.4 - Required workspace directory
 
-All the scripts are designed to have a unique working directory or workspace. The workspace is for managing the clone of the git repository, and the log and output directories to avoid any conflicts and collisions. When invoking any of the script, the workspace is a required parameter which can either be an absolute path or a relative path. 
+All the scripts are designed to have a unique working directory or workspace. The workspace is for managing the clone of the Git repository, and the log and output directories to avoid any conflicts and collisions. When invoking any of the scripts, the workspace is a required parameter which can either be an absolute path or a relative path. 
 
-If a relative path is provided, the value of the workspace parameter is combined with the `buildRootDir` setting that is defined in the [pipelineBackend.config](pipelineBackend.config) as : `<buildRootDir>/<workspace>`.
+If a relative path is provided, the value of the workspace parameter is combined with the `buildRootDir` setting that is defined in the [pipelineBackend.config](pipelineBackend.config) as `<buildRootDir>/<workspace>`.
 
-In the below sample, we use a workspace path consisting of 3 segments which are the **application name**, the **branch name** and the **pipeline build id**. This is the recommended approach, to ensure a unique workspace directory on Unix System Services:
+In the sample below, we use a workspace path consisting of 3 segments which are the **application name**, the **branch name** and the **pipeline build id**. This is the recommended approach, to ensure a unique workspace directory on Unix System Services:
 
 ```
 <Application>/<branch>/<pipeline-id>
 ```
-The branch and pipelineID segments are resolved from the pipeline orchestrator via it's built-in variables to:
+The branch and pipelineID segments are resolved from the pipeline orchestrator via its built-in variables to:
 ```
 MortApp/main/build-1
 ```
 
 ## 3 - Invocation of scripts
 
-Scripts can be invoked from the distributed pipeline runner via 
+Scripts can be invoked from a non-z/OS pipeline runner/agent via 
 * SSH connection
 * ZOWE CLI
 * or natively, to include steps (such as build and packaging phase) in a pipeline configuration that is executed under Unix System Services. 
 
-### 3.1 - Invocation samples: Non-interactive ssh session
+### 3.1 - Invocation samples: non-interactive SSH session
 
-A non-interactive ssh session has a light setup and is not fully initialized like an interactive session that loads the users profile. Please setup the environment through the users profile. That needs bash on its' PATH, like the below:
+A non-interactive SSH session comes with a lightweight setup and is not fully initialized, like an interactive session can be by automatically loading the user's profile. The environment should be setup through the user's profile. The following snippet requires `bash` to be part of the PATH environment variable:
 ```
 ssh pipelineuser@lpar ". /u/pipelineuser/.profile && dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main"
 ```
 
+An alternate configuration is to have `bash` defined as the default program in the OMVS segment of the user.
+
 ### 3.2 - Invocation samples: ZOWE CLI
 
-Zowe CLI by default initializes  the environment with the users profile.
+Zowe CLI by default initializes the environment with the user's profile:
 ```
 zowe zos-Unix System Services issue ssh "dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main
 ```
@@ -131,11 +133,11 @@ Artifact Name |  Description | Script details
 ---------- | -----| -----------------------------------------------------
 [gitClone.sh](gitClone.sh) | Pipeline Shell Script to perform Git Clone to Unix System Services | [script details](README.md#41---gitclonesh)
 [dbbBuild.sh](dbbBuild.sh) | Pipeline Shell Script to invoke the Dependency Based Build framework [zAppBuild](https://github.com/IBM/dbb-zappbuild) | [script details](README.md#42---dbbbuildsh)
-[utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) | Utility Shell Script to implementing the computation of build configuration, such as HLQ, build type or property overrides. | [script details](README.md#43---script-capabilities--dbbbuildutilssh)
+[utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) | Utility Shell Script to implement the computation of build configuration, such as HLQ, build type or property overrides. | [script details](README.md#43---script-capabilities--dbbbuildutilssh)
 [packageBuildOutputs.sh](packageBuildOutputs.sh) | Pipeline Shell Script to create a Package using the [PackageBuildOutputs groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/PackageBuildOutputs) | [script details](README.md#44---packagebuildoutputssh)
 [ucdPackage.sh](ucdPackaging.sh) | Pipeline Shell Script to publish to UCD Code Station binary repository using the [CreateUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/CreateUCDComponentVersion) | [script details](README.md#45---ucdpackagingsh)
 [ucdDeploy.sh](ucdDeploy.sh) | Pipeline Shell Script to trigger a UCD Deployment via its REST interface using the [DeployUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/DeployUCDComponentVersion) | [script details](README.md#46---ucddeploysh)
-[prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a tar file containing log files that can then be retrieved. | [script details](README.md#47---preparelogssh)
+[prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](README.md#47---preparelogssh)
 
 
 ### 4.1 - gitClone.sh
@@ -144,29 +146,28 @@ Script to clone a repository to Unix System Services. Please note that it is not
 
 #### Invocation
 
-The gitClone.sh script can be invoked as below:
+The `gitClone.sh` script can be invoked as below:
 
 ```
-gitClone.sh -w MortApp/main/build-1 -r git@github.ibm.com:zDevOps-Acceleration/MortgageApplication.git -b main
+gitClone.sh -w MortApp/main/build-1 -r git@github.com:Organization/MortgageApplication.git -b main
 ```
 
-Cli parameter | Description
+CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
--w `<workspace>` | **Workspace directory** an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
--r `<repoURL>` | **Git repository url**, can either be ssh or https. Ex. `-r git@github.ibm.com:zDevOps-Acceleration/MortgageApplication.git`
--b `<branch>` | **Git branch** that should be checked out. Ex. `-b main`
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
+-r `<repoURL>` | **Git repository URL**, can either be SSH or HTTPS-based. Example: `-r git@github.com:Organization/MortgageApplication.git`
+-b `<branch>` | **Git branch** that should be checked out. Example: `-b main`
 
-**Dealing with Private repositories**
+**Dealing with private repositories**
 
-You can pass on the credentials via the invocation as:
+Alhtough credentials should be managed in the secret vault of your pipeline orchestrator, you can pass credentials via the Git Repository URL, as follows:
 ```
-gitClone.sh -w MortApp/main/build-1 -r https://<personal-access-token>@github.com/dennis-behm/dbb-zappbuild-private.git -b main 
+gitClone.sh -w MortApp/main/build-1 -r https://<personal-access-token>@github.com/user/dbb-zappbuild-private.git -b main 
 ```
-while credentials should be manages in the secret vault of your pipeline orchestrator.
 
 #### Output
 
-Expand the section below to view the output that is produced by the `gitClone.sh` script.
+The section below contains the output that is produced by the `gitClone.sh` script.
 
 <details>
   <summary>Script Output</summary>
@@ -210,11 +211,11 @@ c08c90fb9b76d466b5717595b5de0dee9031f9ca refs/tags/rel100
 
 ### 4.2 - dbbBuild.sh
 
-This script is implementing the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. Per the design, it leverages the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) of zAppBuild. The [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script is used to compute the build configuration depending on the workflow to define zAppBuild cli parameters. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the application-conf directory in order to compute the baseline reference and its changes.
+This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. As designed, it makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild. The [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script is used to compute the build configuration depending on the workflow to define zAppBuild CLI parameters. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf`` directory in order to compute the baseline reference and its changes.
 
 #### Git branches naming convention requirements
 
-The build script follows the below conventions on branch names, that are outlined in the document `The Git-based workflow for Mainframe development`:
+The build script follows the naming conventions for branches that are outlined in the document `The Git-based workflow for Mainframe development`:
 
 ```properties
 # main Build branch
@@ -240,38 +241,36 @@ epic1234/myfirstcoolnewfeature
 project1/myfirstcoolnewfeature
 ```
 
-The [utilities](utilities/dbbBuildUtils.sh) script implements the rules outlined in IBMs documentation `The Git-based workflow for Mainframe development.` Read [dbbBuildUtils.sh](README.md#script-capabilities--dbbbuildutilssh) for details.
+Details are documented in [dbbBuildUtils.sh](README.md#script-capabilities--dbbbuildutilssh).
 
 #### Invocation
 
-The dbbBuild.sh script can be invoked as below:
+The `dbbBuild.sh` script can be invoked as follows:
 
 ```
 dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
 ```
 
-Cli parameter | Description
+CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
--w `<workspace>` | **Workspace directory** an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps.
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps.
 -a `<application>` | **Application name** to be built, which is passed to zAppBuild as the `--application` parameter.
 -b `<branch>` | **Git branch** that is built. Used to compute various build properties such as the `--hlq` and build type.
--p  `<build/release/preview>` | (*) **Pipeline Type** to indicate a build pipeline (`build` - only with test/debug options) or a `release` pipeline (build for performance optimized load modules), or if it runs in `preview` mode.
--v | (*) zAppBuild verbose tracing flag.
--t  `<buildTypeArgument>` | (*) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Please provide arguments in quotes `-t '--fullBuild'` . Please note - providing this parameter overrides the computation of the build type in the backend scripts. Might be used to initialize the DBB Metadatastore. 
--q '<hlqPrefix>' |(*) **HLQ prefix**. Default is retrieved from the `pipelineBackend.config` file, which is set to the pipeline user executing the script.
-
-(*) Optional
+-p  `<build/release/preview>` | (Optional) **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules), or if it runs in `preview` mode.
+-v | (Optional) zAppBuild verbose tracing flag.
+-t  `<buildTypeArgument>` | (Optional) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Arguments must be provided between quotes ()`-t '--fullBuild'`). Providing this parameter overrides the computation of the build type in the backend scripts. Can be used to initialize the DBB Metadatastore. 
+-q '<hlqPrefix>' |(Optional) **HLQ prefix**. Default is retrieved from the `pipelineBackend.config` file, which is set to the pipeline user executing the script.
 
 **Pipeline type**
 
 The type of pipeline (`-p` option), is used to modify the operational behavior of the build framework on producing executables:
 * `build` configures the build options for test/debug options. This is the **default**.
-* `release` used to indicate to produce executables with the flag for performance optimized runtime modules. This is required for the release pipelines which include packaging of release candidates.
-* `preview` configures to run the build process but will not produce any outputs. It is used to preview what the build will do. The pipeline should not have any subsequent actions.
+* `release` used to indicate to produce executables with the flag for performance-optimized runtime modules. This is required for the release pipelines which include release candidate packages.
+* `preview` configures the build process to execute without producing any outputs. It is used to preview what the build will do. The pipeline should not have any subsequent actions.
 
 #### Output
 
-Expand the section below to view the output that is produced by the `dbbBuild.sh` script.
+The section below contains the output that is produced by the `dbbBuild.sh` script.
 
 <details>
   <summary>Script Output</summary>
@@ -328,12 +327,12 @@ dbbBuild.sh: [INFO] DBB Build Complete. rc=0
 
 </details>
 
-### 4.3 - Script capabilities / dbbBuildUtils.sh
+### 4.3 - Script utility - dbbBuildUtils.sh
 
-The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a utility script providing a method `computeBuildConfiguration()` to compute the zAppBuild options and parameters:
+The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a utility script providing the `computeBuildConfiguration()` method to compute the zAppBuild's options and parameters:
 
-* `build type` such as `--impactBuild`
-* the baseline reference `--baselineRef xxx`, where xxx is retrieved from the baselineReference.config file.
+* `build type`, such as `--impactBuild`
+* the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file.
 * flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules).
 * the `mainBuildBranch` to configure feature branches to clone the correct dependency metadata collections and to identify the correct offset of changes.
 
@@ -345,51 +344,40 @@ Note that the location of the baselineReferences.config file can be customized i
 
 [MortgageApplication-baselineReference.config](MortgageApplication-baselineReference.config) is a sample, that indicates the baseline for the `main` and `release maintenance` branch.
 
-For IBM internal purposes there is a sample git repository at [zDevOpsAcceleration/MortgageApplication](https://github.ibm.com/zDevOps-Acceleration/MortgageApplication/branches), that contains the branches and the following git history:
-
-```log
-* 597012c (origin/feature/setmainbuildbranch, feature/setmainbuildbranch) change main build branch
-* 9f1ce97 (HEAD -> main, origin/main) change submodule
-| * 5d2b737 (origin/release/rel-1.0.0, origin/hotfix/rel-1.0.0/myfix) Update epscsmrt.cbl
-|/ 
-*   0cc39e4 (tag: rel-1.0.0) Merge pull request #6 from zDevOps-Acceleration/Development 
-```
-
-
 ### 4.4 - packageBuildOutputs.sh
 
-This script is to execute the `PackageBuildOutputs.groovy` that packages up the build outputs and optionally uploads it to an artifact repository to publish the artifacts created by the DBB Build from a pipeline.
+This script is to execute the `PackageBuildOutputs.groovy` that packages up the build outputs and optionally uploads it to an artifact repository to publish the artifacts created by a DBB build in the pipeline.
 
 #### Invocation
 
-The packageBuildOutputs.sh script can be invoked as below:
+The `packageBuildOutputs.sh` script can be invoked as follows:
 
-Package only
+- Package only
 
 ```
 packageBuildOutputs.sh -w MortApp/main/build-1 -t rel-1.0.0.tar
 ```
-Package and Upload
+- Package and Upload
 ```
 packageBuildOutputs.sh -w MortApp/main/build-1 -t rel-1.0.0.tar -a MortgageApplication -b main -u -p release -v rel-1.0.0.2023-09-22-08.55.20
 ```
 
-Cli parameter | Description
+CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
-Packaging options | 
--w `<workspace>` | **Workspace directory** an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. The packageBuildOutputs.sh script is evaluating the logs directory.
--t `<tarFileName>` | Name of the **tar file** to create (Optional).
-Artifact Upload options |
+**Packaging options**
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. The `packageBuildOutputs.sh` script is evaluating the logs directory.
+-t `<tarFileName>` | (Optional) Name of the **tar file** to create.
+**Artifact Upload options**
 -u | Flag to enable upload of outputs to the configured artifact repository.
--b | Name of the **git branch** turning into an segment of the directory path in the artifact repo (Optional, but required when publishing). 
--p  `<build/release>` | **Pipeline type** to indicate a build pipeline (`build` - only with test/debug options) or a `release` pipeline (build for performance optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
+-b | (Optional, but required when publishing) Name of the **git branch** turning into an segment of the directory path in the artifact repository. 
+-p  `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
 -v `artifactVersion` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
 
 #### Script conventions
 
 **Directory Path within the artifact repo**
 
-The backend script computes for the upload to the artifact repository the directory path within repository:
+For uploading, the backend script computes the directory path within the artifact repository :
 * **Branch**/**artifactVersion**
 
 If it is the `main` branch, the pipeline type (-p) is evaluated to 
@@ -399,7 +387,7 @@ while **artifactVersion** is appended by the `PackageBuildOutputs.groovy` script
 
 #### Output 
 
-Expand the section below to view the output that is produced by the `packageBuildOutputs.sh` script.
+The section below contains the output that is produced by the `packageBuildOutputs.sh` script.
 
 <details>
   <summary>Script Output</summary>
@@ -477,32 +465,30 @@ rc=0
 
 ### 4.5 - ucdPackaging.sh
 
-This script is to execute the dbb-ucd-packaging.groovy that invokes the UCD Buztool to publish the artifacts created by the DBB Build from a pipeline.
+This script is to execute the `dbb-ucd-packaging.groovy` that invokes the Urban Code Deploy (UCD) buztool utility, to publish the artifacts created by the DBB Build from a pipeline.
 
 #### Invocation
 
-The uscPackaging.sh script can be invoked as below:
+The `ucdPackaging.sh` script can be invoked as follows:
 
 ```
 ucdPacking.sh -v ucdVersion -c ucdComponentName -w workingDirectory -e externalRepositoryFile -f packagingPropertiesFile [-u pipelineURL] [-b gitBranchName] [-p gitPullRequestURL]
 ```
 
-Cli parameter | Description
+CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -v `<ucdVersion>` | **Version** name to create.
 -c `<ucdComponentName>` | **Component** name in UCD.
--w `<workspace>` | **Workspace directory** an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. The ucdPackaging.sh script is evaluating the logs directory.
--e `<externalRepositoryFile>` | **Path to external artifact repository file** for buzztool.sh.
--f `<packagingPropertiesFile>` |**Path to a properties file** for additional configuration of the dbb-ucd-packaging script.
--u `<pipelineUrl>`|(*) URL to the pipeline to establish link to pipeline build result.
--b |(*) Name of the **git branch**.
--p |(*) URL to the pull request.
-
-(*) Optional
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. The `ucdPackaging.sh` script is evaluating the logs directory.
+-e `<externalRepositoryFile>` | **Path to external artifact repository file** used by UCD buztool.
+-f `<packagingPropertiesFile>` | **Path to a properties file** for additional configuration for the `dbb-ucd-packaging` script.
+-u `<pipelineUrl>`| (Optional) URL to the pipeline to establish link to pipeline build result.
+-b | (Optional) Name of the **git branch**.
+-p | (Optional) URL to the pull request.
 
 #### Output
 
-Expand the section below to view the output that is produced by the `ucdPacking.sh` script.
+The section below contains the output that is produced by the `ucdPackaging.sh` script.
 
 <details>
   <summary>Script Output</summary>
@@ -534,33 +520,31 @@ ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDCom
 
 ### 4.6 - ucdDeploy.sh
 
-This script is implementing the invocation of the ucd-deploy.groovy script to perform Urban Code Deploy deployments.
+This script is implementing the invocation of the `ucd-deploy.groovy` script to perform Urban Code Deploy (UCD) deployments.
 
 
 #### Invocation
 
-The ucdDeploy.sh script can be invoked as follows:
+The `ucdDeploy.sh` script can be invoked as follows:
 
 ```
 ucdDeploy.sh -a ucdApplicationName -p ucdApplicationProcessName -e ucdEnvironmentName -d ucdComponentName:ucdDeployVersion
 ```
 
-Cli parameter | Description
+CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -a `<ucdApplicationName>` | **Application** name defined in UCD containing the component version to be deployed.
 -p `<ucdApplicationProcessName>` | **Process** name in UCD associated with the application being deployed.
--e `<ucdEnvironmmentName>` | **Environment** name in UCD that the component version will be deployed to.
+-e `<ucdEnvironmentName>` | **Environment** name in UCD that the component version will be deployed to.
 -d `<ucdComponentName:ucdDeployVersion>` | **Component name and version** to be deployed to the UCD environment.
--t `<timeout>` |(*) **Deployment timeout** value in seconds.  Defaults to 300 seconds.
--s `<SSLProtocol>`|(*) **SSL protocol** to use.  Default is TLSv1.2.
--k |(*) Disable SSL verification flag.
--v |(*) Verbose tracing flag. Used to produce additional tracing in the groovy script.
-
-(*) Optional
+-t `<timeout>` | (Optional) **Deployment timeout** value in seconds.  Defaults to 300 seconds.
+-s `<SSLProtocol>`| (Optional) **SSL protocol** to use. Default is TLSv1.2.
+-k | (Optional) Disable SSL verification flag.
+-v | (Optional) Verbose tracing flag. Used to produce additional tracing in the groovy script.
 
 #### Output
 
-Expand the section below to view the output that is produced by the `ucdDeploy.sh` script.
+The section below contains the output that is produced by the `ucdDeploy.sh` script.
 
 <details>
   <summary>Script Output</summary>
@@ -602,30 +586,185 @@ Executing ......
 
 </details>
 
-### 4.7 - prepareLogs.sh
+### 4.7 - wazideploy-generate.sh
 
-Script to obtain the logs that were produced as part of the pipeline steps in the work/log directory. 
+This script invokes the Wazi Deploy Generate command to generate a Deployment Plan based on the content of a package. The package should be created with the `PackageBuildOutputs.groovy` script or through the `packageBuildOutputs.sh` script.
+
 
 #### Invocation
 
-The script can be invoked as below:
+The `wazideploy-generate.sh` script can be invoked as follows:
+
+```
+wazideploy-generate.sh -m deploymentMethod -p deploymentPlan -r deploymentPlanReport -i packageInputFile
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-m `<deploymentMethod>` | Absolute path to the Wazi Deploy **Deployment Plan** stored on UNIX System Services.
+-p `<deploymentPlan>` | Absolute path to the **Deployment Plan** file, generated based on the content of the input package.
+-r `<deploymentPlanReport>` | (Optional) Absolute path to the **Deployment Plan Report**.
+-i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
+-o `<packageOutputFile>` | (Optional) Absolute path to the **Package Output File** to be deployed to the UCD environment. Only required when a URL is specified for the **Package Input File**.
+-c `<configurationFile>` | (Optional) Absolute path to the **Configuration File** that contains information to connect to Artifactory. Only required when a URL is specified for **Package Input File**.
+-v | (Optional) Verbose tracing flag. Used to produce additional tracing with Wazi Deploy.
+
+#### Output
+
+The section below contains the output that is produced by the `wazideploy-generate.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+wazideploy-generate.sh -m /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/deployment-method/deployment-method.yml -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml -r /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+wazideploy-generate.sh: [INFO] Generate Wazi Deploy Deployment Plan. Version=1.00
+
+wazideploy-generate.sh: [INFO] **************************************************************
+wazideploy-generate.sh: [INFO] ** Start Wazi Deploy Generation on HOST/USER: z/OS ZT01 04.00 02 8561/***
+wazideploy-generate.sh: [INFO] **               Deployment Method: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/deployment-method/deployment-method.yml
+wazideploy-generate.sh: [INFO] **       Generated Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
+wazideploy-generate.sh: [INFO] **          Deployment Plan Report: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html
+wazideploy-generate.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+wazideploy-generate.sh: [INFO] **       Verbose output is enabled: FALSE
+wazideploy-generate.sh: [INFO] **************************************************************
+
+* Build the deployment plan from the deployment method with the deployment plan extension: WdDeploymentStateExtension
+** Generic step PACKAGE/PACKAGE/PACKAGE
+*** No item found
+** Collecting items for DEPLOY_MODULES/ADD/MEMBER_COPY
+*** 4 items found [EPSCMORT.CICSLOAD, EPSMORT.MAPLOAD, EPSCMORT.DBRM, EPSMLIS.MAPLOAD]
+** Collecting items for DEPLOY_MODULES/UPDATE/MEMBER_VALIDATE
+*** No item found
+** Collecting items for DEPLOY_MODULES/UPDATE/MEMBER_ARCHIVE
+*** No item found
+** Collecting items for DEPLOY_MODULES/UPDATE/MEMBER_COPY
+*** No item found
+** Collecting items for DB2/UPDATE/DB2_BIND_PACKAGE
+*** 1 item found [EPSCMORT.DBRM]
+** Collecting items for DB2/UPDATE/DB2_BIND_PLAN
+*** 1 item found [EPSCMORT.DBRM]
+** Collecting items for CICS/ADD/PROG_CREATE
+*** No item found
+** Collecting items for CICS/UPDATE/PROG_UPDATE
+*** 3 items found [EPSCMORT.CICSLOAD, EPSMORT.MAPLOAD, EPSMLIS.MAPLOAD]
+** Collecting items for CICS/DELETE/PROG_DELETE
+*** No item found
+** Collecting items for DELETE_MODULES/DELETE/MEMBER_DELETE
+*** No item found
+* Save the deployment plan to: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
+* Save the deployment plan report to: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html
+
+</details>
+
+### 4.8 - wazideploy-deploy.sh
+
+This script invokes the Wazi Deploy Deploy (with the Python Translator) command to deploy the content of a provided package with a Deployment Plan.
+
+#### Invocation
+
+The `wazideploy-deploy.sh` script can be invoked as follows:
+
+```
+wazideploy-deploy.sh -w workingDirectory -p deploymentPlan -e environmentFile -i packageInputFile -l evidenceFile
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-w `<workingDirectory>` | **Working directory**, an absolute path to a directory where the package will be expanded before being deployed.
+-p `<deploymentPlan>` | Absolute path to the **Deployment Plan** file, that describes the deployment tasks.
+-e `<environmentFile>` | Absolute path to **Environment File**, that describes the tarhet z/OS environment.
+-i `<packageInputFile>` | Absolute path to the **Package Input File** to be deployed with Wazi Deploy.
+-l `<evidenceFile>` | (Optional) Absolute path to the **Evidence File** that will contain the logs of all Wazi Deploy tasks.
+-v | (Optional) Verbose tracing flag. Used to produce additional tracing with Wazi Deploy.
+
+#### Output
+
+The section below contains the output that is produced by the `wazideploy-deploy.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+Successfully connected.
+wazideploy-deploy.sh -w /u/ado/workspace/MortgageApplication/main/build-20231019.13 -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml -e /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -l /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+wazideploy-deploy.sh: [INFO] Deploy Package with Wazi Deploy. Version=1.00
+
+wazideploy-deploy.sh: [INFO] **************************************************************
+wazideploy-deploy.sh: [INFO] ** Start Wazi Deploy Deployment on HOST/USER: z/OS ZT01 04.00 02 8561/***
+wazideploy-deploy.sh: [INFO] **               Working Directory: /u/ado/workspace/MortgageApplication/main/build-20231019.13
+wazideploy-deploy.sh: [INFO] **                 Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
+wazideploy-deploy.sh: [INFO] **                Environment File: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml
+wazideploy-deploy.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+wazideploy-deploy.sh: [INFO] **                   Evidence File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+wazideploy-deploy.sh: [INFO] **       Verbose output is enabled: FALSE
+wazideploy-deploy.sh: [INFO] **************************************************************
+wazideploy-deploy -wf /u/ado/workspace/MortgageApplication/main/build-20231019.13 -dp /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml -ef /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -pif /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -efn /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+
+** Reading the deployment file from: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
+** Reading the target environment file from: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml
+*** Validate Deployment Plan before processing it
+*** End of Deployment Plan validation
+*** Validate /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar fingerprint
+*** Checksum is valid for /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+** Registering SMF Record
+*! WARNING: The registration of SMF record failed. See full log in evidence file /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+** Processing PACKAGE(s)
+** Processing PACKAGE/PACKAGE(s)
+** Processing PACKAGE/PACKAGE/PACKAGE(s) with package
+*** Processing package /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+*** Expand the package /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar to /u/ado/workspace/MortgageApplication/main/build-20231019.13 on system os OS/390
+** Processing DEPLOY_MODULES(s)
+** Processing DEPLOY_MODULES/ADD(s)
+** Processing DEPLOY_MODULES/ADD/MEMBER_COPY(s) with member_copy
+*** Copy /u/ado/workspace/MortgageApplication/main/build-20231019.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSCMORT.CICSLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSCMORT)'
+*** Copy /u/ado/workspace/MortgageApplication/main/build-20231019.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSMORT.MAPLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSMORT)'
+*** Copy /u/ado/workspace/MortgageApplication/main/build-20231019.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSMLIS.MAPLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSMLIS)'
+*** Copy /u/ado/workspace/MortgageApplication/main/build-20231019.13/***.MORTGAGE.MAIN.BLD.DBRM/EPSCMORT.DBRM to 'WDEPLOY.MORTGAGE.INT.DBRM(EPSCMORT)'
+** Processing DB2(s)
+** Processing DB2/UPDATE(s)
+** Processing DB2/UPDATE/DB2_BIND_PACKAGE(s) with db2_bind_package
+*** Perform BIND PACKAGE on subsys 'DBC1' for package 'MORTGAGE' and qualifier 'MORTGAGE' with template 'db2_bind_package.j2'
+**** Perform BIND PACKAGE on 'EPSCMORT.DBRM'
+*** Submit jcl /u/ado/workspace/MortgageApplication/main/build-20231019.13/bind_package_1.jcl
+** Job JOB03104 submitted with ZOAU Python API.
+**** Job JOB03104 finished CC=0000
+** Processing DB2/UPDATE/DB2_BIND_PLAN(s) with db2_bind_plan
+*** Perform BIND PLAN on subsys 'DBC1' for pklist '*.MORTGAGE.*' and qualifier 'MORTGAGE' with template 'db2_bind_plan.j2'
+*** Submit jcl /u/ado/workspace/MortgageApplication/main/build-20231019.13/bind_plan_1.jcl
+** Job JOB03105 submitted with ZOAU Python API.
+**** Job JOB03105 finished CC=0000
+** Processing CICS(s)
+** Processing CICS/UPDATE(s)
+** Processing CICS/UPDATE/PROG_UPDATE(s) with cics_cmci_prog_update
+*** Perform CICS NEWCOPY on WDEPLOY.MORTGAGE.INT.LOAD(EPSCMORT) on sysplex 'CICS01'
+*** Perform CICS NEWCOPY on WDEPLOY.MORTGAGE.INT.LOAD(EPSMORT) on sysplex 'CICS01'
+*** Perform CICS NEWCOPY on WDEPLOY.MORTGAGE.INT.LOAD(EPSMLIS) on sysplex 'CICS01'
+** Evidences saved in /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+
+</details>
+
+
+### 4.9 - prepareLogs.sh
+
+Script to obtain the logs that were produced as part of the pipeline steps in the *logs* directory. 
+
+#### Invocation
+
+The `prepareLogs.sh` script can be invoked as follows:
 
 ```
 prepareLogs.sh -w MortApp/main/build-1
 ```
 
-Cli parameter | Description
+CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
--w `<workspace>` | **Workspace directory** an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
 
-On successful completion, the script is writing a message to indicate the output directory with the log file name
+On successful completion, the script writes a message to indicate the output directory with the log file name:
 ```
 Logs successfully stored at /var/dbb/pipelineBackend/workspace/MortApp/feature/setmainbuildbranch/build-1/logs.tar
 ```
 
  #### Script output
 
-Expand the section below to view the output that is produced by the `prepareLogs.sh` script.
+The section below contains the output that is produced by the `prepareLogs.sh` script.
 
 <details>
   <summary>Script Output</summary>
@@ -657,11 +796,11 @@ prepareLogs.sh: [INFO] Logs successfully stored at /var/dbb/pipelineBackend/work
 
 </details>
 
-#### Download logs to distributed runner environment
+#### Download logs to non-z/OS runner/agent environment
 
-While the script `prepareLogs.sh` only creates the tar file on the workspace directory, you want to download the created tar file to the distributed runner environment to attach it to the pipeline results.
+While the script `prepareLogs.sh` only creates the TAR file on the workspace directory, the next step is to download the TAR file to the non-z/OS runner/agent environment, in order to attach it to the pipeline results.
 
-The below sample illustrates the invocation of the prepareLogs script and inspect the console output for the message `Logs successfully stored at ` indicating that a tar file was successfully created. 
+The following sample illustrates the invocation of the `prepareLogs.sh` script and inspects the console output for the message `Logs successfully stored at ` indicating that a TAR file was successfully created. 
 It _greps_ the information and invokes a download action.
 
 ```shell
