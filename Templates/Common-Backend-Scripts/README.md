@@ -124,7 +124,7 @@ An alternate configuration is to have `bash` defined as the default program in t
 
 Zowe CLI by default initializes the environment with the user's profile:
 ```
-zowe zos-Unix System Services issue ssh "dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main
+zowe zos-uss issue ssh "dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main
 ```
 
 ## 4 - Script Inventory
@@ -258,10 +258,10 @@ CLI parameter | Description
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps.
 -a `<application>` | **Application name** to be built, which is passed to zAppBuild as the `--application` parameter.
 -b `<branch>` | **Git branch** that is built. Used to compute various build properties such as the `--hlq` and build type.
--p  `<build/release/preview>` | (Optional) **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules), or if it runs in `preview` mode.
+-p `<build/release/preview>` | (Optional) **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules), or if it runs in `preview` mode.
 -v | (Optional) zAppBuild verbose tracing flag.
--t  `<buildTypeArgument>` | (Optional) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Arguments must be provided between quotes ()`-t '--fullBuild'`). Providing this parameter overrides the computation of the build type in the backend scripts. Can be used to initialize the DBB Metadatastore. 
--q '<hlqPrefix>' |(Optional) **HLQ prefix**. Default is retrieved from the `pipelineBackend.config` file, which is set to the pipeline user executing the script.
+-t `<buildTypeArgument>` | (Optional) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Arguments must be provided between quotes ()`-t '--fullBuild'`). Providing this parameter overrides the computation of the build type in the backend scripts. Can be used to initialize the DBB Metadatastore. 
+-q `<hlqPrefix>` |(Optional) **HLQ prefix**. Default is retrieved from the `pipelineBackend.config` file, which is set to the pipeline user executing the script. This parameter allows 
 
 **Pipeline type**
 
@@ -289,7 +289,7 @@ dbbBuild.sh: [INFO] **          Workspace: /var/dbb/pipelineBackend/workspace/Mo
 dbbBuild.sh: [INFO] **        Application: MortgageApplication
 dbbBuild.sh: [INFO] **             Branch: main
 dbbBuild.sh: [INFO] **         Build Type: --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
-dbbBuild.sh: [INFO] **                HLQ: DBEHM.MORTGAGE.main.BLD
+dbbBuild.sh: [INFO] **                HLQ: DBEHM.MORTGAGE.MAIN.BLD
 dbbBuild.sh: [INFO] **             AppDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/MortgageApplication
 dbbBuild.sh: [INFO] **             LogDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs
 dbbBuild.sh: [INFO] **     zAppBuild Path: /var/dbb/dbb-zappbuild_300
@@ -301,7 +301,7 @@ dbbBuild.sh: [INFO] **         DBB Logger: No
 dbbBuild.sh: [INFO] **************************************************************
 
 dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
-dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /var/dbb/pipelineBackend/workspace/MortApp/main/build-1 --application MortgageApplication --outDir /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs --hlq DBEHM.MORTGAGE.main.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
+dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /var/dbb/pipelineBackend/workspace/MortApp/main/build-1 --application MortgageApplication --outDir /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs --hlq DBEHM.MORTGAGE.MAIN.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
 
 ** Build start at 20230825.043936.039
 ** Build output located at /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039
@@ -371,9 +371,9 @@ CLI parameter | Description
 -t `<tarFileName>` | (Optional) Name of the **tar file** to create.
 **Artifact Upload options**
 -u | Flag to enable upload of outputs to the configured artifact repository.
--b | (Optional, but required when publishing) Name of the **git branch** turning into an segment of the directory path in the artifact repository. 
--p  `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
--v `artifactVersion` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
+-b | (Required when publishing) Name of the **git branch** turning into an segment of the directory path in the artifact repository. 
+-p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
+-v `<artifactVersion>` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
 
 #### Script conventions
 
@@ -808,7 +808,7 @@ It _greps_ the information and invokes a download action.
 ```shell
     cmdStr="prepareLogs.sh -w MortApp/main/build-1"
     echo "$cmdStr"
-    zowe zos-Unix System Services issue ssh "${cmdStr}" | tee prepareLogsOutput.txt
+    zowe zos-uss issue ssh "${cmdStr}" | tee prepareLogsOutput.txt
 
     # read logs 
     logsTar=$(cat prepareLogsOutput.txt | grep "Logs successfully stored at " | awk -F "stored at " ' { print $2 }')
@@ -816,7 +816,7 @@ It _greps_ the information and invokes a download action.
     if [ ! -z "${logsTar}" ]; then
         # use zowe cli to download file to local environment
         # sftp / scp can be alternative download options.
-        zowe zos-files download Unix System Services-file "$logsTar" -f ./logs/MortApp/main/build-1/logs.tar -b
+        zowe zos-files download uss-file "$logsTar" -f ./logs/MortApp/main/build-1/logs.tar -b
     else 
         rc=4
         echo "[WARNING] Tar file containing the logs was not found. rc="$rc
