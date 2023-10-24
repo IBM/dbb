@@ -597,7 +597,6 @@ This script invokes the Wazi Deploy Generate command to generate a Deployment Pl
 
 The `wazideploy-generate.sh` script can be invoked as follows:
 
-
 ```
 wazideploy-generate.sh -w  MortApp/main/build-1 -i MortgageApplication.tar"                                     
 ```
@@ -609,7 +608,7 @@ wazideploy-generate.sh -m deploymentMethod -p deploymentPlan -r deploymentPlanRe
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `deploymentPlanReport` and `packageOutputFile` are fully referenced. 
--i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
+-i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. If providing a relative path, the file is assumed to be located in the `<workspace directory>/<logsDir>`. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
 -m `<deploymentMethod>` | (Optional) Absolute path to the Wazi Deploy **Deployment Method** stored on UNIX System Services. If not specified the deployment method file location is obtained from the `pipelineBackend.config`.
 -p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified the deployment plan location is obtained from the `pipelineBackend.config`.
 -r `<deploymentPlanReport>` | (Optional) Absolute path to the **Deployment Plan Report**. If not specified the deployment plan report location is obtained from the `pipelineBackend.config`.
@@ -623,13 +622,13 @@ The section below contains the output that is produced by the `wazideploy-genera
 
 <details>
   <summary>Script Output</summary>
-wazideploy-generate.sh -m /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/deployment-method/deployment-method.yml -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml -r /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+wazideploy-generate.sh -m /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/deployment-method/deployment-method.yml -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml -r /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
 wazideploy-generate.sh: [INFO] Generate Wazi Deploy Deployment Plan. Version=1.00
 
 wazideploy-generate.sh: [INFO] **************************************************************
 wazideploy-generate.sh: [INFO] ** Start Wazi Deploy Generation on HOST/USER: z/OS ZT01 04.00 02 8561/***
 wazideploy-generate.sh: [INFO] **               Deployment Method: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/deployment-method/deployment-method.yml
-wazideploy-generate.sh: [INFO] **       Generated Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
+wazideploy-generate.sh: [INFO] **       Generated Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml
 wazideploy-generate.sh: [INFO] **          Deployment Plan Report: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html
 wazideploy-generate.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
 wazideploy-generate.sh: [INFO] **        Debug output is disabled.
@@ -658,7 +657,7 @@ wazideploy-generate.sh: [INFO] *************************************************
 *** No item found
 ** Collecting items for DELETE_MODULES/DELETE/MEMBER_DELETE
 *** No item found
-* Save the deployment plan to: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
+* Save the deployment plan to: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml
 * Save the deployment plan report to: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html
 
 </details>
@@ -671,17 +670,22 @@ This script invokes the Wazi Deploy Deploy (with the Python Translator) command 
 
 The `wazideploy-deploy.sh` script can be invoked as follows:
 
+Only mandatory parameters, and using relative paths:
 ```
-wazideploy-deploy.sh -w workingDirectory -p deploymentPlan -e environmentFile -i packageInputFile -l evidenceFile
+wazideploy-deploy.sh -w  MorgageApplication/main/build-1 -e IntegrationTest.yaml -i MortgageApplication.tar"
+```
+or qualified paths
+```
+wazideploy-deploy.sh -w /u/ado/workspace/MorgageApplication/main/build-1 -p /u/ado/workspace/MortApp/main/build-1/deploymentPlan.yaml -e /u/ado/deployment/environment-configs/IntegrationTest.yaml -i /u/ado/builds/MortApp/main/build-1/logs/MortgageApplication.tar -l /u/ado/builds/MortApp/main/build-1/logs/evidences.yaml
 ```
 
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
--w `<workingDirectory>` | **Working directory**, an absolute path to a directory where the package will be expanded before being deployed.
--p `<deploymentPlan>` | Absolute path to the **Deployment Plan** file, that describes the deployment tasks.
--e `<environmentFile>` | Absolute path to **Environment File**, that describes the tarhet z/OS environment.
--i `<packageInputFile>` | Absolute path to the **Package Input File** to be deployed with Wazi Deploy.
--l `<evidenceFile>` | (Optional) Absolute path to the **Evidence File** that will contain the logs of all Wazi Deploy tasks.
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `environmentFile`, `packageInputFile` and `evidenceFile` are fully referenced. 
+-p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified, the deployment plan location is obtained from the `pipelineBackend.config`.
+-e `<environmentFile>` | (Optional) Absolute or relative path to **Environment File**, that describes the target z/OS environment. If a relative path is provided, the deployment plan is located with based on the configuration from the `pipelineBackend.config`.
+-i `<packageInputFile>` | **Package Input File** package that is to be deployed. If a relative file path is provided, the file is assumed to be located in the `<workspace directory>/<logsDir>`.
+-l `<evidenceFile>` | (Optional) Absolute path to the **Evidence File** that will contain the logs of all Wazi Deploy tasks. If not specified, evidence file location will be obtained from the `pipelineBackend.config`.
 -d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
 
 #### Output
@@ -691,21 +695,21 @@ The section below contains the output that is produced by the `wazideploy-deploy
 <details>
   <summary>Script Output</summary>
 Successfully connected.
-wazideploy-deploy.sh -w /u/ado/workspace/MortgageApplication/main/build-20231019.13 -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml -e /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -l /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+wazideploy-deploy.sh -w /u/ado/workspace/MortgageApplication/main/build-20231019.13 -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml -e /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -l /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
 wazideploy-deploy.sh: [INFO] Deploy Package with Wazi Deploy. Version=1.00
 
 wazideploy-deploy.sh: [INFO] **************************************************************
 wazideploy-deploy.sh: [INFO] ** Start Wazi Deploy Deployment on HOST/USER: z/OS ZT01 04.00 02 8561/***
 wazideploy-deploy.sh: [INFO] **               Working Directory: /u/ado/workspace/MortgageApplication/main/build-20231019.13
-wazideploy-deploy.sh: [INFO] **                 Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
+wazideploy-deploy.sh: [INFO] **                 Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml
 wazideploy-deploy.sh: [INFO] **                Environment File: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml
 wazideploy-deploy.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
 wazideploy-deploy.sh: [INFO] **                   Evidence File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
 wazideploy-deploy.sh: [INFO] **        Debug output is disabled.
 wazideploy-deploy.sh: [INFO] **************************************************************
-wazideploy-deploy -wf /u/ado/workspace/MortgageApplication/main/build-20231019.13 -dp /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml -ef /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -pif /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -efn /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+wazideploy-deploy -wf /u/ado/workspace/MortgageApplication/main/build-20231019.13 -dp /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml -ef /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -pif /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -efn /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
 
-** Reading the deployment file from: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentplan.yaml
+** Reading the deployment file from: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml
 ** Reading the target environment file from: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml
 *** Validate Deployment Plan before processing it
 *** End of Deployment Plan validation

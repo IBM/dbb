@@ -2,7 +2,7 @@
 #===================================================================================
 # NAME: wazideploy-deploy.sh
 #
-# DESCRIPTION: The purpose of this script is to use wazideploy-deploy to 
+# DESCRIPTION: The purpose of this script is to use wazideploy-deploy to
 # deploy a package with a provided Deployment Plan
 #
 # SYNTAX: See Help() Section Below
@@ -24,51 +24,85 @@
 #   None
 #
 # Maintenance Log
-# Date       Who Vers Description
-# ---------- --- ---- --------------------------------------------------------------
-# 2023/07/18 RBS 1.00 Initial Release
+# Date       Who  Vers Description
+# ---------- ---- ---- --------------------------------------------------------------
+# 2023/10/19 MDLB 1.00 Initial Release
 #===================================================================================
 Help() {
-  echo $PGM" - Deploy a package with Wazi Deploy                                  "
-  echo "                                                                          "
-  echo "Description: The purpose of this script is to use wazideploy-deploy to    "
-  echo "deploy a package with a provided Deployment Plan                          "
-  echo "                                                                          "
-  echo "Syntax:                                                                   "
-  echo "                                                                          "
-  echo "       "$PGM" [Options]                                                   "
-  echo "                                                                          "
-  echo "Options:                                                                  "
-  echo "                                                                          "
-  echo "       -h                                - Help.                          "
-  echo "                                                                          "
-  echo "       -w <working directory>            - Path to the working            "
-  echo "                                           directory                      "
-  echo "                                           Default=None, Required         "
-  echo "                                                                          "
-  echo "       -p <deployment plan path>         - Path to the Deployment Plan    "
-  echo "                                           Default=None, Required         "
-  echo "                                                                          "
-  echo "       -e <environment file>             - Path to the environment file   "
-  echo "                                           Default=None, Required         "
-  echo "                                                                          "
-  echo "       -i <package input file path>      - Path to the package            "
-  echo "                                           to be deployed                 "
-  echo "                                           Default=None, Optional         "
-  echo "                                                                          "
-  echo "       -l <evidence file path>           - Path to the evidence file      "
-  echo "                                           Default=None, Optional         "
-  echo "                                                                          "
-  echo "       -d                                - Debug tracing flag             "
-  echo " "
-  exit 0
+    echo $PGM" - Deploy a package with Wazi Deploy                                  "
+    echo "                                                                          "
+    echo "Description: The purpose of this script is to use wazideploy-deploy to    "
+    echo "deploy a package with a provided Deployment Plan                          "
+    echo "                                                                          "
+    echo "Syntax:                                                                   "
+    echo "                                                                          "
+    echo "       "$PGM" [Options]                                                   "
+    echo "                                                                          "
+    echo "Options:                                                                  "
+    echo "                                                                          "
+    echo "       -h                                - Help.                          "
+    echo "                                                                          "
+    echo "       -w <workspace>                    - Directory Path to a unique     "
+    echo "                                           working directory              "
+    echo "                                           Either an absolute path        "
+    echo "                                           or relative path.              "
+    echo "                                           If a relative path is provided,"
+    echo "                                           buildRootDir and the workspace "
+    echo "                                           path are combined              "
+    echo "                                           Default computed in            "
+    echo "                                            wdDeployPackageDir()          "
+    echo "                                            in pipelineBackend.config     "
+    echo "                                           Default=None, Required.        "
+    echo "                                                                          "
+    echo "                 Ex: MortgageApplication/main/build-1                     "
+    echo "                                                                          "
+    echo "                                                                          "
+    echo "       -p <deployment plan path>         - Path to the generated          "
+    echo "                                           Deployment Plan                "
+    echo "                                           (Optional)                     "
+    echo "                                           Default=                       "
+    echo "                                            See wdDeploymentPlanName      "
+    echo "                                            in pipelineBackend.config     "
+    echo "                                                                          "
+    echo "       -e <environment file>             - Path to the environment file   "
+    echo "                                           Either an absolute path        "
+    echo "                                           or relative path.              "
+    echo "                                           If a relative file name is     "
+    echo "                                           provided, environment file     "
+    echo "                                           is looked up in folder         "
+    echo "                                           wdEnvironmentConfigurations    "
+    echo "                                           in pipelineBackend.config      "
+    echo "                                           Default=None, Required.        "
+    echo "                                                                          "
+    echo "                 Ex: Integration.yaml                                     "
+    echo "                                                                          "
+    echo "                                                                          "
+    echo "       -i <package input file>           - Path to the package            "
+    echo "                                           used as input                  "
+    echo "                                           Default=None, Required.        "
+    echo "                                           If a relative path is provided,"
+    echo "                                           buildRootDir and the workspace "
+    echo "                                           path are combined              "
+    echo "                                           Default=None, Required.        "
+    echo "                                                                          "
+    echo "                 Ex: MortgageApplication.tar                              "
+    echo "                                                                          "
+    echo "       -l <evidence file path>           - Path to the evidence file      "
+    echo "                                           (Optional)                     "
+    echo "                                           Default=                       "
+    echo "                                            See wdEvidenceFileName        "
+    echo "                                            in pipelineBackend.config     "
+    echo "                                                                          "
+    echo "       -d                                - Debug tracing flag             "
+    echo " "
+    exit 0
 }
 
 #
 # Customization
 # Configuration file leveraged by the backend scripts
 # Either an absolute path or a relative path to the current working directory
-SCRIPT_HOME="`dirname "$0"`"
+SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 # Customization - End
 
@@ -84,7 +118,7 @@ SYS=$(uname -Ia)
 
 rc=0
 ERRMSG=""
-WorkingDirectory=""
+Workspace=""
 DeploymentPlan=""
 EnvironmentFile=""
 PackageInputFile=""
@@ -93,211 +127,265 @@ Debug=""
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
-  Help
+    Help
 fi
 
 # Validate Shell environment
 currentShell=$(ps -p $$ | grep bash)
 if [ -z "${currentShell}" ]; then
-  rc=8
-  ERRMSG=$PGM": [ERROR] The scripts are designed to run in bash. You are running a different shell. rc=${rc}. \n. $(ps -p $$)."
-  echo $ERRMSG
+    rc=8
+    ERRMSG=$PGM": [ERROR] The scripts are designed to run in bash. You are running a different shell. rc=${rc}. \n. $(ps -p $$)."
+    echo $ERRMSG
 fi
 #
 
 if [ $rc -eq 0 ]; then
-  echo $PGM": [INFO] Deploy Package with Wazi Deploy. Version="$PGMVERS
+    echo $PGM": [INFO] Deploy Package with Wazi Deploy. Version="$PGMVERS
 fi
 
 # Read and import pipeline configuration
 if [ $rc -eq 0 ]; then
-  if [ ! -f "${pipelineConfiguration}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Pipeline Configuration File (${pipelineConfiguration}) was not found. rc="$rc
-    echo $ERRMSG
-  else
-    source $pipelineConfiguration
-  fi
+    if [ ! -f "${pipelineConfiguration}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Pipeline Configuration File (${pipelineConfiguration}) was not found. rc="$rc
+        echo $ERRMSG
+    else
+        source $pipelineConfiguration
+    fi
 fi
 
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "hd:w:p:e:i:l:" opt; do
-    case $opt in
-    h)
-      Help
-      ;;
+    while getopts "hd:w:p:e:i:l:" opt; do
+        case $opt in
+        h)
+            Help
+            ;;
 
-    w)
-      argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
-      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-        rc=4
-        ERRMSG=$PGM": [ERROR] Working Directory is required. rc="$rc
-        echo $ERRMSG
-        break
-      fi
-      WorkingDirectory="$argument"
-      ;;
+        w)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] Working Directory is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            Workspace="$argument"
+            ;;
 
-    p)
-      argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
-      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-        rc=4
-        ERRMSG=$PGM": [ERROR] Path to Deployment Plan is required. rc="$rc
-        echo $ERRMSG
-        break
-      fi
-      DeploymentPlan="$argument"
-      ;;
+        p)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] Path to Deployment Plan is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            DeploymentPlan="$argument"
+            ;;
 
-    e)
-      argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
-      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-        rc=4
-        ERRMSG=$PGM": [ERROR] Path to Environment file is required. rc="$rc
-        echo $ERRMSG
-        break
-      fi
-      EnvironmentFile="$argument"
-      ;;
+        e)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] Path to Environment file is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            EnvironmentFile="$argument"
+            ;;
 
-    i)
-      argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
-      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-        rc=4
-        ERRMSG=$PGM": [ERROR] Path to Package Input File is required. rc="$rc
-        echo $ERRMSG
-        break
-      fi
-      PackageInputFile="$argument"
-      ;;
+        i)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] Path to Package Input File is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            PackageInputFile="$argument"
+            ;;
 
-    l)
-      argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
-      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-        rc=4
-        ERRMSG=$PGM": [ERROR] Path to Evidence file is required. rc="$rc
-        echo $ERRMSG
-        break
-      fi
-      EvidenceFile="$argument"
-      ;;
+        l)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] Path to Evidence file is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            EvidenceFile="$argument"
+            ;;
 
-    d)
-      # Add command to produce debug output
-      Debug=" -d"
-      ;;
+        d)
+            # Add command to produce debug output
+            Debug="--debug"
+            ;;
 
-    \?)
-      Help
-      rc=1
-      break
-      ;;
+        \?)
+            Help
+            rc=1
+            break
+            ;;
 
-    :)
-      rc=1
-      ERRMSG=$PGM": [ERROR] Option -$OPTARG requires an argument. rc="$rc
-      echo $ERRMSG
-      break
-      ;;
+        :)
+            rc=1
+            ERRMSG=$PGM": [ERROR] Option -$OPTARG requires an argument. rc="$rc
+            echo $ERRMSG
+            break
+            ;;
 
-    esac
-  done
+        esac
+    done
 fi
 
-#
+# Valicate Workspace property
+checkWorkspace() {
+    if [ -z "${Workspace}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Unique Workspace parameter is required. rc="$rc
+        echo $ERRMSG
+    fi
+}
+
 # Validate Options
+validateOptions() {
 
-if [ $rc -eq 0 ]; then
-  if [ -z "${WorkingDirectory}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Working Directory is required. rc="$rc
-    echo $ERRMSG
-  fi
-fi
+    # validate workspace
+    if [ -z "${Workspace}" ]; then
+        Workspace="$(wdDeployPackageDir)"
+    else
+        # relative workspace directory
+        if [[ ! ${Workspace:0:1} == "/" ]]; then
+            Workspace="$(wdDeployPackageDir)"
+        fi
+    fi
 
-if [ $rc -eq 0 ]; then
-  if [ -z "${DeploymentPlan}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Deployment Plan is required. rc="$rc
-    echo $ERRMSG
-  fi
-fi
+    # compute deployment plan if not specified
+    if [ -z "${DeploymentPlan}" ]; then
+        # compute default based on configuration
+        DeploymentPlan="$(wdDeployPackageDir)/${wdDeploymentPlanName}"
+        # if still undefined
+        if [ -z "${DeploymentPlan}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Deployment Plan is required. rc="$rc
+            echo $ERRMSG
+        fi
+    fi
+    # validate that plan exists
+    if [ ! -f "${DeploymentPlan}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Wazi Deploy Deployment Plan (${DeploymentPlan}) was not found. rc="$rc
+        echo $ERRMSG
+    fi
 
-if [ $rc -eq 0 ]; then
-  if [ -z "${EnvironmentFile}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Environment File is required. rc="$rc
-    echo $ERRMSG
-  fi
-fi
+    # validate the environment file
+    if [ -z "${EnvironmentFile}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Environment File is required. rc="$rc
+        echo $ERRMSG
+    else
+        # check for relative path
+        if [[ ! ${EnvironmentFile:0:1} == "/" ]]; then
+            EnvironmentFile="${wdEnvironmentConfigurations}/${EnvironmentFile}"
+        fi
+    fi
+    # validate that environment file exits
+    if [ ! -f "${EnvironmentFile}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Wazi Deploy Environment File (${EnvironmentFile}) was not found. rc="$rc
+        echo $ERRMSG
+    fi
 
+    # validate package input file
+    if [ -z "${PackageInputFile}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Package Input File is required. rc="$rc
+        echo $ERRMSG
+    else
+        # check for relative path
+        if [[ ! ${PackageInputFile:0:1} == "/" ]]; then
+            checkWorkspace
+            PackageInputFile="$(getLogDir)/${PackageInputFile}"
+        fi
+    fi
+    if [ ! -f "${PackageInputFile}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Package Input File (${PackageInputFile}) was not found. rc="$rc
+        echo $ERRMSG
+    fi
+
+    # compute evidence file if not specified
+    if [ -z "${EvidenceFile}" ]; then
+        # compute default based on configuration
+        checkWorkspace
+        EvidenceFile="$(wdDeployPackageDir)/${wdEvidenceFileName}"
+    fi
+}
+
+# Call validate Options
 if [ $rc -eq 0 ]; then
-  if [ -z "${PackageInputFile}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Package Input File is required. rc="$rc
-    echo $ERRMSG
-  fi
+    validateOptions
 fi
 
 #
 # Set up Environment
 if [ $rc -eq 0 ]; then
-  . $HOME/.profile
+    . $HOME/.profile
 fi
 
 #
 # Ready to go
 if [ $rc -eq 0 ]; then
-  echo $PGM": [INFO] **************************************************************"
-  echo $PGM": [INFO] ** Start Wazi Deploy Deployment on HOST/USER: ${SYS}/${USER}"
-  echo $PGM": [INFO] **               Working Directory:" ${WorkingDirectory}
-  echo $PGM": [INFO] **                 Deployment Plan:" ${DeploymentPlan}
-  echo $PGM": [INFO] **                Environment File:" ${EnvironmentFile}
-  echo $PGM": [INFO] **              Package Input File:" ${PackageInputFile}
+    echo $PGM": [INFO] **************************************************************"
+    echo $PGM": [INFO] ** Start Wazi Deploy Deployment on HOST/USER: ${SYS}/${USER}"
+    echo $PGM": [INFO] **               Working Directory:" ${Workspace}
+    echo $PGM": [INFO] **                 Deployment Plan:" ${DeploymentPlan}
+    echo $PGM": [INFO] **                Environment File:" ${EnvironmentFile}
+    echo $PGM": [INFO] **              Package Input File:" ${PackageInputFile}
 
-  if [ ! -z "${EvidenceFile}" ]; then
-    echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
-  fi
+    if [ ! -z "${EvidenceFile}" ]; then
+        echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
+    fi
 
-  if [ ! -z "${Debug}" ]; then
-    echo $PGM": [INFO] **         Debug output is enabled."
-  else
-    echo $PGM": [INFO] **        Debug output is disabled."
-  fi
+    if [ ! -z "${Debug}" ]; then
+        echo $PGM": [INFO] **         Debug output is enabled."
+    else
+        echo $PGM": [INFO] **        Debug output is disabled."
+    fi
 
-  echo $PGM": [INFO] **************************************************************"
-  echo ""
+    echo $PGM": [INFO] **************************************************************"
+    echo ""
 fi
 
 #
 # Set up to execute the Wazi Deploy deploy command
 if [ $rc -eq 0 ]; then
-  CommandLine="wazideploy-deploy -wf "${WorkingDirectory}" -dp "${DeploymentPlan}" -ef "${EnvironmentFile}
-  if [ ! -z "${PackageInputFile}" ]; then
-    CommandLine+=" -pif "${PackageInputFile}  
-  fi 
-  if [ ! -z "${EvidenceFile}" ]; then
-    CommandLine+=" -efn "${EvidenceFile}  
-  fi 
-  if [ ! -z "${Debug}" ]; then
-    CommandLine+=${Debug}  
-  fi   
-  echo ${CommandLine} 2>&1 
-  ${CommandLine} 2>&1
-  rc=$?
+    CommandLine="wazideploy-deploy --workingFolder "${Workspace}" --deploymentPlan "${DeploymentPlan}" --envFile "${EnvironmentFile}
+    if [ ! -z "${PackageInputFile}" ]; then
+        CommandLine+=" --packageInputFile "${PackageInputFile}
+    fi
+    if [ ! -z "${EvidenceFile}" ]; then
+        CommandLine+=" --evidencesFileName "${EvidenceFile}
+    fi
+    if [ ! -z "${Debug}" ]; then
+        CommandLine+=" ${Debug}"
+    fi
+    echo ${CommandLine} 2>&1
+    ${CommandLine} 2>&1
+    rc=$?
 
-  if [ $rc -ne 0 ]; then
-    ERRMSG=$PGM": [ERROR] Unable to Deploy package with Wazi Deploy. rc="$rc
-    echo $ERRMSG
-    rc=8
-  fi
+    if [ $rc -ne 0 ]; then
+        ERRMSG=$PGM": [ERROR] Unable to Deploy package with Wazi Deploy. rc="$rc
+        echo $ERRMSG
+        rc=8
+    fi
 fi
 
 exit $rc
