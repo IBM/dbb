@@ -597,18 +597,24 @@ This script invokes the Wazi Deploy Generate command to generate a Deployment Pl
 
 The `wazideploy-generate.sh` script can be invoked as follows:
 
+
+```
+wazideploy-generate.sh -w  MortApp/main/build-1 -i MortgageApplication.tar"                                     
+```
+Or by fully specifying the settings
 ```
 wazideploy-generate.sh -m deploymentMethod -p deploymentPlan -r deploymentPlanReport -i packageInputFile
 ```
 
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
--m `<deploymentMethod>` | Absolute path to the Wazi Deploy **Deployment Plan** stored on UNIX System Services.
--p `<deploymentPlan>` | Absolute path to the **Deployment Plan** file, generated based on the content of the input package.
--r `<deploymentPlanReport>` | (Optional) Absolute path to the **Deployment Plan Report**.
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `deploymentPlanReport` and `packageOutputFile` are fully referenced. 
 -i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
--o `<packageOutputFile>` | (Optional) Absolute path to the **Package Output File** to be deployed to the UCD environment. Only required when a URL is specified for the **Package Input File**.
--c `<configurationFile>` | (Optional) Absolute path to the **Configuration File** that contains information to connect to Artifactory. Only required when a URL is specified for **Package Input File**.
+-m `<deploymentMethod>` | (Optional) Absolute path to the Wazi Deploy **Deployment Method** stored on UNIX System Services. If not specified the deployment method file location is obtained from the `pipelineBackend.config`.
+-p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified the deployment plan location is obtained from the `pipelineBackend.config`.
+-r `<deploymentPlanReport>` | (Optional) Absolute path to the **Deployment Plan Report**. If not specified the deployment plan report location is obtained from the `pipelineBackend.config`.
+-o `<packageOutputFile>` | (Optional) Absolute or relative path to the **Package Output File** that specifies the location where to store the downloaded tar file. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
+-c `<configurationFile>` | (Optional) Absolute path to the **Configuration File** that contains information to connect to Artifactory. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
 -d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
 
 #### Output

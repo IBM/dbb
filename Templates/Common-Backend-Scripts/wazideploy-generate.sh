@@ -2,7 +2,7 @@
 #===================================================================================
 # NAME: wazideploy-generate.sh
 #
-# DESCRIPTION: The purpose of this script is to use wazideploy-generate to 
+# DESCRIPTION: The purpose of this script is to use wazideploy-generate to
 # generate a Deployment Plan for Wazi Deploy
 #
 # SYNTAX: See Help() Section Below
@@ -24,9 +24,9 @@
 #   None
 #
 # Maintenance Log
-# Date       Who Vers Description
-# ---------- --- ---- --------------------------------------------------------------
-# 2023/10/20 DLB 1.00 Initial Release
+# Date       Who  Vers Description
+# ---------- ---- ---- --------------------------------------------------------------
+# 2023/10/19 MDLB 1.00 Initial Release
 #===================================================================================
 Help() {
   echo $PGM" - Generate Wazi Deploy Deployment Plan                               "
@@ -42,28 +42,49 @@ Help() {
   echo "                                                                          "
   echo "       -h                                - Help.                          "
   echo "                                                                          "
+  echo "       -w <workspace>                    - Directory Path to a unique     "
+  echo "                                           working directory              "
+  echo "                                           Either an absolute path        "
+  echo "                                           or relative path.              "
+  echo "                                           If a relative path is provided,"
+  echo "                                           buildRootDir and the workspace "
+  echo "                                           path are combined              "
+  echo "                                           Default=None, Required.        "
+  echo "                                                                          "
+  echo "                 Ex: MortgageApplication/main/build-1                     "
+  echo "                                                                          "
+  echo "       -i <package input file>           - Path to the package            "
+  echo "                                           used as input                  "
+  echo "                                           Default=None, Required.        "
+  echo "                                           If a relative path is provided,"
+  echo "                                           the log directory is suffixed  "
+  echo "                                           Default=None, Required.        "  
+  echo "                                                                          "
+  echo "                 Ex: MortgageApplication.tar                              "
+  echo "                                                                          "
   echo "       -m <deployment method path>       - Path to the Deployment Method  "
-  echo "                                           Default=None, Required         "
+  echo "                                           (Optional)                     "
+  echo "                                           Default=pipelineBackend.config "
   echo "                                                                          "
   echo "       -p <deployment plan path>         - Path to the generated          "
   echo "                                           Deployment Plan                "
-  echo "                                           Default=None, Required         "
+  echo "                                           (Optional)                     "
+  echo "                                           Default=pipelineBackend.config "
   echo "                                                                          "
   echo "       -r <deployment plan report>       - Path to the generated          "
-  echo "                                           Deployment Plan report         "
-  echo "                                           Default=None, Optional         "
+  echo "                                           (Optional)                     "
+  echo "                                           Default=pipelineBackend.config "
   echo "                                                                          "
-  echo "       -i <package input file path>      - Path to the package            "
-  echo "                                           used as input                  "
-  echo "                                           Default=None, Optional         "
   echo "                                                                          "
   echo "       -o <package output file path>     - Path to the package            "
   echo "                                           used as output                 "
-  echo "                                           Default=None, Optional         "
+  echo "                                           (Optional)                     "
+  echo "                                           Default=pipelineBackend.config "
   echo "                                                                          "
   echo "       -c <configuration file path>      - Path to configuration file     "
   echo "                                           for the artifact repository    "
-  echo "                                           Default=None, Optional         "
+  echo "                                           (Optional)                     "
+  echo "                                           Default=pipelineBackend.config "
   echo "                                                                          "
   echo "       -d                                - Debug tracing flag             "
   echo " "
@@ -74,7 +95,7 @@ Help() {
 # Customization
 # Configuration file leveraged by the backend scripts
 # Either an absolute path or a relative path to the current working directory
-SCRIPT_HOME="`dirname "$0"`"
+SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 # Customization - End
 
@@ -96,6 +117,7 @@ DeploymentPlanReport=""
 PackageInputFile=""
 PackageOutputFile=""
 ConfigFile=""
+Workspace=""
 Debug=""
 HELP=$1
 
@@ -130,12 +152,22 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "hd:m:p:r:i:o:c:" opt; do
+  while getopts "hd:w:m:p:r:i:o:c:" opt; do
     case $opt in
     h)
       Help
       ;;
-
+    w)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] Build Workspace Folder Name is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      Workspace="$argument"
+      ;;
     m)
       argument="$OPTARG"
       nextchar="$(expr substr $argument 1 1)"
@@ -208,7 +240,6 @@ if [ $rc -eq 0 ]; then
       ConfigFile="$argument"
       ;;
 
-
     d)
       # Add command to produce debug output with Wazi Deploy
       Debug=" -d"
@@ -231,39 +262,98 @@ if [ $rc -eq 0 ]; then
   done
 fi
 
-#
+# if computation of files is setup
+checkWorkspace() {
+  if [ -z "${Workspace}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERROR] Unique Workspace parameter (-w) is required. rc="$rc
+    echo $ERRMSG
+  fi
+}
+
 # Validate Options
+validateOptions() {
 
-if [ $rc -eq 0 ]; then
+  # read default deployment method if not specified
   if [ -z "${DeploymentMethod}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Deployment Method is required. rc="$rc
-    echo $ERRMSG
+    #  read from pipelineBackend.config
+    DeploymentMethod="${wdDeploymentMethod}"
+    if [ -z "${DeploymentMethod}" ]; then
+      rc=8
+      ERRMSG=$PGM": [ERROR] Deployment Method is required. rc="$rc
+      echo $ERRMSG
+    fi
   fi
-fi
+  if [ $rc -eq 0 ]; then
+    if [ ! -f "${DeploymentMethod}" ]; then
+      rc=8
+      ERRMSG=$PGM": [ERROR] Wazi Deploy Deployment Method (${DeploymentMethod}) was not found. rc="$rc
+      echo $ERRMSG
+    fi
+  fi
 
-if [ $rc -eq 0 ]; then
+  # compute deployment plan if not specified
   if [ -z "${DeploymentPlan}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Deployment Plan is required. rc="$rc
-    echo $ERRMSG
+    # compute default based on configuration
+    checkWorkspace
+    DeploymentPlan="$(wdDeployPackageDir)/${wdDeploymentPlanName}"
+    # if still undefined
+    if [ -z "${DeploymentPlan}" ]; then
+      rc=8
+      ERRMSG=$PGM": [ERROR] Deployment Plan is required. rc="$rc
+      echo $ERRMSG
+    fi
   fi
-fi
 
-if [ $rc -eq 0 ]; then
+  # compute deployment plan report if not specified
+  if [ -z "${DeploymentPlanReport}" ]; then
+    # compute default based on configuration
+    checkWorkspace
+    DeploymentPlanReport="$(wdDeployPackageDir)/${wdDeploymentPlanReportName}"
+  fi
+
+ # validate package input file
   if [ -z "${PackageInputFile}" ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] Package Input File is required. rc="$rc
     echo $ERRMSG
+  else
+    # check for relative path
+    if [[ ! ${PackageInputFile:0:1} == "/" ]] ; then 
+        checkWorkspace
+        PackageInputFile="$(getLogDir)/${PackageInputFile}"
+    fi
   fi
-fi
-
-if [ $rc -eq 0 ]; then
-  if [ ! -z "${PackageOutputFile}" ] && [ -z "${ConfigFile}" ]; then
+  if [ ! -f "${PackageInputFile}" ]; then
     rc=8
-    ERRMSG=$PGM": [ERROR] Configuration File is required when specifying Package Output File. rc="$rc
+    ERRMSG=$PGM": [ERROR] Package Input File (${PackageInputFile}) was not found. rc="$rc
     echo $ERRMSG
   fi
+
+  # validate config file
+  if [ -z "${ConfigFile}" ]; then
+    ConfigFile="${wdDeployArtifactoryConfig}"
+  fi
+
+  if [ ! -z "${ConfigFile}" ]; then
+    if [ ! -f "${ConfigFile}" ]; then
+      rc=8
+      ERRMSG=$PGM": [ERROR] Specified Wazi Deploy Artifactory Configuration file (${ConfigFile}) was not found. rc="$rc
+      echo $ERRMSG
+    fi
+  fi
+
+  # compute the output file
+  if [ -z "${PackageOutputFile}" ] && [ ! -z "${ConfigFile}" ]; then
+    # c
+    checkWorkspace
+    PackageOutputFile="$(wdDeployPackageDir)"
+  fi
+}
+
+# Call validate Options
+if [ $rc -eq 0 ]; then
+  validateOptions
 fi
 
 #
@@ -294,7 +384,6 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **              Configuration File:" ${ConfigFile}
   fi
 
-
   if [ ! -z "${Debug}" ]; then
     echo $PGM": [INFO] **         Debug output is enabled."
   else
@@ -310,18 +399,18 @@ fi
 if [ $rc -eq 0 ]; then
   CommandLine="wazideploy-generate -dm "${DeploymentMethod}" -dp "${DeploymentPlan}" -pif "${PackageInputFile}
   if [ ! -z "${DeploymentPlanReport}" ]; then
-    CommandLine+=" -dpr "${DeploymentPlanReport}  
-  fi 
+    CommandLine+=" -dpr "${DeploymentPlanReport}
+  fi
   if [ ! -z "${PackageOutputFile}" ]; then
-    CommandLine+=" -pof "${PackageOutputFile}  
-  fi 
+    CommandLine+=" -pof "${PackageOutputFile}
+  fi
   if [ ! -z "${ConfigFile}" ]; then
-    CommandLine+=" -cdf "${ConfigFile}  
-  fi 
+    CommandLine+=" -cdf "${ConfigFile}
+  fi
   if [ ! -z "${Debug}" ]; then
-    CommandLine+=${Debug}  
-  fi 
-  echo ${CommandLine} 2>&1 
+    CommandLine+=${Debug}
+  fi
+  echo ${CommandLine} 2>&1
   ${CommandLine} 2>&1
   rc=$?
 
