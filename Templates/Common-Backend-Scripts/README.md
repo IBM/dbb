@@ -598,7 +598,7 @@ This script invokes the Wazi Deploy Generate command to generate a Deployment Pl
 The `wazideploy-generate.sh` script can be invoked as follows:
 
 ```
-wazideploy-generate.sh -w  MortApp/main/build-1 -i MortgageApplication.tar"                                     
+wazideploy-generate.sh -w  MortApp/main/build-1 -i MortgageApplication.tar                                     
 ```
 Or by fully specifying the settings
 ```
@@ -672,7 +672,7 @@ The `wazideploy-deploy.sh` script can be invoked as follows:
 
 Only mandatory parameters, and using relative paths:
 ```
-wazideploy-deploy.sh -w  MorgageApplication/main/build-1 -e IntegrationTest.yaml -i MortgageApplication.tar"
+wazideploy-deploy.sh -w  MorgageApplication/main/build-1 -e IntegrationTest.yaml -i MortgageApplication.tar
 ```
 or qualified paths
 ```
