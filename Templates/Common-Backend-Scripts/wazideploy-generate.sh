@@ -397,15 +397,15 @@ fi
 #
 # Set up to execute the Wazi Deploy generate command
 if [ $rc -eq 0 ]; then
-  CommandLine="wazideploy-generate -dm "${DeploymentMethod}" -dp "${DeploymentPlan}" -pif "${PackageInputFile}
+  CommandLine="wazideploy-generate --deploymentMethod "${DeploymentMethod}" --deploymentPlan "${DeploymentPlan}" --packageInputFile "${PackageInputFile}
   if [ ! -z "${DeploymentPlanReport}" ]; then
-    CommandLine+=" -dpr "${DeploymentPlanReport}
+    CommandLine+=" --deploymentPlanReport "${DeploymentPlanReport}
   fi
   if [ ! -z "${PackageOutputFile}" ]; then
-    CommandLine+=" -pof "${PackageOutputFile}
+    CommandLine+=" --packageOutputFile "${PackageOutputFile}
   fi
   if [ ! -z "${ConfigFile}" ]; then
-    CommandLine+=" -cdf "${ConfigFile}
+    CommandLine+=" --configFile "${ConfigFile}
   fi
   if [ ! -z "${Debug}" ]; then
     CommandLine+=${Debug}
