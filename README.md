@@ -27,6 +27,7 @@ Sample | Description
 [Pipeline/PublishSharedInterfaces](Pipeline/PublishSharedInterfaces) | Post-build script to publish shared copybooks to a shared git repository managing all shared copybooks. 
 [Pipeline/RunIDZCodeReview](Pipeline/RunIDZCodeReview) | Post-build script to integrate IBM IDz Code Review application into a pipeline.
 [Pipeline/SimplePackageDeploy](Pipeline/SimplePackageDeploy) | Post-build script to deploy the tar package contents to the target libraries.
+[Templates/Common-Backend-Scripts](Templates/Common-Backend-Scripts) | Asset to encapsulate pipeline steps to simplify the pipeline implementation 
 [Utilities/DeletePDS](Utilities/DeletePDS) | Sample script to delete PDSes on z/OS that are no longer needed.
 [Utilities/Jenkins](Utilities/Jenkins) | Utility shell scripts supplied to address issues when running Jenkins remote agents on z/OS UNIX System Services (USS).
 [Utilities/ReadSMFRecords](Utilities/ReadSMFRecords) | Groovy scripts to read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities.
