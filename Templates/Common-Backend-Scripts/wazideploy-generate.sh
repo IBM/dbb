@@ -315,6 +315,11 @@ validateOptions() {
       echo $ERRMSG
     fi
   fi
+  # if relative path
+  if [[ ! ${DeploymentPlan:0:1} == "/" ]] ; then
+    DeploymentPlan="$(wdDeployPackageDir)/${DeploymentPlan}"
+  fi
+
 
   # compute deployment plan report if not specified
   if [ -z "${DeploymentPlanReport}" ]; then
@@ -322,8 +327,12 @@ validateOptions() {
     checkWorkspace
     DeploymentPlanReport="$(wdDeployPackageDir)/${wdDeploymentPlanReportName}"
   fi
+  # if relative path
+  if [[ ! ${DeploymentPlanReport:0:1} == "/" ]] ; then
+    DeploymentPlanReport="$(wdDeployPackageDir)/${DeploymentPlanReport}"
+  fi
 
- # validate package input file
+  # validate package input file
   if [ -z "${PackageInputFile}" ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] Package Input File is required. rc="$rc
@@ -359,6 +368,10 @@ validateOptions() {
     # c
     checkWorkspace
     PackageOutputFile="$(wdDeployPackageDir)"
+  fi
+  # if relative path
+  if [[ ! ${PackageOutputFile:0:1} == "/" ]] ; then
+    PackageOutputFile="$(wdDeployPackageDir)/${PackageOutputFile}"
   fi
 }
 

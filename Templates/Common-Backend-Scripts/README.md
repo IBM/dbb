@@ -485,8 +485,8 @@ CLI parameter | Description
 -e `<externalRepositoryFile>` | **Path to external artifact repository file** used by UCD buztool.
 -f `<packagingPropertiesFile>` | **Path to a properties file** for additional configuration for the `dbb-ucd-packaging` script.
 -u `<pipelineUrl>`| (Optional) URL to the pipeline to establish link to pipeline build result.
--b | (Optional) Name of the **git branch**.
--p | (Optional) URL to the pull request.
+-b `<branchName>` | (Optional) Name of the **git branch**.
+-p `<prUrl>` | (Optional) URL to the pull request.
 
 #### Output
 
@@ -608,11 +608,11 @@ wazideploy-generate.sh -m deploymentMethod -p deploymentPlan -r deploymentPlanRe
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `deploymentPlanReport` and `packageOutputFile` are fully referenced. 
--i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. If providing a relative path, the file is assumed to be located in the `<workspace directory>/<logsDir>`. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
+-i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. If providing a relative path, the file is assumed to be located in the directory `<workspace directory>/<logsDir>`. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
 -m `<deploymentMethod>` | (Optional) Absolute path to the Wazi Deploy **Deployment Method** stored on UNIX System Services. If not specified the deployment method file location is obtained from the `pipelineBackend.config`.
--p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified the deployment plan location is obtained from the `pipelineBackend.config`.
--r `<deploymentPlanReport>` | (Optional) Absolute path to the **Deployment Plan Report**. If not specified the deployment plan report location is obtained from the `pipelineBackend.config`.
--o `<packageOutputFile>` | (Optional) Absolute or relative path to the **Package Output File** that specifies the location where to store the downloaded tar file. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
+-p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`.  If not specified the deployment plan location is obtained from the `pipelineBackend.config`.
+-r `<deploymentPlanReport>` | (Optional) Absolute or relative path to the **Deployment Plan Report**. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. If not specified the deployment plan report location is obtained from the `pipelineBackend.config`.
+-o `<packageOutputFile>` | (Optional) Absolute or relative path to the **Package Output File** that specifies the location where to store the downloaded tar file. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
 -c `<configurationFile>` | (Optional) Absolute path to the **Configuration File** that contains information to connect to Artifactory. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
 -d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
 
