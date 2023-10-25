@@ -17,7 +17,7 @@ The purpose of these common backend scripts is to reduce the necessary configura
 
 Instead of mixing **orchestration of tasks** and **implementation of the pipeline rules** (such as computation of build HLQ, build type, etc) in the specific pipeline technology (e.g. a Jenkinsfile or a .gitlab-ci.yaml definition), the common backend scripts provide central services to the pipeline orchestrator, independently from the chosen orchestration technology.
 
-By simplifying the invocation of the [pipeline tasks](../../Pipeline/), these scripts help the DevOps engineer to implement the pipeline configuration, especially for pipeline orchestrators that do not have a runner/agent available on Unix System Services.
+By simplifying the invocation of the [pipeline tasks](../../Pipeline/), these scripts help the DevOps engineer to implement the pipeline configuration, especially for pipeline orchestrators that do not have a runner/agent available on z/OS UNIX System Services.
 
 In addition, this repository contains a [test driver](test/) to outline how the scripts can be remotely invoked from non-z/OS systems. Additional templates for the various pipeline orchestrators (such as an azure-pipeline.yaml), is planned to be provided as well, to showcase how the Common Backend Scripts should be used.
 
@@ -37,7 +37,7 @@ The following are required to use these scripts:
 
 ### 2.2 - Installation
 
-* Copy/clone the Common Backend Scripts into Unix System Services under a protected directory, e.g. `/usr/dbb/pipelineBackend`.
+* Copy/clone the Common Backend Scripts into z/OS UNIX System Services under a protected directory, e.g. `/usr/dbb/pipelineBackend`.
   * Update the permission of these scripts to allow for `read/execute` to only the users who will invoke the scripts. This is typically the technical user defined for the pipeline orchestrator. 
 
 * The following environment variables need to be defined (for instance within the `.profile`) for the mainframe users who will execute the scripts on UNIX System Services:
@@ -94,7 +94,7 @@ All the scripts are designed to have a unique working directory or workspace. Th
 
 If a relative path is provided, the value of the workspace parameter is combined with the `buildRootDir` setting that is defined in the [pipelineBackend.config](pipelineBackend.config) as `<buildRootDir>/<workspace>`.
 
-In the sample below, we use a workspace path consisting of 3 segments which are the **application name**, the **branch name** and the **pipeline build id**. This is the recommended approach, to ensure a unique workspace directory on Unix System Services:
+In the sample below, we use a workspace path consisting of 3 segments which are the **application name**, the **branch name** and the **pipeline build id**. This is the recommended approach, to ensure a unique workspace directory on z/OS UNIX System Services:
 
 ```
 <Application>/<branch>/<pipeline-id>
@@ -109,7 +109,7 @@ MortApp/main/build-1
 Scripts can be invoked from a non-z/OS pipeline runner/agent via 
 * SSH connection
 * ZOWE CLI
-* or natively, to include steps (such as build and packaging phase) in a pipeline configuration that is executed under Unix System Services. 
+* or natively, to include steps (such as build and packaging phase) in a pipeline configuration that is executed under z/OS UNIX System Services. 
 
 ### 3.1 - Invocation samples: non-interactive SSH session
 
@@ -131,7 +131,7 @@ zowe zos-uss issue ssh "dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplicati
 
 Artifact Name |  Description | Script details   
 ---------- | -----| -----------------------------------------------------
-[gitClone.sh](gitClone.sh) | Pipeline Shell Script to perform Git Clone to Unix System Services | [script details](README.md#41---gitclonesh)
+[gitClone.sh](gitClone.sh) | Pipeline Shell Script to perform Git Clone to z/OS UNIX System Services | [script details](README.md#41---gitclonesh)
 [dbbBuild.sh](dbbBuild.sh) | Pipeline Shell Script to invoke the Dependency Based Build framework [zAppBuild](https://github.com/IBM/dbb-zappbuild) | [script details](README.md#42---dbbbuildsh)
 [utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) | Utility Shell Script to implement the computation of build configuration, such as HLQ, build type or property overrides. | [script details](README.md#43---script-capabilities--dbbbuildutilssh)
 [packageBuildOutputs.sh](packageBuildOutputs.sh) | Pipeline Shell Script to create a Package using the [PackageBuildOutputs groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/PackageBuildOutputs) | [script details](README.md#44---packagebuildoutputssh)
@@ -144,7 +144,7 @@ Artifact Name |  Description | Script details
 
 ### 4.1 - gitClone.sh
 
-Script to clone a repository to Unix System Services. Please note that it is not pulling for updates. 
+Script to clone a repository to z/OS UNIX System Services. Please note that it is not pulling for updates. 
 
 #### Invocation
 
@@ -162,7 +162,7 @@ CLI parameter | Description
 
 **Dealing with private repositories**
 
-Alhtough credentials should be managed in the secret vault of your pipeline orchestrator, you can pass credentials via the Git Repository URL, as follows:
+Although credentials should be managed in the secret vault of your pipeline orchestrator, you can pass credentials via the Git Repository URL, as follows:
 ```
 gitClone.sh -w MortApp/main/build-1 -r https://<personal-access-token>@github.com/user/dbb-zappbuild-private.git -b main 
 ```
@@ -371,7 +371,7 @@ CLI parameter | Description
 -t `<tarFileName>` | (Optional) Name of the **tar file** to create.
 **Artifact Upload options**
 -u | Flag to enable upload of outputs to the configured artifact repository.
--b | (Required when publishing) Name of the **git branch** turning into an segment of the directory path in the artifact repository. 
+-b | (Required when publishing) Name of the **git branch** turning into a segment of the directory path in the artifact repository. 
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
 -v `<artifactVersion>` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
 
@@ -609,9 +609,9 @@ CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `deploymentPlanReport` and `packageOutputFile` are fully referenced. 
 -i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. If providing a relative path, the file is assumed to be located in the directory `<workspace directory>/<logsDir>`. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
--m `<deploymentMethod>` | (Optional) Absolute path to the Wazi Deploy **Deployment Method** stored on UNIX System Services. If not specified the deployment method file location is obtained from the `pipelineBackend.config`.
--p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`.  If not specified the deployment plan location is obtained from the `pipelineBackend.config`.
--r `<deploymentPlanReport>` | (Optional) Absolute or relative path to the **Deployment Plan Report**. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. If not specified the deployment plan report location is obtained from the `pipelineBackend.config`.
+-m `<deploymentMethod>` | (Optional) Absolute path to the Wazi Deploy **Deployment Method** stored on UNIX System Services. If not specified, the deployment method file location is obtained from the `pipelineBackend.config`.
+-p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`.  If not specified, the deployment plan location is obtained from the `pipelineBackend.config`.
+-r `<deploymentPlanReport>` | (Optional) Absolute or relative path to the **Deployment Plan Report**. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. If not specified, the deployment plan report location is obtained from the `pipelineBackend.config`.
 -o `<packageOutputFile>` | (Optional) Absolute or relative path to the **Package Output File** that specifies the location where to store the downloaded tar file. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
 -c `<configurationFile>` | (Optional) Absolute path to the **Configuration File** that contains information to connect to Artifactory. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
 -d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
