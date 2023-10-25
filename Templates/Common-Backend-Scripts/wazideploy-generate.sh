@@ -370,7 +370,7 @@ validateOptions() {
     PackageOutputFile="$(wdDeployPackageDir)"
   fi
   # if relative path
-  if [[ ! ${PackageOutputFile:0:1} == "/" ]] ; then
+  if [[ ! ${PackageOutputFile:0:1} == "/" ]] && [[ ! -z "${PackageOutputFile}" ]] ; then
     PackageOutputFile="$(wdDeployPackageDir)/${PackageOutputFile}"
   fi
 }
