@@ -1,0 +1,236 @@
+# Branches that triggers this pipleline
+trigger:
+- feature/*
+- release/*
+- hotfix/*
+- epic/*
+- main
+
+parameters:
+- name: pipelineType
+  displayName: 'Pipeline Type'
+  type: string
+  default: build
+  values:
+  - build
+  - release
+  - preview
+- name: verboseLogging
+  displayName: 'zAppBuild verbose logging'
+  type: boolean
+  default: false
+
+# Agent pool where the pipeline runs
+pool:
+  name: $(agentPool)
+
+# Variables used in the pipeline
+variables:
+  ### Variables to be created in Azure pipeline
+  # ) agentPool                            # Agent pool name for Azure Agents to connect to MVS
+  # ) zos-sshConnection                    # zOS - SSH connection name
+  # ) pipelineWorkspace                   # Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
+  # ) wdEnvironmentFile                    # The Wazi Deploy environment file for the deployment into the lowest stage
+  # ) sftp-host-ip                         # zOS - Host IP for SFTP connection
+  # ) sftp-host-user                       # zOS - Host user for SFTP connection
+  # ) azureArtifactFeedID                  # Feed ID of the Azure artifact for publishing the package
+  # ) azureArtifactVersionOption           # Azure artifact version option (major, minor, fix)
+
+    
+  ### Environment variables to be added in zOS USS $HOME/.profile 
+  #    1) pipelineScriptsDir: Ex: export pipelineScriptsDir=/var/dbb/pipelineBackend-release/DAT-Clearing-House/Generic/Common-Wrapper-Scripts
+  
+  ### Variables generated during run time
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/') }}:                                           # Extract branch name for push 
+    branch: $[ replace(variables['Build.SourceBranch'], 'refs/heads/', '') ]    
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}:                                            # Extract branch name for pull request
+    branch: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]                                
+  buildNumber: $(Build.BuildNumber)                                                                               # Build number
+  organization_tmp: $[ replace(variables['System.TeamFoundationCollectionUri'], 'https://dev.azure.com/', '') ]   # Generate Azure repository uri for cloning
+  organization: $[ replace(variables['organization_tmp'], '/', '') ]                                              # Azure organization name
+  project: $(System.TeamProject)                                                                                  # Project name
+  application: ${{ variables['Build.Repository.Name'] }}                                                          # Application name
+  repo: "git@ssh.dev.azure.com:v3/$(organization)/$(project)/$(application)"                                      # Git repository path
+  uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/$(branch)/build-$(buildNumber)                                   # Calculated worksapce path
+  # Azure package name. Package names must contain only lowercase alphanumeric segments separated by a dash, dot or underscore.
+  reformattedBranchName: $[ replace(variables['branch'], '/', '-')]
+  lowerApplicatioName: $[ lower(variables['application']) ]
+  lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
+  azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicatioName).tar
+  packageName: $(application).build-$(buildNumber)                                                                # Name of the Package
+  pipelineType: ${{ parameters.pipelineType }}                                                                    
+  isMain: $[contains(variables['Build.SourceBranch'], 'main')]                                                    # Variable to indicate pipeline for the main branch
+  verbose : ""
+  ${{ if eq(parameters.verboseLogging, true) }}:                                                                  # Computation DBB verbose logging
+    verbose: "-v"
+
+stages:
+  - stage: Setup
+    jobs:
+    - job: Setup
+      continueOnError: false
+      steps:
+        - checkout: none  
+    # Display CI-CD pipeline parms
+        - script: |
+            echo " "
+            echo "Following are the CI-CD pipeline parameters"
+            echo "*******************************************"
+            echo "zos-sshConnection          = $(zos-sshConnection)"
+            echo "zos-sftp-host-ip           = $(sftp-host-ip)"
+            echo "zos-sftp-host-user         = $(sftp-host-user)"
+            echo "uss-workspace-root         = $(pipelineWorkspace)"
+            echo "uss-workspace-dir          = $(uniqueWorkspaceId)"
+            echo "verbose                    = ${{ parameters.verboseLogging }} "
+            echo "branch                     = $(branch)"
+            echo "buildNumber                = $(buildNumber)"
+            echo "organization               = $(organization)"
+            echo "project                    = $(project)"
+            echo "application                = $(application)"
+            echo "repo                       = $(repo)"
+            echo "pipelineType               = $(pipelineType)"
+            echo "deploymentTarget           = $(wdEnvironmentFile)"
+            echo "azureArtifactName          = $(azureArtifactName)"
+            echo "azureArtifactFeedID        = $(azureArtifactFeedID)"
+            echo "azureArtifactVersionOption = $(azureArtifactVersionOption)"
+            echo "packageName                = $(packageName)"
+            echo " "
+          displayName: 'Display CI-CD pipeline parms'
+        - task: SSH@0
+          inputs:
+            sshEndpoint: $(zos-sshConnection)
+            runOptions: 'commands'
+            commands: '. ./.profile && $pipelineScriptsDir/gitClone.sh -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)'
+            readyTimeout: '20000'
+          displayName: 'Clone application repo'
+
+  - stage: Build
+    jobs:
+    - job: Build
+      displayName: 'Build'
+      steps:
+        - checkout: none  
+        - task: SSH@0
+          inputs:
+            sshEndpoint: $(zos-sshConnection)
+            runOptions: 'commands'
+            commands: '. ./.profile && $pipelineScriptsDir/dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) $(verbose)'
+            readyTimeout: '20000'
+          displayName: 'Build application'
+        
+        - task: SSH@0
+          inputs:
+            sshEndpoint: $(zos-sshConnection)
+            runOptions: 'commands'
+            commands: '. ./.profile && $pipelineScriptsDir/prepareLogs.sh -w $(uniqueWorkspaceId)'
+            readyTimeout: '20000'
+          displayName: 'Prepare build logs'
+        
+        - task: CmdLine@2
+          inputs:
+            script: |
+              rm -rf "$(Build.SourcesDirectory)/build-logs" 
+              mkdir "$(Build.SourcesDirectory)/build-logs" 
+              sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/*.tar "\"$(Build.SourcesDirectory)/build-logs\""
+              tar -xvf "$(Build.SourcesDirectory)/build-logs/logs.tar" -C "$(Build.SourcesDirectory)/build-logs"
+          displayName: 'Stage the build logs'
+        
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: "$(Build.SourcesDirectory)/build-logs/logs" 
+            ArtifactName: 'build-logs'
+            publishLocation: 'Container'
+          displayName: 'Publish build logs'
+    
+  - stage: Package
+    jobs:
+    - job: Package
+      displayName: 'Package Outputs'
+      steps:
+      - checkout: none    
+      #- task: SSH@0
+      #  inputs:
+      #    sshEndpoint: $(zos-sshConnection)
+      #    runOptions: 'commands'
+      #    commands: '. ./.profile && $pipelineScriptsDir/ucdPackaging.sh -v $(packageName) -c $(application) -w $(uniqueWorkspaceId)  -b $(branch) -e $artifactRepoConfig'
+      #    readyTimeout: '20000'
+      #  displayName: 'Package the build artifacts for Deployment'
+      - task: SSH@0
+        condition: not(eq(variables['pipelineType'], 'preview'))
+        inputs:
+          sshEndpoint: $(zos-sshConnection)
+          runOptions: 'commands'
+          commands: '. ./.profile && $pipelineScriptsDir/packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageName)'
+          readyTimeout: '20000'
+        displayName: 'Package the build artifacts for Deployment' 
+      # Preview - Demonstrate to upload package to Azure DevOps Artifacts
+      ## TODO - Requires more work to distinguish build and release packages
+      - task: CmdLine@2
+        condition: not(eq(variables['pipelineType'], 'preview'))
+        inputs:
+          script: |
+            rm -rf "$(Build.SourcesDirectory)/deploymentPackage" 
+            mkdir "$(Build.SourcesDirectory)/deploymentPackage" 
+            sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
+        displayName: 'Stage the deployment package'     
+      - task: UniversalPackages@0
+        condition: not(eq(variables['pipelineType'], 'preview')) 
+        inputs:
+          command: 'publish'
+          publishDirectory: "$(Build.SourcesDirectory)/deploymentPackage"
+          feedsToUsePublish: 'internal'
+          vstsFeedPublish: '$(azureArtifactFeedID)'
+          vstsFeedPackagePublish: '$(azureArtifactName)'
+          versionOption: '$(azureArtifactVersionOption)'
+        displayName: 'Publish deployment package to Azure artifacts'
+  
+  - stage: Deploy
+    jobs:
+    - job: DeploymentToIntegration
+      displayName: 'Deployment Integration Environment'
+      steps:  
+        - checkout: none    
+        - task: SSH@0
+          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          inputs:
+            sshEndpoint: $(zos-sshConnection)
+            runOptions: 'commands'
+            commands: '. ./.profile && $pipelineScriptsDir/wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar'
+            readyTimeout: '20000'
+          displayName: 'Generate Deployment Plan with Wazi Deploy'
+        
+        - task: SSH@0
+          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          inputs:
+            sshEndpoint: $(zos-sshConnection)
+            runOptions: 'commands'
+            commands: '. ./.profile && $pipelineScriptsDir/wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e $(wdEnvironmentFile) -i $(application).tar -l $(uniqueWorkspaceId)/deploy/evidences/evidence.yaml'
+            readyTimeout: '20000'
+          displayName: 'Deploy Package with Wazi Deploy'
+        
+        - task: SSH@0
+          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          inputs:
+            sshEndpoint: $(zos-sshConnection)
+            runOptions: 'commands'
+            commands: '. ./.profile && $pipelineScriptsDir/wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l $(uniqueWorkspaceId)/deploy/evidences/evidence.yaml -o $(uniqueWorkspaceId)/deploy/deployment-report.html'
+            readyTimeout: '20000'
+          displayName: 'Generate deployment report with Wazi Deploy'
+
+        - task: CmdLine@2
+          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          inputs:
+            script: |
+              rm -rf "$(Build.SourcesDirectory)/deploy-logs" 
+              mkdir "$(Build.SourcesDirectory)/deploy-logs" 
+              sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/deploy/evidences/evidence.yaml "\"$(Build.SourcesDirectory)/deploy-logs\""
+              sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/deploy/deployment-report.html "\"$(Build.SourcesDirectory)/deploy-logs\""
+          displayName: 'Retrieve deployment report'
+
+        - task: PublishBuildArtifacts@1
+          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          inputs:
+            PathtoPublish: "$(Build.SourcesDirectory)/deploy-logs/" 
+            ArtifactName: 'deploy-logs'
+            publishLocation: 'Container'
+          displayName: 'Publish deployment logs'
