@@ -1,6 +1,6 @@
 # Pipeline Templates
 
-This category provides templates to implement a CI/CD pipeline covering the entire development lifecycle. These assets are developed based on `The Git-based process you need for Mainframe development`. Please make yourself familiar with the proposed development process.
+This category provides templates to implement a CI/CD pipeline covering the entire development lifecycle. These assets are developed based on [The Git-based process you need for Mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) and help you to quickly setup your pipeline environment. Please make yourself familiar with the outlined Git branching model.
 
 ## Table of Contents 
 Asset | Description | Documentation Link

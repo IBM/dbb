@@ -4,9 +4,11 @@ Welcome to the IBM Dependency Based Build (DBB) community repository. The helpfu
 ## Resources
 * [IBM Dependency Based Build Product Page](https://www.ibm.com/products/dependency-based-build)
 * [IBM DBB Documentation](https://www.ibm.com/docs/en/dbb)
+* [IBM DBB zAppBuild](https://github.com/IBM/dbb-zappbuild)
+* [IBM DevOps Acceleration Program Solution Page](https://ibm.github.io/z-devops-acceleration-program/)
 * [IBM zDevOps Community](https://community.ibm.com/community/user/ibmz-and-linuxone/groups/topic-home?CommunityKey=f36c1ced-7e79-43cd-897c-e798acfef4a4)
 * [IBM DBB Community](https://community.ibm.com/community/user/ibmz-and-linuxone/groups/topic-home/blog-entries?communitykey=20c9b889-9450-4ab6-8f11-8a5eb2b3342d)
-* [IBM DBB zAppBuild](https://github.com/IBM/dbb-zappbuild)
+
 
 ## Versions
 Branches and tags are used in this repository to help clarify the appropriate DBB version for the example scripts and snippets.
