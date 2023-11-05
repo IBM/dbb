@@ -260,8 +260,8 @@ CLI parameter | Description
 -b `<branch>` | **Git branch** that is built. Used to compute various build properties such as the `--hlq` and build type.
 -p `<build/release/preview>` | (Optional) **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules), or if it runs in `preview` mode.
 -v | (Optional) zAppBuild verbose tracing flag.
--t `<buildTypeArgument>` | (Optional) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Arguments must be provided between quotes ()`-t '--fullBuild'`). Providing this parameter overrides the computation of the build type in the backend scripts. Can be used to initialize the DBB Metadatastore. 
--q `<hlqPrefix>` |(Optional) **HLQ prefix**. Default is retrieved from the `pipelineBackend.config` file, which is set to the pipeline user executing the script. This parameter allows 
+-t `<buildTypeArgument>` | (Optional) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Arguments must be provided between quotes - e.g.: `-t '--fullBuild'`. Providing this parameter overrides the computation of the build type in the backend scripts. For instance can be used to initialize the DBB Metadatastore. 
+-q `<hlqPrefix>` |(Optional) **HLQ prefix**. Default is retrieved from the [pipelineBackend.config](pipelineBackend.config) file, if the configuration file is not modified - the default value is set to the user executing the script.
 
 **Pipeline type**
 
