@@ -69,6 +69,9 @@ import java.nio.file.*
  *  Support for UCD packaging format v2 
  *  Ability to package deletions (requires DBB Toolkit 1.1.3 and zAppBuild 2.4.0)
  *  
+ * Version 8 - 2023-11 
+ *  Added support for zFS files
+ *  
  */
 
 def properties = parseInput(args)

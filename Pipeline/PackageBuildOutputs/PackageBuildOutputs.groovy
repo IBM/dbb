@@ -41,6 +41,9 @@ import com.ibm.jzos.ZFile;
  * Version 5 - 2023-07
  *  - Added support for DeployableArtifact, to manage the correct stacking
  *    of duplicates artifacts
+ *
+ * Version 6 - 2023-11
+ *  - Added support for zFS files
  ************************************************************************************/
 
 // start create & publish package
