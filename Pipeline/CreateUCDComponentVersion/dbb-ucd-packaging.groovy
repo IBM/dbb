@@ -10,6 +10,7 @@ import groovy.json.JsonParserType
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import com.ibm.jzos.ZFile;
+import java.nio.file.*
 
 /**
  * This script creates a version in UrbanCode Deploy based on the build result.
@@ -125,7 +126,14 @@ properties.buildReportOrder.each{ buildReportFile ->
 		}
 	}
 
+    def USSRecords = buildReport.getRecords().findAll{
+        try {
+            it.getType()=="USS_RECORD"
+        } catch (Exception e) {}
+    }
+
 	def count = 0
+	def USSCount = 0
 	def deletionCount = 0
 
 	// store build output information in Hashmap buildOutputsMap to replace potential duplicates
@@ -134,31 +142,65 @@ properties.buildReportOrder.each{ buildReportFile ->
 		if(executeRecord.getOutputs().isEmpty() != true) {
 			count += executeRecord.getOutputs().size()
 			executeRecord.getOutputs().each{ output ->
-				def (ds,member) = getDatasetName(output.dataset)
+				def (ds,member) = getContainerAndFile(output.dataset)
 				tempBuildOutputsMap.put(new DeployableArtifact(member, output.deployType) , [ds, buildReport, executeRecord, buildReportRank])
 			}
 		}
 	}
+
+    // store build output information in Hashmap buildOutputsMap to replace potential duplicates
+    // managing TYPE USS_RECORD
+    USSRecords.each{ USSRecord ->
+        ArrayList<ArrayList> outputs = []
+        USSRecord.getAttribute("outputs").split(';').collectEntries { entry ->
+            outputs += entry.replaceAll('\\[|\\]', '').split(',')
+        }
+  
+        if(outputs.size() > 0) {
+            USSCount += outputs.size()
+            outputs.each{ output ->
+                rootDir = output[0].trim()
+                file = output[1].trim()
+                deployType = output[2].trim()
+                tempBuildOutputsMap.put(new DeployableArtifact(file, deployType) , [rootDir, buildReport, USSRecord, buildReportRank])
+            }
+        }
+    }
+
 
 	// store build output information in Hashmap buildOutputsMap to replace potential duplicates
 	// managing DELETE_RECORD leveraging the generic AnyTypeRecord Type
 	deletions.each { deleteRecord ->
 		deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
 		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
-//			def (ds,member) = getDatasetName(deletedFile)
 			String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
 			tempBuildOutputsMap.put(new DeployableArtifact(cleansedDeletedFile, "DELETE") , [deletedFile, buildReport, deleteRecord, buildReportRank])
 		}
 	}
 
-	if ( count + deletionCount == 0 ) {
+	if ( count + USSCount + deletionCount == 0 ) {
 		println("**  No items to package in $buildReportFile.")
 	} else {
 		// Log deployable files
-		if (count != 0) {
-			println("**  Deployable files detected in $buildReportFile")
-			executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
-		}
+        if (count != 0) {
+            println("**  Deployable dataset members detected in $buildReportFile")
+            executes.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+        }
+        if (USSCount != 0) {
+            println("**  Deployable files detected in $buildReportFile")
+            USSRecords.each { USSRecord ->
+                ArrayList<ArrayList> outputs = []
+                USSRecord.getAttribute("outputs").split(';').collectEntries { entry ->
+                    outputs += entry.replaceAll('\\[|\\]', '').split(',')
+                }
+                outputs.each{ output -> 
+                    rootDir = output[0].trim()
+                    file = output[1].trim()
+                    deployType = output[2].trim() 
+                    println("   $rootDir/$file, $deployType")
+                }
+            }
+        }
 
 		// Log deleted files
 		if (deletionCount != 0) {
@@ -182,7 +224,7 @@ tempBuildOutputsMap.each{ deployableArtifact, info ->
 	record = info[2]
 	artifactRank = info[3]
 	
-	if (record.getType() == DefaultRecordFactory.TYPE_EXECUTE || record.getType() == DefaultRecordFactory.TYPE_COPY_TO_PDS) {
+	if (record.getType() == DefaultRecordFactory.TYPE_EXECUTE || record.getType() == DefaultRecordFactory.TYPE_COPY_TO_PDS || record.getType() == "USS_RECORD") {
 		DeployableArtifact deleteArtifact = new DeployableArtifact(container + "(" + deployableArtifact.file + ")", "DELETE")
 		if (tempBuildOutputsMap.containsKey(deleteArtifact)) {
 			deleteArtifactInfo = tempBuildOutputsMap.get(deleteArtifact)
@@ -360,7 +402,93 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 				}
 			}
 		}
-		else if (record.getType()=="DELETE_RECORD") {
+        else if (record.getType()=="USS_RECORD") {
+            ArrayList<ArrayList> outputs = []
+            record.getAttribute("outputs").split(';').collectEntries { entry ->
+                outputs += entry.replaceAll('\\[|\\]', '').split(',')
+            }
+
+            outputs.each{ output -> 
+                rootDir = output[0].trim()
+                file = output[1].trim()
+                deployType = output[2].trim() 
+                // process only outputs of the key of the map
+                if (deployableArtifact.file.equals(file)) {
+                    if (isZFSFile("$rootDir/${deployableArtifact.file}")) {                            
+                        println "   Creating shiplist record for build output $rootDir/${deployableArtifact.file} with recordType $record.type."
+                        def (directory, relativeFileName) = extractDirectoryAndFile(deployableArtifact.file)
+                        println "**** $directory - $relativeFileName"
+                        def containerAttributes = [name:directory, rootDir:rootDir, type:"directory"]
+                        container(containerAttributes){
+                            resource(name:relativeFileName, type:"file", deployType:deployType){
+    
+                                // document dbb build result url and build properties on the element level when there are more than one buildReport processed
+                                if (properties.buildReportOrder.size() != 1) {
+    
+                                    // Url to DBB Build result
+                                    if (buildResult != null) {
+                                        property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+                                    }   
+                                    // Populate build result properties
+                                    if (buildResultProperties != null) {
+                                        buildResultProperties.each{
+                                            //not all properties need to be included in the shiplist
+                                            //can ignore files processed
+                                            //can ignore full build / impact build
+                                            property(name:it.key, value:it.value)
+                                        }
+                                    }
+                                }
+    
+                                property(name:"buildcommand", value:record.getAttribute("command"))
+                                property(name:"label", value:record.getAttribute("label"))
+    
+                                // add githash to container
+                                def githash = "" // set empty
+                                if (buildResultProperties != null){
+                                    // get git references from build properties
+                                    def gitproperty = buildResultProperties.find{
+                                        it.key.contains(":githash:") && record.getAttribute("file").contains(it.key.substring(9))
+                                    }
+                                    if (gitproperty != null ) {
+                                        githash = gitproperty.getValue()
+                                        // set properties in shiplist
+                                        property(name:"githash", value:githash)
+                                        if(properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
+                                    }
+                                }
+                                
+                                // add source information in the input column of UCD
+                                inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ record.getAttribute("file") : ""
+                                inputs(url : "${inputUrl}"){
+                                    input(name : record.getAttribute("file"), compileType : "Main", url : inputUrl)
+                                    
+                                    // adding dependencies
+                                    def dependencySets = buildReport.getRecords().findAll{
+                                        it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile()==record.getAttribute("file")
+                                    };
+                                    Set<String> dependencyCache = new HashSet<String>()
+                                    dependencySets.unique().each{
+                                        it.getAllDependencies().each{
+                                            if (it.isResolved() && !dependencyCache.contains(it.getLname()) && it.getFile()!=record.record.getAttribute("file")){
+                                                def displayName = it.getFile() ? it.getFile() : it.getLname()
+                                                def dependencyUrl =""
+                                                if (it.getFile() && (it.getCategory()=="COPY"||it.getCategory()=="SQL INCLUDE")) dependencyUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash!="") ? "${properties.git_treeURL_prefix}/${githash}/"+ it.getFile() : ""
+                                                input(name : displayName , compileType : it.getCategory(), url : dependencyUrl)
+                                                dependencyCache.add(it.getLname())
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        println "*! The file '$rootDir/${deployableArtifact.file}' doesn't exist. Copy is skipped."
+                    }
+                }
+            }        
+        }
+        else if (record.getType()=="DELETE_RECORD") {
 			// document delete container
 			
 			deletedFiles = record.getAttributeAsList("deletedBuildOutputs")
@@ -376,7 +504,7 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
 
 					deleted{
 						// create container
-						def (ds, member) = getDatasetName(deployableArtifact.file)
+						def (ds, member) = getContainerAndFile(deployableArtifact.file)
 						def containerAttributes = getContainerAttributes(ds, properties)
 						container(containerAttributes){
 							resource(name:member, type:"PDSMember")
@@ -495,20 +623,38 @@ if (!properties.preview.toBoolean()){
 }
 
 /**
- * parse data set name and member name
- * @param fullname e.g. BLD.LOAD(PGM1)
- * @return e.g. (BLD.LOAD, PGM1)
+ * return true if the file is a file stored on zFS, false otherwise
  */
-def getDatasetName(String fullname){
-	def ds,member;
-	def elements =  fullname.split("[\\(\\)]");
-	ds = elements[0];
-	member = elements.size()>1? elements[1] : "";
-	return [ds, member];
+def isZFSFile(String name) {
+    Path path = Paths.get(name);
+    return Files.exists(path);
 }
 
 /**
+ * Extract the directory and the file 
+ * from the fullname of a zFS file
+ * For instance: /var/test/file.txt  --> [/var/test, file.txt]
  */
+def extractDirectoryAndFile(String fullname) {
+    Path filePath = Paths.get(fullname);
+    String file = filePath.getFileName().toString();
+    String directory = filePath.getParent();
+    return [directory, file];
+}
+
+/**
+ * Parse the fullname of a qualified dataset and member name
+ * Returns its dataset name and member name)  
+ * For instance: BLD.LOAD(PGM1)     --> [BLD.LOAD, PGM1]
+ */
+def getContainerAndFile(String fullname) {
+    def ds,member;
+    def elements =  fullname.split("[\\(\\)]");
+    ds = elements[0];
+    member = elements.size()>1? elements[1] : "";
+    return [ds, member];
+}
+ 
 
 /**
  * calculate the container attributes for default package or package v2 

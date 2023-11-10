@@ -11,6 +11,9 @@ This sample Groovy script to package build outputs:
 
 - Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
 - Copies outputs to a temporary directory on Unix System Services and creates a tar file based on the temporary directory.
+
+The support for zFS files in the packaging process is performed through the use of an USS_RECORD type record in the DBB BuildReport. 
+
 ## Package Build Outputs Process - High-level Processing Flow
 
 This section provides a more detailed explanation of how the PackageBuildOutputs script works and what it does.

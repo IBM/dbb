@@ -95,10 +95,17 @@ props.buildReportOrder.each{ buildReportFile ->
 	// finds all the build outputs with a deployType
 	def buildRecords = buildReport.getRecords().findAll{
 		try {
-			(it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
-					!it.getOutputs().isEmpty()
+            (it.getType()==DefaultRecordFactory.TYPE_EXECUTE || it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS) &&
+                  !it.getOutputs().isEmpty()
 		} catch (Exception e){}
 	}
+
+    // finds all the build outputs with a deployType
+    def USSBuildRecords = buildReport.getRecords().findAll{
+        try {
+            it.getType()=="USS_RECORD" && !it.getAttribute("outputs").isEmpty()
+        } catch (Exception e){}
+    }
 
 	if (props.deployTypeFilter){
 		println("** Filtering Output Records on following deployTypes: ${props.deployTypeFilter}...")
@@ -111,6 +118,25 @@ props.buildReportOrder.each{ buildReportFile ->
 			it.getOutputs().clear()
 			it.getOutputs().addAll(filteredOutputs)
 		}
+        USSBuildRecords.each { 
+            ArrayList<ArrayList> outputs = []
+            it.getAttribute("outputs").split(';').collectEntries { entry ->
+                outputs += entry.replaceAll('\\[|\\]', '').split(',')
+            }
+            
+            ArrayList<String> filteredOutputs = []
+            outputs.each{ output -> 
+                rootDir = output[0].trim()
+                file = output[1].trim()
+                deployType = output[2].trim()
+                if (!(props.deployTypeFilter).split(',').contains(deployType)) {
+                    filteredOutputs += output.toString()
+                }
+            } 
+            
+            def filteredOutputsStrings = String.join(";", filteredOutputs)
+            it.setAttribute("outputs", filteredOutputsStrings)
+        }
 	} else {
 		// Remove outputs without deployType + ZUNIT-TESTCASEs
 		println("** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE...")
@@ -122,24 +148,60 @@ props.buildReportOrder.each{ buildReportFile ->
 		}
 	}
 
+    buildRecords += USSBuildRecords
+
 	def count = 0
+    def USSCount = 0	
 
 	// adding files and executes with outputs to Hashmap to remove redundant data
-	buildRecords.each{ buildRecord ->
-		if (buildRecord.getOutputs().size() != 0) {
-			buildRecord.getOutputs().each{ output ->
-				count++
-				def (dataset, member) = getDatasetName(output.dataset)
-				buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [dataset, buildRecord])
-			}
+	buildRecords.each{ buildRecord ->	
+        if (buildRecord.getType()=="USS_RECORD") {
+            if (!buildRecord.getAttribute("outputs").isEmpty()) {
+                ArrayList<ArrayList> outputs = []
+                buildRecord.getAttribute("outputs").split(';').collectEntries { entry ->
+                    outputs += entry.replaceAll('\\[|\\]', '').split(',')
+                }
+                USSCount += outputs.size()
+                outputs.each{ output -> 
+                    rootDir = output[0].trim()
+                    file = output[1].trim()
+                    deployType = output[2].trim() 
+                    buildOutputsMap.put(new DeployableArtifact(file, deployType), [rootDir, buildRecord])
+                }                
+            }
+        } else {
+            if (buildRecord.getOutputs().size() != 0) {
+                buildRecord.getOutputs().each{ output ->
+                    count++
+                    def (dataset, member) = getDatasetName(output.dataset)
+                    buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [dataset, buildRecord])
+                }
+            }		
 		}
 	}
 
-	if ( count == 0 ) {
+	if ( count + USSCount == 0 ) {
 		println("** No items to package in ${buildReportFile}.")
 	} else {
-		println("** Files detected in ${buildReportFile}.")
-		buildRecords.each { it.getOutputs().each { println("   ${it.dataset}, ${it.deployType}")}}
+        println("**  Deployable files detected in $buildReportFile")
+		buildRecords.each { record ->
+		    if (record.getType()=="USS_RECORD") {
+                if (!record.getAttribute("outputs").isEmpty()) {
+                    ArrayList<ArrayList> outputs = []
+                    record.getAttribute("outputs").split(';').collectEntries { entry ->
+                        outputs += entry.replaceAll('\\[|\\]', '').split(',')
+                    }
+                    outputs.each{ output -> 
+                        rootDir = output[0].trim()
+                        file = output[1].trim()
+                        deployType = output[2].trim() 
+                        println("   $rootDir/$file, $deployType")
+                    }
+                }		        
+		    } else {
+		        record.getOutputs().each {println("   ${it.dataset}, ${it.deployType}")}
+		    }
+		}
 	}
 }
 
@@ -159,14 +221,17 @@ if (buildOutputsMap.size() == 0) {
 	println("** Copying build outputs to temporary package directory....")
 
 	buildOutputsMap.each { deployableArtifact, info ->
-		String dataset = info[0]
+		String container = info[0]
 		Record record = info[1]
 		
-		def filePath = "$tempLoadDir/$dataset"
-		new File(filePath).mkdirs()
+		def filePath = ""
+        if (record.getType()=="USS_RECORD") {
+    		filePath = "$tempLoadDir"
+    	} else {
+            filePath = "$tempLoadDir/$container"
+    	}
 
 		// define file name in USS
-		// default : member
 		def fileName = deployableArtifact.file
 
 		// add deployType to file name
@@ -175,35 +240,45 @@ if (buildOutputsMap.size() == 0) {
 		}
 		def file = new File(filePath, fileName)
 
-		// set copyMode based on last level qualifier
-		currentCopyMode = copyModeMap[dataset.replaceAll(/.*\.([^.]*)/, "\$1")]
-		if (currentCopyMode != null) {
-			if (ZFile.exists("//'$dataset(${deployableArtifact.file})'")) {
-				// Copy outputs to HFS
-				CopyToHFS copy = new CopyToHFS()
-				copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
-				copy.setDataset(dataset)
-	
-				println "     Copying $dataset(${deployableArtifact.file}) to $filePath/$fileName with DBB Copymode $currentCopyMode..."
-				copy.dataset(dataset).member(deployableArtifact.file).file(file).execute()
-	
-				// Tagging binary files
-				if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
-					StringBuffer stdout = new StringBuffer()
-					StringBuffer stderr = new StringBuffer()
-					Process process = "chtag -b $file".execute()
-					process.waitForProcessOutput(stdout, stderr)
-					if (stderr){
-						println ("*! stderr : $stderr")
-						println ("*! stdout : $stdout")
-					}
-				}
-			} else {
-				println "*! The file '$dataset(${deployableArtifact.file})' doesn't exist. Copy is skipped."
-			}
-		} else {
-			println "*! Copying $dataset(${deployableArtifact.file}) could not be copied due to missing mapping."
-		}
+        def (directory, relativeFileName) = extractDirectoryAndFile(file.toPath().toString())
+        new File(directory).mkdirs()
+
+
+        if (record.getType()=="USS_RECORD") {
+            def originalFile = new File(container + "/" + deployableArtifact.file)
+            println "     Copying ${originalFile.toPath()} to ${file.toPath()}..."
+            Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+        } else {
+    		// set copyMode based on last level qualifier
+    		currentCopyMode = copyModeMap[container.replaceAll(/.*\.([^.]*)/, "\$1")]
+    		if (currentCopyMode != null) {
+    			if (ZFile.exists("//'$container(${deployableArtifact.file})'")) {
+    				// Copy outputs to HFS
+    				CopyToHFS copy = new CopyToHFS()
+    				copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
+    				copy.setDataset(container)
+    	
+    				println "     Copying $container(${deployableArtifact.file}) to $filePath/$fileName with DBB Copymode $currentCopyMode..."
+    				copy.dataset(container).member(deployableArtifact.file).file(file).execute()
+    	
+    				// Tagging binary files
+    				if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
+    					StringBuffer stdout = new StringBuffer()
+    					StringBuffer stderr = new StringBuffer()
+    					Process process = "chtag -b $file".execute()
+    					process.waitForProcessOutput(stdout, stderr)
+    					if (stderr){
+    						println ("*! stderr : $stderr")
+    						println ("*! stdout : $stdout")
+    					}
+    				}
+    			} else {
+    				println "*! The file '$container(${deployableArtifact.file})' doesn't exist. Copy is skipped."
+    			}
+    		} else {
+    			println "*! Copying $container(${deployableArtifact.file}) could not be copied due to missing mapping."
+    		}
+    	}
 	}
 
 	// log buildReportOrder file and add build reports to tar file
@@ -312,6 +387,19 @@ def getDatasetName(String fullname){
 	member = elements.size()>1? elements[1] : "";
 	return [ds, member];
 }
+
+/**
+ * Extract the directory and the file 
+ * from the fullname of a zFS file
+ * For instance: /var/test/file.txt  --> [/var/test, file.txt]
+ */
+def extractDirectoryAndFile(String fullname) {
+    Path filePath = Paths.get(fullname);
+    String file = filePath.getFileName().toString();
+    String directory = filePath.getParent();
+    return [directory, file];
+}
+
 
 
 /**
