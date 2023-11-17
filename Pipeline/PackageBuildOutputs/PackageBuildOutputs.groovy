@@ -101,6 +101,8 @@ props.buildReportOrder.each { buildReportFile ->
     }
 
     // finds all the build outputs with a deployType
+    // Today the USS_RECORD type is built using an AnyTypeRecord record
+	// An Idea is currently opened to have an official USS_RECORD: https://ideas.ibm.com/ideas/DBB-I-43
     def ussBuildRecords = buildReport.getRecords().findAll{
         try {
             it.getType()=="USS_RECORD" && !it.getAttribute("outputs").isEmpty()
@@ -117,7 +119,7 @@ props.buildReportOrder.each { buildReportFile ->
             // Manipulating the scope of build outputs
             it.getOutputs().clear()
             it.getOutputs().addAll(filteredOutputs)
-        }
+        }        
         ussBuildRecords.each { 
             ArrayList<ArrayList> outputs = []
             it.getAttribute("outputs").split(';').collectEntries { entry ->
