@@ -78,6 +78,7 @@ buildRootDir | Absolute path to define the root workspace directory for pipeline
 logsDir | A relative directory name for logs and temporary outputs. Default: logs
 zAppBuild settings | Multiple settings for zAppBuild, like path and credentials
 UCD settings | Multiple settings for UCD server, like URL and credentials
+Wazi Deploy settings | Multiple settings for Wazi Deploy Generation, Deployment and Evidence Requests commands
 
 Central function | Description
 ---------- | ----------------------------------------------------------------------------------------
@@ -139,7 +140,8 @@ Artifact Name |  Description | Script details
 [ucdDeploy.sh](ucdDeploy.sh) | Pipeline Shell Script to trigger a UCD Deployment via its REST interface using the [DeployUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/DeployUCDComponentVersion) | [script details](README.md#46---ucddeploysh)
 [wazideploy-generate.sh](wazideploy-generate.sh) | Pipeline Shell Script to generate a Deployment Plan to be used with Wazi Deploy | [script details](README.md#47---wazideploy-generatesh)
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](README.md#48---wazideploy-deploysh)
-[prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](README.md#49---preparelogssh)
+[wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](README.md#49---wazideploy-evidenceh)
+[prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](README.md#410---preparelogssh)
 
 
 ### 4.1 - gitClone.sh
@@ -694,7 +696,6 @@ The section below contains the output that is produced by the `wazideploy-deploy
 
 <details>
   <summary>Script Output</summary>
-Successfully connected.
 wazideploy-deploy.sh -w /u/ado/workspace/MortgageApplication/main/build-20231019.13 -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml -e /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -l /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
 wazideploy-deploy.sh: [INFO] Deploy Package with Wazi Deploy. Version=1.00
 
@@ -753,7 +754,64 @@ wazideploy-deploy -wf /u/ado/workspace/MortgageApplication/main/build-20231019.1
 </details>
 
 
-### 4.9 - prepareLogs.sh
+### 4.9 - wazideploy-evidence.sh
+
+This script invokes the Wazi Deploy Evidence command to generate a Deployment report from the Wazi Deploy Evidence YAML file created by the Wazi Deploy Deploy command.
+
+#### Invocation
+
+The `wazideploy-evidence.sh` script can be invoked as follows:
+
+Only mandatory parameters, and using relative paths:
+```
+wazideploy-evidence.sh -w MortgageApplication/main/build-20231101.15
+```
+or qualified paths with optional parameters:
+```
+wazideploy-evidence.sh -w /u/ado/workspace/MortgageApplication/main/build-20231101.15 -l /u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/evidences/evidence.yaml -o /u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/deployment-report.html
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `environmentFile`, `packageInputFile` and `evidenceFile` are fully referenced. 
+-l `<evidenceFile>` | (Optional) Absolute or relative path to the **Evidence File** that contains the logs of all Wazi Deploy tasks. If not specified, evidence file location will be obtained from the `pipelineBackend.config`.
+-o `<outputFile>` | (Optional) Absolute or relative path to the **Output File** that will contain the Deployment Report. If not specified, evidence file location will be obtained from the `pipelineBackend.config`.
+
+#### Output
+
+The section below contains the output that is produced by the `wazideploy-evidence.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+wazideploy-evidence.sh -w /u/ado/workspace/MortgageApplication/main/build-20231101.15 -l /u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/evidences/evidence.yaml -o /u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/deployment-report.html
+wazideploy-evidence.sh: [INFO] Generate deployment reports with Wazi Deploy. Version=1.00
+
+wazideploy-evidence.sh: [INFO] **************************************************************
+wazideploy-evidence.sh: [INFO] ** Start Wazi Deploy Deployment on HOST/USER: z/OS ZT01 04.00 02 8561/***
+wazideploy-evidence.sh: [INFO] **               Working Directory: /u/ado/workspace/MortgageApplication/main/build-20231101.15
+wazideploy-evidence.sh: [INFO] **                     Output File: /u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/deployment-report.html
+wazideploy-evidence.sh: [INFO] **                   Evidence File: /u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/evidences/evidence.yaml
+
+wazideploy-evidence.sh: [INFO] **************************************************************
+
+
+wazideploy-evidence --index /u/ado/workspace/MortgageApplication/main/build-20231101.15/index --dataFolder /u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/evidences i
+
+Indexing '/u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/evidences' to '/u/ado/workspace/MortgageApplication/main/build-20231101.15/index' ...
+1 new file scanned in 0.30 seconds
+Index in '/u/ado/workspace/MortgageApplication/main/build-20231101.15/index':
+    File count: 1 (1 new, 0 deleted)
+    Field count: 51
+    Record count: 64
+
+wazideploy-evidence --index /u/ado/workspace/MortgageApplication/main/build-20231101.15/index --template /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/evidences/templates/full-report.yml --output=/u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/deployment-report.html r renderer=/var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/evidences/renderers/full-report.html
+
+1 record extracted to file '/u/ado/workspace/MortgageApplication/main/build-20231101.15/deploy/deployment-report.html' in 0.06 seconds
+
+
+</details>
+
+### 4.10 - prepareLogs.sh
 
 Script to obtain the logs that were produced as part of the pipeline steps in the *logs* directory. 
 
