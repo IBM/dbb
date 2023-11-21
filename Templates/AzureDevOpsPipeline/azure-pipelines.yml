@@ -37,8 +37,11 @@ variables:
   # ) azureArtifactVersionOption           # Azure artifact version option (major, minor, fix)
 
     
-  ### Environment variables to be added in zOS USS $HOME/.profile 
-  #    1) pipelineScriptsDir: Ex: export pipelineScriptsDir=/var/dbb/pipelineBackend-release/DAT-Clearing-House/Generic/Common-Wrapper-Scripts
+  ### Environment variables to be added in z/OS Unix System Services $HOME/.profile 
+  #  To locate the backend scripts. See also Installation of backend scripts.
+  #  PIPELINE_SCRIPTS: 
+  #  Ex: export PIPELINE_SCRIPTS=/var/dbb/Common-Backend-Scripts
+  #      export PATH=$PIPELINE_SCRIPTS:$PATH
   
   ### Variables generated during run time
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/') }}:                                           # Extract branch name for push 
@@ -100,7 +103,7 @@ stages:
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && $pipelineScriptsDir/gitClone.sh -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)'
+            commands: '. ./.profile && gitClone.sh -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)'
             readyTimeout: '20000'
           displayName: 'Clone application repo'
 
@@ -114,7 +117,7 @@ stages:
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && $pipelineScriptsDir/dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) $(verbose)'
+            commands: '. ./.profile && dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) $(verbose)'
             readyTimeout: '20000'
           displayName: 'Build application'
         
@@ -122,7 +125,7 @@ stages:
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && $pipelineScriptsDir/prepareLogs.sh -w $(uniqueWorkspaceId)'
+            commands: '. ./.profile && prepareLogs.sh -w $(uniqueWorkspaceId)'
             readyTimeout: '20000'
           displayName: 'Prepare build logs'
         
@@ -152,7 +155,7 @@ stages:
       #  inputs:
       #    sshEndpoint: $(zos-sshConnection)
       #    runOptions: 'commands'
-      #    commands: '. ./.profile && $pipelineScriptsDir/ucdPackaging.sh -v $(packageName) -c $(application) -w $(uniqueWorkspaceId)  -b $(branch) -e $artifactRepoConfig'
+      #    commands: '. ./.profile && ucdPackaging.sh -v $(packageName) -c $(application) -w $(uniqueWorkspaceId)  -b $(branch) -e $artifactRepoConfig'
       #    readyTimeout: '20000'
       #  displayName: 'Package the build artifacts for Deployment'
       - task: SSH@0
@@ -160,7 +163,7 @@ stages:
         inputs:
           sshEndpoint: $(zos-sshConnection)
           runOptions: 'commands'
-          commands: '. ./.profile && $pipelineScriptsDir/packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageName)'
+          commands: '. ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageName)'
           readyTimeout: '20000'
         displayName: 'Package the build artifacts for Deployment' 
       # Preview - Demonstrate to upload package to Azure DevOps Artifacts
@@ -195,7 +198,7 @@ stages:
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && $pipelineScriptsDir/wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar'
+            commands: '. ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar'
             readyTimeout: '20000'
           displayName: 'Generate Deployment Plan with Wazi Deploy'
         
@@ -204,7 +207,7 @@ stages:
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && $pipelineScriptsDir/wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e $(wdEnvironmentFile) -i $(application).tar -l $(uniqueWorkspaceId)/deploy/evidences/evidence.yaml'
+            commands: '. ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e $(wdEnvironmentFile) -i $(application).tar -l $(uniqueWorkspaceId)/deploy/evidences/evidence.yaml'
             readyTimeout: '20000'
           displayName: 'Deploy Package with Wazi Deploy'
         
@@ -213,7 +216,7 @@ stages:
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && $pipelineScriptsDir/wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l $(uniqueWorkspaceId)/deploy/evidences/evidence.yaml -o $(uniqueWorkspaceId)/deploy/deployment-report.html'
+            commands: '. ./.profile && wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l $(uniqueWorkspaceId)/deploy/evidences/evidence.yaml -o $(uniqueWorkspaceId)/deploy/deployment-report.html'
             readyTimeout: '20000'
           displayName: 'Generate deployment report with Wazi Deploy'
 
