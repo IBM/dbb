@@ -159,7 +159,7 @@ stages:
       #    readyTimeout: '20000'
       #  displayName: 'Package the build artifacts for Deployment'
       - task: SSH@0
-        condition: not(eq(variables['pipelineType'], 'preview'))
+        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
         inputs:
           sshEndpoint: $(zos-sshConnection)
           runOptions: 'commands'
@@ -169,7 +169,7 @@ stages:
       # Preview - Demonstrate to upload package to Azure DevOps Artifacts
       ## TODO - Requires more work to distinguish build and release packages
       - task: CmdLine@2
-        condition: not(eq(variables['pipelineType'], 'preview'))
+        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
         inputs:
           script: |
             rm -rf "$(Build.SourcesDirectory)/deploymentPackage" 
@@ -177,7 +177,7 @@ stages:
             sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
         displayName: 'Stage the deployment package'     
       - task: UniversalPackages@0
-        condition: not(eq(variables['pipelineType'], 'preview')) 
+        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
         inputs:
           command: 'publish'
           publishDirectory: "$(Build.SourcesDirectory)/deploymentPackage"
@@ -194,7 +194,7 @@ stages:
       steps:  
         - checkout: none    
         - task: SSH@0
-          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
@@ -203,7 +203,7 @@ stages:
           displayName: 'Generate Deployment Plan with Wazi Deploy'
         
         - task: SSH@0
-          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
@@ -212,7 +212,7 @@ stages:
           displayName: 'Deploy Package with Wazi Deploy'
         
         - task: SSH@0
-          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
             sshEndpoint: $(zos-sshConnection)
             runOptions: 'commands'
@@ -221,7 +221,7 @@ stages:
           displayName: 'Generate deployment report with Wazi Deploy'
 
         - task: CmdLine@2
-          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
             script: |
               rm -rf "$(Build.SourcesDirectory)/deploy-logs" 
@@ -231,7 +231,7 @@ stages:
           displayName: 'Retrieve deployment report'
 
         - task: PublishBuildArtifacts@1
-          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+          condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
             PathtoPublish: "$(Build.SourcesDirectory)/deploy-logs/" 
             ArtifactName: 'deploy-logs'
