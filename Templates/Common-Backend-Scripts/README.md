@@ -687,7 +687,7 @@ CLI parameter | Description
 -p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified, the deployment plan location is obtained from the `pipelineBackend.config`.
 -e `<environmentFile>` | (Optional) Absolute or relative path to **Environment File**, that describes the target z/OS environment. If a relative path is provided, the deployment plan is located with based on the configuration from the `pipelineBackend.config`.
 -i `<packageInputFile>` | **Package Input File** package that is to be deployed. If a relative file path is provided, the file is assumed to be located in the `<workspace directory>/<logsDir>`.
--l `<evidenceFile>` | (Optional) Absolute path to the **Evidence File** that will contain the logs of all Wazi Deploy tasks. If not specified, evidence file location will be obtained from the `pipelineBackend.config`.
+-l `<evidenceFile>` | (Optional) Absolute or relative path to the **Evidence File** that will contain the logs of all Wazi Deploy tasks. If not specified, evidence file location will be obtained from the `pipelineBackend.config`.
 -d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
 
 #### Output
