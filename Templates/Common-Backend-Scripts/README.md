@@ -140,7 +140,7 @@ Artifact Name |  Description | Script details
 [ucdDeploy.sh](ucdDeploy.sh) | Pipeline Shell Script to trigger a UCD Deployment via its REST interface using the [DeployUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/DeployUCDComponentVersion) | [script details](README.md#46---ucddeploysh)
 [wazideploy-generate.sh](wazideploy-generate.sh) | Pipeline Shell Script to generate a Deployment Plan to be used with Wazi Deploy | [script details](README.md#47---wazideploy-generatesh)
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](README.md#48---wazideploy-deploysh)
-[wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](README.md#49---wazideploy-evidenceh)
+[wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](README.md#49---wazideploy-evidencesh)
 [prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](README.md#410---preparelogssh)
 
 
