@@ -28,11 +28,11 @@ pool:
 variables:
   ### Variables to be created in Azure pipeline
   # ) agentPool                            # Agent pool name for Azure Agents to connect to MVS
-  # ) zos-sshConnection                    # zOS - SSH connection name
-  # ) pipelineWorkspace                   # Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
+  # ) zosSSHConnection                     # zOS - SSH connection name
+  # ) pipelineWorkspace                    # Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
   # ) wdEnvironmentFile                    # The Wazi Deploy environment file for the deployment into the lowest stage
-  # ) sftp-host-ip                         # zOS - Host IP for SFTP connection
-  # ) sftp-host-user                       # zOS - Host user for SFTP connection
+  # ) zosSFTPHostname                      # zOS - Host IP for SFTP connection
+  # ) zosSFTPUser                          # zOS - Host user for SFTP connection
   # ) azureArtifactFeedID                  # Feed ID of the Azure artifact for publishing the package
   # ) azureArtifactVersionOption           # Azure artifact version option (major, minor, fix)
 
@@ -79,9 +79,9 @@ stages:
             echo " "
             echo "Following are the CI-CD pipeline parameters"
             echo "*******************************************"
-            echo "zos-sshConnection          = $(zos-sshConnection)"
-            echo "zos-sftp-host-ip           = $(sftp-host-ip)"
-            echo "zos-sftp-host-user         = $(sftp-host-user)"
+            echo "zosSSHConnection           = $(zosSSHConnection)"
+            echo "zos-zosSFTPHostname        = $(zosSFTPHostname)"
+            echo "zos-zosSFTPUser            = $(zosSFTPUser)"
             echo "uss-workspace-root         = $(pipelineWorkspace)"
             echo "uss-workspace-dir          = $(uniqueWorkspaceId)"
             echo "verbose                    = ${{ parameters.verboseLogging }} "
@@ -101,7 +101,7 @@ stages:
           displayName: 'Display CI-CD pipeline parms'
         - task: SSH@0
           inputs:
-            sshEndpoint: $(zos-sshConnection)
+            sshEndpoint: $(zosSSHConnection)
             runOptions: 'commands'
             commands: '. ./.profile && gitClone.sh -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)'
             readyTimeout: '20000'
@@ -115,7 +115,7 @@ stages:
         - checkout: none  
         - task: SSH@0
           inputs:
-            sshEndpoint: $(zos-sshConnection)
+            sshEndpoint: $(zosSSHConnection)
             runOptions: 'commands'
             commands: '. ./.profile && dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) $(verbose)'
             readyTimeout: '20000'
@@ -123,7 +123,7 @@ stages:
         
         - task: SSH@0
           inputs:
-            sshEndpoint: $(zos-sshConnection)
+            sshEndpoint: $(zosSSHConnection)
             runOptions: 'commands'
             commands: '. ./.profile && prepareLogs.sh -w $(uniqueWorkspaceId)'
             readyTimeout: '20000'
@@ -134,7 +134,7 @@ stages:
             script: |
               rm -rf "$(Build.SourcesDirectory)/build-logs" 
               mkdir "$(Build.SourcesDirectory)/build-logs" 
-              sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/*.tar "\"$(Build.SourcesDirectory)/build-logs\""
+              sftp $(zosSFTPUser)@$(zosSFTPHostname):$(uniqueWorkspaceId)/*.tar "\"$(Build.SourcesDirectory)/build-logs\""
               tar -xvf "$(Build.SourcesDirectory)/build-logs/logs.tar" -C "$(Build.SourcesDirectory)/build-logs"
           displayName: 'Stage the build logs'
         
@@ -153,7 +153,7 @@ stages:
       - checkout: none    
       #- task: SSH@0
       #  inputs:
-      #    sshEndpoint: $(zos-sshConnection)
+      #    sshEndpoint: $(zosSSHConnection)
       #    runOptions: 'commands'
       #    commands: '. ./.profile && ucdPackaging.sh -v $(packageName) -c $(application) -w $(uniqueWorkspaceId)  -b $(branch) -e $artifactRepoConfig'
       #    readyTimeout: '20000'
@@ -161,7 +161,7 @@ stages:
       - task: SSH@0
         condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
         inputs:
-          sshEndpoint: $(zos-sshConnection)
+          sshEndpoint: $(zosSSHConnection)
           runOptions: 'commands'
           commands: '. ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageName)'
           readyTimeout: '20000'
@@ -174,7 +174,7 @@ stages:
           script: |
             rm -rf "$(Build.SourcesDirectory)/deploymentPackage" 
             mkdir "$(Build.SourcesDirectory)/deploymentPackage" 
-            sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
+            sftp $(zosSFTPUser)@$(zosSFTPHostname):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
         displayName: 'Stage the deployment package'     
       - task: UniversalPackages@0
         condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
@@ -196,7 +196,7 @@ stages:
         - task: SSH@0
           condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
-            sshEndpoint: $(zos-sshConnection)
+            sshEndpoint: $(zosSSHConnection)
             runOptions: 'commands'
             commands: '. ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar'
             readyTimeout: '20000'
@@ -205,18 +205,18 @@ stages:
         - task: SSH@0
           condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
-            sshEndpoint: $(zos-sshConnection)
+            sshEndpoint: $(zosSSHConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e $(wdEnvironmentFile) -i $(application).tar -l $(uniqueWorkspaceId)/deploy/evidences/evidence.yaml'
+            commands: '. ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e $(wdEnvironmentFile) -i $(application).tar -l deploy/evidences/evidence.yaml'
             readyTimeout: '20000'
           displayName: 'Deploy Package with Wazi Deploy'
         
         - task: SSH@0
           condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
-            sshEndpoint: $(zos-sshConnection)
+            sshEndpoint: $(zosSSHConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l $(uniqueWorkspaceId)/deploy/evidences/evidence.yaml -o $(uniqueWorkspaceId)/deploy/deployment-report.html'
+            commands: '. ./.profile && wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html'
             readyTimeout: '20000'
           displayName: 'Generate deployment report with Wazi Deploy'
 
@@ -226,8 +226,8 @@ stages:
             script: |
               rm -rf "$(Build.SourcesDirectory)/deploy-logs" 
               mkdir "$(Build.SourcesDirectory)/deploy-logs" 
-              sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/deploy/evidences/evidence.yaml "\"$(Build.SourcesDirectory)/deploy-logs\""
-              sftp $(sftp-host-user)@$(sftp-host-ip):$(uniqueWorkspaceId)/deploy/deployment-report.html "\"$(Build.SourcesDirectory)/deploy-logs\""
+              sftp $(zosSFTPUser)@$(zosSFTPHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy/evidences/evidence.yaml "\"$(Build.SourcesDirectory)/deploy-logs\""
+              sftp $(zosSFTPUser)@$(zosSFTPHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy/deployment-report.html "\"$(Build.SourcesDirectory)/deploy-logs\""
           displayName: 'Retrieve deployment report'
 
         - task: PublishBuildArtifacts@1

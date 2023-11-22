@@ -31,11 +31,11 @@ The `azure-pipeline.yaml` can be dropped into the root folder of your Azure git 
 Variable | Description
 --- | ---
   agentPool                            | Agent pool name for Azure Agents to connect to MVS
-  zos-sshConnection                    | zOS - SSH connection name
+  zosSSHConnection                     | zOS - SSH connection name
   pipelineWorkspace                    | Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
   wdEnvironmentFile                    | The Wazi Deploy environment file for the deployment into the lowest stage
-  sftp-host-ip                         | zOS - Host IP for SFTP connection
-  sftp-host-user                       | zOS - Host user for SFTP connection
+  zosSFTPHostname                      | zOS - Host name (or Host IP address) for SFTP connection
+  zosSFTPUser                          | zOS - Host user for SFTP connection
   azureArtifactFeedID                  | Feed ID of the Azure artifact for publishing the package (when publishing to Azure DevOps Artifacts)
   azureArtifactVersionOption           | Azure artifact version option (when publishing to Azure DevOps Artifacts)
 
