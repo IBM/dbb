@@ -66,6 +66,12 @@ Help() {
   echo "       -b <Branch>  - Name of the Branch to be cloned.        "
   echo "                      Default=None, Required.                 "
   echo "                                                              "
+  echo "       Optional:                                              "
+  echo "       -a <Application>    - Folder name to clone the         "
+  echo "                             application git repo             "
+  echo "                                                              "
+  echo "                 Ex: MortgageApplication                      "
+  echo "                                                              "
   echo "         Ex: refs/heads/main                                  "
   echo " "
   exit 0
@@ -94,6 +100,7 @@ ERRMSG=""
 Repo=""
 WorkDir=""
 Branch=""
+application=""
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -129,7 +136,7 @@ fi
 
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "h:r:w:b:" opt; do
+  while getopts "h:r:a:w:b:" opt; do
     case $opt in
     h)
       Help
@@ -155,6 +162,17 @@ if [ $rc -eq 0 ]; then
         break
       fi
       Workspace="$argument"
+      ;;
+    a)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] Application Name is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      application="$argument"
       ;;
     b)
       argument="$OPTARG"
@@ -240,7 +258,11 @@ if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] ** Start Git Clone on HOST/USER: ${SYS}/${USER}"
   echo $PGM": [INFO] **          Repo:" ${Repo}
   echo $PGM": [INFO] **       WorkDir:" $(getWorkDirectory)
-  echo $PGM": [INFO] **        GitDir:" ${GitDir}
+  if [ ! -z "${application}" ]; then
+    echo $PGM": [INFO] **        GitDir:" ${application}
+  else    
+    echo $PGM": [INFO] **        GitDir:" ${GitDir}
+  fi
   echo $PGM": [INFO] **        Branch:" ${Branch} "->" ${BranchID}
   echo $PGM": [INFO] **************************************************************"
   echo ""
@@ -280,7 +302,15 @@ fi
 if [ $rc -eq 0 ]; then
 
   echo $PGM": [INFO] Preforming Git Clone of Repo ${Repo}, Branch ${BranchID} to $(getWorkDirectory)"
-  git clone -b ${BranchID} ${Repo} 2>&1
+  if [ ! -z "${application}" ]; then
+    CMD="git clone -b ${BranchID} ${Repo} ${application}"
+  else   
+    CMD="git clone -b ${BranchID} ${Repo}"
+  fi
+
+  echo $PGM": [INFO] ${CMD}"
+  ${CMD} 2>&1
+  rc=$?
   rc=$?
 
   if [ $rc -ne 0 ]; then
@@ -294,7 +324,11 @@ fi
 # Check status of the cloned Repo
 if [ $rc -eq 0 ]; then
 
-  cd ${GitDir}
+  if [ ! -z "${application}" ]; then
+    cd ${application}
+  else   
+    cd ${GitDir}
+  fi
   rc=$?
 
   if [ $rc -eq 0 ]; then

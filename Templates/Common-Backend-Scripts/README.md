@@ -161,6 +161,7 @@ CLI parameter | Description
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
 -r `<repoURL>` | **Git repository URL**, can either be SSH or HTTPS-based. Example: `-r git@github.com:Organization/MortgageApplication.git`
 -b `<branch>` | **Git branch** that should be checked out. Example: `-b main`
+-a `<application>` | (Optional) **Application name** to specify the directory into which git will clone. This is required for instance in the scenario if the repository name differs from the application name that is used in the build phase. Example: `-a CBSA`.
 
 **Dealing with private repositories**
 
