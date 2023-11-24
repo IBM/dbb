@@ -374,7 +374,8 @@ CLI parameter | Description
 -t `<tarFileName>` | (Optional) Name of the **tar file** to create.
 **Artifact Upload options**
 -u | Flag to enable upload of outputs to the configured artifact repository.
--b | (Required when publishing) Name of the **git branch** turning into a segment of the directory path in the artifact repository. 
+-a `<application>` | **Application name** leveraged to define the artifact repository name. See function `computeArtifactRepositoryName()` in the pipelineBackend.config file. Ex.: `MortgageApplication-repo-local`. 
+-b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. See function `computeArtifactRepositoryDirectory()` in the pipelineBackend.config file.
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
 -v `<artifactVersion>` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
 
