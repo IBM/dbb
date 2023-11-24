@@ -280,18 +280,6 @@ validateOptions() {
         fi
     fi
 
-    if [ -z "${App}" ]; then
-        rc=8
-        ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
-        echo $ERRMSG
-    fi
-
-    if [ -z "${Branch}" ]; then
-        rc=8
-        ERRMSG=$PGM": [ERROR] Branch Name parameter (-b) is required. rc="$rc
-        echo $ERRMSG
-    fi
-
     # Validate Packaging script
     if [ ! -f "${PackagingScript}" ]; then
         rc=8
@@ -312,6 +300,18 @@ validateOptions() {
 
 # function to validate publishing options
 validatePublishingOptions() {
+
+     if [ -z "${App}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
+        echo $ERRMSG
+    fi
+
+    if [ -z "${Branch}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Branch Name parameter (-b) is required. rc="$rc
+        echo $ERRMSG
+    fi
 
     if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
         if [ ! -f "${artifactRepositoryPropertyFile}" ]; then
@@ -412,8 +412,12 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **************************************************************"
     echo $PGM": [INFO] ** Started - Package Build Outputs on HOST/USER: ${SYS}/${USER}"
     echo $PGM": [INFO] **                  WorkDir:" $(getWorkDirectory)
-    echo $PGM": [INFO] **              Application:" ${App}
-    echo $PGM": [INFO] **                   Branch:" ${Branch}
+    if [ ! -z "${App}" ]; then
+        echo $PGM": [INFO] **              Application:" ${App}
+    fi
+    if [ ! -z "${Branch}" ]; then
+        echo $PGM": [INFO] **                   Branch:" ${Branch}
+    fi
     if [ ! -z "${PipelineType}" ]; then
         echo $PGM": [INFO] **         Type of pipeline:" ${PipelineType}
     fi
