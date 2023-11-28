@@ -425,7 +425,7 @@ fi
 
 # Validate hlq length
 if [ $rc -eq 0 ]; then
-  if [ ${#HLQ} -gt 35 ]; then
+  if [ ${#HLQ} -gt 44 ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] High-Level Qualifier (${HLQ}) exceeds maximum length of 35. rc="$rc
     echo $ERRMSG
