@@ -27,6 +27,7 @@
 # Date       Who  Vers Description
 # ---------- ---- ---- --------------------------------------------------------------
 # 2023/10/19 MDLB 1.00 Initial Release
+# 2023/11/29 DB   1.10 Fixes to relative workspace directory
 #===================================================================================
 Help() {
     echo $PGM" - Deploy a package with Wazi Deploy                                  "
@@ -112,7 +113,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -245,25 +246,25 @@ if [ $rc -eq 0 ]; then
     done
 fi
 
-# Valicate Workspace property
-checkWorkspace() {
-    if [ -z "${Workspace}" ]; then
-        rc=8
-        ERRMSG=$PGM": [ERROR] Unique Workspace parameter is required. rc="$rc
-        echo $ERRMSG
-    fi
-}
-
 # Validate Options
 validateOptions() {
 
     # validate workspace
     if [ -z "${Workspace}" ]; then
-        Workspace="$(wdDeployPackageDir)"
+        rc=8
+        ERRMSG=$PGM": [ERROR] Unique Workspace parameter (-w) is required. rc="$rc
+        echo $ERRMSG
     else
         # relative workspace directory
         if [[ ! ${Workspace:0:1} == "/" ]]; then
-            Workspace="$(wdDeployPackageDir)"
+            Workspace="$(getWorkDirectory)"
+        fi
+
+        # validate if workspace directory exists
+        if [ ! -d "${Workspace}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Workspace Directory (${Workspace}) was not found. rc="$rc
+            echo $ERRMSG
         fi
     fi
 
@@ -278,7 +279,8 @@ validateOptions() {
             echo $ERRMSG
         fi
     fi
-    # validate that plan exists
+    
+    # validate that deployment plan exists
     if [ ! -f "${DeploymentPlan}" ]; then
         rc=8
         ERRMSG=$PGM": [ERROR] Wazi Deploy Deployment Plan (${DeploymentPlan}) was not found. rc="$rc
@@ -296,7 +298,8 @@ validateOptions() {
             EnvironmentFile="${wdEnvironmentConfigurations}/${EnvironmentFile}"
         fi
     fi
-    # validate that environment file exits
+    
+    # validate that environment file exists
     if [ ! -f "${EnvironmentFile}" ]; then
         rc=8
         ERRMSG=$PGM": [ERROR] Wazi Deploy Environment File (${EnvironmentFile}) was not found. rc="$rc
@@ -311,10 +314,11 @@ validateOptions() {
     else
         # check for relative path
         if [[ ! ${PackageInputFile:0:1} == "/" ]]; then
-            checkWorkspace
             PackageInputFile="$(getLogDir)/${PackageInputFile}"
         fi
     fi
+
+    # validate that package input file exists
     if [ ! -f "${PackageInputFile}" ]; then
         rc=8
         ERRMSG=$PGM": [ERROR] Package Input File (${PackageInputFile}) was not found. rc="$rc
@@ -324,13 +328,12 @@ validateOptions() {
     # compute evidence file if not specified
     if [ -z "${EvidenceFile}" ]; then
         # compute default based on configuration
-        checkWorkspace
         EvidenceFile="$(wdDeployPackageDir)/${wdEvidenceFileName}"
     else
         # relative path
         if [[ ! ${EvidenceFile:0:1} == "/" ]]; then
             EvidenceFile="$(wdDeployPackageDir)/${EvidenceFile}"
-        fi        
+        fi
     fi
 }
 
