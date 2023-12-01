@@ -219,7 +219,7 @@ stages:
           inputs:
             sshEndpoint: $(zosSSHConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar -r deploy-logs/deployment-plan-report.html'
+            commands: '. ./.profile && mkdir -p $(uniqueWorkspaceId)/deployPkgDir/deploy-logs && wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar -r deploy-logs/deployment-plan-report.html'
             readyTimeout: '20000'
           displayName: 'Generate Deployment Plan with Wazi Deploy'
       
