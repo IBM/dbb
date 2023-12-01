@@ -32,7 +32,7 @@ The pipeline uses the Azure concepts `Stage`, `Jobs` and `Tasks`:
 The `azure-pipeline.yaml` can be dropped into the root folder of your Azure git repository and will automatically provide pipelines for the specified triggers. Please review the definitions thoroughly with your Azure administrator. 
 
 Following requirements need to be met:
-* [Azure Agent](https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/agents?view=azure-devops)  the pipeline script can connect to the mainframe LPAR
+* [Azure Agent](https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/agents?view=azure-devops) the pipeline script can connect to the mainframe LPAR
 * Azure [SSH Service Connection](https://learn.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml#ssh-service-connection) to connect to the mainframe LPAR for the Azure built-in SSH tasks
 * The private SSH key of the TSO technical user to login to z/OS Unix System Services from scripts
 
@@ -68,10 +68,19 @@ Open a terminal and issue `ssh-keyscan eoleb7.dat.ibm.com` - with using the LPAR
 
 Select the uncommented line as the value for the `sshZosKnownHost` key of the pipeline variable.
 
-### Configurable pipeline parameters when requesting a pipeline
+## Pipeline Usage
+
+The pipeline implements a build, package and deploy pipeline to build the various configurations according to the defined conventions.  This sample does not (yet) provide a Azure release pipeline templates to deploy to higher-controlled test environments.
+
+Please check the pipeline definition to understand the various triggers for which this pipeline is executed. 
+
+### Pipeline parameters 
+
+In a default setup the pipeline is triggered after each new commit. It allows overriding the below parameters when manually requesting the pipeline. Especially, in the situation that the application team want to create a release candidate package for higher test environments and production 
 
 Parameter | Description
 --- | ---
 pipelineType     | Pipeline type - either build, release or preview. (Default: build)
 verbose          | boolean flag to control logging of build framework. (Default: false) 
 
+![](images/ado_requestPipeline.png)
