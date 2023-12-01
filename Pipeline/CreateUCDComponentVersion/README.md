@@ -4,9 +4,11 @@
 
 An important step in the pipeline is to generate a deployable package. This sample Groovy script:
 
-- Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
+- Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds.
 - Generates the UrbanCode Deploy (UCD) shiplist `shiplist.xml` file.
 - Invokes the `buztool.sh` with the appropriate configuration to store the binary package either in UCD packaging format v1 or v2 in the artifact repository and to register a new UCD component version. To use UCD packaging format v2, pass the CLI option `--ucdV2PackageFormat`.
+
+The support for zFS files in the packaging process is performed through the use of an USS_RECORD type record in the DBB BuildReport. 
 
 ## High-level Processing Flow
 
