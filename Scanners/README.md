@@ -3,18 +3,18 @@
 This category contains examples how to build your custom dependency scanner based on DBBs' `AbstractDependencyScanner` API.
 Samples are supposed to follow the same structure. The custom dependency scanner may either be a scanner implementation by itself or extend an existing scanner.
 
-## Building a scanner
+## Building a scanner with IDZ
 
 * Clone the IBM/DBB repository into IDZ/Eclipse.
 * Import the scanner implementation as a JAVA project
 * Download the `<DBB-HOME>/lib/dbb.core_2.0.x.x.jar` package from your IBM DBB toolkit installation to your development environment 
 * Fix the build setup and of the scanner project.
 * Implement changes in `runScan()` method of the scanner implementation that is extending `AbstractDependencyScanner`.
-* Create a `Run Configuration` for a Java Application for the scanner implementation
+* Create a `Run Configuration` for a Java Application for the scanner implementation (Note: The Run Configuration will not have a main method as we will not actually be using it to run the program. You might see some warnings.)
 * Execute the `Export Java > Runnable JAR file` action in IDZ/Eclipse, which will create the JAR file containing your custom scanner:
   * Select the previously created runner configuration
   * Select the export destination
-  * In the Library handling section, select to `Copy required libraries into a sub-folder next to the generated JAR' option
+  * In the Library handling section, select to `Copy required libraries into a sub-folder next to the generated JAR` option
 * Upload the generated JAR to z/OS Unix system services 
 * Run the provided test script which each scanner implementation should provide. Details are included in the scanner project.
  
