@@ -29,12 +29,14 @@ The pipeline uses the Azure concepts `Stage`, `Jobs` and `Tasks`:
 
 ## Installation and Setup
 
+**Note: Please work with your ADO pipeline specialist to review the below section.**
+
 The `azure-pipeline.yaml` can be dropped into the root folder of your Azure git repository and will automatically provide pipelines for the specified triggers. Please review the definitions thoroughly with your Azure administrator. 
 
 Following requirements need to be met:
 * [Azure Agent](https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/agents?view=azure-devops) the pipeline script can connect to the mainframe LPAR
 * Azure [SSH Service Connection](https://learn.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml#ssh-service-connection) to connect to the mainframe LPAR for the Azure built-in SSH tasks
-* The private SSH key of the TSO technical user to login to z/OS Unix System Services from scripts
+* The private SSH key of the TSO technical user to login to z/OS Unix System Services from scripts, that is installed as a Secure file. See [Install private SSH key](#install-private-ssh-key)
 
 ### Required Pipeline Variables
 
@@ -49,6 +51,14 @@ Variable | Description
   zosSFTPUser                          | zOS - Host user for SFTP connection
   azureArtifactFeedID                  | Feed ID of the Azure artifact for publishing the package (when publishing to Azure DevOps Artifacts)
   azureArtifactVersionOption           | Azure artifact version option (when publishing to Azure DevOps Artifacts)
+
+### Install private SSH key
+
+To execute actions on the mainframe LPAR, the default communication channel is established via the SSH Service Connection that is provided by Azure. To download files from the build workspace on z/OS Unix System Services, it requires to use a CmdLine task and write a script. SSH communication from a CmdLine task does not use the Service Connection. To make the agent installation independent of any configurations outside of Azure, a private SSH key is installed as part of the pipeline to connect to the mainframe through a CmdLine task. 
+
+The configuration requires 
+1) the `sshZosKnownHost` pipeline variable, and
+2) uploading a Secure File `ssh_key_ado` that is referenced in the pipeline definition. 
 
 #### Obtaining the known host entry for secure shell connections
 
@@ -67,6 +77,13 @@ Open a terminal and issue `ssh-keyscan eoleb7.dat.ibm.com` - with using the LPAR
 ```
 
 Select the uncommented line as the value for the `sshZosKnownHost` key of the pipeline variable.
+
+#### Upload private SSH key as Secure File
+
+To upload the private key as a Secure File, please 
+
+* obtain the private SSH key from the location where you generated it. For instance, use `scp` to download the private key to your workstation. 
+* upload the private SSH key as a Secure File and set the appropriate permissions that the pipeline can use it. For more information, please checkout the [ADO documentation on Secure Files](https://learn.microsoft.com/en-us/azure/devops/pipelines/library/secure-files?view=azure-devops). 
 
 ## Pipeline Usage
 
