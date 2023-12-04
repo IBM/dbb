@@ -24,4 +24,4 @@ The below list contains the available scanner implementations
 
 Sample | Description
 --- | ---
-[DTL Scanner](DTL%20Scanner) | A custom scanner implementation for z/OS ISPF Dialog Tag Language to detect it's dependencies. zAppBuild contains the language script for DTL. The scanner implementation leverages regex patterns to identify the referenced include files.
+[DTL Scanner](DTL%20Scanner) | A custom scanner implementation for z/OS ISPF Dialog Tag Language to detect its dependencies. zAppBuild contains the language script for DTL. The scanner implementation leverages regex patterns to identify the referenced include files.
