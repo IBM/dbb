@@ -1,0 +1,72 @@
+<:-- FLMB#P panel -->
+
+<:doctype dm system(
+  <:ENTITY ispfmenu system>
+  <:ENTITY ispfsclm system>
+  <:ENTITY ispdutil system>
+  <:ENTITY ispfjobc system>
+  <:ENTITY ispdtest system>
+<:--                                                         @01D   -->
+  <:ENTITY flmzb#p  system -- common logic file imbed -->
+  <:ENTITY flmzb#p1 system -- common panel body file imbed -->
+  <:ENTITY flmzoctl system -- common "Output Control" panel section -->
+  <:ENTITY flmzocrp system -- common "Output Control" panel section -->
+
+<:-- Start of translatable panel text section                        -->
+<:--   text delimited by " is to be translated                       -->
+<:--   text should end with '">' as shown.                           -->
+<:--     the '">' can be moved to the right for text expansion       -->
+
+ <:-- panel title text follows - maximum length = 78 bytes           -->
+  <:ENTITY panel_title "SCLM Build - Entry Panel">
+
+ <:-- help pull-down description follows - maximum length for        -->
+ <:--      pull-down text is 64 bytes                                -->
+  <:ENTITY help_abc_desc "Help">
+  <:ENTITY help_pdc_01 "General">
+  <:ENTITY help_pdc_02 "Function">
+  <:ENTITY help_pdc_03 "Input">
+  <:ENTITY help_pdc_04 "Output">
+  <:ENTITY help_pdc_05 "Errors">
+  <:ENTITY help_pdc_06 "Examples">
+
+ <:-- choice selection text entries follow                           -->
+ <:-- the length of the text should be limited to 25 bytes           -->
+   <:ENTITY choice_1_text "Error Listings only">
+<:--                                                         @01D   -->
+
+ <:-- group heading text line - maximum text length = 78 bytes       -->
+  <:ENTITY group_head_1 "Build input:">
+
+  <:ENTITY % flm@ent1 system>   <:-- common ENTITY definitions imbed -->
+           %flm@ent1;           <:-- activate common definitions     -->
+
+ <:-- formatting variables for NLS width adjustments                 -->
+  <:ENTITY pgtm_pmtwidth "12">
+  <:ENTITY reg_indent    "14">
+  <:ENTITY divider_space "3">
+  <:ENTITY scope_pmtwidth "11">
+  <:ENTITY scope_selwidth "20">
+
+ <:-- dataset name character identifier                              -->
+  <:ENTITY dsname_ident "B">
+
+ <:-- optional 2rd output type field                                 -->
+  <:ENTITY output_2nd_field "&flmzocrp"> <:-- Report output field    -->
+
+ <:-- optional 3rd output type field                                 -->
+  <:ENTITY output_3rd_field
+   "<region dir=horiz align=no>
+      <dtafld datavar=LISTDBVE entwidth=1 pmtwidth=12>&output_lst;
+      <dtafld datavar=LISTDBVS autotab=yes entwidth=1 pmtwidth=0>
+    </region>">
+
+<:-- End of translatable panel text section                          -->
+)>         <:-- DO NOT DELETE THIS LINE -->
+
+<:-- common panel body file imbed -->
+&flmzb#p1;
+<:-- Flag Reason   Release  Date   Origin    Description           -->
+<:-- **** ******** *******  ****** ********  ********************* -->
+<:-- $01= V5SPFWSA ZOSV205  190809 stayton : WSA removal 75244     -->
+ <:-- 5650-ZOS     COPYRIGHT IBM CORP 1999, 2021 -->
