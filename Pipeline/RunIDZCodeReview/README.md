@@ -1,18 +1,19 @@
 # Run IBM IDZ Code Review in Batch based on the DBB Build Report
 
-This sample groovy script lets you embed the IDZ Code Review Application, also known as IDZ Software Analyzer, into your CI/CD pipeline. It requires that the IDZ code analysis tool is installed via FMID HAKGxxx. Please see the documentation at https://www.ibm.com/support/knowledgecenter/SSQ2R2_14.2.0/com.ibm.rsar.analysis.codereview.cobol.doc/topics/cac_zosbatch_overview.html
+This sample groovy script lets you embed the IBM Developer for z/OS (IDz also formerly Rational Developer for System z or RDz) Code Review batch application, also known as IDz Software Analyzer, into your CI/CD pipeline. For the host, this requires that the IDz code analysis tool (AKGCR) is installed via FMID HAKGxxx. 
+Please see the documentation at [https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=review-code-application-zos](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=review-code-application-zos)
 
-This sample groovy `RunCodeReview.groogy` script
+This sample groovy `RunCodeReview.groovy` script
 - extracts information about the processed source code (Record Type TYPE_COPY_TO_PDS) from the DBB BuildReport.json
-- assembles and runs a JCL to invoke IDZ Code Review in Batch
+- assembles and runs a JCL to invoke IDz Code Review in Batch.
 
 ## Processing flow
-- Read command line parameters and the mandatory ```codereview.properties``` file for externalizing parameters - either via cli parameter or from its default location.
+- Read command line parameters and the mandatory ```codereview.properties``` file for externalizing parameters - either via Command Line Interface (CLI) parameter or from its default location.
 - Read DBB's BuildReport.json from the pipeline work directory
 - Parse and extract processed source code info from COPY_TO_PDS records from the build report
 - Extract the SYSLIB information
 - Generates an JCLExec for invoking the IDZ Code Review application
-- Stores the IDZ Code review reports ```CodeReviewCSV.csv```, ```CodeReviewJUNIT.xml```  as well as the JCL spool in the workdir.
+- Stores the IDz Code Review reports ```CodeReviewCSV.csv```, ```CodeReviewJUNIT.xml```  as well as the JCL spool in the DBB build output directory (workDir).
 
 ## Return codes
 The script will exit with the following return codes:
