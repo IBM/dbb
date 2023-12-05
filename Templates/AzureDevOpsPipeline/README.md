@@ -47,7 +47,7 @@ Variable | Description
   zosSSHKnownHost                      | The known host entry for secure shell connections. [See Notes](#obtaining-the-known-host-entry-for-secure-shell-connections).
   pipelineWorkspace                    | Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
   wdEnvironmentFile                    | The Wazi Deploy environment file for the deployment into the lowest stage
-  zosSFTPHostname                      | zOS - Host name (or Host IP address) for SFTP connection
+  zosHostname                          | zOS - Host name (or Host IP address) for SFTP connection
   zosSFTPUser                          | zOS - Host user for SFTP connection
   azureArtifactFeedID                  | Feed ID of the Azure artifact for publishing the package (when publishing to Azure DevOps Artifacts)
   azureArtifactVersionOption           | Azure artifact version option (when publishing to Azure DevOps Artifacts)

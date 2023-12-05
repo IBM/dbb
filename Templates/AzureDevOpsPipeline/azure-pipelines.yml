@@ -29,6 +29,7 @@ variables:
   ### Variables to be created in Azure pipeline
   # ) agentPool                            # Agent pool name for Azure Agents to connect to MVS
   # ) zosSSHConnection                     # zOS - SSH connection name
+  # ) zosSSHKnownHost                      # Known host entry for secure shell connections
   # ) pipelineWorkspace                    # Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
   # ) wdEnvironmentFile                    # The Wazi Deploy environment file for the deployment into the lowest stage
   # ) zosHostname                          # zOS - Host IP for SFTP connection
