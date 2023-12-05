@@ -45,6 +45,7 @@ Variable | Description
   agentPool                            | Agent pool name for Azure Agents to connect to MVS
   zosSSHConnection                     | zOS - The name of the Azure SSH connection name for connecting to z/OS Unix System Services of the LPAR where the build actions will be performed.
   zosSSHKnownHost                      | The known host entry for secure shell connections. [See Notes](#obtaining-the-known-host-entry-for-secure-shell-connections).
+  zosSSHPrivateKeySecureFile           | Reference to uploaded Private SSH Key in ADO Pipeline/Libary/SecureFile that is installed for sftp processes. [See Notes](#upload-private-ssh-key-as-secure-file)
   pipelineWorkspace                    | Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
   wdEnvironmentFile                    | The Wazi Deploy environment file for the deployment into the lowest stage
   zosHostname                          | zOS - Host name (or Host IP address) for SFTP connection
