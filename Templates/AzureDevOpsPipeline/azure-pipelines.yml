@@ -134,7 +134,7 @@ stages:
         # Install private SSH key prior to a subsequent cmdline tasks 
         - task: InstallSSHKey@0
           inputs:
-            knownHostsEntry: $(sshZosKnownHost)    # Known Hosts Entry for build LPAR
+            knownHostsEntry: $(zosSSHKnownHost)    # Known Hosts Entry for build LPAR
             sshKeySecureFile: id_rsa_ado           # Required. Reference to private SSH Key that is uploaded to Pipeline/Libary/SecureFile to connect to . 
         
         - task: CmdLine@2
@@ -180,7 +180,7 @@ stages:
        # Install private SSH key prior to a subsequent cmdline tasks 
       - task: InstallSSHKey@0
         inputs:
-         knownHostsEntry: $(sshZosKnownHost)    # Known Hosts Entry for build LPAR
+         knownHostsEntry: $(zosSSHKnownHost)    # Known Hosts Entry for build LPAR
          sshKeySecureFile: id_rsa_ado           # Required. Reference to private SSH Key that is uploaded to Pipeline/Libary/SecureFile to connect to . 
       
       - task: CmdLine@2
@@ -211,7 +211,7 @@ stages:
        # Install private SSH key prior to a subsequent cmdline tasks 
         - task: InstallSSHKey@0
           inputs:
-             knownHostsEntry: $(sshZosKnownHost)    # Known Hosts Entry for build LPAR
+             knownHostsEntry: $(zosSSHKnownHost)    # Known Hosts Entry for build LPAR
              sshKeySecureFile: id_rsa_ado           # Required. Reference to private SSH Key that is uploaded to Pipeline/Libary/SecureFile to connect to . 
 
         - task: SSH@0

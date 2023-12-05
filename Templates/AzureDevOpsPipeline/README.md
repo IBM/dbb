@@ -44,7 +44,7 @@ Variable | Description
 --- | ---
   agentPool                            | Agent pool name for Azure Agents to connect to MVS
   zosSSHConnection                     | zOS - The name of the Azure SSH connection name for connecting to z/OS Unix System Services of the LPAR where the build actions will be performed.
-  sshZosKnownHost                      | The known host entry for secure shell connections. [See Notes](#obtaining-the-known-host-entry-for-secure-shell-connections).
+  zosSSHKnownHost                      | The known host entry for secure shell connections. [See Notes](#obtaining-the-known-host-entry-for-secure-shell-connections).
   pipelineWorkspace                    | Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
   wdEnvironmentFile                    | The Wazi Deploy environment file for the deployment into the lowest stage
   zosSFTPHostname                      | zOS - Host name (or Host IP address) for SFTP connection
@@ -60,7 +60,7 @@ SSH communication from a `CmdLine` task does not use the Service Connection.
 To make the agent installation independent of any configurations outside of Azure, a private SSH key is installed as part of the pipeline to connect to the z/OS system through a `CmdLine` task. 
 
 The configuration requires 
-1) the `sshZosKnownHost` pipeline variable, and
+1) the `zosSSHKnownHost` pipeline variable, and
 2) uploading a Secure File `ssh_key_ado` that is referenced in the pipeline definition. 
 
 #### Obtaining the known host entry for secure shell connections
@@ -79,7 +79,7 @@ Open a terminal and issue `ssh-keyscan eoleb7.dat.ibm.com` - with using the z/OS
     # eoleb7.dat.ibm.com:22 SSH-2.0-OpenSSH_7.6
 ```
 
-Select the uncommented line as the value for the `sshZosKnownHost` key of the pipeline variable.
+Select the uncommented line as the value for the `zosSSHKnownHost` key of the pipeline variable.
 
 #### Upload private SSH key as Secure File
 
