@@ -158,7 +158,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts "hd:w:p:e:i:l:" opt; do
+    while getopts "hdw:p:e:i:l:" opt; do
         case $opt in
         h)
             Help
