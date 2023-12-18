@@ -220,30 +220,30 @@ This script implements the invocation of the [zAppBuild](https://github.com/IBM/
 
 #### Git branches naming convention requirements
 
-The build script follows the naming conventions for branches that are outlined in the document `The Git-based workflow for Mainframe development`:
+The build script follows the naming conventions for branches that are outlined in the document in the [solution guide](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev#naming-conventions):
 
 ```properties
+## integration branches
+#
 # main Build branch
 main
-
-# feature branches for contributing to the next planned release via main
-feature/setmainbuildbranch
-
 # release maintenance branches to fix a release that is been put to production
 release/rel-1.0.0
-
-# release maintenance feature branches
-#  second segment is indicating the release
-hotfix/rel-1.0.0/fixMortgageApplication
-
 # project/initiative/epic branches
 epic/epic1234
 project/project1
 
-# project/initiative/epic branches
-#  second segment is indicating the project/initiative/epic
-epic1234/myfirstcoolnewfeature
-project1/myfirstcoolnewfeature
+## feature branches
+#
+# feature branches for contributing to the next planned release via main
+feature/setmainbuildbranch
+feature/43-set-main-build-branch
+# release maintenance feature branches
+#  second segment is indicating the release
+hotfix/rel-1.0.0/fixMortgageApplication
+# feature branches for epics / larger development initiatives
+#  second segment is referencing the epic context
+feature/epic1234/54-my-first-cool-new-feature
 ```
 
 Details are documented in [dbbBuildUtils.sh](README.md#script-capabilities--dbbbuildutilssh).
