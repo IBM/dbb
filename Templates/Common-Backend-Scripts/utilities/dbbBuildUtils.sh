@@ -77,8 +77,10 @@ computeBuildConfiguration() {
             # evaluate third segment
             if [ ! -z "${thirdBranchSegment}" ]; then
                 # feature branches for EPIC workflow
-                computeSegmentName $secondBranchSegment
-                HLQ="${HLQ}.E${segmentName:0:7}"
+                
+                # // skipped for simplicity
+                # computeSegmentName $secondBranchSegment
+                # HLQ="${HLQ}.E${segmentName:0:7}"
                 computeSegmentName $thirdBranchSegment
                 HLQ="${HLQ}.F${segmentName:0:7}"
                 
@@ -101,8 +103,10 @@ computeBuildConfiguration() {
             # evaluate third segment
             if [ ! -z "${thirdBranchSegment}" ]; then
                 # feature branches for hotfix workflow
-                computeSegmentName $secondBranchSegment
-                HLQ="${HLQ}.R${segmentName:0:7}"
+
+                # // skipped for simplicity
+                # computeSegmentName $secondBranchSegment
+                # HLQ="${HLQ}.R${segmentName:0:7}"
                 computeSegmentName $thirdBranchSegment
                 HLQ="${HLQ}.H${segmentName:0:7}"
             else
