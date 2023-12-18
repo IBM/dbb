@@ -16,10 +16,10 @@ computeBuildConfiguration() {
     HLQ=$(echo ${HLQPrefix}.${App:0:8} | tr '[:lower:]' '[:upper:]' | tr -d '-')
 
     # Locate the baseline reference file based on the baselineReferenceLocation config in pipelineBackend.config
-    #baselineReferenceFile="${AppDir}/$baselineReferenceLocation"
+    baselineReferenceFile="${AppDir}/$baselineReferenceLocation"
 
     if [ ! -f "${baselineReferenceFile}" ]; then
-        #rc=8
+        rc=8
         ERRMSG=$PGM": [ERROR] Applications baseline reference configuration file (${baselineReferenceFile}) was not found. rc="$rc
         echo $ERRMSG
     fi
