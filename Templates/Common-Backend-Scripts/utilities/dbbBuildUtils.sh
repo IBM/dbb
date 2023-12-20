@@ -2,6 +2,7 @@
 mainBranchSegment=""
 secondBranchSegment=""
 baselineReferenceFile=""
+segmentName=""
 
 computeBuildConfiguration() {
 
@@ -28,7 +29,7 @@ computeBuildConfiguration() {
     if [ $rc -eq 0 ]; then
         if [ ${#branchConvention[@]} -gt 3 ]; then
             rc=8
-            ERRMSG=$PGM": [ERROR] Script is only managing branch name with 3 segments (${Branch}) . rc="$rc
+            ERRMSG=$PGM": [ERROR] Script is only managing branch name with up to 3 segments (${Branch}) . rc="$rc
             echo $ERRMSG
         fi
     fi
@@ -42,15 +43,24 @@ computeBuildConfiguration() {
 
         # remove chars (. -) from the name
         mainBranchSegmentTrimmed=$(echo ${mainBranchSegment} | tr -d '.-' | tr '[:lower:]' '[:upper:]')
-        secondBranchSegmentTrimmed=$(echo ${secondBranchSegment} | tr -d '.-' | tr '[:lower:]' '[:upper:]')
-        thirdBranchSegmentTrimmed=$(echo ${thirdBranchSegment} | tr -d '.-' | tr '[:lower:]' '[:upper:]')
-
+        
         # evaluate main segment
         case $mainBranchSegmentTrimmed in
         REL* | EPIC* | PROJ*)
             # Release maintenance, epic and project branches are intergration branches,
             # that derive dependency information from mainBuildBranch configuration.
-            HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}"
+
+            # evaluate third segment
+            if [ ! -z "${thirdBranchSegment}" ]; then
+                rc=8
+                ERRMSG=$PGM": [ERROR] Branch (${Branch}) does not follow standard naming conventions  . rc="$rc
+                echo $ERRMSG
+            else
+                # feature branches for next planned release
+                computeSegmentName $secondBranchSegment
+                HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:1}${segmentName:0:7}"
+            fi
+
             getBaselineReference
             if [ -z "${Type}" ]; then
                 Type="--impactBuild"
@@ -62,7 +72,26 @@ computeBuildConfiguration() {
             fi
             ;;
         FEATURE*)
-            HLQ="${HLQ}.FEATURE"
+            # all feature branche start with F
+
+            # evaluate third segment
+            if [ ! -z "${thirdBranchSegment}" ]; then
+                # feature branches for EPIC workflow
+                
+                # // skipped for simplicity
+                # computeSegmentName $secondBranchSegment
+                # HLQ="${HLQ}.E${segmentName:0:7}"
+                computeSegmentName $thirdBranchSegment
+                HLQ="${HLQ}.F${segmentName:0:7}"
+                
+                propOverrides="mainBuildBranch=epic/${secondBranchSegment}"
+
+            else
+                # feature branches for next planned release
+                computeSegmentName $secondBranchSegment
+                HLQ="${HLQ}.F${segmentName:0:7}"
+            fi
+
             if [ -z "${Type}" ]; then
                 Type="--impactBuild"
                 # appending the --debug flag to compile with TEST options
@@ -70,7 +99,22 @@ computeBuildConfiguration() {
             fi
             ;;
         HOTFIX*)
-            HLQ="${HLQ}.HOTFIX"
+
+            # evaluate third segment
+            if [ ! -z "${thirdBranchSegment}" ]; then
+                # feature branches for hotfix workflow
+
+                # // skipped for simplicity
+                # computeSegmentName $secondBranchSegment
+                # HLQ="${HLQ}.R${segmentName:0:7}"
+                computeSegmentName $thirdBranchSegment
+                HLQ="${HLQ}.H${segmentName:0:7}"
+            else
+                rc=8
+                ERRMSG=$PGM": [ERROR] Hotfix branch (${Branch}) does not follow naming conventions  . rc="$rc
+                echo $ERRMSG
+            fi
+
             if [ -z "${Type}" ]; then
                 Type="--impactBuild"
                 propOverrides="mainBuildBranch=release/${secondBranchSegment}"
@@ -92,7 +136,6 @@ computeBuildConfiguration() {
                 fi
             fi
 
-            #Type="--fullBuild" # init build environment
             ;;
         *)
             # Treat other branches as feature branch.
@@ -116,16 +159,6 @@ computeBuildConfiguration() {
             # ;;
         esac
 
-        # evaluate second segment
-        if [ ! -z "${secondBranchSegment}" ]; then
-            HLQ="${HLQ}.${secondBranchSegmentTrimmed:0:8}"
-        fi
-
-        # evaluate third segment
-        if [ ! -z "${thirdBranchSegment}" ]; then
-            HLQ="${HLQ}.${thirdBranchSegmentTrimmed:0:8}"
-        fi
-
         # append pipeline preview if specified
         if [ "${PipelineType}" == "preview" ]; then
             if [ -z "${Type}" ]; then
@@ -146,6 +179,7 @@ computeBuildConfiguration() {
         thirdBranchSegment=""
         thirdBranchSegmentTrimmed=""
         branchConvention=""
+        segmentName=""
 
     fi
 
@@ -164,4 +198,32 @@ getBaselineReference() {
     fi
 
     ##DEBUG ## echo -e "baselineRef \t: ${baselineRef}"    ## DEBUG
+}
+
+
+#
+# computation of branch segments
+# captured cases
+#
+# containing numbers, assuming to be an work-item-id
+# containing strings and words separated by dashes, return first characters of each string
+# none of the above - return segement name in upper case w/o underscores
+#
+
+computeSegmentName() {
+
+    segmentName=$1
+    echo $segmentName
+    if [ ! -z $(echo "$segmentName" | tr -dc '0-9') ]; then
+        # "contains numbers"
+        retval=$(echo "$segmentName" | tr -dc '0-9')
+    elif [[ $segmentName == *"-"* ]]; then
+        # contains dashes
+        segmentNameTrimmed=$(echo "$segmentName" | awk -F "-" '{ for(i=1; i <= NF;i++) print($i) }' | cut -c-1-1)
+        segment1=$(echo "$segmentNameTrimmed" | tr -d '\n')
+        retval=$(echo "$segment1" | tr '[:lower:]' '[:upper:]')
+    else 
+        retval=$(echo "$segmentName" | tr -d '_' | tr '[:lower:]' '[:upper:]')
+    fi
+    segmentName=$(echo "$retval")
 }

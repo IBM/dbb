@@ -711,7 +711,7 @@ testMortgageApplication-Epic-implementAI-Build-1() {
 ############# MortgageApplication contibution to the next release
 testMortgageApplication-Epic-Feature-implementAI-Build-1() {
     echo "$PGM: [TEST] Executing test scenario testMortgageApplication-Epic-Feature-implementAI-Build-1."
-    branch="implementAI/myFeatureImpl"
+    branch="feature/implementAI/myFeatureImpl"
     uniqueWorkspaceId="MortApp/${branch}/build-1"
     ucdVersionName="prelim_${application}.epic.implementAI.build-1"
     # set timestamp
