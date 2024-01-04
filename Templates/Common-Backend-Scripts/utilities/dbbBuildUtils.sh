@@ -61,9 +61,10 @@ computeBuildConfiguration() {
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:1}${segmentName:0:7}"
             fi
 
-            getBaselineReference
-            if [ -z "${Type}" ]; then
+                        if [ -z "${Type}" ]; then
                 Type="--impactBuild"
+# obtain the baselineRef from file
+                getBaselineReference
                 Type="${Type} --baselineRef ${baselineRef}"
                 # Release maintenance / epic / project branch clones the dependency information from the main build branch
                 # propOverrides="mainBuildBranch=${mainBranchSegment}"
@@ -96,6 +97,19 @@ computeBuildConfiguration() {
                 Type="--impactBuild"
                 # appending the --debug flag to compile with TEST options
                 Type="${Type} --debug"
+
+                # evaluate the feature branch build behaviour
+                if [ "${featureBranchBuildBehaviour}" == "cumulative" ]; then
+                    if [ ! -z "${thirdBranchSegment}" ]; then
+                        # epic branch workflow
+                        Type="${Type} --baselineRef origin/epic/${secondBranchSegment}"
+                    else 
+                        # default dev workflow
+                        Type="${Type} --baselineRef origin/main"
+                    fi
+                    
+                fi
+
             fi
             ;;
         HOTFIX*)
@@ -118,6 +132,16 @@ computeBuildConfiguration() {
             if [ -z "${Type}" ]; then
                 Type="--impactBuild"
                 propOverrides="mainBuildBranch=release/${secondBranchSegment}"
+
+                # evaluate the feature branch build behaviour
+                if [ "${featureBranchBuildBehaviour}" == "cumulative" ]; then
+                    if [ ! -z "${thirdBranchSegment}" ]; then
+                        # define baseline reference
+                        Type="${Type} --baselineRef release/${secondBranchSegment}"
+                    fi
+                    
+                fi
+
             fi
             ;;
         "PROD" | "MASTER" | "MAIN")
@@ -213,7 +237,6 @@ getBaselineReference() {
 computeSegmentName() {
 
     segmentName=$1
-    echo $segmentName
     if [ ! -z $(echo "$segmentName" | tr -dc '0-9') ]; then
         # "contains numbers"
         retval=$(echo "$segmentName" | tr -dc '0-9')
