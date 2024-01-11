@@ -142,6 +142,7 @@ Artifact Name |  Description | Script details
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](README.md#48---wazideploy-deploysh)
 [wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](README.md#49---wazideploy-evidencesh)
 [prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](README.md#410---preparelogssh)
+[deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](README.md#411---deleteworkspacesh)
 
 
 ### 4.1 - gitClone.sh
