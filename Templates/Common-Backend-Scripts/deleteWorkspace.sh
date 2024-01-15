@@ -162,7 +162,6 @@ if [ $rc -eq 0 ]; then
 fi
 
 # Print info
-# Ready to go  TLD: Suggest in the section to echo as much as possible
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **************************************************************"
     echo $PGM": [INFO] ** Started - Delete Workspace on HOST/USER: ${SYS}/${USER}    "
@@ -171,36 +170,19 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **************************************************************"
 fi
 
-# Delete the build directory
+# Delete build directory
 if [ $rc -eq 0 ]; then
-    echo $PGM": [INFO] Deleting contents in $(getWorkDirectory): "
-    CMD="rm -Rfv $(getWorkDirectory)/*"
+    echo $PGM": [INFO] Deleting working directory $(getWorkDirectory): "
+    CMD="rm -Rf $(getWorkDirectory)"
     echo $PGM": [INFO] ${CMD}"
     ${CMD}
     rc=$?
 fi
-# delete empty directories in the working tree
-if [ $rc -eq 0 ]; then
-    echo $PGM": [INFO] Deleting empty directories in working tree."
-    echo $PGM": [INFO] rmdir -p $(getWorkDirectory) 2>&1"
-    cmdOut=$(rmdir -p $(getWorkDirectory) 2>&1)
-    rc=$?
-    # suppress message 'EDC5136I Directory not empty.'
-    if [[ $cmdOut == *"EDC5136I"* ]]; then
-        rc=0
-        echo $PGM": [INFO] Deleting empty directories stopped at below directory because it is not empty."
-        echo $PGM": [INFO] $cmdOut "
-    else 
-        rc=4
-        echo $PGM": [WARNING] Deleting empty directories in working tree failed. rc="$rc
-        echo $PGM": [WARNING] $cmdOut "
-    fi 
-fi
 
 if [ $rc -eq 0 ]; then
-    echo $PGM": [INFO] Workspace directory successfully deleted."
+    echo $PGM": [INFO] Workspace directory successfully deleted. rc="$rc
 else 
-    echo $PGM": [ERROR] Deleting workspace directory $(getWorkDirectory) failed."
+    echo $PGM": [ERROR] Deleting workspace directory $(getWorkDirectory) failed. rc="$rc
 fi 
 
 exit $rc
