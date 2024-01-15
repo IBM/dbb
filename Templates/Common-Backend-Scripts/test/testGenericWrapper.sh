@@ -67,6 +67,7 @@ executePackageBuildOutputs="true" # optional
 executePublishLogs="true"         # optional
 executeUcdPackaging="true"        # optional
 executeUcdDeploy="true"           # optional
+executeDeleteWorkspace="true"     # optional, depending on test scenario
 
 #====================================================================================
 ## script configuration - end
@@ -272,6 +273,18 @@ pullLogs() {
 
 }
 
+# delete workspace
+deleteWorkspace(){
+    cmdStr="deleteWorkspace.sh -w $dbbBuildRootDir/$uniqueWorkspaceId"
+
+    if [ "$executeDeleteWorkspace" == "true" ]; then
+        submitCmd
+    else
+        echo "$PGM: [INFO] Workspace Cleanup skipped based on configuration."
+    fi
+
+}
+
 ############# MortgageApplication
 ############# MortgageApplication
 ############# MortgageApplication
@@ -326,6 +339,15 @@ testMortgageApplication-Main-Bld-Build-0() {
         echo "Pull Logs"
         echo "-------------"
         pullLogs
+        rc=$?
+        echo "rc=$rc"
+    fi
+
+    executeDeleteWorkspace="false"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
         rc=$?
         echo "rc=$rc"
     fi
@@ -395,6 +417,15 @@ testMortgageApplication-Main-Bld-Build-1() {
         echo "rc=$rc"
     fi
 
+    executeDeleteWorkspace="true"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
+        rc=$?
+        echo "rc=$rc"
+    fi
+
     #unset variables
     verbose=""
 
@@ -450,6 +481,15 @@ testMortgageApplication-Main-Rel-Build-2() {
         echo "rc=$rc"
     fi
 
+    executeDeleteWorkspace="true"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
+        rc=$?
+        echo "rc=$rc"
+    fi
+
 }
 
 testMortgageApplication-Main-Prev-Build-3() {
@@ -491,6 +531,15 @@ testMortgageApplication-Main-Prev-Build-3() {
         echo "Pull Logs"
         echo "-------------"
         pullLogs
+        rc=$?
+        echo "rc=$rc"
+    fi
+
+    executeDeleteWorkspace="true"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
         rc=$?
         echo "rc=$rc"
     fi
@@ -546,6 +595,15 @@ testMortgageApplication-Release-Rel100-Build-1() {
         echo "rc=$rc"
     fi
 
+    executeDeleteWorkspace="true"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
+        rc=$?
+        echo "rc=$rc"
+    fi
+
 }
 
 ############# MortgageApplication release maintenance leg MortApp/build-3
@@ -594,6 +652,15 @@ testMortgageApplication-Hotfix-Release-Rel100-Build-1() {
         echo "Pull Logs"
         echo "-------------"
         pullLogs
+        rc=$?
+        echo "rc=$rc"
+    fi
+
+    executeDeleteWorkspace="true"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
         rc=$?
         echo "rc=$rc"
     fi
@@ -652,6 +719,15 @@ testMortgageApplication-Feature-Setmainbuildbranch-Build-1() {
         echo "rc=$rc"
     fi
 
+    executeDeleteWorkspace="true"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
+        rc=$?
+        echo "rc=$rc"
+    fi
+
     rc=0 #msg will be RC=4 because no files to be build
 
 }
@@ -706,6 +782,15 @@ testMortgageApplication-Epic-implementAI-Build-1() {
         echo "rc=$rc"
     fi
 
+    executeDeleteWorkspace="true"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
+        rc=$?
+        echo "rc=$rc"
+    fi
+
 }
 
 ############# MortgageApplication contibution to the next release
@@ -754,6 +839,15 @@ testMortgageApplication-Epic-Feature-implementAI-Build-1() {
         echo "Pull Logs"
         echo "-------------"
         pullLogs
+        rc=$?
+        echo "rc=$rc"
+    fi
+
+    executeDeleteWorkspace="true"
+    if [ $rc -eq 0 ] ; then
+        echo "Delete Workspace"
+        echo "-------------"
+        deleteWorkspace
         rc=$?
         echo "rc=$rc"
     fi
