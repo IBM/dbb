@@ -686,8 +686,8 @@ wazideploy-deploy.sh -w /u/ado/workspace/MorgageApplication/main/build-1 -p /u/a
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `environmentFile`, `packageInputFile` and `evidenceFile` are fully referenced. 
--p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified, the deployment plan location is obtained from the `pipelineBackend.config`.
--e `<environmentFile>` | (Optional) Absolute or relative path to **Environment File**, that describes the target z/OS environment. If a relative path is provided, the deployment plan is located with based on the configuration from the `pipelineBackend.config`.
+-p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified, the location of the deployment plan is obtained from the `pipelineBackend.config`.
+-e `<environmentFile>` | (Optional) Absolute or relative path to **Environment File**, that describes the target z/OS environment. If a relative path is provided, the environment file is located based on the setting `wdEnvironmentConfigurations` in `pipelineBackend.config`.
 -i `<packageInputFile>` | **Package Input File** package that is to be deployed. If a relative file path is provided, the file is assumed to be located in the `<workspace directory>/<logsDir>`.
 -l `<evidenceFile>` | (Optional) Absolute or relative path to the **Evidence File** that will contain the logs of all Wazi Deploy tasks. If not specified, evidence file location will be obtained from the `pipelineBackend.config`.
 -d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
