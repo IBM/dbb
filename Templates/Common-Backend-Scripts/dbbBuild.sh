@@ -506,7 +506,7 @@ if [ $rc -eq 0 ]; then
       array=$(find ${outDir} -name "buildList.txt")
       for log in ${array[@]}; do
         LastBuildLog=${log}
-        echo $PGM": [INFO} LastBuildLog = ${LastBuildLog}"
+        echo $PGM": [INFO] LastBuildLog = ${LastBuildLog}"
       done
 
       # If "buildList.txt" was found in the last Build Log Directory, determine the character count.
