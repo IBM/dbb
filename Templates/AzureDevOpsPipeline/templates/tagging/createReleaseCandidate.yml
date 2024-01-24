@@ -1,0 +1,60 @@
+# Template to compute and create the release tag
+steps:
+  - checkout: none
+  - bash: |
+
+      # If release type is defined
+      if [ ! -z "$(releaseType)" ]; then
+      # obtain previous tag via AZ CLI - aka the latest available
+
+      previousTag=$(az repos ref list --org $(System.CollectionUri) --project $(System.TeamProjectId) -r $(application) --filter tags --query '[?name].name | sort(@)[-1]')
+      # echo Old Tag = ${previousTag} # Debug
+
+      # case of a new release candidate for the current release
+      if [[ "${previousTag}" == *"rc"* ]]; then
+        # echo "bump release candidate version" # Debug
+        export newVersionTag=`echo $previousTag | sed 's/^["refs\/tags\/rel-]*//g' | awk -F "rc" '{print "rel-"$1"rc"(-f2 $2+1)}' | tr -d \"  ` 
+      else
+      # start with a new release candidate
+          # echo "create new release candidate" # Debug
+          if [ "$(releaseType)" == "patch" ]; then
+            export newVersionTag=`echo ${previousTag} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$3 += 1 ; print}'`
+          fi
+          if [ "$(releaseType)" == "minor" ]; then
+            export newVersionTag=`echo ${previousTag} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$2 += 1 ; $3 = 0; print}'`
+          fi
+          if [ "$(releaseType)" == "major" ]; then
+            export newVersionTag=`echo ${previousTag} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
+          fi
+          # rebuild the entire version tag 
+          export newVersionTag=`echo "rel-${newVersionTag}_rc00" | tr -d \" `
+      fi
+      
+      # Create new tag
+      echo "[INFO] Creating new tag with name ${newVersionTag}"
+
+      az rest \
+         --method post \
+         --headers "Authorization=Bearer $AZURE_DEVOPS_EXT_PAT" \
+         --url $(System.CollectionUri)/$(System.TeamProjectId)/_apis/git/repositories/$(application)/annotatedtags\?api-version\=7.1-preview.1 \
+         --body "{ \"name\": \"${newVersionTag}\",  \"taggedObject\": { \"objectId\": \"$(Build.SourceVersion)\" }, \"message\": \"Release Candidate created by pipeline $(Build.BuildNumber) \"} " \
+         --resource 499b84ac-1321-427f-aa17-267ca6975798
+
+      # catch RC rest command return code
+      rc=$?
+
+      if [ $rc -eq 0 ]; then
+        echo "[INFO] - AZ REST command has completed successfully."
+      else
+        echo "[WARNING] - AZ REST command has ended with a return code other than 0. rc="$rc
+        exit rc
+      fi
+
+      else
+        echo "[WARNING] - No release type has been specified."
+        exit 1
+      fi
+    
+    env:
+      AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+    displayName: "Create Release Candidate Tag"

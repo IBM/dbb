@@ -15,10 +15,26 @@ parameters:
   - build
   - release
   - preview
+- name: releaseType
+  displayName: 'Release Type'
+  type: string
+  default: patch
+  values:
+  - major
+  - minor
+  - patch
+
 - name: verboseLogging
   displayName: 'zAppBuild verbose logging'
   type: boolean
   default: false
+
+# pipeline templates
+resources:
+  repositories:
+      - repository: templates
+        type: git
+        name: PipelineCore/PipelineCore
 
 # Agent pool where the pipeline runs
 pool:
@@ -30,9 +46,8 @@ variables:
   # ) agentPool                            # Agent pool name for Azure Agents to connect to MVS
   # ) zosSSHConnection                     # zOS - SSH connection name
   # ) zosSSHKnownHost                      # Known host entry for secure shell connections
-  # ) zosSSHPrivateKeySecureFile           # Reference to uploaded Private SSH Key in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+  # ) zosSSHPrivateKeySecureFile           # Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
   # ) pipelineWorkspace                    # Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
-  # ) wdEnvironmentFile                    # The Wazi Deploy environment file for the deployment into the lowest stage
   # ) zosHostname                          # zOS - Host IP for SFTP connection
   # ) zosSFTPUser                          # zOS - Host user for SFTP connection
   # ) azureArtifactFeedID                  # Feed ID of the Azure artifact for publishing the package
@@ -64,11 +79,14 @@ variables:
   azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicatioName).tar
   packageName: $(application).build-$(buildNumber)                                                                # Name of the Package
   pipelineType: ${{ parameters.pipelineType }}                                                                    
+  releaseType: ${{ parameters.releaseType }}                                                                    
   isMain: $[contains(variables['Build.SourceBranch'], 'main')]                                                    # Variable to indicate pipeline for the main branch
   verbose : ""
   ${{ if eq(parameters.verboseLogging, true) }}:                                                                  # Computation DBB verbose logging
     verbose: "-v"
 
+
+# Pipeline stages
 stages:
   - stage: Setup
     jobs:
@@ -94,7 +112,7 @@ stages:
             echo "application                = $(application)"
             echo "repo                       = $(repo)"
             echo "pipelineType               = $(pipelineType)"
-            echo "deploymentTarget           = $(wdEnvironmentFile)"
+            echo "releaseType                = $(releaseType)"
             echo "azureArtifactName          = $(azureArtifactName)"
             echo "azureArtifactFeedID        = $(azureArtifactFeedID)"
             echo "azureArtifactVersionOption = $(azureArtifactVersionOption)"
@@ -110,7 +128,10 @@ stages:
             commands: '. ./.profile && gitClone.sh -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)'
             readyTimeout: '20000'
           displayName: 'Clone application repo'
-
+  
+  ## Build stage 
+  # Invoke build and create a release candidate tag
+  
   - stage: Build
     jobs:
     - job: Build
@@ -155,7 +176,20 @@ stages:
             publishLocation: 'Container'
           displayName: 'Publish build logs'
     
+    # Create release candidate tag
+    - job: Tag
+      displayName: 'Create Release tag'
+      condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
+      dependsOn: Build
+      steps: 
+      - template : tagging/createReleaseCandidate.yml@templates
+
+  ## Packaging stage 
+  # Store build outputs in appropiate artifact repository
+          
   - stage: Package
+    displayName: 'Packaging'
+    condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
     jobs:
     - job: Package
       displayName: 'Package Outputs'
@@ -169,7 +203,7 @@ stages:
       #    readyTimeout: '20000'
       #  displayName: 'Package the build artifacts for Deployment'
       - task: SSH@0
-        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
+        condition: succeeded()
         inputs:
           sshEndpoint: $(zosSSHConnection)
           runOptions: 'commands'
@@ -179,22 +213,26 @@ stages:
       # Preview - Demonstrate to upload package to Azure DevOps Artifacts
       ## TODO - Requires more work to distinguish build and release packages
 
-       # Install private SSH key prior to a subsequent cmdline tasks 
+      # Install private SSH key prior to a subsequent cmdline tasks 
       - task: InstallSSHKey@0
+        condition: succeeded()
         inputs:
          knownHostsEntry: $(zosSSHKnownHost)    # Known Hosts Entry for build LPAR
          sshKeySecureFile: $(zosSSHPrivateKeySecureFile)           # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
       
+      # Download package to ADO runner  
       - task: CmdLine@2
-        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
+        condition: succeeded()
         inputs:
           script: |
             rm -rf "$(Build.SourcesDirectory)/deploymentPackage" 
             mkdir "$(Build.SourcesDirectory)/deploymentPackage" 
             sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
         displayName: 'Stage the deployment package'     
+      
+      # Attach package to Azure Artifacts repository  
       - task: UniversalPackages@0
-        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
+        condition: succeeded()
         inputs:
           command: 'publish'
           publishDirectory: "$(Build.SourcesDirectory)/deploymentPackage"
@@ -204,7 +242,13 @@ stages:
           versionOption: '$(azureArtifactVersionOption)'
         displayName: 'Publish deployment package to Azure artifacts'
   
-  - stage: Deploy
+  ## Deployment to development test environment
+  # deployments to these test environment can only happen when the development team requests a build / release pipeline
+  # this step is automatically executed for build / release pipelines
+
+  - stage: Deploy_DEVINT
+    displayName: 'Deploy DevInt'
+    condition: and(succeeded(), eq(variables.isMain, true), not(eq(variables['pipelineType'], 'preview')))
     jobs:
     - job: DeploymentToIntegration
       displayName: 'Deployment Integration Environment'
@@ -225,12 +269,13 @@ stages:
             readyTimeout: '20000'
           displayName: 'Generate Deployment Plan with Wazi Deploy'
       
+        # Trigger deployment to the development integration stage   
         - task: SSH@0
           condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
           inputs:
             sshEndpoint: $(zosSSHConnection)
             runOptions: 'commands'
-            commands: '. ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e $(wdEnvironmentFile) -i $(application).tar -l deploy-logs/evidences/evidence.yaml'
+            commands: '. ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e EOLEB7-$(application)-Integration.yaml -i $(application).tar -l deploy-logs/evidences/evidence.yaml'
             readyTimeout: '20000'
           displayName: 'Deploy Package with Wazi Deploy'
         
@@ -259,3 +304,48 @@ stages:
             ArtifactName: 'deploy-logs'
             publishLocation: 'Container'
           displayName: 'Publish deployment logs'
+  
+  ## Deployment to higher test environments
+  # deployments to these test environment can only happen when the development team requests a release pipeline
+
+  # Acceptance Test environment
+  - stage: Deploy_ACCEPTANCE
+    displayName : 'Deploy Acceptance'
+    dependsOn: Deploy_DEVINT
+    condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
+    variables: 
+      Environment: Acceptance
+    jobs:
+    - template: deployment/deployReleasePackage.yml@templates
+      parameters:
+        environmentName: 'Acceptance'
+  
+  # Add additional deployment stages as you need.    
+
+  # Production environment
+  - stage: Deploy_PRODUCTION
+    displayName : 'Deploy Production'
+    dependsOn: Deploy_ACCEPTANCE
+    condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
+    variables: 
+       Environment: Production
+    jobs:
+     - template: deployment/deployReleasePackage.yml@templates
+       parameters:
+         environmentName: 'Production'
+
+  # Cleanup
+  - stage: Cleanup
+    condition: not(or(failed(), canceled()))
+    jobs:
+      - job: Cleanup
+        displayName: 'Cleanup Build environment'
+        steps:
+           - checkout: none  
+           - task: SSH@0
+             inputs:
+                 sshEndpoint: $(zosSSHConnection)
+                 runOptions: 'commands'
+                 commands: '. ./.profile && deleteWorkspace.sh -w $(uniqueWorkspaceId)'
+                 readyTimeout: '20000'
+             displayName: 'Delete Build Folder on USS'
