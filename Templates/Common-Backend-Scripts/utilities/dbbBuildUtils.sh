@@ -9,9 +9,6 @@ computeBuildConfiguration() {
     ##DEBUG ## echo -e "App name \t: ${App}"
     ##DEBUG ## echo -e "Branch name \t: ${Branch}"
 
-    # reset variables
-    propOverrides=""
-
     # Compute HLQ preix and application name
     HLQ=$(echo ${HLQPrefix}.${App:0:8} | tr '[:lower:]' '[:upper:]' | tr -d '-')
 
@@ -180,6 +177,7 @@ computeBuildConfiguration() {
         thirdBranchSegmentTrimmed=""
         branchConvention=""
         segmentName=""
+        propOverrides=""
 
     fi
 
@@ -205,21 +203,20 @@ getBaselineReference() {
 # computation of branch segments
 # captured cases
 #
-# containing numbers, assuming to be an work-item-id
-# containing strings and words separated by dashes, return first characters of each string
-# none of the above - return segement name in upper case w/o underscores
+# - containing numbers, assuming to be an work-item-id
+# - containing strings and words separated by dashes, return first characters of each string
+# - none of the above - return segment name in upper case w/o underscores
 #
 
 computeSegmentName() {
 
     segmentName=$1
-    echo $segmentName
     if [ ! -z $(echo "$segmentName" | tr -dc '0-9') ]; then
         # "contains numbers"
         retval=$(echo "$segmentName" | tr -dc '0-9')
     elif [[ $segmentName == *"-"* ]]; then
         # contains dashes
-        segmentNameTrimmed=$(echo "$segmentName" | awk -F "-" '{ for(i=1; i <= NF;i++) print($i) }' | cut -c-1-1)
+        segmentNameTrimmed=$(echo "$segmentName" | awk -F "-" '{ for(i=1; i <= NF;i++) print($i) }' | cut -c 1-1)
         segment1=$(echo "$segmentNameTrimmed" | tr -d '\n')
         retval=$(echo "$segment1" | tr '[:lower:]' '[:upper:]')
     else 
