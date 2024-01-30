@@ -4,43 +4,56 @@ parameters:
     default: "." # defaults for any parameters that specified with "." (current directory)
 
 jobs:
+  - job: RetrievePackage
+    displayName: "Retrieve Deployment Package"
+    steps:
+      - checkout: none
+      - task: InstallSSHKey@0
+        inputs:
+          knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
+          sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+
+      - task: UniversalPackages@0
+        condition: and(succeeded(), eq(variables['pipelineType'], 'release'))
+        inputs:
+          command: "download"
+          downloadDirectory: "$(System.DefaultWorkingDirectory)"
+          feedsToUse: "internal"
+          vstsFeed: "$(azureArtifactFeedID)"
+          vstsFeedPackage: "$(azureArtifactName)"
+          versionOption: "$(azureArtifactVersionOption)"
+          vstsPackageVersion: "*.*.*" # latest package
+        displayName: "Download deployment package to staging area"
+
+      # Copy package to a remote machine over SSH.
+      - task: CopyFilesOverSSH@0
+        inputs:
+          sshEndpoint: $(zosSSHConnection) # string. Required. SSH service connection.
+          sourceFolder: "$(System.DefaultWorkingDirectory)" # string. Source folder.
+          contents: "$(azureArtifactName)" # string. Required. Contents. Default: all
+          targetFolder: "$(uniqueWorkspaceId)/deploy_${{ parameters.environmentName }}" # string. Target folder.
+          cleanTargetFolder: true # boolean. Clean target folder. Default: false.
+          cleanHiddenFilesInTarget: true # boolean. Optional. Use when cleanTargetFolder = true. Remove hidden files in target folder. Default: false.
+          readyTimeout: "20000" # string. Required. SSH handshake timeout. Default: 20000.
+          overwrite: true # boolean. Overwrite. Default: true.
+          failOnEmptySource: true # boolean. Fail if no files found to copy. Default: false.
+        displayName: "Upload Package to Deployment environment"
+
   - deployment: DEPLOY_${{ parameters.environmentName }}
+    dependsOn: RetrievePackage
     displayName: "Deploy-${{ parameters.environmentName }}"
+    variables:
+      nextReleaseName: $[ stageDependencies.Build.Tag.outputs['tagRelease.nextReleaseName'] ] 
     environment: "${{ parameters.environmentName }}"
     strategy:
       runOnce:
         deploy:
           steps:
-            - download : none
+            - download: none
             - task: InstallSSHKey@0
               inputs:
                 knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
                 sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
-            - task: UniversalPackages@0
-              condition: and(succeeded(), eq(variables['pipelineType'], 'release'))
-              inputs:
-                command: "download"
-                downloadDirectory: "$(System.DefaultWorkingDirectory)"
-                feedsToUse: "internal"
-                vstsFeed: "$(azureArtifactFeedID)"
-                vstsFeedPackage: "$(azureArtifactName)"
-                versionOption: "$(azureArtifactVersionOption)"
-                vstsPackageVersion: "*.*.*" # latest package
-              displayName: "Download deployment package to staging area"
-
-            # Copy package to a remote machine over SSH.
-            - task: CopyFilesOverSSH@0
-              inputs:
-                sshEndpoint: $(zosSSHConnection) # string. Required. SSH service connection.
-                sourceFolder: "$(System.DefaultWorkingDirectory)" # string. Source folder.
-                contents: "$(azureArtifactName)" # string. Required. Contents. Default: all
-                targetFolder: "$(uniqueWorkspaceId)/deploy_${{ parameters.environmentName }}" # string. Target folder.
-                cleanTargetFolder: true # boolean. Clean target folder. Default: false.
-                cleanHiddenFilesInTarget: true # boolean. Optional. Use when cleanTargetFolder = true. Remove hidden files in target folder. Default: false.
-                readyTimeout: "20000" # string. Required. SSH handshake timeout. Default: 20000.
-                overwrite: true # boolean. Overwrite. Default: true.
-                failOnEmptySource: true # boolean. Fail if no files found to copy. Default: false.
-              displayName: "Upload Package to Deployment environment"
 
             # Generate Deployment Plan.
             - task: SSH@0
@@ -82,7 +95,6 @@ jobs:
                   sftp -r $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy-logs-${{ parameters.environmentName }}/* "\"$(Build.SourcesDirectory)/deploy-logs-${{ parameters.environmentName }}\""
               displayName: "Retrieve deployment reports"
 
-
             - task: PublishBuildArtifacts@1
               condition: eq(variables['pipelineType'], 'release')
               inputs:
@@ -93,7 +105,6 @@ jobs:
 
             # Create Prod Release (when deploying to production)
             # Condition within template
-            - template : ../tagging/createProductionReleaseTag.yml
+            - template: ../tagging/createProductionReleaseTag.yml
               parameters:
                 environmentName: ${{ parameters.environmentName }}
-
