@@ -38,7 +38,7 @@ Depending on your selected deployment technology, review the definitions and (de
 
 The pipeline uses the Azure concepts `Stage`, `Jobs` and `Tasks`, as well leverages Gitlab templates.
 
-![Azure Release pipeline](images/ado_releasePipeline.png.png)
+![Azure Release pipeline](images/ado_releasePipeline.png)
 
 ## Prerequisites
 
@@ -149,10 +149,14 @@ verbose          | boolean flag to control logging of build framework. (Default:
 
 ### Feature Branch pipeline
 
-The pipeline for feature branches executes, the following steps:
+The pipeline for feature branches executes the following steps:
+
 * Clone
 * Build
 * Package & publish package
+* Cleanup
+
+Overview of the pipeline:  
 
 ![Feature Branch pipeline](images/ado_featureBranchPipeline.png)
 
@@ -163,6 +167,9 @@ The basic build pipeline for integration branches contains the following stages:
 * Build 
 * Package & publish package
 * Deployment to the integration test environment
+* Cleanup
+
+Overview of the pipeline: 
 
 ![Basic pipeline for integration branches](images/ado_basicBuildPipeline.png)
 
@@ -176,13 +183,15 @@ It covers the followings steps:
 * Package & publish package
 * Deployment to the controlled test environments
 * Deployment to the production environment, including tagging the production release state
+* Cleanup
 
+The development team manually requests the pipeline and specifies the *pipeline type* `release` as a parameter. Along with the *release type*, the pipeline will tag a release candidate and also the final release that is deployed to production.
 
-The development team manually requests the pipeline and specifies the pipeline type `release` .
+<img src="images/ado_requestReleasePipeline.png" alt="Request Release pipeline" title="Request Release pipeline" width="400">
 
-![Release pipeline](images/ado_requestReleasePipeline.png?raw=true)
+Overview of the release pipeline: 
 
-![Feature Branch pipeline](images/ado_releasePipeline.png)
+![Release pipeline](images/ado_releasePipeline.png)
 
 ### Additional notes
 
