@@ -24,13 +24,13 @@ The pipeline implements the following stages
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
-* `Deployment` to controlled test environments via the release pipeline that includes:
+* `Deployment` to controlled test environments via the [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) that includes:
   * to create a git tag to flag the release candidate. 
   * to retrieve the package from the Azure Artifacts binary repository.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
-  * to create a git tag to flag the release that was deployed to production.
+  * to create a git tag of the commit that was deployed to the production environment.
 * `Cleanup` stage: 
   * to [delete the build workspace](../Common-Backend-Scripts/README.md#411---deleteworkspacesh) on z/OS Unix System Services.
 
@@ -38,7 +38,7 @@ Depending on your selected deployment technology, review the definitions and (de
 
 The pipeline uses the Azure concepts `Stage`, `Jobs` and `Tasks`, as well leverages Gitlab templates.
 
-![](images/ado_pipelineOverview.png)
+![Azure Release pipeline](images/ado_releasePipeline.png.png)
 
 ## Prerequisites
 
@@ -48,7 +48,7 @@ The template leverages the [SSH Task](https://learn.microsoft.com/en-us/azure/de
 
 The backend scripts need to be configured for the selected technologies to operate correctly.
 
-The implemented tagging of important commits in the git history, leverages the Azure CLI, that needs to be available on the Azure runner. Please follow the supplied [documentation](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to make the Azure CLI available to all agents within the agent pool that the pipelines will use.
+The implemented tagging of important commits in the git history, leverages the Azure CLI, that needs to be available on the Azure runner. Please follow the [documentation](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to make the Azure CLI available to all agents within the agent pool that the pipelines will use.
 
 ## Installation and setup of template
 
@@ -79,11 +79,11 @@ Variable | Description
 
 The directory [templates](templates/) contains additional [Azure pipeline templates](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops&pivots=templates-includes#parameters-to-select-a-template-at-runtime) that implement actions that are leveraged by the core pipeline template to provide a central control over the tagging and release deployment process. Please review the templates with your Azure administrator and adjust the reference within the [azure-pipelines.yml](azure-pipelines.yml#L32) file.
 
-The tagging process implemented in the templates leverages the [AZ REST command of the Azure DevOps CLI](templates/tagging/createReleaseCandidate.yml#L33) to connect with the existing permissions of the pipeline to the Azure repository.The Azure DevOps CLI needs to be available on the installed. 
+The tagging process implemented in the template leverages the [AZ REST command of the Azure DevOps CLI](templates/tagging/createReleaseCandidate.yml#L33) to connect with the existing permissions of the pipeline build user to the Azure repository to create the release candidate and the final release tag. Azure DevOps CLI needs to be available on the installed Azure agents.  
 
 ### Azure environments
 
-The template uses [Azure deployment jobs](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/deployment-jobs?view=azure-devops) to trigger the deployment on the mainframe and document the deployment of packages to the defined [environments in Azure](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops). Please create the environments in advance, also consider configuring approvals and checks for environments as gates.
+This template uses [Azure deployment jobs](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/deployment-jobs?view=azure-devops) to trigger the deployment on the mainframe and document the deployment of packages to the defined [environments in Azure](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/environments?view=azure-devops). Please create the environments in advance, also consider configuring approvals and checks for environments as gates.
 
 The template allows the development team to add additional environments where they would like to deploy the package to. Please see the [deployment section of the pipeline configuration](azure-pipelines.yml#L187).
 
@@ -123,24 +123,31 @@ To upload the private key as a Secure File:
 
 ## Pipeline usage
 
-The pipeline implements a build, package and deploy pipeline to build the various configurations according to the defined conventions. It is a single pipeline definition supporting various workflows. 
+The pipeline implements the common build, package and deploy steps to process various configurations according to the defined conventions.
+It is a single Azure pipeline definition supporting various workflows. The [azure-pipelines.yml](azure-pipelines.yml) supports: 
 
-It supports automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#pipeline-build-of-feature-branches) with a clone and build stage, the [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the integration branch `main` and a [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) to build and package the release candidate, installation to predefined environments including the production environment.  
+* automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#pipeline-build-of-feature-branches) with a clone and build stage, 
+* the [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the branch `main` and
+* a [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) to build and package the release candidate, installation to predefined environments including the production environment.
 
-Please check the pipeline definition to understand the various triggers for which this pipeline is executed. 
+Please check the pipeline definition to understand the various triggers for which this pipeline is executed and also the conditions when stages, jobs or steps are executed. 
+
+Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation. 
 
 ### Pipeline parameters 
 
-In a default setup, the pipeline is triggered after each new commit. It allows overriding the below parameters when manually requesting the pipeline.
+In a default setup, the pipeline is triggered for each new commit.
+
+It allows overriding the below parameters when manually requesting the pipeline.
 This is especially useful when the application team want to create a release candidate package for higher test environments and production. 
 
 Parameter | Description
 --- | ---
 pipelineType     | Pipeline type - either build, release or preview. (Default: build)
-releaseType      | Release type - major, minor, patch as input to compute the release version and set the git tag. (Default: patch)
+releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: patch)
 verbose          | boolean flag to control logging of build framework. (Default: false) 
 
-#### Feature Branch pipeline
+### Feature Branch pipeline
 
 The pipeline for feature branches executes, the following steps:
 * Clone
@@ -149,7 +156,7 @@ The pipeline for feature branches executes, the following steps:
 
 ![Feature Branch pipeline](images/ado_featureBranchPipeline.png)
 
-#### Basic build pipeline for Integration branches
+### Basic build pipeline for Integration branches
 
 The basic build pipeline for integration branches contains the following stages:
 * Clone
@@ -159,7 +166,7 @@ The basic build pipeline for integration branches contains the following stages:
 
 ![Basic pipeline for integration branches](images/ado_basicBuildPipeline.png)
 
-#### Release pipeline
+### Release pipeline
 
 When the development team agrees to build a release candidate, the release pipeline type is triggered manually.
 
@@ -176,3 +183,9 @@ The development team manually requests the pipeline and specifies the pipeline t
 ![Release pipeline](images/ado_requestReleasePipeline.png?raw=true)
 
 ![Feature Branch pipeline](images/ado_releasePipeline.png)
+
+### Additional notes
+
+Build, package and deployment logs are attached to the Azure pipeline run and can be accessed via UI: 
+
+![published build logs](images/ado_publishedArtifacts.png)

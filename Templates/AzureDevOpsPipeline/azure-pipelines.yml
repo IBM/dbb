@@ -184,7 +184,7 @@ stages:
 
       # Create release candidate tag
       - job: Tag
-        displayName: "Create Release tag"
+        displayName: "Create Release Candidate tag"
         condition: and(succeeded(), eq(variables['pipelineType'], 'release'))
         dependsOn: Build
         steps:
@@ -329,7 +329,9 @@ stages:
   # Production environment
   - stage: Deploy_PRODUCTION
     displayName: "Deploy Production"
-    dependsOn: Deploy_ACCEPTANCE
+    dependsOn: 
+      - Build
+      - Deploy_ACCEPTANCE
     condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
     variables:
       Environment: Production
