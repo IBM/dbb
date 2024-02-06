@@ -41,7 +41,7 @@ jobs:
 
   - deployment: DEPLOY_${{ parameters.environmentName }}
     dependsOn: RetrievePackage
-    displayName: "Deploy-${{ parameters.environmentName }}"
+    displayName: "Deploy to ${{ parameters.environmentName }}"
     variables:
       nextReleaseName: $[ stageDependencies.Build.Tag.outputs['tagRelease.nextReleaseName'] ] 
     environment: "${{ parameters.environmentName }}"

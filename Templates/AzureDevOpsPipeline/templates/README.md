@@ -1,8 +1,8 @@
 # README
 
-This folder contains [Azure DevOps Templates](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops&pivots=templates-includes) yaml configurations, that are referenced by the core Azure pipeline. 
+This folder contains [Azure DevOps Templates](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops&pivots=templates-includes) YAML configurations, that are referenced by the main Azure pipeline template. 
 
-Please work with your Azure DevOps administrators where to maintain these scripts. 
+Please work with your Azure DevOps administrators to agree on how and where to maintain these scripts.
 
 ## Inventory
 

@@ -255,7 +255,7 @@ stages:
     condition: and(succeeded(), eq(variables.isMain, true), not(eq(variables['pipelineType'], 'preview')))
     jobs:
       - job: DeploymentToIntegration
-        displayName: "Deployment Integration Environment"
+        displayName: "Deploy to DevTest"
         steps:
           - checkout: none
           # Install private SSH key prior to a subsequent cmdline tasks

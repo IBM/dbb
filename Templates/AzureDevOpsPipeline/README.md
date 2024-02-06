@@ -36,19 +36,19 @@ The pipeline implements the following stages
 
 Depending on your selected deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
-The pipeline uses the Azure concepts `Stage`, `Jobs` and `Tasks`, as well leverages Gitlab templates.
+The pipeline uses the Azure concepts `Stage`, `Jobs` and `Tasks`, as well as [Azure DevOps templates](#supplied-azure-pipeline-templates).
 
 ![Azure Release pipeline](images/ado_releasePipeline.png)
 
 ## Prerequisites
 
-To leverages this template, access to an Azure DevOps environment and an Azure Pipeline agent that can connect to your mainframe environment is required. Please review the setup instructions of this [techdoc](https://www.ibm.com/support/pages/node/6422813).
+To leverages this template, access to an Azure DevOps environment is required, and an Azure DevOps Pipeline agent must be configured to connect to your mainframe environment. Please review the setup instructions of this [techdoc](https://www.ibm.com/support/pages/node/6422813).
 
-The template leverages the [SSH Task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/ssh-v0?view=azure-pipelines) to invoke the [Common Backend scripts](../Common-Backend-Scripts/) via the configured ssh endpoint. Alternatively, the template can be modified to use the [CmdLine task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/cmd-line-v2?view=azure-pipelines) to leverage an alternative communication technology such as Zowe CLI.
+The template leverages the [SSH Task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/ssh-v0?view=azure-pipelines) to invoke the [Common Backend scripts](../Common-Backend-Scripts/) via the configured SSH endpoint. Alternatively, the template can be modified to use the [CmdLine task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/cmd-line-v2?view=azure-pipelines) to leverage an alternative communication technology such as Zowe CLI.
 
-The backend scripts need to be configured for the selected technologies to operate correctly.
+The Common Backend Scripts need to be configured for the selected deployment technologies to operate correctly.
 
-The implemented tagging of important commits in the git history, leverages the Azure CLI, that needs to be available on the Azure runner. Please follow the [documentation](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to make the Azure CLI available to all agents within the agent pool that the pipelines will use.
+To tag important commits in the history of the application's Git repository, the Azure CLI is used and must be available on the Azure runner. Please follow the [documentation](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to install the Azure CLI on all the agents within the agent pool that the pipelines will use.
 
 ## Installation and setup of template
 
@@ -77,7 +77,7 @@ Variable | Description
 
 ### Supplied Azure pipeline templates 
 
-The directory [templates](templates/) contains additional [Azure pipeline templates](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops&pivots=templates-includes#parameters-to-select-a-template-at-runtime) that implement actions that are leveraged by the core pipeline template to provide a central control over the tagging and release deployment process. Please review the templates with your Azure administrator and adjust the reference within the [azure-pipelines.yml](azure-pipelines.yml#L32) file.
+The directory [templates](templates/) contains additional [Azure pipeline templates](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops&pivots=templates-includes#parameters-to-select-a-template-at-runtime) that implement actions used in the main pipeline template. This approach helps to keep central control over the tagging and release deployment process. Please review the templates with your Azure administrator and adjust the reference within the [azure-pipelines.yml](azure-pipelines.yml#L32) file.
 
 The tagging process implemented in the template leverages the [AZ REST command of the Azure DevOps CLI](templates/tagging/createReleaseCandidate.yml#L33) to connect with the existing permissions of the pipeline build user to the Azure repository to create the release candidate and the final release tag. Azure DevOps CLI needs to be available on the installed Azure agents.  
 
@@ -90,7 +90,7 @@ The template allows the development team to add additional environments where th
 ### Installing the private SSH key
 
 To execute actions on the z/OS system, the default communication channel is established via the SSH Service Connection that is provided by Azure.
-To download files from the build workspace on z/OS Unix System Services, it requires to use a `CmdLine` task and leverage a script to pull the log files from the mainframe to the Azure agent. The used SSH communication from a `CmdLine` task does not use the Service Connection. To make the agent installation independent of any configurations outside of Azure, a private SSH key is installed as part of the pipeline to connect to the z/OS system through a `CmdLine` task. 
+To download files from the build workspace on z/OS Unix System Services, the pipeline uses a `CmdLine` task and leverage a script to pull the log files from the mainframe to the Azure agent. The used SSH communication from a `CmdLine` task does not use the Azure Service Connection. To make the agent installation independent of any configurations outside of Azure, a private SSH key is installed as part of the pipeline to connect to the z/OS system through a `CmdLine` task. 
 
 The configuration requires 
 1) the `zosSSHKnownHost` pipeline variable, and
