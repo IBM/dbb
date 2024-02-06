@@ -463,7 +463,7 @@ fi
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the Package Build Outputs script."
 
-    CMD="groovyz ${log4j2} ${PackagingScript} --workDir ${logDir}"
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${PackagingScript} --workDir ${logDir}"
 
     # add tarfile name
     if [ ! -z "${tarFileName}" ]; then
