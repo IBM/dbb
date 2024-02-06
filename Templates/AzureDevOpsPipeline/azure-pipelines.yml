@@ -1,24 +1,40 @@
 # Branches that triggers this pipleline
 trigger:
-- feature/*
-- release/*
-- hotfix/*
-- epic/*
-- main
+  - feature/*
+  - release/*
+  - hotfix/*
+  - epic/*
+  - main
 
 parameters:
-- name: pipelineType
-  displayName: 'Pipeline Type'
-  type: string
-  default: build
-  values:
-  - build
-  - release
-  - preview
-- name: verboseLogging
-  displayName: 'zAppBuild verbose logging'
-  type: boolean
-  default: false
+  - name: pipelineType
+    displayName: "Pipeline Type"
+    type: string
+    default: build
+    values:
+      - build
+      - release
+      - preview
+  - name: releaseType
+    displayName: "Release Type"
+    type: string
+    default: patch
+    values:
+      - major
+      - minor
+      - patch
+
+  - name: verboseLogging
+    displayName: "zAppBuild verbose logging"
+    type: boolean
+    default: false
+
+# pipeline templates
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: PipelineCore/PipelineCore
 
 # Agent pool where the pipeline runs
 pool:
@@ -30,232 +46,312 @@ variables:
   # ) agentPool                            # Agent pool name for Azure Agents to connect to MVS
   # ) zosSSHConnection                     # zOS - SSH connection name
   # ) zosSSHKnownHost                      # Known host entry for secure shell connections
-  # ) zosSSHPrivateKeySecureFile           # Reference to uploaded Private SSH Key in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+  # ) zosSSHPrivateKeySecureFile           # Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
   # ) pipelineWorkspace                    # Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
-  # ) wdEnvironmentFile                    # The Wazi Deploy environment file for the deployment into the lowest stage
   # ) zosHostname                          # zOS - Host IP for SFTP connection
   # ) zosSFTPUser                          # zOS - Host user for SFTP connection
   # ) azureArtifactFeedID                  # Feed ID of the Azure artifact for publishing the package
   # ) azureArtifactVersionOption           # Azure artifact version option (major, minor, fix)
 
-    
-  ### Environment variables to be added in z/OS Unix System Services $HOME/.profile 
+  ### Environment variables to be added in z/OS Unix System Services $HOME/.profile
   #  To locate the backend scripts. See also Installation of backend scripts.
-  #  PIPELINE_SCRIPTS: 
+  #  PIPELINE_SCRIPTS:
   #  Ex: export PIPELINE_SCRIPTS=/var/dbb/Common-Backend-Scripts
   #      export PATH=$PIPELINE_SCRIPTS:$PATH
-  
+
   ### Variables generated during run time
-  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/') }}:                                           # Extract branch name for push 
-    branch: $[ replace(variables['Build.SourceBranch'], 'refs/heads/', '') ]    
-  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}:                                            # Extract branch name for pull request
-    branch: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]                                
-  buildNumber: $(Build.BuildNumber)                                                                               # Build number
-  organization_tmp: $[ replace(variables['System.TeamFoundationCollectionUri'], 'https://dev.azure.com/', '') ]   # Generate Azure repository uri for cloning
-  organization: $[ replace(variables['organization_tmp'], '/', '') ]                                              # Azure organization name
-  project: $(System.TeamProject)                                                                                  # Project name
-  application: ${{ variables['Build.Repository.Name'] }}                                                          # Application name
-  repo: "git@ssh.dev.azure.com:v3/$(organization)/$(project)/$(application)"                                      # Git repository path
-  uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/$(branch)/build-$(buildNumber)                                   # Calculated worksapce path
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/') }}: # Extract branch name for push
+    branch: $[ replace(variables['Build.SourceBranch'], 'refs/heads/', '') ]
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}: # Extract branch name for pull request
+    branch: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
+  buildNumber: $(Build.BuildNumber) # Build number
+  organization_tmp: $[ replace(variables['System.TeamFoundationCollectionUri'], 'https://dev.azure.com/', '') ] # Generate Azure repository uri for cloning
+  organization: $[ replace(variables['organization_tmp'], '/', '') ] # Azure organization name
+  project: $(System.TeamProject) # Project name
+  application: ${{ variables['Build.Repository.Name'] }} # Application name
+  repo: "git@ssh.dev.azure.com:v3/$(organization)/$(project)/$(application)" # Git repository path
+  uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/$(branch)/build-$(buildNumber) # Calculated worksapce path
   # Azure package name. Package names must contain only lowercase alphanumeric segments separated by a dash, dot or underscore.
   reformattedBranchName: $[ replace(variables['branch'], '/', '-')]
   lowerApplicatioName: $[ lower(variables['application']) ]
   lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
   azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicatioName).tar
-  packageName: $(application).build-$(buildNumber)                                                                # Name of the Package
-  pipelineType: ${{ parameters.pipelineType }}                                                                    
-  isMain: $[contains(variables['Build.SourceBranch'], 'main')]                                                    # Variable to indicate pipeline for the main branch
-  verbose : ""
-  ${{ if eq(parameters.verboseLogging, true) }}:                                                                  # Computation DBB verbose logging
+  packageName: $(application).build-$(buildNumber) # Name of the Package
+  pipelineType: ${{ parameters.pipelineType }}
+  releaseType: ${{ parameters.releaseType }}
+  isMain: $[contains(variables['Build.SourceBranch'], 'main')] # Variable to indicate pipeline for the main branch
+  verbose: ""
+  ${{ if eq(parameters.verboseLogging, true) }}: # Computation DBB verbose logging
     verbose: "-v"
 
+# Pipeline stages
 stages:
   - stage: Setup
     jobs:
-    - job: Setup
-      continueOnError: false
-      steps:
-        - checkout: none  
-    # Display CI-CD pipeline parms
-        - script: |
-            echo " "
-            echo "Following are the CI-CD pipeline parameters"
-            echo "*******************************************"
-            echo "zosSSHConnection           = $(zosSSHConnection)"
-            echo "zosHostname                = $(zosHostname)"
-            echo "zosSFTPUser                = $(zosSFTPUser)"
-            echo "ussWorkspaceRoot           = $(pipelineWorkspace)"
-            echo "ussWorkspaceDir            = $(uniqueWorkspaceId)"
-            echo "verbose                    = ${{ parameters.verboseLogging }} "
-            echo "branch                     = $(branch)"
-            echo "buildNumber                = $(buildNumber)"
-            echo "organization               = $(organization)"
-            echo "project                    = $(project)"
-            echo "application                = $(application)"
-            echo "repo                       = $(repo)"
-            echo "pipelineType               = $(pipelineType)"
-            echo "deploymentTarget           = $(wdEnvironmentFile)"
-            echo "azureArtifactName          = $(azureArtifactName)"
-            echo "azureArtifactFeedID        = $(azureArtifactFeedID)"
-            echo "azureArtifactVersionOption = $(azureArtifactVersionOption)"
-            echo "packageName                = $(packageName)"
-            echo " "
-          displayName: 'Display CI-CD pipeline parms'
+      - job: Setup
+        continueOnError: false
+        steps:
+          - checkout: none
+          # Display CI-CD pipeline parms
+          - script: |
+              echo " "
+              echo "Following are the CI-CD pipeline parameters"
+              echo "*******************************************"
+              echo "zosSSHConnection           = $(zosSSHConnection)"
+              echo "zosHostname                = $(zosHostname)"
+              echo "zosSFTPUser                = $(zosSFTPUser)"
+              echo "ussWorkspaceRoot           = $(pipelineWorkspace)"
+              echo "ussWorkspaceDir            = $(uniqueWorkspaceId)"
+              echo "verbose                    = ${{ parameters.verboseLogging }} "
+              echo "branch                     = $(branch)"
+              echo "buildNumber                = $(buildNumber)"
+              echo "organization               = $(organization)"
+              echo "project                    = $(project)"
+              echo "application                = $(application)"
+              echo "repo                       = $(repo)"
+              echo "pipelineType               = $(pipelineType)"
+              echo "releaseType                = $(releaseType)"
+              echo "azureArtifactName          = $(azureArtifactName)"
+              echo "azureArtifactFeedID        = $(azureArtifactFeedID)"
+              echo "azureArtifactVersionOption = $(azureArtifactVersionOption)"
+              echo "packageName                = $(packageName)"
+              echo " "
+            displayName: "Display CI-CD pipeline parms"
+      - job: Clone # Git clone
+        displayName: "Clone repository"
+        dependsOn: Setup
+        steps:
+          - checkout: none
+          - task: SSH@0
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && gitClone.sh -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)"
+              readyTimeout: "20000"
+            displayName: "Clone application repo"
 
-        # Git clone
-        - task: SSH@0
-          inputs:
-            sshEndpoint: $(zosSSHConnection)
-            runOptions: 'commands'
-            commands: '. ./.profile && gitClone.sh -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)'
-            readyTimeout: '20000'
-          displayName: 'Clone application repo'
+  ## Build stage
+  # Invoke build and create a release candidate tag
 
   - stage: Build
     jobs:
-    - job: Build
-      displayName: 'Build'
-      steps:
-        - checkout: none  
-        - task: SSH@0
-          inputs:
-            sshEndpoint: $(zosSSHConnection)
-            runOptions: 'commands'
-            commands: '. ./.profile && dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) $(verbose)'
-            readyTimeout: '20000'
-          displayName: 'Build application'
-        
-        - task: SSH@0
-          inputs:
-            sshEndpoint: $(zosSSHConnection)
-            runOptions: 'commands'
-            commands: '. ./.profile && prepareLogs.sh -w $(uniqueWorkspaceId)'
-            readyTimeout: '20000'
-          displayName: 'Prepare build logs'
-        
-        # Install private SSH key prior to a subsequent cmdline tasks 
-        - task: InstallSSHKey@0
-          inputs:
-            knownHostsEntry: $(zosSSHKnownHost)    # Known Hosts Entry for build LPAR
-            sshKeySecureFile: $(zosSSHPrivateKeySecureFile)           # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
-        
-        - task: CmdLine@2
-          inputs:
-            script: |
-              rm -rf "$(Build.SourcesDirectory)/build-logs" 
-              mkdir "$(Build.SourcesDirectory)/build-logs" 
-              sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/*.tar "\"$(Build.SourcesDirectory)/build-logs\""
-              tar -xvf "$(Build.SourcesDirectory)/build-logs/logs.tar" -C "$(Build.SourcesDirectory)/build-logs"
-          displayName: 'Stage the build logs'
-        
-        - task: PublishBuildArtifacts@1
-          inputs:
-            PathtoPublish: "$(Build.SourcesDirectory)/build-logs/logs" 
-            ArtifactName: 'build-logs'
-            publishLocation: 'Container'
-          displayName: 'Publish build logs'
-    
+      - job: Build
+        displayName: "Build"
+        steps:
+          - checkout: none
+          - task: SSH@0
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) $(verbose)"
+              readyTimeout: "20000"
+            displayName: "Build application"
+      - job: PublishBuildLogs
+        displayName: "Publish build logs"
+        dependsOn: Build
+        condition: always()
+        steps:
+          - checkout: none
+          - task: SSH@0
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && prepareLogs.sh -w $(uniqueWorkspaceId)"
+              readyTimeout: "20000"
+            displayName: "Prepare build logs"
+
+          # Install private SSH key prior to a subsequent cmdline tasks
+          - task: InstallSSHKey@0
+            inputs:
+              knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
+              sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+
+          - task: CmdLine@2
+            inputs:
+              script: |
+                rm -rf "$(Build.SourcesDirectory)/build-logs" 
+                mkdir "$(Build.SourcesDirectory)/build-logs" 
+                sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/*.tar "\"$(Build.SourcesDirectory)/build-logs\""
+                tar -xvf "$(Build.SourcesDirectory)/build-logs/logs.tar" -C "$(Build.SourcesDirectory)/build-logs"
+            displayName: "Stage the build logs"
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: "$(Build.SourcesDirectory)/build-logs/logs"
+              ArtifactName: "build-logs"
+              publishLocation: "Container"
+            displayName: "Publish build logs"
+
+      # Create release candidate tag
+      - job: Tag
+        displayName: "Create Release Candidate tag"
+        condition: and(succeeded(), eq(variables['pipelineType'], 'release'))
+        dependsOn: Build
+        steps:
+          - template: tagging/createReleaseCandidate.yml@templates
+
+  ## Packaging stage
+  # Store build outputs in appropiate artifact repository
+
   - stage: Package
+    displayName: "Packaging"
+    condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
     jobs:
-    - job: Package
-      displayName: 'Package Outputs'
-      steps:
-      - checkout: none    
-      #- task: SSH@0
-      #  inputs:
-      #    sshEndpoint: $(zosSSHConnection)
-      #    runOptions: 'commands'
-      #    commands: '. ./.profile && ucdPackaging.sh -v $(packageName) -c $(application) -w $(uniqueWorkspaceId)  -b $(branch) -e $artifactRepoConfig'
-      #    readyTimeout: '20000'
-      #  displayName: 'Package the build artifacts for Deployment'
-      - task: SSH@0
-        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
-        inputs:
-          sshEndpoint: $(zosSSHConnection)
-          runOptions: 'commands'
-          commands: '. ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageName)'
-          readyTimeout: '20000'
-        displayName: 'Package the build artifacts for Deployment' 
-      # Preview - Demonstrate to upload package to Azure DevOps Artifacts
-      ## TODO - Requires more work to distinguish build and release packages
+      - job: Package
+        displayName: "Package Outputs"
+        steps:
+          - checkout: none
+          #- task: SSH@0
+          #  inputs:
+          #    sshEndpoint: $(zosSSHConnection)
+          #    runOptions: 'commands'
+          #    commands: '. ./.profile && ucdPackaging.sh -v $(packageName) -c $(application) -w $(uniqueWorkspaceId)  -b $(branch) -e $artifactRepoConfig'
+          #    readyTimeout: '20000'
+          #  displayName: 'Package the build artifacts for Deployment'
+          - task: SSH@0
+            condition: succeeded()
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageName)"
+              readyTimeout: "20000"
+            displayName: "Package the build artifacts for Deployment"
 
-       # Install private SSH key prior to a subsequent cmdline tasks 
-      - task: InstallSSHKey@0
-        inputs:
-         knownHostsEntry: $(zosSSHKnownHost)    # Known Hosts Entry for build LPAR
-         sshKeySecureFile: $(zosSSHPrivateKeySecureFile)           # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
-      
-      - task: CmdLine@2
-        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
-        inputs:
-          script: |
-            rm -rf "$(Build.SourcesDirectory)/deploymentPackage" 
-            mkdir "$(Build.SourcesDirectory)/deploymentPackage" 
-            sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
-        displayName: 'Stage the deployment package'     
-      - task: UniversalPackages@0
-        condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
-        inputs:
-          command: 'publish'
-          publishDirectory: "$(Build.SourcesDirectory)/deploymentPackage"
-          feedsToUsePublish: 'internal'
-          vstsFeedPublish: '$(azureArtifactFeedID)'
-          vstsFeedPackagePublish: '$(azureArtifactName)'
-          versionOption: '$(azureArtifactVersionOption)'
-        displayName: 'Publish deployment package to Azure artifacts'
-  
-  - stage: Deploy
+        # Preview - Demonstrate to upload package to Azure DevOps Artifacts
+        ## TODO - Requires more work to distinguish build and release packages
+      - job: PublishPackage
+        displayName: "Publish deployment package"
+        dependsOn: Package
+        steps:
+          # Install private SSH key prior to a subsequent cmdline tasks
+          - task: InstallSSHKey@0
+            inputs:
+              knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
+              sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+
+          - task: CmdLine@2
+            inputs:
+              script: |
+                rm -rf "$(Build.SourcesDirectory)/deploymentPackage" 
+                mkdir "$(Build.SourcesDirectory)/deploymentPackage" 
+                sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
+            displayName: "Stage the deployment package"
+          - task: UniversalPackages@0
+            inputs:
+              command: "publish"
+              publishDirectory: "$(Build.SourcesDirectory)/deploymentPackage"
+              feedsToUsePublish: "internal"
+              vstsFeedPublish: "$(azureArtifactFeedID)"
+              vstsFeedPackagePublish: "$(azureArtifactName)"
+              versionOption: "$(azureArtifactVersionOption)"
+            displayName: "Publish deployment package to Azure artifacts"
+
+  ## Deployment to development test environment
+  # deployments to these test environment can only happen when the development team requests a build / release pipeline
+  # this step is automatically executed for build / release pipelines
+
+  - stage: Deploy_DEVINT
+    displayName: "Deploy DevInt"
+    condition: and(succeeded(), eq(variables.isMain, true), not(eq(variables['pipelineType'], 'preview')))
     jobs:
-    - job: DeploymentToIntegration
-      displayName: 'Deployment Integration Environment'
-      steps:  
-        - checkout: none    
-       # Install private SSH key prior to a subsequent cmdline tasks 
-        - task: InstallSSHKey@0
-          inputs:
-             knownHostsEntry: $(zosSSHKnownHost)    # Known Hosts Entry for build LPAR
-             sshKeySecureFile: $(zosSSHPrivateKeySecureFile)           # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+      - job: DeploymentToIntegration
+        displayName: "Deploy to DevTest"
+        steps:
+          - checkout: none
+          # Install private SSH key prior to a subsequent cmdline tasks
+          - task: InstallSSHKey@0
+            inputs:
+              knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
+              sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
 
-        - task: SSH@0
-          condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-          inputs:
-            sshEndpoint: $(zosSSHConnection)
-            runOptions: 'commands'
-            commands: '. ./.profile && mkdir -p $(uniqueWorkspaceId)/deployPkgDir/deploy-logs && wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar -r deploy-logs/deployment-plan-report.html'
-            readyTimeout: '20000'
-          displayName: 'Generate Deployment Plan with Wazi Deploy'
-      
-        - task: SSH@0
-          condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-          inputs:
-            sshEndpoint: $(zosSSHConnection)
-            runOptions: 'commands'
-            commands: '. ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e $(wdEnvironmentFile) -i $(application).tar -l deploy-logs/evidences/evidence.yaml'
-            readyTimeout: '20000'
-          displayName: 'Deploy Package with Wazi Deploy'
-        
-        - task: SSH@0
-          condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-          inputs:
-            sshEndpoint: $(zosSSHConnection)
-            runOptions: 'commands'
-            commands: '. ./.profile && wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l deploy-logs/evidence.yaml -o deploy-logs/deployment-report.html'
-            readyTimeout: '20000'
-          displayName: 'Generate deployment report with Wazi Deploy'
+          - task: SSH@0
+            condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && mkdir -p $(uniqueWorkspaceId)/deployPkgDir/deploy-logs && wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar -r deploy-logs/deployment-plan-report.html"
+              readyTimeout: "20000"
+            displayName: "Generate Deployment Plan with Wazi Deploy"
 
-        - task: CmdLine@2
-          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-          inputs:
-            script: |
-              rm -rf "$(Build.SourcesDirectory)/deploy-logs" 
-              mkdir "$(Build.SourcesDirectory)/deploy-logs" 
-              sftp -r $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy-logs/* "\"$(Build.SourcesDirectory)/deploy-logs\""
-          displayName: 'Retrieve deployment reports'
+          # Trigger deployment to the development integration stage
+          - task: SSH@0
+            condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e EOLEB7-$(application)-Integration.yaml -i $(application).tar -l deploy-logs/evidences/evidence.yaml"
+              readyTimeout: "20000"
+            displayName: "Deploy Package with Wazi Deploy"
 
-        - task: PublishBuildArtifacts@1
-          condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-          inputs:
-            PathtoPublish: "$(Build.SourcesDirectory)/deploy-logs/" 
-            ArtifactName: 'deploy-logs'
-            publishLocation: 'Container'
-          displayName: 'Publish deployment logs'
+          - task: SSH@0
+            condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l deploy-logs/evidence.yaml -o deploy-logs/deployment-report.html"
+              readyTimeout: "20000"
+            displayName: "Generate deployment report with Wazi Deploy"
+
+          - task: CmdLine@2
+            condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+            inputs:
+              script: |
+                rm -rf "$(Build.SourcesDirectory)/deploy-logs" 
+                mkdir "$(Build.SourcesDirectory)/deploy-logs" 
+                sftp -r $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy-logs/* "\"$(Build.SourcesDirectory)/deploy-logs\""
+            displayName: "Retrieve deployment reports"
+
+          - task: PublishBuildArtifacts@1
+            condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
+            inputs:
+              PathtoPublish: "$(Build.SourcesDirectory)/deploy-logs/"
+              ArtifactName: "deploy-logs"
+              publishLocation: "Container"
+            displayName: "Publish deployment logs"
+
+  ## Deployment to higher test environments
+  # deployments to these test environment can only happen when the development team requests a release pipeline
+
+  # Acceptance Test environment
+  - stage: Deploy_ACCEPTANCE
+    displayName: "Deploy Acceptance"
+    dependsOn: Deploy_DEVINT
+    condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
+    variables:
+      Environment: Acceptance
+    jobs:
+      - template: deployment/deployReleasePackage.yml@templates
+        parameters:
+          environmentName: "Acceptance"
+
+  # Add additional deployment stages as you need.
+
+  # Production environment
+  - stage: Deploy_PRODUCTION
+    displayName: "Deploy Production"
+    dependsOn: 
+      - Build
+      - Deploy_ACCEPTANCE
+    condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
+    variables:
+      Environment: Production
+    jobs:
+      - template: deployment/deployReleasePackage.yml@templates
+        parameters:
+          environmentName: "Production"
+
+  # Cleanup
+  - stage: Cleanup
+    condition: always()
+    jobs:
+      - job: Cleanup
+        displayName: "Cleanup Build environment"
+        steps:
+          - checkout: none
+          - task: SSH@0
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && deleteWorkspace.sh -w $(uniqueWorkspaceId)"
+              readyTimeout: "20000"
+            displayName: "Delete Build Folder on USS"
