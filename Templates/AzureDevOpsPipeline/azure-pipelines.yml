@@ -80,7 +80,6 @@ variables:
   pipelineType: ${{ parameters.pipelineType }}
   releaseType: ${{ parameters.releaseType }}
   isMain: $[contains(variables['Build.SourceBranch'], 'main')] # Variable to indicate pipeline for the main branch
-  verbose: ""
   ${{ if eq(parameters.verboseLogging, true) }}: # Computation DBB verbose logging
     verbose: "-v"
 
