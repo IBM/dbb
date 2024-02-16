@@ -130,10 +130,8 @@ computeBuildConfiguration() {
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}.REL"
             else
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}.BLD"
-                if [ -z "${Type}" ]; then
-                    # appending the --debug flag to compile with TEST options
-                    Type="${Type} --debug"
-                fi
+                # appending the --debug flag to compile with TEST options
+                Type="${Type} --debug"
             fi
 
             ;;
