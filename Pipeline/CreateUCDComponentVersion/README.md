@@ -12,7 +12,7 @@ The support for zFS files in the packaging process is performed through the use 
 
 ## High-level Processing Flow
 
-This section provides a more detailed explanation of how the CreateUCDComponentVersion script works and what it does.
+This section provides a more detailed explanation of how the [dbb-ucd-packaging.groovy](dbb-ucd-packaging.groovy) script works and what it does.
 
 1. **Initialization**
    1. Read [command line parameters](#command-line-options-summary).
