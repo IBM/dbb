@@ -24,7 +24,7 @@ The pipeline implements the following stages
   * to deploy the package with the Wazi Deploy to targeted environment [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the Gitlab Artifacts.
-* `finalize` stage to create a release tag from [baseline reference file](???) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#scaling-up).
+* `Finalize` stage to create a release tag from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#scaling-up).
 * `Cleanup` stage: 
   * to clean up project directory on Gitlab server
   * to [delete the build workspace](../Common-Backend-Scripts/README.md#411---deleteworkspacesh) on z/OS Unix System Services.
@@ -80,7 +80,7 @@ The [Common Backend scripts](../Common-Backend-Scripts/) need to be configured f
 The `.gitlab-ci.yaml` can be dropped into the root folder of your Gitlab Git repository and will automatically provide pipelines for the specified triggers. Please review the definitions thoroughly with your Gitlab administrator.
 
 Following requirements need to be met:
-???? Any requirements to go here ????
+* Zowe rse profile is configured to connect to z/OS machine as described above.
 
 ### Variables configuration
 The following variables need to be defined and configured as the environment variables in the GitLab group or project setting:
@@ -100,7 +100,7 @@ appliction | Specify the name of your application which will be used to invoke t
 wdEnvironmentFileIntegration | Path to a Wazi Deploy configuration file for integration environment.
 wdEnvironmentFileAcceptance | Path to a Wazi Deploy configuration file for acceptance environment.
 wdEnvironmentFileProduction | Path to a Wazi Deploy configuration file for production environment.
-baselineReferenceFile | Path to baselineRefer0ence.cfg file of your application file.
+baselineReferenceFile | Path to baselineRefer0ence.config file of your application.
 
 ## Pipeline usage
 
@@ -168,7 +168,7 @@ It covers the followings steps:
 * Deployment to the production environment, including tagging the production release state (required to be triggered manually)
 * Cleanup (required to be triggered manually)
 
-The development team manually requests the pipeline and specifies the *pipelineType* variable as `release`. Along with the *release type*, the pipeline will automatically calculate the release tag based on the information in the *baselineReference.cfg* file, tag a release candidate and also the final release that is deployed to production.
+The development team manually requests the pipeline and specifies the *pipelineType* variable as `release`. Along with the *release type*, the pipeline will automatically calculate the release tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config) file, tag a release candidate and also the final release that is deployed to production.
 
 Overview of the release pipeline:
 
