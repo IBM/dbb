@@ -11,6 +11,7 @@ import groovy.cli.commons.*
 import java.nio.file.*
 import static java.nio.file.StandardCopyOption.*
 import com.ibm.jzos.ZFile;
+import groovy.yaml.YamlBuilder
 
 /************************************************************************************
  * This script creates a simplified package with the outputs generated from a DBB build
@@ -41,6 +42,10 @@ import com.ibm.jzos.ZFile;
  * Version 5 - 2023-07
  *  - Added support for DeployableArtifact, to manage the correct stacking
  *    of duplicates artifacts
+ * 
+ * Version 6 - 2024-02
+ *  - Added support to write IBM Wazi Deploy Application Manifest file
+ *      
  ************************************************************************************/
 
 // start create & publish package
@@ -70,6 +75,9 @@ Map<DeployableArtifact, Map> buildOutputsMap = new HashMap<DeployableArtifact, M
 // Field to store default tarFileLabel (buildInfo.label) when cli argument tarFileName is not passed.
 def String tarFileLabel = "Default"
 
+// Object to store scm information for Application Manifest file
+@Field ScmInfo scmInfo = new ScmInfo()
+
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
     println("** Read build report data from ${buildReportFile}.")
@@ -91,6 +99,13 @@ props.buildReportOrder.each { buildReportFile ->
     if (buildInfo.size() != 0) {
         tarFileLabel = buildInfo[0].label
     }
+	
+	// retrieve the buildResultPropertiesRecord
+	def buildResultPropertiesRecord = buildReport.getRecords().find {
+		try {
+			it.getType()==DefaultRecordFactory.TYPE_PROPERTIES && it.getId()=="DBB.BuildResultProperties"
+		} catch (Exception e){}
+	}
 
     // finds all the build outputs with a deployType
     def buildRecords = buildReport.getRecords().findAll{
@@ -168,7 +183,7 @@ props.buildReportOrder.each { buildReportFile ->
                     rootDir = output[0].trim()
                     file = output[1].trim()
                     deployType = output[2].trim() 
-                    buildOutputsMap.put(new DeployableArtifact(file, deployType), [rootDir, buildRecord])
+                    buildOutputsMap.put(new DeployableArtifact(file, deployType), [rootDir, buildRecord, buildResultPropertiesRecord])
                 }                
             }
         } else {
@@ -176,7 +191,7 @@ props.buildReportOrder.each { buildReportFile ->
                 buildRecord.getOutputs().each{ output ->
                     datasetMembersCount++
                     def (dataset, member) = getDatasetName(output.dataset)
-                    buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [dataset, buildRecord])
+                    buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [dataset, buildRecord, buildResultPropertiesRecord])
                 }
             }        
         }
@@ -205,12 +220,36 @@ props.buildReportOrder.each { buildReportFile ->
             }
         }
     }
+	
+	// generate scmInfo record
+	if (props.buildReportOrder.size() == 1) {
+		scmInfo.type = "git"
+		gitUrl = retrieveBuildResultProperty (buildResultPropertiesRecord, "giturl") 
+		if (gitUrl) scmInfo.uri = gitUrl
+		gitHash = retrieveBuildResultProperty (buildResultPropertiesRecord, "githash")
+		if (gitHash) scmInfo.shortCommit = gitHash
+		scmInfo.branch = (props.branch) ? props.branch : "UNDEFINED"
+	
+	} else {
+		scmInfo.shortCommit = "multipleBuildReports"
+		scmInfo.uri = "multipleBuildReports"
+	}
+	
 }
+
+
+
 
 if (buildOutputsMap.size() == 0) {
     println("** There are no build outputs found in all provided build reports. Exiting.")
     System.exit(0)
 } else {
+	
+	// ApplicationManifest
+	ApplicationManifest applicationManifest = initializeApplicationManifest()
+	
+	
+	
     def String tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
 
     //Create a temporary directory on zFS to copy the load modules from data sets to
@@ -225,6 +264,7 @@ if (buildOutputsMap.size() == 0) {
     buildOutputsMap.each { deployableArtifact, info ->
         String container = info[0]
         Record record = info[1]
+		PropertiesRecord propertiesRecord = info[2]
         
         def filePath = ""
         if (record.getType()=="USS_RECORD") {
@@ -274,8 +314,36 @@ if (buildOutputsMap.size() == 0) {
                             println ("*! stdout : $stdout")
                         }
                     }
-                } else {
-                    println "*! The file '$container(${deployableArtifact.file})' doesn't exist. Copy is skipped."
+
+					if (applicationManifest) { 
+						Artifact artifact = new Artifact()
+						artifact.name = deployableArtifact.file
+						gitHashInfo = retrieveBuildResultProperty (propertiesRecord, "githash")
+						artifact.hash =  (gitHashInfo) ? gitHashInfo : "UNDEFINED"
+						artifact.description = (record.file) ? record.file : deployableArtifact.file
+						if (propertiesRecord) {
+							ArrayList<ElementProperty> artifactProperties = new ArrayList()
+							["githash", "giturl"].each {property ->
+								ElementProperty artifactProperty = new ElementProperty()
+								propValue =  retrieveBuildResultProperty (propertiesRecord, property)
+								if (propValue) {
+									artifactProperty.key = property
+									artifactProperty.value = propValue
+									artifactProperties.add(artifactProperty)
+								}
+							}
+							if (artifactProperties.size() > 0 ) {
+								artifact.properties = artifactProperties
+							}
+						}
+						artifact.type =deployableArtifact.deployType
+						
+						// adding artifact into applicationManifest
+						applicationManifest.artifacts.add(artifact)
+					}
+					
+				} else {
+					println "*! The file '$container(${deployableArtifact.file})' doesn't exist. Copy is skipped."
                 }
             } else {
                 println "*! Copying $container(${deployableArtifact.file}) could not be copied due to missing mapping."
@@ -283,6 +351,11 @@ if (buildOutputsMap.size() == 0) {
         }
     }
 
+	if (applicationManifest) {
+		// print application manifest
+		writeApplicationsMapping(new File("$tempLoadDir/waziDeployManifest.yaml"), applicationManifest)
+	}
+	
     // log buildReportOrder file and add build reports to tar file
     File buildReportOrder = new File("$tempLoadDir/buildReportOrder.txt")
     buildReportOrder.write('')
@@ -441,6 +514,9 @@ def parseInput(String[] cliArgs){
     cli.il(longOpt:'includeLogs', args:1, argName:'includeLogs', 'Comma-separated list of files/patterns from the USS build workspace. (Optional)')
     cli.ae(longOpt:'addExtension', 'Flag to add the deploy type extension to the member in the package tar file. (Optional)')
 
+	cli.b(longOpt:'branch', args:1, argName:'branch', 'The git branch processed by the pipeline')
+	cli.a(longOpt:'application', args:1, argName:'application', 'The name of the application')
+	
     // Artifact repository options ::
     cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifact Repository server. (Optional)')
     cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package on the Artifact repository server. (Optional)')
@@ -494,6 +570,9 @@ def parseInput(String[] cliArgs){
     if (opts.d) props.deployTypeFilter = opts.d
     if (opts.t) props.tarFileName = opts.t
     if (opts.il) props.includeLogs = opts.il
+	if (opts.a) props.application = opts.a
+	if (opts.b) props.branch = opts.b
+	
     props.addExtension = (opts.ae) ? 'true' : 'false'
 
     props.verbose = (opts.verb) ? 'true' : 'false'
@@ -637,4 +716,137 @@ class DeployableArtifact {
     public String toString() {
         return file + "." + deployType;
     }
+}
+
+/**
+ * Wazi Deploy Application Manifest Classes and Helpers
+ */
+
+class ApplicationManifest {
+	String apiVersion = "wazideploy.ibm.com/v1"
+	String kind = "ManifestState"
+	Metadata metadata
+	ArrayList<Artifact> artifacts
+}
+
+class Metadata {
+	String name
+	String description
+	String version
+	Annotations annotations
+}
+
+class Annotations {
+	String creationTimestamp
+	ScmInfo scmInfo
+	PackageInfo packageInfo
+}
+
+class ScmInfo {
+	String type
+	String uri
+	String branch
+	String shortCommit
+}
+
+class PackageInfo {
+	String name
+	String description
+	Properties properties
+	String uri
+	String type
+}
+
+class Artifact {
+	String name
+	String description
+	ArrayList<ElementProperty> properties
+	String type
+	String hash
+}
+
+class ElementProperty {
+	String key
+	String value
+}
+
+/**
+ * Write an ApplicationDescriptor Object into a YAML file
+ */
+def writeApplicationsMapping(File yamlFile, ApplicationManifest applicationManifest){
+	def yamlBuilder = new YamlBuilder()
+//	yamlBuilder(applicationManifest)
+	// debug
+
+	
+	yamlBuilder {
+		apiVersion applicationManifest.apiVersion
+		kind applicationManifest.kind
+		metadata applicationManifest.metadata
+		artifacts  applicationManifest.artifacts
+	}
+	
+	println yamlBuilder.toString()
+
+	// write file
+	yamlFile.withWriter() { writer ->
+		writer.write(yamlBuilder.toString())
+	}
+}
+
+/**
+ * Initialize application manifest file 
+ */
+
+def initializeApplicationManifest() {
+	ApplicationManifest applicationManifest = new ApplicationManifest()
+	ArrayList<Artifact> artifacts = new ArrayList()
+	applicationManifest.artifacts = artifacts
+	
+	// Metadata
+	Metadata metadata = new Metadata()
+	
+	applicationManifest.metadata = metadata
+	
+	// Annotations
+	Annotations annotations = new Annotations()
+	annotations.creationTimestamp = props.startTime
+	metadata.annotations = annotations
+	if (props.application) {
+		metadata.description = props.application
+		metadata.name = props.application
+	} else {
+		metadata.description = "UNDEFINED"
+		metadata.name = "UNDEFINED"
+	}
+	
+	// Fields to write Application Manifest file
+	
+	PackageInfo packageInfo = new PackageInfo()
+	
+	if (scmInfo) annotations.scmInfo = scmInfo
+	metadata.version = (props.versionName) ? props.versionName : props.startTime
+	if (props.application) metadata.name = props.application
+	
+	return applicationManifest
+}
+
+def retrieveBuildResultProperty(PropertiesRecord buildResultPropertiesRecord, String propertyName) {
+
+
+	if (buildResultPropertiesRecord!=null) {
+		buildResultProperties = buildResultPropertiesRecord.getProperties()
+
+		def property = buildResultProperties.find {
+			it.key.contains(propertyName)
+		}
+		
+		if (property) {
+			return property.getValue()
+		} else
+		{
+			return null
+		}
+	}
+	
 }
