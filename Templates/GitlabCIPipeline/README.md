@@ -6,7 +6,6 @@ This pipeline template is implementing the [Git-based process and branching mode
 It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) to implement the Setup, Build, Packaging and Deployment stages.
 
 The pipeline implements the following stages
-
 * `Setup` stage to [clone](../Common-Backend-Scripts/README.md#41---gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
 * `Build` stage 
   * to invoke the zAppBuild [build](../Common-Backend-Scripts/README.md#42---dbbbuildsh) framework,
@@ -85,12 +84,13 @@ Following requirements need to be met:
 ### Variables configuration
 The following variables need to be defined and configured as the environment variables in the GitLab group or project setting:
 
-Veriables | Description
+Variables | Description
 --- | ---
 AutomationToken | [Group access token](https://docs.gitlab.com/ee/api/rest/#personalprojectgroup-access-tokens) to be used for authentication when invoke Gitlab CLI REST interfaces.
 RSEAPI_USER | Username for Zowe RSEAPI server authentication. This username is used when issue shell script command through Zowe.
 RSEAPI_PASSWORD | Password for Zowe RSEAPI server authentication. This password is used when issue shell script command through Zowe.
 PIPELINE_WORKSPACE | Root directory on z/OS Unix System services to perform builds. E.g. /u/gitlab/workspace
+WAZI_DEPLOY_SAMPLES | Installation path of IBM Wazi Deploy.
 
 The following variable need to be updated within the pipeline definition file: `.gitlab-ci.yaml`.
 
@@ -100,7 +100,7 @@ appliction | Specify the name of your application which will be used to invoke t
 wdEnvironmentFileIntegration | Path to a Wazi Deploy configuration file for integration environment.
 wdEnvironmentFileAcceptance | Path to a Wazi Deploy configuration file for acceptance environment.
 wdEnvironmentFileProduction | Path to a Wazi Deploy configuration file for production environment.
-baselineReferenceFile | Path to baselineRefer0ence.config file of your application.
+baselineReferenceFile | Path to baselineReference.config file of your application.
 
 ## Pipeline usage
 
