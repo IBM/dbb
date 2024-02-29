@@ -3,9 +3,9 @@ variables:
     GIT_STRATEGY: none
     GIT_CHECKOUT: "false"
     application: ${CI_PROJECT_NAME}
-    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/Integration.yml
-    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
-    wdEnvironmentFileProduction: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/Production.yml
+    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Integration.yml
+    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
+    wdEnvironmentFileProduction: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Production.yml
     packageName: ${application}.build-${CI_PIPELINE_ID}
 
  # Working directory on USS 

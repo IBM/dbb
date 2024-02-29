@@ -90,7 +90,7 @@ AutomationToken | [Group access token](https://docs.gitlab.com/ee/api/rest/#pers
 RSEAPI_USER | Username for Zowe RSEAPI server authentication. This username is used when issue shell script command through Zowe.
 RSEAPI_PASSWORD | Password for Zowe RSEAPI server authentication. This password is used when issue shell script command through Zowe.
 PIPELINE_WORKSPACE | Root directory on z/OS Unix System services to perform builds. E.g. /u/gitlab/workspace
-WAZI_DEPLOY_SAMPLES | Installation path of IBM Wazi Deploy.
+WAZI_DEPLOY_CONFIGDIR | Path to a directory of Wazi Deploy configuration files.
 
 The following variable need to be updated within the pipeline definition file: `.gitlab-ci.yaml`.
 
