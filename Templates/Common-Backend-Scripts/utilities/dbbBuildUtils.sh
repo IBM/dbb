@@ -44,7 +44,7 @@ computeBuildConfiguration() {
         # evaluate main segment
         case $mainBranchSegmentTrimmed in
         REL* | EPIC* | PROJ*)
-            # Release maintenance, epic and project branches are intergration branches,
+            # Release maintenance, epic and project branches are integration branches,
             # that derive dependency information from mainBuildBranch configuration.
 
             # evaluate third segment
@@ -209,7 +209,17 @@ computeBuildConfiguration() {
 
 getBaselineReference() {
 
-    baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')
+    baselienRef=""
+    
+    case $mainBranchSegment in
+        "RELEASE" | "release" | "EPIC" |  "epic")
+            baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
+         ;;
+        "main" | "MAIN")
+            baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }') 
+         ;;
+    esac
+    
 
     if [ -z "${baselineRef}" ]; then
         rc=8
