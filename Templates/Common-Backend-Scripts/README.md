@@ -179,37 +179,30 @@ The section below contains the output that is produced by the `gitClone.sh` scri
   <summary>Script Output</summary>
 
 ```
-gitClone.sh -w MortApp/release/rel-1.0.0/build-1 -r git@github.ibm.com:zDevOps-Acceleration/MortgageApplication.git -b release/rel-1.0.0
-
-gitClone.sh: [INFO] Clone Repository. Version=1.00
+gitClone.sh: [INFO] Git Clone Wrapper. Version=1.2.0
 gitClone.sh: [INFO] **************************************************************
-gitClone.sh: [INFO] ** Start Git Clone on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-gitClone.sh: [INFO] **          Repo: git@github.ibm.com:zDevOps-Acceleration/MortgageApplication.git
-gitClone.sh: [INFO] **       WorkDir: /var/dbb/pipelineBackend/workspace/MortApp/release/rel-1.0.0/build-1
-gitClone.sh: [INFO] **        GitDir: MortgageApplication
-gitClone.sh: [INFO] **        Branch: release/rel-1.0.0 -> release/rel-1.0.0
+gitClone.sh: [INFO] ** Start Git Clone on HOST/USER: z/OS ZT01 05.00 02 8561/***
+gitClone.sh: [INFO] **          Repo: git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator
+gitClone.sh: [INFO] **       WorkDir: /u/ado/workspace/retirementCalculator/main/build-20240301.1
+gitClone.sh: [INFO] **        GitDir: retirementCalculator
+gitClone.sh: [INFO] **           Ref: main -> main
 gitClone.sh: [INFO] **************************************************************
-
-gitClone.sh: [INFO] Preforming Git Clone of Repo git@github.ibm.com:zDevOps-Acceleration/MortgageApplication.git, Branch release/rel-1.0.0 to /var/dbb/pipelineBackend/workspace/MortApp/release/rel-1.0.0/build-1
-Cloning into 'MortgageApplication'...
-...
-Resolving deltas: 100% (344/344), done.
-gitClone.sh: [INFO] Git Status for MortgageApplication
-On branch release/rel-1.0.0
-Your branch is up to date with 'origin/release/rel-1.0.0'.
-
+gitClone.sh: [INFO] Preforming Git Clone of Repo git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator, Ref main to /u/ado/workspace/retirementCalculator/main/build-20240301.1
+gitClone.sh: [INFO] git clone -b main git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator
+Cloning into 'retirementCalculator'...
+gitClone.sh: [INFO] Git Status for retirementCalculator
+On branch main
+Your branch is up to date with 'origin/main'.
 nothing to commit, working tree clean
-gitClone.sh: [INFO] Git Show-Ref for MortgageApplication
-5d2b737fbc62cf2f14630ac4d4473e2d027212c0 refs/heads/release/rel-1.0.0
-e720027dd4f1afac469484fc1b5c8f8675d62e27 refs/remotes/origin/Development
-9f1ce97a11f4bebe07b30a59992052ddf39e71de refs/remotes/origin/HEAD
-597012c81d1bc0714d4c0595619833f30581c314 refs/remotes/origin/feature/setmainbuildbranch
-5d2b737fbc62cf2f14630ac4d4473e2d027212c0 refs/remotes/origin/hotfix/rel-1.0.0/myfix
-9f1ce97a11f4bebe07b30a59992052ddf39e71de refs/remotes/origin/main
-5d2b737fbc62cf2f14630ac4d4473e2d027212c0 refs/remotes/origin/release/rel-1.0.0
-0cc39e464cdd6fa7a4a7e9bb1381e25daf757d08 refs/tags/rel-1.0.0
-c08c90fb9b76d466b5717595b5de0dee9031f9ca refs/tags/rel100
-
+gitClone.sh: [INFO] Git Show-Ref for retirementCalculator
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/heads/main
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/remotes/origin/HEAD
+ca11720bdffc280fc9ddefdae41943bc5b2008fc refs/remotes/origin/feature/implementUnitTests
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/remotes/origin/main
+8ee95ad28813cca2378463a2ef16958c60abcbd9 refs/tags/rel-1.0.0
+f12465b6a9623033b6d4fcc393acbcfd71f8e8d8 refs/tags/rel-1.0.1
+c7e7dcf9c65bebca8e3d0427c9ce82cb4127f7da refs/tags/rel-1.0.1_rc00
+gitClone.sh: [INFO] Clone Repository Complete. rc=0
 ```  
 
 </details>

@@ -29,6 +29,7 @@
 # ---------- --- ----- --------------------------------------------------------------
 # 2023/07/06 TLD 1.0.0 Initial Release
 # 2023/09/25 DB  1.1.0 Initial Release
+# 2024/03/01 DB  1.2.0 Updated Error Handling
 #===================================================================================
 
 Help() {
@@ -91,7 +92,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.1.0"
+PGMVERS="1.2.0"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -263,7 +264,7 @@ if [ $rc -eq 0 ]; then
   else    
     echo $PGM": [INFO] **        GitDir:" ${GitDir}
   fi
-  echo $PGM": [INFO] **        Branch:" ${Branch} "->" ${BranchID}
+  echo $PGM": [INFO] **           Ref:" ${Branch} "->" ${BranchID}
   echo $PGM": [INFO] **************************************************************"
   echo ""
 fi
@@ -301,7 +302,7 @@ fi
 # Clone the Repo to z/OS UNIX System Services with a re-Direct of STDERR to STDOUT
 if [ $rc -eq 0 ]; then
 
-  echo $PGM": [INFO] Preforming Git Clone of Repo ${Repo}, Branch ${BranchID} to $(getWorkDirectory)"
+  echo $PGM": [INFO] Preforming Git Clone of Repo ${Repo}, Ref ${BranchID} to $(getWorkDirectory)"
   if [ ! -z "${application}" ]; then
     CMD="git clone -b ${BranchID} ${Repo} ${application}"
   else   
@@ -311,10 +312,9 @@ if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] ${CMD}"
   ${CMD} 2>&1
   rc=$?
-  rc=$?
 
   if [ $rc -ne 0 ]; then
-    ERRMSG=$PGM": [ERROR] Unable to Clone Repo ${Repo}, Branch ${BranchID}. rc="$rc
+    ERRMSG=$PGM": [ERROR] Unable to Clone Repo ${Repo}, Ref ${BranchID}. rc="$rc
     echo $ERRMSG
     rc=8
   fi
@@ -362,6 +362,9 @@ fi
 
 if [ $rc -eq 0 ]; then
   ERRMSG=$PGM": [INFO] Clone Repository Complete. rc="$rc
+  echo $ERRMSG
+else 
+  ERRMSG=$PGM": [ERROR] Clone Repository Failed. Check Log. rc="$rc
   echo $ERRMSG
 fi
 
