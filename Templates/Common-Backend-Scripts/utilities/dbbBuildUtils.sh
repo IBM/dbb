@@ -44,7 +44,7 @@ computeBuildConfiguration() {
         # evaluate main segment
         case $mainBranchSegmentTrimmed in
         REL* | EPIC* | PROJ*)
-            # Release maintenance, epic and project branches are intergration branches,
+            # Release maintenance, epic and project branches are integration branches,
             # that derive dependency information from mainBuildBranch configuration.
 
             # evaluate third segment
@@ -209,7 +209,22 @@ computeBuildConfiguration() {
 
 getBaselineReference() {
 
-    baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')
+    baselineRef=""
+    
+    case $(echo $mainBranchSegment | tr '[:lower:]' '[:upper:]') in
+        "RELEASE" | "EPIC")
+            baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
+         ;;
+        "MAIN")
+            baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }') 
+         ;;
+        *)
+            rc=8
+            ERRMSG=$PGM": [ERROR] Branch name ${Branch} does not follow the recommended naming conventions to compute the baseline reference. Received '${mainBranchSegment}' which does not fall into the conventions of release, epic or main. rc="$rc
+            echo $ERRMSG
+         ;;
+    esac
+    
 
     if [ -z "${baselineRef}" ]; then
         rc=8
