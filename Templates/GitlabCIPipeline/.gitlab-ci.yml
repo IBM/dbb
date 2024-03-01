@@ -71,9 +71,9 @@ Clone:
         zowe rse issue unix ". ~/.bash_profile && gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME} -a ${application}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Completed clone job.
+            echo [INFO] Clone job passed.
         else
-             echo [ERROR] Incompleted clone job with exit code ${RC}.
+             echo [ERROR] Clone job failed. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -97,10 +97,14 @@ Clone:
         zowe rse issue unix ". ~/.bash_profile && env|sort && dbbBuild.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} ${verbose}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Completed build application job.
+            echo [INFO] Build job passed.
         else
-             echo [ERROR] Incompleted build application job with exit code ${RC}.
-             exit ${RC}
+             if [ ${RC} -eq 0 ]; then
+                echo [WARNING] Build job failed due to no source code changes. Exit code: ${RC}.
+            else
+                echo [ERROR] Build job failed. Exit code: ${RC}.
+                exit ${RC}
+            fi
         fi
 
 2-Prepare and publish build logs:
@@ -119,6 +123,7 @@ Clone:
         name: "buildReport-${CI_PIPELINE_ID}"
         when: always
         paths:
+            # Uncomment or comment the type of file that o not want to publish to Gitlab artifacts
             - "${buildOutputDirectory}/*.log"
             - "${buildOutputDirectory}/*.html"
             - "${buildOutputDirectory}/*.json"
@@ -132,31 +137,31 @@ Clone:
         zowe rse issue unix ". ~/.bash_profile && prepareLogs.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully prepare log files.
-        
-            echo START TRANSFER LOGS FILE = ${sourceLogsFile} to ${destinationLogsFile}
+            echo [INFO] Prepared build log files.
+
+            echo [INFO] Start loading log files from ${sourceLogsFile} to ${destinationLogsFile}
             if [ -d "${buildOutputDirectory}/" ]; then
                 rm -R ${buildOutputDirectory}
-                echo [INFO] Removed existing directory ${buildOutputDirectory}
+                echo [INFO] Removed existing output directory: ${buildOutputDirectory}
             fi
 
             # Create directory to store build output
             mkdir ${buildOutputDirectory}
-            echo [INFO] Created build output directory = ${buildOutputDirectory}
+            echo [INFO] Created build output directory: ${buildOutputDirectory}
             zowe rse dl uf "${sourceLogsFile}" -f "${destinationLogsFile}" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Successfully transfer tar file.
+                echo [INFO] Transfered tar file.
             
                 tar -xvf "${destinationLogsFile}" -C "${buildOutputDirectory}/" --strip-components 1
                 echo [INFO] Extracted log.tar file to ${buildOutputDirectory}
-                echo [INFO] Build resutls are published.
+                echo [INFO] Published build resutls.
             else
-                echo [ERROR] Unsuccessfully transfer tar file with exit code ${RC}.
+                echo [ERROR] Failed to load tar file. Exit code: ${RC}.
                 exit ${RC}
             fi
         else
-             echo [ERROR] Unsuccessfully prepare log files with exit code ${RC}.
+             echo [ERROR] Failed to prepare build log files. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -190,8 +195,8 @@ Clone:
             export secondBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $2 }'`
             export thirdBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $3 }'`
 
-            echo [INFO] Branch == ${CI_COMMIT_BRANCH}
-            echo [INFO] Branch segment == ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}
+            echo [INFO] Branch: ${CI_COMMIT_BRANCH}
+            echo [INFO] Branch segment: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}
 
             # Find base line version of the current branch from the baseLineReferenceFile
             case ${mainBranchSegment} in
@@ -207,7 +212,7 @@ Clone:
                 echo [ERROR] No baseline ref was found for branch name ${Branch} in ${baselineReferenceFile}.
                 exit 1
             else
-                echo [INFO] Baseline Reference == ${baselineRef}
+                echo [INFO] Baseline Reference: ${baselineRef}
             fi
 
             # Compute the name of the next release based on the releaseType
@@ -221,29 +226,29 @@ Clone:
                 export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
             fi
             export newVersionTag=$(echo "rel-${newVersion}")
-            echo [INFO] Computed tag for the next release = ${newVersionTag}
+            echo [INFO] Computed tag for the next release: ${newVersionTag}
 
             # Compute the name of the next release candidate 
             export releaseCandidate=$(git tag --list "${newVersionTag}_*rc*" --sort=-committerdate | head -n 1)
-            echo [INFO] Current releaseCandidate == ${releaseCandidate}
+            echo [INFO] Current release candidate tag: ${releaseCandidate}
 
             if [ -z "${releaseCandidate}" ]; then
             # initial version tag
                 export newVersionTag="${newVersionTag}_rc00"
-                echo [INFO] Updated release condidate tag == ${newVersionTag}
+                echo [INFO] Updated release candidate tag: ${newVersionTag}
             else
             # bump up release candidate number
                 export newVersionTag=`echo ${releaseCandidate} | sed 's/^["refs\/tags\/rel-]*//g' | awk -F "rc" '{print "rel-"$1"rc"(-f2 $2+1)}' | tr -d \"`
-                echo [INFO] Updated release condidate tag == ${newVersionTag}
+                echo [INFO] Updated release candidate tag: ${newVersionTag}
             fi
 
         # Creates the git tag using the CLI REST interface and the automation token
             curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${newVersionTag}&ref=${CI_COMMIT_REF_NAME}"
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Release candidate tag is successfully created as ${newVersionTag}.
+                echo [INFO] Created release candidate tag: ${newVersionTag}.
             else
-                echo [ERROR] Release candidate tag is unsuccessfully created.
+                echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
                 exit ${RC}
             fi
         fi
@@ -262,9 +267,9 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -t ${application}.tar -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -v ${packageName}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully packaging build artifact.
+            echo [INFO] Packaging job passed.
         else
-             echo [ERROR] Unsuccessfully packaging build artifact with exit code ${RC}.
+             echo [ERROR] Packaging job failed. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -283,9 +288,9 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -i ${application}.tar" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully generate deployment plan.
+            echo [INFO] Generate deployment plan job passed.
         else
-             echo [ERROR] Unsuccessfully generate deployment plan with exit code ${RC}.
+             echo [ERROR] Generate deployment plan job failed. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -305,9 +310,9 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileIntegration} -i ${application}.tar -l deploy/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully deploy to integration.
+            echo [INFO] Deploy to integration job passed.
         else
-             echo [ERROR] Unsuccessfully deploy to integration with exit code ${RC}.
+             echo [ERROR] Deploy to integration job failed. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -337,7 +342,7 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully generate deployment evidence file.
+            echo [INFO] Generated deployment evidence.
         
             if [ ! -d "${deployOutputDirectory}/" ]; then
                 mkdir ${deployOutputDirectory}
@@ -345,34 +350,34 @@ Packaging:
 
             if [ -d "${integrationReportDir}/" ]; then
                 rm -R ${integrationReportDir}
-                echo [INFO] Removed existing directory ${integrationReportDir}
+                echo [INFO] Removed existing integration report directory: ${integrationReportDir}
             fi
         
             # Create integration report directory
             mkdir ${integrationReportDir}
-            echo [INFO] Create integration report directory = ${integrationReportDir}
+            echo [INFO] Created integration report directory: ${integrationReportDir}
             # Transfer deployment report and evidence report
-            echo [INFO] TRANSFER OUTPUT FILES = ${sourceOutputFile} to ${integrationReportDir}/deployment-report.html
+            echo [INFO] Start loading deployment reports from ${sourceOutputFile} to ${integrationReportDir}/deployment-report.html
             zowe rse dl uf "${sourceOutputFile}" -f "${integrationReportDir}/deployment-report.html" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Successfully transfer deployment report file.
+                echo [INFO] Loaded deployment report file.
             else
-                echo [ERROR] Unsuccessfully transfer deployment report file with exit code ${RC}.
+                echo [ERROR] Failed to load deployment report. Exit code: ${RC}.
                 exit ${RC}
             fi
-            echo [INFO] TRANSFER OUTPUT FILES = ${sourceEvidenceFile} to ${integrationReportDir}/evidence.yaml
+            echo [INFO] Start loading evidence report from ${sourceEvidenceFile} to ${integrationReportDir}/evidence.yaml
             zowe rse dl uf "${sourceEvidenceFile}" -f "${integrationReportDir}/evidence.yaml" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Successfully transfer deployment evidence file.
+                echo [INFO] Loaded deployment evidence file.
             else
-                echo [ERROR] Unsuccessfully transfer deployment evidence file with exit code ${RC}.
+                echo [ERROR] Failed to load deployment evidence file. Exit code: ${RC}.
                 exit ${RC}
             fi
-            echo [INFO] Deployment report published
+            echo [INFO] Published Deployment report.
         else
-            echo [ERROR] Unsuccessfully generate deployment evidence file with exit code ${RC}.
+            echo [ERROR] Failed to generate deployment evidence file. Exit code: ${RC}.
             exit ${RC}
         fi
 
@@ -391,9 +396,9 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && deleteWorkspace.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully cleaning up workspace.
+            echo [INFO] Clean up development job passed.
         else
-             echo [ERROR] Unsuccessfully cleaning up workspace with exit code ${RC}.
+             echo [ERROR] Clean up development job failed. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -414,9 +419,9 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileAcceptance} -i ${application}.tar -l deploy-acceptance/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully deploy to acceptnace environment.
+            echo [INFO] Deploy to acceptnace job passed.
         else
-             echo [ERROR] Unsuccessfully deploy to acceptnace environment with exit code ${RC}.
+             echo [ERROR] Deploy to acceptnace job failed. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -445,7 +450,7 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy-acceptance/evidences/evidence.yaml -o deploy-acceptance/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully generate acceptnace evidence file.
+            echo [INFO] Generated deployment evidence.
         
             if [ ! -d "${deployOutputDirectory}/" ]; then
                 mkdir ${deployOutputDirectory}
@@ -453,34 +458,35 @@ Packaging:
 
             if [ -d "${acceptanceReportDir}/" ]; then
                 rm -R ${acceptanceReportDir}
-                echo [INFO] Removed existing directory ${acceptanceReportDir}
+                echo [INFO] Removed existing acceptance report directory: ${acceptanceReportDir}
             fi
         
             # Create acceptance report directory
             mkdir ${acceptanceReportDir}
-            echo [INFO] Created directory = ${acceptanceReportDir}
+            echo [INFO] Created acceptance report directory: ${acceptanceReportDir}
             # Transfer acceptnace deployment report and evidence report
-            echo [INFO] TRANSFER OUTPUT FILES = ${sourceOutputFile} to ${acceptanceReportDir}/deployment-report.html
+            echo [INFO] Start loading deployment reports from ${sourceOutputFile} to ${acceptanceReportDir}/deployment-report.html
             zowe rse dl uf "${sourceOutputFile}" -f "${acceptanceReportDir}/deployment-report.html" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+            RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Successfully transfer deployment report file.
+                echo [INFO] Loaded deployment report file.
             else
-                echo [ERROR] Unsuccessfully transfer deployment report file with exit code ${RC}.
+                echo [ERROR] Failed to load deployment report. Exit code: ${RC}.
                 exit ${RC}
             fi
-            echo [INFO] TRANSFER OUTPUT FILES = ${sourceEvidenceFile} to ${acceptanceReportDir}/evidence.yaml
+            echo [INFO] Start loading evidence report from ${sourceEvidenceFile} to ${acceptanceReportDir}/evidence.yaml
             zowe rse dl uf "${sourceEvidenceFile}" -f "${acceptanceReportDir}/evidence.yaml" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Successfully transfer deployment evidence file.
+                echo [INFO] Loaded deployment evidence file.
             else
-                echo [ERROR] Unsuccessfully transfer deployment evidence file with exit code ${RC}.
+                echo [ERROR] Failed to load deployment evidence file. Exit code: ${RC}.
                 exit ${RC}
             fi
-            echo [INFO] Deployment report published
+            echo [INFO] Published Deployment report.
         else
-             echo [ERROR] Unsuccessfully generate acceptnace evidence file with exit code ${RC}.
-             exit ${RC}
+            echo [ERROR] Failed to generate deployment evidence file. Exit code: ${RC}.
+            exit ${RC}
         fi
         
 
@@ -501,9 +507,9 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileProduction} -i ${application}.tar -l deploy-production/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully deploy to production environment.
+            echo [INFO] Deploy to production job passed.
         else
-             echo [ERROR] Unsuccessfully deploy to production environment with exit code ${RC}.
+             echo [ERROR] Deploy to production job failed. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -532,43 +538,43 @@ Packaging:
         zowe rse issue unix ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy-production/evidences/evidence.yaml -o deploy-production/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully generate production deployment evidence file.
+            echo [INFO] Generated deployment evidence.
 
             if [ ! -d "${deployOutputDirectory}/" ]; then
                 mkdir ${deployOutputDirectory}
             fi
 
             if [ -d "${productionReportDir}/" ]; then
-                echo [INFO] Remove existing directory ${productionReportDir}
                 rm -R ${productionReportDir}
+                echo [INFO] Removed existing production report directory: ${productionReportDir}
             fi
         
             # Create production report directory
-            echo [INFO] Creat directory = ${productionReportDir}
             mkdir ${productionReportDir}
+            echo [INFO] Created production report directory: ${productionReportDir}
     
             # Transfer deployment report and evidence report
-            echo [INFO] TRANSFER OUTPUT FILES = ${sourceOutputFile} to ${productionReportDir}/deployment-report.html
+            echo [INFO] Start loading deployment reports from ${sourceOutputFile} to ${productionReportDir}/deployment-report.html
             zowe rse dl uf "${sourceOutputFile}" -f "${productionReportDir}/deployment-report.html" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Successfully transfer deployment report file.
+                echo [INFO] Loaded deployment report file.
             else
-                echo [ERROR] Unsuccessfully transfer deployment report file with exit code ${RC}.
+                echo [ERROR] Failed to load deployment report. Exit code: ${RC}.
                 exit ${RC}
             fi
-            echo [INFO] TRANSFER OUTPUT FILES = ${sourceEvidenceFile} to ${productionReportDir}/evidence.yaml
+            echo [INFO] Start loading evidence report from ${sourceEvidenceFile} to ${productionReportDir}/evidence.yaml
             zowe rse dl uf "${sourceEvidenceFile}" -f "${productionReportDir}/evidence.yaml" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Successfully transfer deployment evidence file.
+                echo [INFO] Loaded deployment evidence file.
             else
-                echo [ERROR] Unsuccessfully transfer deployment evidence file with exit code ${RC}.
+                echo [ERROR] Failed to load deployment evidence file. Exit code: ${RC}.
                 exit ${RC}
             fi
-            echo [INFO] Deployment report published
+            echo [INFO] Published Deployment report.
         else
-            echo [ERROR] Unsuccessfully generate deployment evidence file with exit code ${RC}.
+            echo [ERROR] Failed to generate deployment evidence file. Exit code: ${RC}.
             exit ${RC}
         fi
 
@@ -602,8 +608,8 @@ Create production version:
             export secondBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $2 }'`
             export thirdBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $3 }'`
 
-            echo [INFO] Branch == ${CI_COMMIT_BRANCH}
-            echo [INFO] Branch segment == ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}
+            echo [INFO] Branch: ${CI_COMMIT_BRANCH}
+            echo [INFO] Branch segment: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}
 
             # Find base line version of the current branch from the baseLineReferenceFile
             case ${mainBranchSegment} in
@@ -616,15 +622,15 @@ Create production version:
             esac
 
             if [ -z "${baselineRef}" ]; then
-                echo [ERROR] No baseline ref was found for branch name ${Branch} in ${baselineReferenceFile}.
+                echo [ERROR] No baseline reference was found for branch name ${Branch} in ${baselineReferenceFile}.
                 exit 1
             else
-                echo [INFO] Baseline Reference == ${baselineRef}
+                echo [INFO] Baseline Reference: ${baselineRef}
             fi
             
             #Compute the current version
             export oldVersionTag=`echo ${baselineRef} | awk -F "-" '{ print $2 }'`
-            echo [INFO] Old version == ${oldVersionTag}
+            echo [INFO] Old version: ${oldVersionTag}
 
             # Compute the name of the next release based on the releaseType
             if [ -z "${type}" ]; then
@@ -639,7 +645,7 @@ Create production version:
             if [ "${type}" == "major" ]; then
                 export newVersionTag=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
             fi
-            echo [INFO} New verion == ${newVersionTag}
+            echo [INFO} New verion: ${newVersionTag}
 
             # Update baselineReference
             export remoteFound=`git remote | grep gitlab_origin | wc -l`
@@ -656,17 +662,17 @@ Create production version:
             curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=rel-${newVersionTag}&ref=${CI_COMMIT_REF_NAME}"
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Release candidate tag is successfully created as ${newVersionTag}.
+                echo [INFO] Created release candidate tag: ${newVersionTag}.
                 curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/branches?branch=release%2Frel-${newVersionTag}&ref=rel-${newVersionTag}"
                 RC=$?
                 if [ ${RC} -eq 0 ]; then
-                    echo [INFO] Release maintenance is successfully created as ${newVersionTag}.
+                    echo [INFO] Created release maintenance: ${newVersionTag}.
                 else
-                    echo [ERROR] Release maintenance is unsuccessfully created.
+                    echo [ERROR] Failed to create release maintenance. Exit code: ${RC}.
                     exit ${RC}
                 fi  
             else
-                echo [ERROR] Release candidate tag is unsuccessfully created.
+                echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
                 exit ${RC}
             fi
         fi
@@ -687,8 +693,8 @@ Cleanup:
         zowe rse issue unix ". ~/.bash_profile && deleteWorkspace.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Successfully cleaning up workspace.
+            echo [INFO] Cleanup job passed.
         else
-             echo [ERROR] Unsuccessfully cleaning up workspace with exit code ${RC}.
+             echo [ERROR] Cleanup job failed. Exit code: ${RC}.
              exit ${RC}
         fi
