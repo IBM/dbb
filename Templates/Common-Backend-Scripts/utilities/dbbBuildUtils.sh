@@ -209,14 +209,19 @@ computeBuildConfiguration() {
 
 getBaselineReference() {
 
-    baselienRef=""
+    baselineRef=""
     
-    case $mainBranchSegment in
-        "RELEASE" | "release" | "EPIC" |  "epic")
+    case $(echo $mainBranchSegment | tr '[:lower:]' '[:upper:]') in
+        "RELEASE" | "EPIC")
             baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
          ;;
-        "main" | "MAIN")
+        "MAIN")
             baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }') 
+         ;;
+        *)
+            rc=8
+            ERRMSG=$PGM": [ERROR] Branch name ${Branch} does not follow the recommended naming conventions to compute the baseline reference. Received '${mainBranchSegment}' which does not fall into the conventions of release, epic or main. rc="$rc
+            echo $ERRMSG
          ;;
     esac
     
