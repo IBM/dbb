@@ -1,7 +1,7 @@
 # Gitlab DevOps pipeline template
-This template provides an [.gitlab-ci.yml](.gitlab-ci.yml) definition file to setup an Gitlab CI pipeline for applications managed in an Gitlab Git repository.
+This template provides an [.gitlab-ci.yml](.gitlab-ci.yml) definition file to setup an Gitlab CI/CD pipeline for applications managed in an Gitlab Git repository.
 ## Overview and capabilities
-This pipeline template is implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) within an Gitlab CI context.
+This pipeline template is implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) within an Gitlab CI/CD context.
 
 It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) to implement the Setup, Build, Packaging and Deployment stages.
 
@@ -36,7 +36,7 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
 ## Prerequisites
 
-To leverages this template, access to a Gitlab CI environment is required, and an Gitlab runner must be configured to connect to your mainframe environment. Please review the setup instructions of this [document](https://www.ibm.com/support/pages/system/files/inline-files/Integrating%20IBM%20zOS%20platform%20in%20CICD%20pipelines%20with%20GitLab%20-%20v1.7_1.pdf).
+To leverages this template, access to a Gitlab CI/CD environment is required, and an Gitlab runner must be configured to connect to your mainframe environment. Please review the setup instructions of this [document](https://www.ibm.com/support/pages/system/files/inline-files/Integrating%20IBM%20zOS%20platform%20in%20CICD%20pipelines%20with%20GitLab%20-%20v1.7_1.pdf).
 
 The template leverages the [Zowe CLI](https://docs.zowe.org/stable/user-guide/cli-installcli/) to issue command invoking the [Common Backend scripts](../Common-Backend-Scripts/) on USS.
 * Zowe `base` and `rse` profiles needs to be configured in the `zowe.config.json` file under `.zowe` directory
@@ -90,7 +90,7 @@ AutomationToken | [Group access token](https://docs.gitlab.com/ee/api/rest/#pers
 RSEAPI_USER | Username for Zowe RSEAPI server authentication. This username is used when issue shell script command through Zowe.
 RSEAPI_PASSWORD | Password for Zowe RSEAPI server authentication. This password is used when issue shell script command through Zowe.
 PIPELINE_WORKSPACE | Root directory on z/OS Unix System services to perform builds. E.g. /u/gitlab/workspace
-WAZI_DEPLOY_CONFIGDIR | Path to a directory of Wazi Deploy configuration files.
+WAZI_DEPLOY_CONFIGDIR | Path to a directory on USS containing Wazi Deploy configuration files. The configuration files can be populated with the [Wazi Deploy samples](https://github.com/jbyibm/cics-genapp/tree/main/wazideploy-samples).
 
 The following variable need to be updated within the pipeline definition file: `.gitlab-ci.yaml`.
 
@@ -105,7 +105,7 @@ baselineReferenceFile | Path to baselineReference.config file of your applicatio
 ## Pipeline usage
 
 The pipeline implements the common build, package and deploy steps to process various configurations according to the defined conventions.
-It is a single Gitlab CI pipeline definition supporting various workflows. The [.gitlab-ci.yml](.gitlab-ci.yml) supports: 
+It is a single Gitlab CI/CD pipeline definition supporting various workflows. The [.gitlab-ci.yml](.gitlab-ci.yml) supports: 
 
 * automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#pipeline-build-of-feature-branches) with a clone and build stage,
 * the [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the branch `main` and
