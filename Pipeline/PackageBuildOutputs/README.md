@@ -10,9 +10,11 @@ The `ArtifactRepositoryHelpers` script is a very simple implementation sufficien
 This sample Groovy script to package build outputs:
 
 - Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
+  - It processes the MVSExec, CopyToPDS and the USS_Record types
+- (Optionally) generates the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) file.
 - Copies outputs to a temporary directory on Unix System Services and creates a tar file based on the temporary directory.
 
-The support for zFS files in the packaging process is performed through the use of an USS_RECORD type record in the DBB BuildReport. 
+The support for zFS files in the packaging process is performed through the use of an `USS_RECORD` type record in the DBB BuildReport. 
 
 ## Package Build Outputs Process - High-level Processing Flow
 
@@ -24,13 +26,11 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
 
 1. **Process the DBB build report(s)**
    1. If one or multiple DBB build reports are passed to the script via either `--buildReportOrder` or `--buildReportOrderFile`, the script loops through the provided DBB build reports. If no build report is specified, the script reads DBB's `BuildReport.json` file from the pipeline work directory specified by the `--workDir` parameter. For each build report, the following steps are performed:
-      1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*. (Requires at least DBB 1.0.8.)
-      1. Remove output entries that have no `deployType` set and remove unwanted outputs such as outputs with the `deployType` equal to `ZUNIT-TESTCASE`.
-   1. If processing multiple build reports, a cumulative hashmap of output records is created to be able to combine outputs from multiple pipeline builds into a single tar file.
+      1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*.
+      2. Remove output entries that have no `deployType` set and remove unwanted outputs such as outputs with the `deployType` equal to `ZUNIT-TESTCASE`.
+   2. If processing multiple build reports, a cumulative hashmap of output records is created to be able to combine outputs from multiple pipeline builds into a single tar file.
    	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type.
-   	  1. Artifacts having the same member name and the same deploy type will be present only once in the generated package, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
-   1. The script doesn't manage the deletions of artifacts. Although they are reported in the DBB Build Reports, deletions are not handled by this script.   	  
-   
+   	  2. Artifacts having the same member name and the same deploy type will be present only once in the generated package, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
 
 1. **Create Tar-file**
     1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
@@ -39,9 +39,13 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
 1. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
     1. Publishes the tar file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. Consider a Nexus RAW, or a Artifactory Generic as the repository type. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
 
+Notes: 
+* The script doesn't manage the deletions of artifacts. Although they are reported in the DBB Build Reports, deletions are not handled by this script.
+
+
 ## Invocation samples 
 
-### Package only
+### Package
 ```
 groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \ 
         --workDir /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949
@@ -92,7 +96,9 @@ PackageBuildOutputs console output
 ```
 </details>
 
-### Package only including adding deployType to files in tar
+### Package with capturing the deployType attribute as file extension
+
+Adding `--addExtension` is mandatory, when you plan to use Wazi Deploy as the deployment engine.
 
 ```
 + groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
@@ -146,8 +152,108 @@ PackageBuildOutputs console output
 ```
 </details>
 
+### Package to deploy with Wazi Deploy
 
-### Package only processing multiple build reports
+When deploying with Wazi Deploy, and generating the Wazi Deploy Application Manifest file make the following options mandatory:
+
+* `--generateWaziDeployAppManifest`
+* `--addExtension`
+* `--branch`
+* `--versionName` (recommended)
+
+```
++ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
+      --workDir /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs  \
+      --tarFileName retirementCalculator.tar  \
+      --application retirementCalculator  \
+      --addExtension \
+      --branch main \
+      --generateWaziDeployAppManifest  \
+      --includeLogs "*.log"  \
+      --versionName rel-2.0.0 \
+      --verbose
+```
+
+<details>
+  <summary>Console log</summary>
+
+PackageBuildOutputs console output
+
+```
+** PackageBuildOutputs start at 20240304.015055.050
+** Properties at startup:
+   addExtension -> true
+   application -> retirementCalculator
+   branch -> main
+   buildReportOrder -> [/u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/BuildReport.json]
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY"]
+   generateWaziDeployAppManifest -> true
+   includeLogs -> *.log
+   packagingPropertiesFile -> /u/pipeline/git/dbb/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
+   publish -> false
+   startTime -> 20240304.015055.050
+   tarFileName -> retirementCalculator.tar
+   verbose -> true
+   versionName -> rel-2.0.0
+   workDir -> /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs
+** Read build report data from /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/BuildReport.json.
+** Removing output records w/o deployType or with deployType=ZUNIT-TESTCASE
+** Deployable files detected in /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/BuildReport.json
+   ADO.RETIREME.MAIN.BLD.LOAD(EBUD01), LOAD
+*** Number of build outputs to package: 1
+** Copying build outputs to temporary package directory /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir
+   Copy ADO.RETIREME.MAIN.BLD.LOAD(EBUD01) to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/ADO.RETIREME.MAIN.BLD.LOAD/EBUD01.LOAD with DBB Copymode LOAD
+** Generate Wazi Deploy Application Manifest file to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/waziDeployManifest.yaml
+---
+apiVersion: "wazideploy.ibm.com/v1"
+kind: "ManifestState"
+metadata:
+  name: "retirementCalculator"
+  description: "retirementCalculator"
+  version: "rel-2.0.0"
+  annotations:
+    creationTimestamp: "20240304.015055.050"
+    scmInfo:
+      type: "git"
+      uri: "git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator"
+      branch: "main"
+      shortCommit: "cac60e95685575fab15a583d2a3966a087b58b38"
+    packageInfo: null
+artifacts:
+- name: "EBUD01"
+  description: "retirementCalculator/cobol/EBUD01.cbl"
+  properties:
+  - key: "githash"
+    value: "cac60e95685575fab15a583d2a3966a087b58b38"
+  - key: "giturl"
+    value: "git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator"
+  type: "LOAD"
+  hash: "cac60e95685575fab15a583d2a3966a087b58b38"
+
+** Generate package build report order file to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/buildReportOrder.txt
+** Copy packaging properties config file to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/packageBuildOutputs.properties
+** Creating tar file at /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar
+   Executing [sh, -c, tar cUXf /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar *]
+** Package successfully created at /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar
+** Adding files with file pattern *.log from /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar
+   Executing [sh, -c, tar rUXf /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar *.log]
+** List package contents.
+   Executing [sh, -c, tar tvf /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar]
+drwxr-xr-x   1 BPXROOT  TIVUSR         0 Mar  4 13:50 ADO.RETIREME.MAIN.BLD.LOAD/
+-rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Mar  4 13:50 ADO.RETIREME.MAIN.BLD.LOAD/EBUD01.LOAD
+-rw-r--r--   1 ADO      TIVUSR      4239 Feb 15 10:19 BuildReport.json
+-rw-r--r--   1 BPXROOT  TIVUSR        97 Mar  4 13:50 buildReportOrder.txt
+-rw-r--r--   1 BPXROOT  TIVUSR      1515 Mar  1 17:54 packageBuildOutputs.properties
+-rw-r--r--   1 BPXROOT  TIVUSR       790 Mar  4 13:50 waziDeployManifest.yaml
+-rw-r--r--   1 ADO      TIVUSR    121483 Feb 15 10:19 EBUD01.cobol.log
+-rw-r--r--   1 ADO      TIVUSR       115 Feb 15 10:19 externalImpacts_MortgageApplication-feature%2FconsumeRetirementCalculatorService.log
+
+** PackageBuildOutputs.groovy completed successfully
+** Build finished
+```
+</details>
+
+### Package using multiple build reports
 
 ```
 + groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
@@ -230,7 +336,7 @@ drwxr-xr-x   1 BPXROOT  TIVUSR         0 Sep  1 16:04 JENKINS.ZDAT.RETIRE.LOAD/
 
 Overview of the various ways to specify the structure within the repository: 
 
-* When not no version or directory name, the package will be uploaded into `(buildLabel)/(tarFileName)`
+* When no version or directory name is provided, the package will be uploaded into `(buildLabel)/(tarFileName)`
 * Specifying `version (-v)` uploads the package into  `(version)/(tarFileName)`
 * Specifying `directory (-ad)` uploads the package into `(directory)/(buildLabel)/(tarFileName)`
 * Specifying `version (-v)` and `directory (-ad)` uploads the package into `(directory)/(versionName)/(tarFileName)`
@@ -294,6 +400,30 @@ PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/App-EPSM/outputs/bui
 ```
 </details>
 
+## Configuration through properties files
+
+Limiting the cli options can be a desired strategy to maintain files under version control or implement central control mechanisms to enforce standards. 
+
+The script can be configured using the [packageBuildOutputs.properties](packageBuildOutputs.properties) file. The script allows you to control the following settings. This is a mandatory setting.
+
+Parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+`copyModeMap` | configures the mapping of last level qualifier and the necessary copymode from PDS to USS.
+`deployTypesFilter` | to limit the scope of DBB deployTypes that are added to the package
+`addExtension` | Boolean flag to append the DBB deployType as the file extension to provide information about the deployment 
+`generateWaziDeployAppManifest` |  
+
+Additionally, the ArtifactRepositoryHelpers accept a properties like [appArtifactRepository.properties](appArtifactRepository.properties) file to define:
+
+Parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+artifactRepository.url | URL to the Artifact server, e.q. https://your-artifactory-url/artifactory
+artifactRepository.repo | Artifact repository name to store the build, e.q. sys-zos-application-local
+artifactRepository.directory | Artifact repository directory to distinguish between prelimiary versions and release candidates, e.q. rel-1.0.0
+artifactRepository.user | User name
+artifactRepository.password | Password, Personal Access Token
+
+
 ## Command Line Options Summary - PackageBuildOutputs
 
 ```
@@ -307,6 +437,7 @@ PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/App-EPSM/outputs/bui
                                                  packaging details. 
                                                                                                                                           
   Optional:
+
   -boFile,--buildReportOrderFile <file>          Name of the buildReportOrder file, used to specify
                                                  buildReport.json files to be processed.
 
@@ -328,6 +459,8 @@ PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/App-EPSM/outputs/bui
 
   -ae,--addExtension                             Flag to add the deploy type extension to the member
                                                  in the package tar file. (Optional)                                                                                              
+
+  -wd,--generateWaziDeployAppManifest            Flag indicating to generate and add the Wazi Deploy Application Manifest file
 
   -h,--help                                      Prints this message
 
@@ -359,12 +492,6 @@ PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/App-EPSM/outputs/bui
   
   -aP,--artifactRepositoryPassword <password>
                      Password to connect to the Artifact repository server. (Optional)
-
- -artifactory,--artifact repositoryPropertiesFile <Artifactory
- repositoryPropertiesFile>  
-                     Path of a property file containing
-                     application specific Artifactory repository details. (Optional) ** (Deprecated)
- 
 
 ```
 
