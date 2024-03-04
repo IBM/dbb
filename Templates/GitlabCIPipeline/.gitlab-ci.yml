@@ -1,0 +1,700 @@
+variables:
+    #Git strategy is set to "none" but overwrite later to "clone" in the jobs to create release candidate tag and release tag.
+    GIT_STRATEGY: none
+    GIT_CHECKOUT: "false"
+    application: ${CI_PROJECT_NAME}
+    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Integration.yml
+    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
+    wdEnvironmentFileProduction: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Production.yml
+    packageName: ${application}.build-${CI_PIPELINE_ID}
+
+ # Working directory on USS 
+    uniqueWorkspaceId: $PIPELINE_WORKSPACE/$CI_PROJECT_NAME/build-${CI_PIPELINE_ID}
+# Working directory on Linux machine
+    buildOutputDirectory: ${CI_PROJECT_DIR}/BUILD-OUTPUT
+    deployOutputDirectory: ${CI_PROJECT_DIR}/DEPLOY-OUTPUT
+    baselineReferenceFile: $CI_PROJECT_DIR/$CI_PROJECT_NAME/application-conf/baselineReference.config
+    verbose: "-v"
+    pipelineType:
+        value: "build"
+        options:
+        - "build"
+        - "release"
+        - "preview"
+        description: "The pipeline type to indicate a build pipeline (build only with test/debug options) or a release pipeline (build for optimized load modules), or if it runs in preview mode. Set to 'build' by default." 
+    releaseType:
+        value: "patch"
+        options:
+        - "major"
+        - "minor"
+        - "patch"
+        description: "The release type to idicate the scope of the release: a major, minor or patch (bug fixes) release"
+            
+stages:
+    - Setup
+    - Build
+    - Packaging
+    - Deploy Integration
+    - Deploy Acceptance
+    - Deploy Production
+    - Finalize
+    - Cleanup
+
+# Note: All the jobs are set not to add to pipeline if there is TAG commit.
+
+Clone:
+    stage: Setup
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never 
+        - when: always
+    dependencies: []
+    variables:
+      # Clone and checkout git repo to get latest update.
+      GIT_STRATEGY: clone
+      GIT_CHECKOUT: "true"
+    script: |
+        # Environment parameters
+        echo Environment parameters
+        echo [INFO] Unique workspace = ${uniqueWorkspaceId}
+        echo [INFO] Git repository URL = ${CI_REPOSITORY_URL}
+        echo [INFO] Branch = ${CI_COMMIT_REF_NAME}
+        echo [INFO] Application = ${application}
+        echo [INFO] Project directory = ${CI_PROJECT_DIR}
+        echo [INFO] Build output directory = ${buildOutputDirectory}
+        echo [INFO] Deploy output directory = ${deployOutputDirectory}
+        echo [INFO] Pipeline Type = ${pipelineType}
+        echo [INFO] Release TYpe = ${releaseType}
+        echo [INFO] Verbose = ${verbose}
+        # Git clone
+        zowe rse issue unix ". ~/.bash_profile && gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME} -a ${application}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Clone job passed.
+        else
+             echo [ERROR] Clone job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
+
+1-Build application:
+    needs: ["Clone"]
+    stage: Build
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never
+        - when: on_success
+    dependencies: []
+    artifacts:
+        name: "report-${CI_PIPELINE_ID}"
+        when: always
+        paths:
+            - "$CI_PROJECT_DIR/BUILD-OUTPUT/*.xml"
+        reports:
+            junit: "$CI_PROJECT_DIR/BUILD-OUTPUT/*.xml"
+    script: |
+        zowe rse issue unix ". ~/.bash_profile && env|sort && dbbBuild.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} ${verbose}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Build job passed.
+        else
+             if [ ${RC} -eq 0 ]; then
+                echo [WARNING] Build job failed due to no source code changes. Exit code: ${RC}.
+            else
+                echo [ERROR] Build job failed. Exit code: ${RC}.
+                exit ${RC}
+            fi
+        fi
+
+2-Prepare and publish build logs:
+    needs: ["1-Build application"]
+    stage: Build
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never 
+        - when: on_success
+    dependencies: []
+    variables:
+        sourceLogsFile: ${uniqueWorkspaceId}/logs.tar
+        destinationLogsFile: ${buildOutputDirectory}/logs.tar
+    artifacts:
+        name: "buildReport-${CI_PIPELINE_ID}"
+        when: always
+        paths:
+            # Uncomment or comment the type of file that o not want to publish to Gitlab artifacts
+            - "${buildOutputDirectory}/*.log"
+            - "${buildOutputDirectory}/*.html"
+            - "${buildOutputDirectory}/*.json"
+            - "${buildOutputDirectory}/*.xml"
+            #- "${buildOutputDirectory}/*.pdf"
+            #- "${buildOutputDirectory}/*.cczip"
+            - "${buildOutputDirectory}/*.txt"
+            #- "${buildOutputDirectory}/*SONARQUBE/*.*"
+            # "${buildOutputDirectory}/logs.tar"
+    script: |
+        zowe rse issue unix ". ~/.bash_profile && prepareLogs.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Prepared build log files.
+
+            echo [INFO] Start loading log files from ${sourceLogsFile} to ${destinationLogsFile}
+            if [ -d "${buildOutputDirectory}/" ]; then
+                rm -R ${buildOutputDirectory}
+                echo [INFO] Removed existing output directory: ${buildOutputDirectory}
+            fi
+
+            # Create directory to store build output
+            mkdir ${buildOutputDirectory}
+            echo [INFO] Created build output directory: ${buildOutputDirectory}
+            zowe rse dl uf "${sourceLogsFile}" -f "${destinationLogsFile}" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Transfered tar file.
+            
+                tar -xvf "${destinationLogsFile}" -C "${buildOutputDirectory}/" --strip-components 1
+                echo [INFO] Extracted log.tar file to ${buildOutputDirectory}
+                echo [INFO] Published build resutls.
+            else
+                echo [ERROR] Failed to load tar file. Exit code: ${RC}.
+                exit ${RC}
+            fi
+        else
+             echo [ERROR] Failed to prepare build log files. Exit code: ${RC}.
+             exit ${RC}
+        fi
+
+3-Create release candidate tag:
+    needs: ["2-Prepare and publish build logs"]
+    stage: Build
+    tags: [shell]
+    rules:
+        # The job only run if the pipelineType is "release".
+        - if: $CI_COMMIT_TAG
+          when: never
+        - if: $pipelineType != "release"
+          when: never
+        - when: on_success
+    variables:
+      # Clone and checkout git repo to get latest baselineReference config file.
+      GIT_STRATEGY: clone
+      GIT_CHECKOUT: "true"
+    dependencies: []
+    script: |
+
+        echo [INFO] Retrieve baseline reference information from ${baselineReferenceFile}.
+        # Retrieve the baseline reference from the baselineReferenceFile        
+        if [ ! -f "${baselineReferenceFile}" ]; then
+            echo [ERROR] Applications baseline reference configuration file ${baselineReferenceFile} was not found.
+            exit 1
+        else
+            
+            # Extract the current branch from GitLab envirnment
+            export mainBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $1 }'`
+            export secondBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $2 }'`
+            export thirdBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $3 }'`
+
+            echo [INFO] Branch: ${CI_COMMIT_BRANCH}
+            echo [INFO] Branch segment: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}
+
+            # Find base line version of the current branch from the baseLineReferenceFile
+            case ${mainBranchSegment} in
+                "main")
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
+              ;;
+                "release")
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
+              ;;
+            esac
+
+            if [ -z "${baselineRef}" ]; then
+                echo [ERROR] No baseline ref was found for branch name ${Branch} in ${baselineReferenceFile}.
+                exit 1
+            else
+                echo [INFO] Baseline Reference: ${baselineRef}
+            fi
+
+            # Compute the name of the next release based on the releaseType
+            if [ "${releaseType}" == "patch" ]; then
+                export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$3 += 1 ; print}'`
+            fi
+            if [ "${releaseType}" == "minor" ]; then
+                export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$2 += 1 ; $3 = 0; print}'`
+            fi
+            if [ "${releaseType}" == "major" ]; then
+                export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
+            fi
+            export newVersionTag=$(echo "rel-${newVersion}")
+            echo [INFO] Computed tag for the next release: ${newVersionTag}
+
+            # Compute the name of the next release candidate 
+            export releaseCandidate=$(git tag --list "${newVersionTag}_*rc*" --sort=-committerdate | head -n 1)
+            echo [INFO] Current release candidate tag: ${releaseCandidate}
+
+            if [ -z "${releaseCandidate}" ]; then
+            # initial version tag
+                export newVersionTag="${newVersionTag}_rc00"
+                echo [INFO] Updated release candidate tag: ${newVersionTag}
+            else
+            # bump up release candidate number
+                export newVersionTag=`echo ${releaseCandidate} | sed 's/^["refs\/tags\/rel-]*//g' | awk -F "rc" '{print "rel-"$1"rc"(-f2 $2+1)}' | tr -d \"`
+                echo [INFO] Updated release candidate tag: ${newVersionTag}
+            fi
+
+        # Creates the git tag using the CLI REST interface and the automation token
+            curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${newVersionTag}&ref=${CI_COMMIT_REF_NAME}"
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Created release candidate tag: ${newVersionTag}.
+            else
+                echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
+                exit ${RC}
+            fi
+        fi
+
+Packaging:
+    needs: ["2-Prepare and publish build logs"]
+    stage: Packaging
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never
+        - when: on_success
+    dependencies: []
+    script: |
+
+        zowe rse issue unix ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -t ${application}.tar -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -v ${packageName}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Packaging job passed.
+        else
+             echo [ERROR] Packaging job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
+
+1-Generate Deployment Plan:
+    needs: ["Packaging"]
+    stage: Deploy Integration
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never 
+        - if: $pipelineType == "preview"
+          when: never
+        - when: on_success
+    script: |
+
+        zowe rse issue unix ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -i ${application}.tar" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Generate deployment plan job passed.
+        else
+             echo [ERROR] Generate deployment plan job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
+
+2-Deploy to Integration:
+    needs: ["1-Generate Deployment Plan"]
+    stage: Deploy Integration
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never 
+        - if: $pipelineType == "preview"
+          when: never
+        - when: on_success 
+    dependencies: []
+    script: |
+        
+        zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileIntegration} -i ${application}.tar -l deploy/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Deploy to integration job passed.
+        else
+             echo [ERROR] Deploy to integration job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
+
+3-Generate and publish deployment report for Integration:
+    needs: ["2-Deploy to Integration"]
+    stage: Deploy Integration
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never 
+        - if: $pipelineType == "preview"
+          when: never
+        - when: on_success
+    dependencies: []
+    variables:
+        sourceOutputFile: ${uniqueWorkspaceId}/deployPkgDir/deploy/deployment-report.html
+        sourceEvidenceFile: ${uniqueWorkspaceId}/deployPkgDir/deploy/evidences/evidence.yaml
+        integrationReportDir: ${deployOutputDirectory}/deploy-integration
+    
+    artifacts:
+        name: "integrationDeploymentReport-${CI_PIPELINE_ID}"
+        when: always
+        paths:
+            - "${integrationReportDir}/deployment-report.html"
+            - "${integrationReportDir}/evidence.yaml"
+    script: |
+        type zowe
+        zowe rse issue unix ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Generated deployment evidence.
+        
+            if [ ! -d "${deployOutputDirectory}/" ]; then
+                mkdir ${deployOutputDirectory}
+            fi
+
+            if [ -d "${integrationReportDir}/" ]; then
+                rm -R ${integrationReportDir}
+                echo [INFO] Removed existing integration report directory: ${integrationReportDir}
+            fi
+        
+            # Create integration report directory
+            mkdir ${integrationReportDir}
+            echo [INFO] Created integration report directory: ${integrationReportDir}
+            # Transfer deployment report and evidence report
+            echo [INFO] Start loading deployment reports from ${sourceOutputFile} to ${integrationReportDir}/deployment-report.html
+            zowe rse dl uf "${sourceOutputFile}" -f "${integrationReportDir}/deployment-report.html" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Loaded deployment report file.
+            else
+                echo [ERROR] Failed to load deployment report. Exit code: ${RC}.
+                exit ${RC}
+            fi
+            echo [INFO] Start loading evidence report from ${sourceEvidenceFile} to ${integrationReportDir}/evidence.yaml
+            zowe rse dl uf "${sourceEvidenceFile}" -f "${integrationReportDir}/evidence.yaml" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Loaded deployment evidence file.
+            else
+                echo [ERROR] Failed to load deployment evidence file. Exit code: ${RC}.
+                exit ${RC}
+            fi
+            echo [INFO] Published Deployment report.
+        else
+            echo [ERROR] Failed to generate deployment evidence file. Exit code: ${RC}.
+            exit ${RC}
+        fi
+
+4-Cleanup Development:
+    stage: Deploy Integration
+    variables:
+      FF_ENABLE_JOB_CLEANUP: 1
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never 
+        - if: $pipelineType == "preview"
+          when: never
+        - when: manual
+    tags: [shell]
+    script: |
+        zowe rse issue unix ". ~/.bash_profile && deleteWorkspace.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Clean up development job passed.
+        else
+             echo [ERROR] Clean up development job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
+
+1-Deploy to Acceptance:
+    needs: ["2-Deploy to Integration"]
+    stage: Deploy Acceptance
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never
+        - if: $pipelineType == "preview" || $pipelineType == "build"
+          when: never
+        - when: manual 
+        #- if: $CI_COMMIT_REF_PROTECTED == "true"
+        #  when: 
+    dependencies: []
+    script: |
+        zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileAcceptance} -i ${application}.tar -l deploy-acceptance/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Deploy to acceptnace job passed.
+        else
+             echo [ERROR] Deploy to acceptnace job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
+
+2-Generate and publish deployment report for Acceptance:
+    needs: ["1-Deploy to Acceptance"]
+    stage: Deploy Acceptance
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never
+        - if: $pipelineType == "preview" || $pipelineType == "build"
+          when: never
+        - when: on_success
+    dependencies: []
+    variables:
+        sourceOutputFile: ${uniqueWorkspaceId}/deployPkgDir/deploy-acceptance/deployment-report.html
+        sourceEvidenceFile: ${uniqueWorkspaceId}/deployPkgDir/deploy-acceptance/evidences/evidence.yaml
+        acceptanceReportDir: ${deployOutputDirectory}/deploy-acceptance
+    artifacts:
+        name: "acceptanceDeploymentReport-${CI_PIPELINE_ID}"
+        when: always
+        paths:
+            - "${acceptanceReportDir}/deployment-report.html"
+            - "${acceptanceReportDir}/evidence.yaml"
+    script: |
+        zowe rse issue unix ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy-acceptance/evidences/evidence.yaml -o deploy-acceptance/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Generated deployment evidence.
+        
+            if [ ! -d "${deployOutputDirectory}/" ]; then
+                mkdir ${deployOutputDirectory}
+            fi
+
+            if [ -d "${acceptanceReportDir}/" ]; then
+                rm -R ${acceptanceReportDir}
+                echo [INFO] Removed existing acceptance report directory: ${acceptanceReportDir}
+            fi
+        
+            # Create acceptance report directory
+            mkdir ${acceptanceReportDir}
+            echo [INFO] Created acceptance report directory: ${acceptanceReportDir}
+            # Transfer acceptnace deployment report and evidence report
+            echo [INFO] Start loading deployment reports from ${sourceOutputFile} to ${acceptanceReportDir}/deployment-report.html
+            zowe rse dl uf "${sourceOutputFile}" -f "${acceptanceReportDir}/deployment-report.html" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Loaded deployment report file.
+            else
+                echo [ERROR] Failed to load deployment report. Exit code: ${RC}.
+                exit ${RC}
+            fi
+            echo [INFO] Start loading evidence report from ${sourceEvidenceFile} to ${acceptanceReportDir}/evidence.yaml
+            zowe rse dl uf "${sourceEvidenceFile}" -f "${acceptanceReportDir}/evidence.yaml" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Loaded deployment evidence file.
+            else
+                echo [ERROR] Failed to load deployment evidence file. Exit code: ${RC}.
+                exit ${RC}
+            fi
+            echo [INFO] Published Deployment report.
+        else
+            echo [ERROR] Failed to generate deployment evidence file. Exit code: ${RC}.
+            exit ${RC}
+        fi
+        
+
+1-Deploy to Production:
+    needs: ["1-Deploy to Acceptance"]
+    stage: Deploy Production
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never
+        - if: $pipelineType == "preview" || $pipelineType == "build"
+          when: never
+        - when: manual
+        #- if: $CI_COMMIT_REF_PROTECTED == "true"
+        #  when: on_success
+    dependencies: []
+    script: |
+        zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileProduction} -i ${application}.tar -l deploy-production/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Deploy to production job passed.
+        else
+             echo [ERROR] Deploy to production job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
+
+2-Generate and publish deployment report for Production:
+    needs: ["1-Deploy to Production"]
+    stage: Deploy Production
+    tags: [shell]
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never
+        - if: $pipelineType == "preview" || $pipelineType == "build"
+          when: never
+        - when: on_success
+    dependencies: []
+    variables:
+        sourceOutputFile: ${uniqueWorkspaceId}/deployPkgDir/deploy-production/deployment-report.html
+        sourceEvidenceFile: ${uniqueWorkspaceId}/deployPkgDir/deploy-production/evidences/evidence.yaml
+        productionReportDir: ${deployOutputDirectory}/deploy-production
+    artifacts:
+        name: “productionDeploymentReport-${CI_PIPELINE_ID}"
+        when: always
+        paths:
+            - "${productionReportDir}/deployment-report.html"
+            - "${productionReportDir}/evidence.yaml"
+    script: |
+        zowe rse issue unix ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy-production/evidences/evidence.yaml -o deploy-production/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Generated deployment evidence.
+
+            if [ ! -d "${deployOutputDirectory}/" ]; then
+                mkdir ${deployOutputDirectory}
+            fi
+
+            if [ -d "${productionReportDir}/" ]; then
+                rm -R ${productionReportDir}
+                echo [INFO] Removed existing production report directory: ${productionReportDir}
+            fi
+        
+            # Create production report directory
+            mkdir ${productionReportDir}
+            echo [INFO] Created production report directory: ${productionReportDir}
+    
+            # Transfer deployment report and evidence report
+            echo [INFO] Start loading deployment reports from ${sourceOutputFile} to ${productionReportDir}/deployment-report.html
+            zowe rse dl uf "${sourceOutputFile}" -f "${productionReportDir}/deployment-report.html" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Loaded deployment report file.
+            else
+                echo [ERROR] Failed to load deployment report. Exit code: ${RC}.
+                exit ${RC}
+            fi
+            echo [INFO] Start loading evidence report from ${sourceEvidenceFile} to ${productionReportDir}/evidence.yaml
+            zowe rse dl uf "${sourceEvidenceFile}" -f "${productionReportDir}/evidence.yaml" -b --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Loaded deployment evidence file.
+            else
+                echo [ERROR] Failed to load deployment evidence file. Exit code: ${RC}.
+                exit ${RC}
+            fi
+            echo [INFO] Published Deployment report.
+        else
+            echo [ERROR] Failed to generate deployment evidence file. Exit code: ${RC}.
+            exit ${RC}
+        fi
+
+Create production version:
+    needs: ["1-Deploy to Production"]
+    stage: Finalize
+    variables:
+        GIT_STRATEGY: clone
+        GIT_CHECKOUT: "true"
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never
+        - if: $pipelineType == "preview" || $pipelineType == "build"
+          when: never
+        - when: manual
+        #- if: ($CI_COMMIT_REF_NAME == "main" && $CI_COMMIT_REF_PROTECTED == "true")
+        #  when: on_success
+          
+    tags: [shell]
+    script: |    
+
+        echo [INFO] Retrieve baseline reference information from ${baselineReferenceFile}.
+        # Retrieve the baseline reference from the baselineReferenceFile        
+        if [ ! -f "${baselineReferenceFile}" ]; then
+            echo [ERROR] Applications baseline reference configuration file ${baselineReferenceFile} was not found.
+            exit 1
+        else
+ 
+            # Extract the current branch from GitLab envirnment
+            export mainBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $1 }'`
+            export secondBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $2 }'`
+            export thirdBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $3 }'`
+
+            echo [INFO] Branch: ${CI_COMMIT_BRANCH}
+            echo [INFO] Branch segment: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}
+
+            # Find base line version of the current branch from the baseLineReferenceFile
+            case ${mainBranchSegment} in
+                "main")
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
+              ;;
+                "release")
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
+              ;;
+            esac
+
+            if [ -z "${baselineRef}" ]; then
+                echo [ERROR] No baseline reference was found for branch name ${Branch} in ${baselineReferenceFile}.
+                exit 1
+            else
+                echo [INFO] Baseline Reference: ${baselineRef}
+            fi
+            
+            #Compute the current version
+            export oldVersionTag=`echo ${baselineRef} | awk -F "-" '{ print $2 }'`
+            echo [INFO] Old version: ${oldVersionTag}
+
+            # Compute the name of the next release based on the releaseType
+            if [ -z "${type}" ]; then
+                export type="patch"
+            fi
+            if [ "${type}" == "patch" ]; then
+                export newVersionTag=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$3 += 1 ; print}'`
+            fi
+            if [ "${type}" == "minor" ]; then
+                export newVersionTag=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$2 += 1 ; $3 = 0; print}'`
+            fi
+            if [ "${type}" == "major" ]; then
+                export newVersionTag=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
+            fi
+            echo [INFO} New verion: ${newVersionTag}
+
+            # Update baselineReference
+            export remoteFound=`git remote | grep gitlab_origin | wc -l`
+            if [ $remoteFound -eq 1 ]; then
+                git remote remove gitlab_origin
+            fi
+            git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git
+            sed -i "s/main=refs\/tags\/rel-${oldVersionTag}/main=refs\/tags\/rel-${newVersionTag}/" ${baselineReferenceFile}
+            sed -i "/^release.*rel-${oldVersionTag}/a release\/rel-${newVersionTag}=refs\/tags\/rel-${newVersionTag}" ${baselineReferenceFile}
+            git add ${baselineReferenceFile}
+            git commit -m "Add maintenance release to baselineReference.config file"
+            git push gitlab_origin HEAD:main -o ci.skip
+
+            curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=rel-${newVersionTag}&ref=${CI_COMMIT_REF_NAME}"
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Created release candidate tag: ${newVersionTag}.
+                curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/branches?branch=release%2Frel-${newVersionTag}&ref=rel-${newVersionTag}"
+                RC=$?
+                if [ ${RC} -eq 0 ]; then
+                    echo [INFO] Created release maintenance: ${newVersionTag}.
+                else
+                    echo [ERROR] Failed to create release maintenance. Exit code: ${RC}.
+                    exit ${RC}
+                fi  
+            else
+                echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
+                exit ${RC}
+            fi
+        fi
+
+Cleanup:
+    needs: ["Create production version"]
+    stage: Cleanup
+    variables:
+      FF_ENABLE_JOB_CLEANUP: 1
+    rules:
+        - if: $CI_COMMIT_TAG
+          when: never 
+        - if: $pipelineType == "preview" || $pipelineType == "build"
+          when: never
+        - when: manual
+    tags: [shell]
+    script: |
+        zowe rse issue unix ". ~/.bash_profile && deleteWorkspace.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Cleanup job passed.
+        else
+             echo [ERROR] Cleanup job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
