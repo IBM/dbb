@@ -44,7 +44,7 @@ computeBuildConfiguration() {
         # evaluate main segment
         case $mainBranchSegmentTrimmed in
         REL* | EPIC* | PROJ*)
-            # Release maintenance, epic and project branches are intergration branches,
+            # Release maintenance, epic and project branches are integration branches,
             # that derive dependency information from mainBuildBranch configuration.
 
             # evaluate third segment
@@ -58,9 +58,10 @@ computeBuildConfiguration() {
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:1}${segmentName:0:7}"
             fi
 
-            getBaselineReference
-            if [ -z "${Type}" ]; then
+                        if [ -z "${Type}" ]; then
                 Type="--impactBuild"
+# obtain the baselineRef from file
+                getBaselineReference
                 Type="${Type} --baselineRef ${baselineRef}"
                 # Release maintenance / epic / project branch clones the dependency information from the main build branch
                 # propOverrides="mainBuildBranch=${mainBranchSegment}"
@@ -93,6 +94,19 @@ computeBuildConfiguration() {
                 Type="--impactBuild"
                 # appending the --debug flag to compile with TEST options
                 Type="${Type} --debug"
+
+                # evaluate the feature branch build behaviour
+                if [ "${featureBranchBuildBehaviour}" == "cumulative" ]; then
+                    if [ ! -z "${thirdBranchSegment}" ]; then
+                        # epic branch workflow
+                        Type="${Type} --baselineRef origin/epic/${secondBranchSegment}"
+                    else 
+                        # default dev workflow
+                        Type="${Type} --baselineRef origin/main"
+                    fi
+                    
+                fi
+
             fi
             ;;
         HOTFIX*)
@@ -115,6 +129,16 @@ computeBuildConfiguration() {
             if [ -z "${Type}" ]; then
                 Type="--impactBuild"
                 propOverrides="mainBuildBranch=release/${secondBranchSegment}"
+
+                # evaluate the feature branch build behaviour
+                if [ "${featureBranchBuildBehaviour}" == "cumulative" ]; then
+                    if [ ! -z "${thirdBranchSegment}" ]; then
+                        # define baseline reference
+                        Type="${Type} --baselineRef release/${secondBranchSegment}"
+                    fi
+                    
+                fi
+
             fi
             ;;
         "PROD" | "MASTER" | "MAIN")
@@ -127,10 +151,8 @@ computeBuildConfiguration() {
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}.REL"
             else
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}.BLD"
-                if [ -z "${Type}" ]; then
-                    # appending the --debug flag to compile with TEST options
-                    Type="${Type} --debug"
-                fi
+                # appending the --debug flag to compile with TEST options
+                Type="${Type} --debug"
             fi
 
             ;;
@@ -187,7 +209,22 @@ computeBuildConfiguration() {
 
 getBaselineReference() {
 
-    baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')
+    baselineRef=""
+    
+    case $(echo $mainBranchSegment | tr '[:lower:]' '[:upper:]') in
+        "RELEASE" | "EPIC")
+            baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
+         ;;
+        "MAIN")
+            baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }') 
+         ;;
+        *)
+            rc=8
+            ERRMSG=$PGM": [ERROR] Branch name ${Branch} does not follow the recommended naming conventions to compute the baseline reference. Received '${mainBranchSegment}' which does not fall into the conventions of release, epic or main. rc="$rc
+            echo $ERRMSG
+         ;;
+    esac
+    
 
     if [ -z "${baselineRef}" ]; then
         rc=8
