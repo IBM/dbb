@@ -213,9 +213,15 @@ stages:
             inputs:
               sshEndpoint: $(zosSSHConnection)
               runOptions: "commands"
-              commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageName)"
+              commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageVersion)"
               readyTimeout: "20000"
             displayName: "Package the build artifacts for Deployment"
+        variables:
+            ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
+              packageVersion: $[ stageDependencies.Build.Tag.outputs['tagRelease.nextReleaseName'] ] 
+            ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
+              packageVersion: $(packageName)
+  
 
         # Preview - Demonstrate to upload package to Azure DevOps Artifacts
         ## TODO - Requires more work to distinguish build and release packages
