@@ -404,24 +404,29 @@ PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/App-EPSM/outputs/bui
 
 Limiting the cli options can be a desired strategy to maintain files under version control or implement central control mechanisms to enforce standards. 
 
-The script can be configured using the [packageBuildOutputs.properties](packageBuildOutputs.properties) file. The script allows you to control the following settings. This is a mandatory setting.
+The PackageBuildOutputs script can be configured using the [packageBuildOutputs.properties](packageBuildOutputs.properties) file.
+In any case, the `packageBuildOutputs.properties` is loaded, because it at least specifies the `copyModeMap`. 
+
+The properties file allows you to control the following settings:
+
 
 Parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 `copyModeMap` | configures the mapping of last level qualifier and the necessary copymode from PDS to USS.
 `deployTypesFilter` | to limit the scope of DBB deployTypes that are added to the package
 `addExtension` | Boolean flag to append the DBB deployType as the file extension to provide information about the deployment 
-`generateWaziDeployAppManifest` |  
+`generateWaziDeployAppManifest` |  Boolean flag to indicate if the Wazi Deploy Application Manifest file should be created
+`includeLogs` | List of file patterns from the workDir, that should be addded to the package, such as build logs
 
 Additionally, the ArtifactRepositoryHelpers accept a properties like [appArtifactRepository.properties](appArtifactRepository.properties) file to define:
 
 Parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
-artifactRepository.url | URL to the Artifact server, e.q. https://your-artifactory-url/artifactory
-artifactRepository.repo | Artifact repository name to store the build, e.q. sys-zos-application-local
-artifactRepository.directory | Artifact repository directory to distinguish between prelimiary versions and release candidates, e.q. rel-1.0.0
-artifactRepository.user | User name
-artifactRepository.password | Password, Personal Access Token
+`artifactRepository.url` | URL to the Artifact server, e.q. https://your-artifactory-url/artifactory
+`artifactRepository.repo` | Artifact repository name to store the build, e.q. sys-zos-application-local
+`artifactRepository.directory` | Artifact repository directory to distinguish between prelimiary versions and release candidates, e.q. rel-1.0.0
+`artifactRepository.user` | User name
+`artifactRepository.password` | Password, Personal Access Token
 
 
 ## Command Line Options Summary - PackageBuildOutputs
