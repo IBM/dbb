@@ -238,7 +238,7 @@ Overview of the various ways to specify the structure within the repository:
 The password for the artifact repository can also represent the APIKey. It is recommended to store that inside the secret store of your pipeline orchestrator.
 
 ```
-groovyz /var/jenkins/pipeline/PublishLoadModule.groovy \
+groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy \
         --workDir /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025 \
         -p \
         -aprop appArtifactRepository.properties \
