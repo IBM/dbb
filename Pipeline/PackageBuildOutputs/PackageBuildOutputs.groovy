@@ -594,9 +594,9 @@ def parseInput(String[] cliArgs){
 	if (opts.b) props.branch = opts.b
 
 	if (opts.wd) props.generateWaziDeployAppManifest = 'true'
-	if (opts.ae) props.addExtension = 'true'
-
-	if (opts.verb) props.verbose = 'true'
+	
+	props.addExtension = (opts.ae) ? 'true' : 'false'
+	props.verbose = (opts.verb) ? 'true' : 'false'
 
 	// Optional Artifact repository info to deploy package
 
@@ -667,7 +667,7 @@ def parseInput(String[] cliArgs){
 		// assess required options to generate Wazi Deploy application manifest
 		if(props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()){
 			assert props.get("branch") : "Generating the Wazi Deploy Application Missing requires that the branch is passed to PackageBuildOutputs. See parameter --branch."
-			assert props.get("addExtension") : "Generating the Wazi Deploy Application Missing requires that to activate adding the deployType as file extensions. See parameter --addExtension."
+			assert (props.addExtension && props.addExtension.toBoolean()) : "Generating the Wazi Deploy Application Missing requires that to activate adding the deployType as file extensions. See parameter --addExtension."
 		}
 
 	} catch (AssertionError e) {
