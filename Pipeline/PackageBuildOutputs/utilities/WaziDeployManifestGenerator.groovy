@@ -41,27 +41,31 @@ def initWaziDeployManifestGenerator(Properties props) {
 /**
  *
  */
-def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, Record record, PropertiesRecord propertiesRecord){
+def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, String path, Record record, PropertiesRecord propertiesRecord){
 	Artifact artifact = new Artifact()
 	artifact.name = deployableArtifact.file
 	def gitHashInfo = retrieveBuildResultProperty (propertiesRecord, "githash")
 	artifact.hash =  (gitHashInfo) ? gitHashInfo : "UNDEFINED"
 	artifact.description = (record.file) ? record.file : deployableArtifact.file
+	// Add properties
+	artifact.properties = new ArrayList()
+	ElementProperty pathProperty = new ElementProperty()
+	pathProperty.key = "path"
+	pathProperty.value = path
+	artifact.properties.add(pathProperty)
+	// Add optional properties
 	if (propertiesRecord) {
-		ArrayList<ElementProperty> artifactProperties = new ArrayList()
 		["githash", "giturl"].each {property ->
 			ElementProperty artifactProperty = new ElementProperty()
 			def propValue =  retrieveBuildResultProperty (propertiesRecord, property)
 			if (propValue) {
 				artifactProperty.key = property
 				artifactProperty.value = propValue
-				artifactProperties.add(artifactProperty)
+				artifact.properties.add(artifactProperty)
 			}
 		}
-		if (artifactProperties.size() > 0 ) {
-			artifact.properties = artifactProperties
-		}
 	}
+	// add type
 	artifact.type =deployableArtifact.deployType
 
 	// adding artifact into applicationManifest

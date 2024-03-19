@@ -330,7 +330,7 @@ if (buildOutputsMap.size() == 0) {
 
 					// Append record to Wazi Deploy Application Manifest
 					if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-						wdManifestGeneratorUtilities.appendArtifactToAppManifest(deployableArtifact, record, propertiesRecord)
+						wdManifestGeneratorUtilities.appendArtifactToAppManifest(deployableArtifact, "$container/$fileName", record, propertiesRecord)
 					}
 
 				} else {
@@ -346,7 +346,8 @@ if (buildOutputsMap.size() == 0) {
 
 	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && !props.error) {
 		// print application manifest
-		wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/waziDeployManifest.yaml"), props.verbose)
+		// wazideploy_manifest.yaml is the default name of the manifest file
+		wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/wazideploy_manifest.yaml"), props.verbose)
 	}
 
 	if (!props.error) {
