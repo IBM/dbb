@@ -344,7 +344,7 @@ if (buildOutputsMap.size() == 0) {
 		}
 	}
 
-	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && !props.error) {
+	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && !props.error) {
 		// print application manifest
 		wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/waziDeployManifest.yaml"), props.verbose)
 	}
