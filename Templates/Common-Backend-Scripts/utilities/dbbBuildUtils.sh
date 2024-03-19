@@ -144,7 +144,7 @@ computeBuildConfiguration() {
                 if [ "${featureBranchBuildBehaviour}" == "cumulative" ]; then
                     if [ ! -z "${thirdBranchSegment}" ]; then
                         # define baseline reference
-                        Type="${Type} --baselineRef release/${secondBranchSegment}"
+                        Type="${Type} --baselineRef origin/release/${secondBranchSegment}"
                     fi
                     
                 fi
