@@ -22,20 +22,20 @@ def initWaziDeployManifestGenerator(Properties props) {
 	wdManifest.metadata = new Metadata()
 
 	// Annotations
-	Annotations annotations = new Annotations()
-	annotations.creationTimestamp = props.startTime
-	metadata.annotations = annotations
+	wdManifest.metadata.annotations = new Annotations()
+	wdManifest.metadata.annotations.creationTimestamp = props.startTime
+	wdManifest.metadata.annotations = annotations
 	if (props.application) {
-		metadata.description = props.application
-		metadata.name = props.application
+		wdManifest.metadata.description = props.application
+		wdManifest.metadata.name = props.application
 	} else {
-		metadata.description = "UNDEFINED"
-		metadata.name = "UNDEFINED"
+		wdManifest.metadata.description = "UNDEFINED"
+		wdManifest.metadata.name = "UNDEFINED"
 	}
 
 	// Metadata information
-	metadata.version = (props.versionName) ? props.versionName : props.startTime
-	if (props.application) metadata.name = props.application
+	wdManifest.metadata.version = (props.versionName) ? props.versionName : props.startTime
+	if (props.application) wdManifest.metadata.name = props.application
 }
 
 /**
