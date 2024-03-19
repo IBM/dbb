@@ -4,6 +4,7 @@ import com.ibm.dbb.build.report.records.*
 
 /*
  * This is a utility method to generate the Wazi Deploy Application Manifest file  
+ * See https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file
  */
 
 /**
@@ -14,13 +15,11 @@ import com.ibm.dbb.build.report.records.*
 @Field WaziDeployManifest wdManifest = new WaziDeployManifest()
 
 def initWaziDeployManifestGenerator(Properties props) {
-	ArrayList<Artifact> artifacts = new ArrayList()
-	wdManifest.artifacts = artifacts
+	// Artifacts
+	wdManifest.artifacts = new ArrayList<Artifact>()
 
 	// Metadata
-	Metadata metadata = new Metadata()
-
-	wdManifest.metadata = metadata
+	wdManifest.metadata = new Metadata()
 
 	// Annotations
 	Annotations annotations = new Annotations()
@@ -34,10 +33,7 @@ def initWaziDeployManifestGenerator(Properties props) {
 		metadata.name = "UNDEFINED"
 	}
 
-	// Fields to write Application Manifest file
-
-	PackageInfo packageInfo = new PackageInfo()
-
+	// Metadata information
 	metadata.version = (props.versionName) ? props.versionName : props.startTime
 	if (props.application) metadata.name = props.application
 }
@@ -73,13 +69,10 @@ def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, Record re
 }
 
 def setScmInfo(HashMap<String, String> scmInfoMap) {
-	def ScmInfo scmInfo = new ScmInfo()
-
+	wdManifest.metadata.annotations.scmInfo = new ScmInfo()
 	scmInfoMap.each { k, v ->
-		scmInfo."$k" = v
+		wdManifest.metadata.annotations.scmInfo."$k" = v
 	}
-
-	wdManifest.metadata.annotations.scmInfo = scmInfo
 }
 
 /**
