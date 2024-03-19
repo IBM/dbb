@@ -523,7 +523,7 @@ def runProcess(ArrayList cmd, File dir){
  * read cliArgs
  */
 def parseInput(String[] cliArgs){
-	def cli = new CliBuilder(usage: "PackageBuildOutputs.groovy [options]", header:header, stopAtNonOption:false)
+	def cli = new CliBuilder(usage: "PackageBuildOutputs.groovy [options]", stopAtNonOption:false)
 	// required packaging options
 	cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
 	cli.properties(longOpt:'packagingPropertiesFile', args:1, argName:'packagingPropertiesFile', 'Path of a property file containing application specific packaging details.')
