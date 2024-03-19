@@ -32,11 +32,14 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
    	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type.
    	  2. Artifacts having the same member name and the same deploy type will be present only once in the generated package, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
 
-1. **Create Tar-file**
-    1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
-    1. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
+1. **(Optionally) Generate Wazi Deploy application manifest **
+   1. Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) is generated and saved as waziDeployManifest.yaml.
 
-1. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
+2. **Create Tar-file**
+    1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
+    2. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
+
+3. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
     1. Publishes the tar file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. Consider a Nexus RAW, or a Artifactory Generic as the repository type. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
 
 Notes: 
