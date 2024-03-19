@@ -6,6 +6,16 @@ segmentName=""
 
 computeBuildConfiguration() {
 
+    # unset variables
+    Type=""
+    HLQ=""
+    propOverrides=""
+
+    ### computes the following environment variables for the dbbBuild.sh script
+    # Type - the build type, e.q. --impactBuild --baselineRef release/rel-1.1.4
+    # HLQ - the high level qualifier to use
+    # propOverrides - zAppBuild property overrides, e.q. "mainBuildBranch=release/rel-1.1.4"
+
     ##DEBUG ## echo -e "App name \t: ${App}"
     ##DEBUG ## echo -e "Branch name \t: ${Branch}"
 
@@ -189,7 +199,7 @@ computeBuildConfiguration() {
         ##DEBUG ## echo -e "Computed hlq \t: ${HLQ}"
         ##DEBUG ## echo -e "Build option \t: ${Type}"
 
-        # unset variables
+        # unset internal variables
         baselineRef=""
         mainBranchSegment=""
         mainBranchSegmentTrimmed=""
@@ -199,10 +209,7 @@ computeBuildConfiguration() {
         thirdBranchSegmentTrimmed=""
         branchConvention=""
         segmentName=""
-        propOverrides=""
-
     fi
-
 }
 
 # Private method to retrieve the baseline reference from the configuration file
