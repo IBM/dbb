@@ -204,7 +204,7 @@ Clone:
                     export baselineRef=`cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
                 "release")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^release/${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
             esac
 
@@ -238,7 +238,7 @@ Clone:
                 echo [INFO] Updated release candidate tag: ${newVersionTag}
             else
             # bump up release candidate number
-                export newVersionTag=`echo ${releaseCandidate} | sed 's/^["refs\/tags\/rel-]*//g' | awk -F "rc" '{print "rel-"$1"rc"(-f2 $2+1)}' | tr -d \"`
+                export newVersionTag=`echo ${releaseCandidate} | sed 's/^["refs\/tags\/rel-]*//g' | awk -F "rc" '{a=++$2; printf("rel-"$1"rc%02d\n",a)}' | tr -d \"`
                 echo [INFO] Updated release candidate tag: ${newVersionTag}
             fi
 
@@ -617,7 +617,7 @@ Create production version:
                     export baselineRef=`cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
                 "release")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^release/${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
             esac
 

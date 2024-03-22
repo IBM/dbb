@@ -55,7 +55,7 @@ steps:
               baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')
               ;;
             "release")
-              baselineRef=$(cat "${baselineReferenceFile}" | grep "^${secondBranchSegment}" | awk -F "=" ' { print $2 }')
+              baselineRef=$(cat "${baselineReferenceFile}" | grep "^release/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
               ;;
           esac
 
@@ -99,7 +99,7 @@ steps:
             export newVersionTag=$(echo "${newVersionTag}_rc00" | tr -d \")
           else
             # bump up release candidate number
-            export newVersionTag=$(echo $releaseCandidate | sed 's/^["refs\/tags\/rel-]*//g' | awk -F "rc" '{print "rel-"$1"rc"(-f2 $2+1)}' | tr -d \")
+            export newVersionTag=$(echo $releaseCandidate | sed 's/^["refs\/tags\/rel-]*//g' | awk -F "rc" '{a=++$2; printf("rel-"$1"rc%02d\n",a)}' | tr -d \")
           fi
 
         fi
