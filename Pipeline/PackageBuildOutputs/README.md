@@ -33,7 +33,7 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
    	  2. Artifacts having the same member name and the same deploy type will be present only once in the generated package, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
 
 1. **(Optionally) Generate Wazi Deploy application manifest **
-   1. Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) is generated and saved as waziDeployManifest.yaml.
+   1. Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) is generated and saved as wazideploy_manifest.yml.
 
 2. **Create Tar-file**
     1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
@@ -206,7 +206,7 @@ PackageBuildOutputs console output
 *** Number of build outputs to package: 1
 ** Copying build outputs to temporary package directory /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir
    Copy ADO.RETIREME.MAIN.BLD.LOAD(EBUD01) to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/ADO.RETIREME.MAIN.BLD.LOAD/EBUD01.LOAD with DBB Copymode LOAD
-** Generate Wazi Deploy Application Manifest file to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/waziDeployManifest.yaml
+** Generate Wazi Deploy Application Manifest file to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/wazideploy_manifest.yml
 ---
 apiVersion: "wazideploy.ibm.com/v1"
 kind: "ManifestState"
@@ -247,7 +247,7 @@ drwxr-xr-x   1 BPXROOT  TIVUSR         0 Mar  4 13:50 ADO.RETIREME.MAIN.BLD.LOAD
 -rw-r--r--   1 ADO      TIVUSR      4239 Feb 15 10:19 BuildReport.json
 -rw-r--r--   1 BPXROOT  TIVUSR        97 Mar  4 13:50 buildReportOrder.txt
 -rw-r--r--   1 BPXROOT  TIVUSR      1515 Mar  1 17:54 packageBuildOutputs.properties
--rw-r--r--   1 BPXROOT  TIVUSR       790 Mar  4 13:50 waziDeployManifest.yaml
+-rw-r--r--   1 BPXROOT  TIVUSR       790 Mar  4 13:50 wazideploy_manifest.yml
 -rw-r--r--   1 ADO      TIVUSR    121483 Feb 15 10:19 EBUD01.cobol.log
 -rw-r--r--   1 ADO      TIVUSR       115 Feb 15 10:19 externalImpacts_MortgageApplication-feature%2FconsumeRetirementCalculatorService.log
 
@@ -420,6 +420,7 @@ Parameter | Description
 `addExtension` | Boolean flag to append the DBB deployType as the file extension to provide information about the deployment 
 `generateWaziDeployAppManifest` |  Boolean flag to indicate if the Wazi Deploy Application Manifest file should be created
 `includeLogs` | List of file patterns from the workDir, that should be addded to the package, such as build logs
+`fileEncoding` | File encoding for files generated as part of the process 
 
 Additionally, the ArtifactRepositoryHelpers accept a properties like [appArtifactRepository.properties](appArtifactRepository.properties) file to define:
 

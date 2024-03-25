@@ -347,7 +347,7 @@ if (buildOutputsMap.size() == 0) {
 	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && !props.error) {
 		// print application manifest
 		// wazideploy_manifest.yaml is the default name of the manifest file
-		wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/wazideploy_manifest.yaml"), props.verbose)
+		wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/wazideploy_manifest.yaml"), props.fileEncoding, props.verbose)
 	}
 
 	if (!props.error) {
@@ -358,11 +358,10 @@ if (buildOutputsMap.size() == 0) {
 		println("** Generate package build report order file to $buildReportOrder")
 
 		buildReportOrder.write('')
-		String logEncoding = 'UTF-8'
 		String buildReportFileName
 		int counter = 0
 
-		buildReportOrder.withWriter(logEncoding) { writer ->
+		buildReportOrder.withWriter(props.fileEncoding) { writer ->
 			props.buildReportOrder.each{ buildReportFile ->
 				counter++
 
@@ -598,6 +597,9 @@ def parseInput(String[] cliArgs){
 	
 	props.addExtension = (opts.ae) ? 'true' : 'false'
 	props.verbose = (opts.verb) ? 'true' : 'false'
+
+	// default log encoding if not specified via config passed in via --properties
+	if (!props.fileEncoding) props.fileEncoding = "IBM-1047"
 
 	// Optional Artifact repository info to deploy package
 

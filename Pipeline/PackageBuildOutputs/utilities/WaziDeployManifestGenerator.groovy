@@ -82,7 +82,7 @@ def setScmInfo(HashMap<String, String> scmInfoMap) {
 /**
  * Write an Wazi Deploy Manifest  a YAML file
  */
-def writeApplicationManifest(File yamlFile, String verbose){
+def writeApplicationManifest(File yamlFile, String fileEncoding, String verbose){
 	println("** Generate Wazi Deploy Application Manifest file to $yamlFile")
 	def yamlBuilder = new YamlBuilder()
 
@@ -98,7 +98,7 @@ def writeApplicationManifest(File yamlFile, String verbose){
 	}
 
 	// write file
-	yamlFile.withWriter() { writer ->
+	yamlFile.withWriter(fileEncoding) { writer ->
 		writer.write(yamlBuilder.toString())
 	}
 }
