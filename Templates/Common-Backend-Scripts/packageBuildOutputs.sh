@@ -301,7 +301,7 @@ validateOptions() {
 # function to validate publishing options
 validatePublishingOptions() {
 
-     if [ -z "${App}" ]; then
+    if [ -z "${App}" ]; then
         rc=8
         ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
         echo $ERRMSG
@@ -429,14 +429,17 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${PkgPropFile}" ]; then
         echo $PGM": [INFO] **     Packaging properties:" ${PkgPropFile}
     fi
+
+    if [ ! -z "${artifactVersionName}" ]; then
+        echo $PGM": [INFO] **            Artifact name:" ${artifactVersionName}
+    fi
+
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
     if [ "$publish" == "true" ]; then
         if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
             echo $PGM": [INFO] **  ArtifactRepo properties:" ${artifactRepositoryPropertyFile}
         fi
-        if [ ! -z "${artifactVersionName}" ]; then
-            echo $PGM": [INFO] **            Artifact name:" ${artifactVersionName}
-        fi
+
         if [ ! -z "${artifactRepositoryUrl}" ]; then
             echo $PGM": [INFO] **         ArtifactRepo Url:" ${artifactRepositoryUrl}
         fi
@@ -470,6 +473,16 @@ if [ $rc -eq 0 ]; then
         CMD="${CMD} --tarFileName ${tarFileName}"
     fi
 
+    # application name
+    if [ ! -z "${App}" ]; then
+        CMD="${CMD} --application ${App}"
+    fi
+
+    # branch name
+    if [ ! -z "${Branch}" ]; then
+        CMD="${CMD} --branch ${Branch}"
+    fi
+
     # packaging properties file
     if [ ! -z "${PkgPropFile}" ]; then
         CMD="${CMD} --packagingPropertiesFile ${PkgPropFile}"
@@ -478,6 +491,11 @@ if [ $rc -eq 0 ]; then
     # addExtension
     if [ "$addExtension" == "true" ]; then
         CMD="${CMD} --addExtension"
+    fi
+
+    # artifactVersionName
+    if [ ! -z "${artifactVersionName}" ]; then
+        CMD="${CMD} --versionName ${artifactVersionName}"
     fi
 
     # publishing options
@@ -489,9 +507,6 @@ if [ $rc -eq 0 ]; then
         fi
         if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
             CMD="${CMD} --artifactRepositoryPropertyFile ${artifactRepositoryPropertyFile}"
-        fi
-        if [ ! -z "${artifactVersionName}" ]; then
-            CMD="${CMD} --versionName ${artifactVersionName}"
         fi
 
         if [ ! -z "${artifactRepositoryUser}" ]; then
