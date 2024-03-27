@@ -52,10 +52,10 @@ steps:
 
           case $mainBranchSegment in
             "main")
-              baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')
+              baselineRef=$(cat "${baselineReferenceFile}" | grep -m 1 "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')
               ;;
             "release")
-              baselineRef=$(cat "${baselineReferenceFile}" | grep "^release/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
+              baselineRef=$(cat "${baselineReferenceFile}" | grep -m 1 "^release/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
               ;;
           esac
 

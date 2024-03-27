@@ -201,10 +201,10 @@ Clone:
             # Find base line version of the current branch from the baseLineReferenceFile
             case ${mainBranchSegment} in
                 "main")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
                 "release")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^release/${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^release/${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
             esac
 
@@ -614,10 +614,10 @@ Create production version:
             # Find base line version of the current branch from the baseLineReferenceFile
             case ${mainBranchSegment} in
                 "main")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
                 "release")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^release/${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^release/${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
             esac
 
