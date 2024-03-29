@@ -65,7 +65,7 @@ Clone:
         echo [INFO] Build output directory = ${buildOutputDirectory}
         echo [INFO] Deploy output directory = ${deployOutputDirectory}
         echo [INFO] Pipeline Type = ${pipelineType}
-        echo [INFO] Release TYpe = ${releaseType}
+        echo [INFO] Release Type = ${releaseType}
         echo [INFO] Verbose = ${verbose}
         # Git clone
         zowe rse issue unix ". ~/.bash_profile && gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME} -a ${application}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
@@ -131,8 +131,6 @@ Clone:
             #- "${buildOutputDirectory}/*.pdf"
             #- "${buildOutputDirectory}/*.cczip"
             - "${buildOutputDirectory}/*.txt"
-            #- "${buildOutputDirectory}/*SONARQUBE/*.*"
-            # "${buildOutputDirectory}/logs.tar"
     script: |
         zowe rse issue unix ". ~/.bash_profile && prepareLogs.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
@@ -154,10 +152,10 @@ Clone:
                 echo [INFO] Transfered tar file.
             
                 tar -xvf "${destinationLogsFile}" -C "${buildOutputDirectory}/" --strip-components 1
-                echo [INFO] Extracted log.tar file to ${buildOutputDirectory}
-                echo [INFO] Published build resutls.
+                echo [INFO] Extracted logs.tar file to ${buildOutputDirectory}
+                echo [INFO] Published build results.
             else
-                echo [ERROR] Failed to load tar file. Exit code: ${RC}.
+                echo [ERROR] Failed to download tar file. Exit code: ${RC}.
                 exit ${RC}
             fi
         else
@@ -319,6 +317,7 @@ Packaging:
 3-Generate and publish deployment report for Integration:
     needs: ["2-Deploy to Integration"]
     stage: Deploy Integration
+    tags: [shell]    
     rules:
         - if: $CI_COMMIT_TAG
           when: never 
@@ -383,6 +382,7 @@ Packaging:
 
 4-Cleanup Development:
     stage: Deploy Integration
+    tags: [shell]    
     variables:
       FF_ENABLE_JOB_CLEANUP: 1
     rules:
@@ -391,7 +391,6 @@ Packaging:
         - if: $pipelineType == "preview"
           when: never
         - when: manual
-    tags: [shell]
     script: |
         zowe rse issue unix ". ~/.bash_profile && deleteWorkspace.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
@@ -412,16 +411,14 @@ Packaging:
         - if: $pipelineType == "preview" || $pipelineType == "build"
           when: never
         - when: manual 
-        #- if: $CI_COMMIT_REF_PROTECTED == "true"
-        #  when: 
     dependencies: []
     script: |
         zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileAcceptance} -i ${application}.tar -l deploy-acceptance/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
-            echo [INFO] Deploy to acceptnace job passed.
+            echo [INFO] Deploy to acceptance job passed.
         else
-             echo [ERROR] Deploy to acceptnace job failed. Exit code: ${RC}.
+             echo [ERROR] Deploy to acceptance job failed. Exit code: ${RC}.
              exit ${RC}
         fi
 
@@ -500,8 +497,6 @@ Packaging:
         - if: $pipelineType == "preview" || $pipelineType == "build"
           when: never
         - when: manual
-        #- if: $CI_COMMIT_REF_PROTECTED == "true"
-        #  when: on_success
     dependencies: []
     script: |
         zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileProduction} -i ${application}.tar -l deploy-production/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
@@ -581,6 +576,7 @@ Packaging:
 Create production version:
     needs: ["1-Deploy to Production"]
     stage: Finalize
+    tags: [shell]    
     variables:
         GIT_STRATEGY: clone
         GIT_CHECKOUT: "true"
@@ -590,10 +586,7 @@ Create production version:
         - if: $pipelineType == "preview" || $pipelineType == "build"
           when: never
         - when: manual
-        #- if: ($CI_COMMIT_REF_NAME == "main" && $CI_COMMIT_REF_PROTECTED == "true")
-        #  when: on_success
-          
-    tags: [shell]
+
     script: |    
 
         echo [INFO] Retrieve baseline reference information from ${baselineReferenceFile}.
@@ -680,6 +673,7 @@ Create production version:
 Cleanup:
     needs: ["Create production version"]
     stage: Cleanup
+    tags: [shell]
     variables:
       FF_ENABLE_JOB_CLEANUP: 1
     rules:
@@ -688,7 +682,6 @@ Cleanup:
         - if: $pipelineType == "preview" || $pipelineType == "build"
           when: never
         - when: manual
-    tags: [shell]
     script: |
         zowe rse issue unix ". ~/.bash_profile && deleteWorkspace.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
