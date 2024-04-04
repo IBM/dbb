@@ -661,7 +661,7 @@ Create production version:
                 curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/branches?branch=release%2Frel-${newVersionTag}&ref=rel-${newVersionTag}"
                 RC=$?
                 if [ ${RC} -eq 0 ]; then
-                    echo [INFO] Created release maintenance branch: ${newVersionTag}.
+                    echo [INFO] Created release maintenance branch: release/rel-${newVersionTag}.
                 else
                     echo [ERROR] Failed to create release maintenance branch. Exit code: ${RC}.
                     exit ${RC}
