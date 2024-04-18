@@ -9,7 +9,7 @@ The pipeline implements the following stages
 * `Setup` stage to [clone](../Common-Backend-Scripts/README.md#41---gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
 * `Build` stage 
   * to invoke the zAppBuild [build](../Common-Backend-Scripts/README.md#42---dbbbuildsh) framework,
-  * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them to the Gitlab Artifacts.
+  * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them as Gitlab Artifacts.
   * in case of a release pipeline, to create the release candidate tag.
 * `Packaging` stage
   * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#44---packagebuildoutputssh)
@@ -36,7 +36,7 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
 ## Prerequisites
 
-To leverages this template, access to a Gitlab CI/CD environment is required, and an Gitlab runner must be configured to connect to your mainframe environment. Please review the setup instructions of this [document](https://www.ibm.com/support/pages/system/files/inline-files/Integrating%20IBM%20zOS%20platform%20in%20CICD%20pipelines%20with%20GitLab%20-%20v1.7_1.pdf).
+To leverage this template, access to a Gitlab CI/CD environment is required, and an Gitlab runner must be configured to connect to your mainframe environment. Please review the setup instructions of this [document](https://www.ibm.com/support/pages/system/files/inline-files/Integrating%20IBM%20zOS%20platform%20in%20CICD%20pipelines%20with%20GitLab%20-%20v1.7_1.pdf).
 
 The template leverages the [Zowe CLI](https://docs.zowe.org/stable/user-guide/cli-installcli/) to issue command invoking the [Common Backend scripts](../Common-Backend-Scripts/) on USS.
 * Zowe `base` and `rse` profiles needs to be configured in the `zowe.config.json` file under `.zowe` directory
@@ -84,7 +84,7 @@ Following requirements need to be met:
 ### Variables configuration
 The following variables need to be defined and configured as the environment variables in the GitLab group or project setting:
 
-Variables | Description
+Variable | Description
 --- | ---
 AutomationToken | [Group access token](https://docs.gitlab.com/ee/api/rest/#personalprojectgroup-access-tokens) to be used for authentication when invoke Gitlab CLI REST interfaces.
 RSEAPI_USER | Username for Zowe RSEAPI server authentication. This username is used when issue shell script command through Zowe.
@@ -92,11 +92,11 @@ RSEAPI_PASSWORD | Password for Zowe RSEAPI server authentication. This password 
 PIPELINE_WORKSPACE | Root directory on z/OS Unix System services to perform builds. E.g. /u/gitlab/workspace
 WAZI_DEPLOY_CONFIGDIR | Path to a directory on USS containing Wazi Deploy configuration files. The configuration files can be populated with the [Wazi Deploy samples](https://github.com/jbyibm/cics-genapp/tree/main/wazideploy-samples).
 
-The following variable need to be updated within the pipeline definition file: `.gitlab-ci.yaml`.
+The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yaml`.
 
-Veriables | Description
+Variable | Description
 --- | ---
-appliction | Specify the name of your application which will be used to invoke the [Common Backend scripts](../Common-Backend-Scripts/).
+application | Specify the name of your application which will be used to invoke the [Common Backend scripts](../Common-Backend-Scripts/).
 wdEnvironmentFileIntegration | Path to a Wazi Deploy configuration file for integration environment.
 wdEnvironmentFileAcceptance | Path to a Wazi Deploy configuration file for acceptance environment.
 wdEnvironmentFileProduction | Path to a Wazi Deploy configuration file for production environment.
@@ -104,7 +104,7 @@ baselineReferenceFile | Path to baselineReference.config file of your applicatio
 
 ## Pipeline usage
 
-The pipeline implements the common build, package and deploy steps to process various configurations according to the defined conventions.
+The pipeline implements the common build, package, and deploy steps to process various configurations according to the defined conventions.
 It is a single Gitlab CI/CD pipeline definition supporting various workflows. The [.gitlab-ci.yml](.gitlab-ci.yml) supports: 
 
 * automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#pipeline-build-of-feature-branches) with a clone and build stage,
@@ -135,7 +135,7 @@ The pipeline for feature branches executes the following steps:
 * Build
 * Package & publish package
 
-This pipeline needs to be run manually and set the *pipelineType* variable as `preview`.
+This pipeline needs to be run manually with the *pipelineType* variable as `preview`.
 
 Overview of the pipeline:  
 
@@ -149,7 +149,7 @@ The basic build pipeline for integration branches contains the following stages:
 * Package & publish package
 * Deployment to the integration test environment with cleanup job (required to be triggered manually)
 
-This is a defult pipeline. It run automatically when there is a new commit to a repository. You can also run this pipeline manually by setting the *pipelineType* variable as `build`.
+This is a default pipeline. It runs automatically when there is a new commit to a repository. You can also run this pipeline manually by setting the *pipelineType* variable as `build`.
 
 Overview of the pipeline:
 
