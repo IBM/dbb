@@ -45,12 +45,16 @@ import com.ibm.jzos.ZFile;
  * Version 6 - 2024-03
  *  - Added support to write IBM Wazi Deploy Application Manifest file
  *      
+ * Version 7 - 2024-04
+ *  - Added support to SBOM files
+ *      
  ************************************************************************************/
 
 // start create & publish package
 @Field Properties props = null
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
+@Field def sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
 
 props = parseInput(args)
 
@@ -79,6 +83,11 @@ def String tarFileLabel = "Default"
 
 // Object to store scm information for Wazi Deploy Application Manifest file
 HashMap<String,String> scmInfo = new HashMap<String, String>()
+
+
+if (props.generateSBOM && props.generateSBOM.toBoolean()) {
+	sbomUtilities.initializeSBOM(props.sbomAuthor)
+}
 
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
@@ -185,10 +194,23 @@ props.buildReportOrder.each { buildReportFile ->
 					rootDir = output[0].trim()
 					file = output[1].trim()
 					deployType = output[2].trim()
+					String file = buildRecord.getFile()
+					String owningApplication = file.split('/')[0];
+					def propertiesRecord = buildReport.getRecords().find {
+						try {
+							(it.getType()==DefaultRecordFactory.TYPE_PROPERTIES) &&
+							(it.getProperties().keySet().contains(sbomUtilities.hashPrefix + owningApplication))
+						} catch (Exception e){}
+					}
+					def dependencySetRecord = buildReport.getRecords().find {
+						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(sourceFile)
+					}
 					buildOutputsMap.put(new DeployableArtifact(file, deployType), [
-						rootDir,
-						buildRecord,
-						buildResultPropertiesRecord
+						container: rootDir,
+						owningApplication: owningApplication,
+						record: buildRecord,
+						propertiesRecord: propertiesRecord,
+						dependencySetRecord: dependencySetRecord
 					])
 				}
 			}
@@ -197,10 +219,23 @@ props.buildReportOrder.each { buildReportFile ->
 				buildRecord.getOutputs().each{ output ->
 					datasetMembersCount++
 					def (dataset, member) = getDatasetName(output.dataset)
+					String file = buildRecord.getFile()
+					String owningApplication = file.split('/')[0];
+					def propertiesRecord = buildReport.getRecords().find {
+						try {
+							(it.getType()==DefaultRecordFactory.TYPE_PROPERTIES) &&
+							(it.getProperties().keySet().contains(sbomUtilities.hashPrefix + owningApplication))
+						} catch (Exception e){}
+					}
+					def dependencySetRecord = buildReport.getRecords().find {
+						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
+					}
 					buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [
-						dataset,
-						buildRecord,
-						buildResultPropertiesRecord
+						container: dataset,
+						owningApplication: owningApplication,
+						record: buildRecord,
+						propertiesRecord: propertiesRecord,
+						dependencySetRecord: dependencySetRecord
 					])
 				}
 			}
@@ -245,11 +280,7 @@ props.buildReportOrder.each { buildReportFile ->
 			scmInfo.put("uri", "multipleBuildReports")
 		}
 	}
-
 }
-
-
-
 
 if (buildOutputsMap.size() == 0) {
 	println("** There are no build outputs found in all provided build reports. Exiting.")
@@ -275,9 +306,15 @@ if (buildOutputsMap.size() == 0) {
 	println("** Copying build outputs to temporary package directory $tempLoadDir")
 
 	buildOutputsMap.each { deployableArtifact, info ->
-		String container = info[0]
-		Record record = info[1]
-		PropertiesRecord propertiesRecord = info[2]
+		String container = info.get("container")
+		String owningApplication = info.get("owningApplication")
+		Record record = info.get("record")
+		PropertiesRecord propertiesRecord = info.get("propertiesRecord")
+		DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
+		
+		if (props.generateSBOM && props.generateSBOM.toBoolean()) {
+			sbomUtilities.addEntryToSBOM(deployableArtifact, info)
+		}
 
 		def filePath = ""
 		if (record.getType()=="USS_RECORD") {
@@ -343,6 +380,11 @@ if (buildOutputsMap.size() == 0) {
 			}
 		}
 	}
+	
+	if (props.generateSBOM && props.generateSBOM.toBoolean()) {
+		sbomUtilities.writeSBOM("$tempLoadDir/sbom.json", props.fileEncoding)    
+	}
+	
 
 	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && !props.error) {
 		// print application manifest
@@ -559,6 +601,9 @@ def parseInput(String[] cliArgs){
 	cli.boFile(longOpt:'buildReportOrderFile', args:1, argName:'buildReportOrderFile', 'A file that lists build reports in order of processing')
 	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'List of build reports in order of processing ')
 
+    // SBOM generation
+    cli.s(longOpt:'sbom', argName:'sbom', 'Flag to control the generation of SBOM')
+    cli.sa(longOpt:'sbomAuthor', args:1, argName:'sbomAuthor', 'Author of the SBOM, in form "Name <email>"')
 
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
@@ -652,7 +697,10 @@ def parseInput(String[] cliArgs){
 	}
 	props.buildReportOrder = buildReports
 
-
+	props.generateSBOM = (opts.sbom) ? 'true' : 'false'
+	if (opts.sbomAuthor) {
+		props.sbomAuthor = opts.sbomAuthor
+	}    
 
 	// validate required props
 	try {
