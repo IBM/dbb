@@ -45,6 +45,44 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
 Notes: 
 * The script doesn't manage the deletions of artifacts. Although they are reported in the DBB Build Reports, deletions are not handled by this script.
 
+## Software-Bill-Of-Material (SBOM) generation
+
+This `PackageBuildOutputs.groovy` script is able to generate an SBOM file based on the information contained in the DBB Build Report.
+It will process the different records of the DBB Build Report, to collect each deployable artifact's required properties and dependencies when documenting a valid SBOM file.
+
+This sample script is using the [CycloneDX](https://cyclonedx.org/) specification to document the necessary elements of the SBOM file.
+The output file is written in JSON, following the [Cyclone DX 1.5](https://cyclonedx.org/docs/1.5/json/) schema.
+
+To implement the correct objects when generating an SBOM file, the script uses the [CycloneDX Java library](https://github.com/CycloneDX/cyclonedx-core-java).
+This library makes use of other libraries like [Jackson](https://github.com/FasterXML/jackson), which also comes with dependencies.
+The list of required libraries are:
+
+- cyclonedx-core-java (8.x version)
+- jackson-core (tested with 2.16.1 version)
+- jackson-annotations (tested with 2.16.1 version)
+- jackson-databind (tested with 2.16.1 version)
+- jackson-dataformat-xml (tested with 2.16.1 version)
+- json-schema-validator (tested with 1.2.0 version)
+- packageurl-java (tested with 1.5.0 version)         
+
+These libraries (available as JAR files) must be made available on z/OS Unix System Services.
+The easiest way it to download the JAR packages manually (or through maven) and upload them to a specific location on z/OS, where the script can use them.
+
+Also, these libraries must be available in the Java CLASSPATH.
+A convenient way is to specify the paths to these libraries through the `-cp` flag when invoking DBB.
+
+To enable the generation of the SBOM file, the `-s/--sbom` flag must be passed.
+It is recommended to specify an author for the SBOM, even when generated through the pipeline, through the`-sa/--sbomAuthor` parameter.
+For instance, it could be the Release Manager of the application for which the pipeline is running. 
+
+As an example, you can invoke the SBOM generation with the following command:
+
+~~~~
+/usr/lpp/dbb/v2r0/bin/groovyz -cp /u/mdalbin/SBOM/cyclonedx-core-java-8.0.3.jar:/u/mdalbin/SBOM/jackson-annotations-2.16.1.jar:/u/mdalbin/SBOM/jackson-core-2.16.1.jar:/u/mdalbin/SBOM/jackson-databind-2.16.1.jar:/u/mdalbin/SBOM/jackson-dataformat-xml-2.16.1.jar:/u/mdalbin/SBOM/json-schema-validator-1.2.0.jar:/u/mdalbin/SBOM/packageurl-java-1.5.0.jar /u/mdalbin/SBOM/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputsWithSBOM.groovy --workDir /u/ado/workspace/MortgageApplication/feature/consumeRetirementCalculatorServiceImpacts/build-20240312.1/logs --tarFileName MortgageApplication.tar --addExtension -s -sa "David Gilmour <david.gilmour@pinkfloyd.com>"
+~~~~ 
+
+By default, the SBOM file is generated in the `tempPackageDir` and named `sbom.json`.
+This way, it is automatically packaged in the TAR file that is created by the script, ensuring the package and its content are not tampered and correctly documented. 
 
 ## Invocation samples 
 
@@ -347,7 +385,7 @@ Overview of the various ways to specify the structure within the repository:
 The password for the artifact repository can also represent the APIKey. It is recommended to store that inside the secret store of your pipeline orchestrator.
 
 ```
-groovyz /var/jenkins/pipeline/PublishLoadModule.groovy \
+groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy \
         --workDir /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025 \
         -p \
         -aprop appArtifactRepository.properties \
@@ -470,6 +508,10 @@ Parameter | Description
                                                  in the package tar file. (Optional)                                                                                              
 
   -wd,--generateWaziDeployAppManifest            Flag indicating to generate and add the Wazi Deploy Application Manifest file
+  
+  -s,--sbom                                      Flag to control the generation of SBOM
+  
+  -sa,--sbomAuthor <sbomAuthor>                  Author of the SBOM, in form "Name <email>"
 
   -h,--help                                      Prints this message
 

@@ -171,19 +171,12 @@ def addEntryToSBOM(DeployableArtifact deployableArtifact, HashMap<String, String
 	     
     
 def writeSBOM(String sbomFilePath, String fileEncoding) {
-/*	try {
-		FileWriter sbomJSONFileWriter = new FileWriter(sbomFilePath)
-		sbomJSONFileWriter.write(BomGeneratorFactory.createJson(CycloneDxSchema.Version.VERSION_15, sbom).toJsonString());
-		sbomJSONFileWriter.close()
-	} catch (IOException e) {
-	} */
+	println("** Generate SBOM file to $sbomFilePath")
 	
 	File sbomFile = new File(sbomFilePath)
 	sbomFile.withWriter(fileEncoding) { writer ->
 		writer.write(BomGeneratorFactory.createJson(CycloneDxSchema.Version.VERSION_15, sbom).toJsonString())
 	}
-	
-	
 }
 
 def getGitHash(String file, propertiesRecord) {
