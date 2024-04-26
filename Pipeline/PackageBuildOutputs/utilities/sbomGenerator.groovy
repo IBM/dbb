@@ -46,14 +46,18 @@ def initializeSBOM(String sbomAuthor) {
 	Metadata sbomMetadata = new Metadata()
 	sbomMetadata.setLifecycles(sbomLifecycles)
 	// Add the Author is passed on command-line, and well-formed ("Name <email>" expected)
-	def sbomAuthorFields = sbomAuthor.split('<')
-	if (sbomAuthorFields.size() == 2) {
-		OrganizationalContact author = new OrganizationalContact()
-		author.setName(sbomAuthorFields[0].trim())
-		author.setEmail(sbomAuthorFields[1].replaceAll(">", "").trim())
-		sbomMetadata.addAuthor(author)
+	if (sbomAuthor) {
+		def sbomAuthorFields = sbomAuthor.split('<')
+		if (sbomAuthorFields.size() == 2) {
+			OrganizationalContact author = new OrganizationalContact()
+			author.setName(sbomAuthorFields[0].trim())
+			author.setEmail(sbomAuthorFields[1].replaceAll(">", "").trim())
+			sbomMetadata.addAuthor(author)
+		} else {
+			println("*! Warning: SBOM Author not correctly formed, expecting 'Name <email>' format. Skipping.")
+		}
 	} else {
-		println("*! Warning: SBOM Author not correctly formed, expecting 'Name <email>' format. Skipping.")
+		println("*! Warning: empty SBOM Author. It is recommend to specify a valid Author.")	
 	}  
 	sbom.setMetadata(sbomMetadata)
     sbom.setDependencies(new ArrayList<Dependency>())
