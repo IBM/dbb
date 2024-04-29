@@ -196,12 +196,6 @@ props.buildReportOrder.each { buildReportFile ->
 					deployType = output[2].trim()
 					String file = buildRecord.getFile()
 					String owningApplication = file.split('/')[0];
-					def propertiesRecord = buildReport.getRecords().find {
-						try {
-							(it.getType()==DefaultRecordFactory.TYPE_PROPERTIES) &&
-							(it.getProperties().keySet().contains(sbomUtilities.hashPrefix + owningApplication))
-						} catch (Exception e){}
-					}
 					def dependencySetRecord = buildReport.getRecords().find {
 						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(sourceFile)
 					}
@@ -209,7 +203,7 @@ props.buildReportOrder.each { buildReportFile ->
 						container: rootDir,
 						owningApplication: owningApplication,
 						record: buildRecord,
-						propertiesRecord: propertiesRecord,
+						propertiesRecord: buildResultPropertiesRecord,
 						dependencySetRecord: dependencySetRecord
 					])
 				}
@@ -221,12 +215,6 @@ props.buildReportOrder.each { buildReportFile ->
 					def (dataset, member) = getDatasetName(output.dataset)
 					String file = buildRecord.getFile()
 					String owningApplication = file.split('/')[0];
-					def propertiesRecord = buildReport.getRecords().find {
-						try {
-							(it.getType()==DefaultRecordFactory.TYPE_PROPERTIES) &&
-							(it.getProperties().keySet().contains(sbomUtilities.hashPrefix + owningApplication))
-						} catch (Exception e){}
-					}
 					def dependencySetRecord = buildReport.getRecords().find {
 						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 					}
@@ -234,7 +222,7 @@ props.buildReportOrder.each { buildReportFile ->
 						container: dataset,
 						owningApplication: owningApplication,
 						record: buildRecord,
-						propertiesRecord: propertiesRecord,
+						propertiesRecord: buildResultPropertiesRecord,
 						dependencySetRecord: dependencySetRecord
 					])
 				}
@@ -312,10 +300,6 @@ if (buildOutputsMap.size() == 0) {
 		PropertiesRecord propertiesRecord = info.get("propertiesRecord")
 		DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
 		
-		if (props.generateSBOM && props.generateSBOM.toBoolean()) {
-			sbomUtilities.addEntryToSBOM(deployableArtifact, info)
-		}
-
 		def filePath = ""
 		if (record.getType()=="USS_RECORD") {
 			filePath = "$tempLoadDir"
@@ -378,6 +362,9 @@ if (buildOutputsMap.size() == 0) {
 				println "*! Copying $container(${deployableArtifact.file}) could not be copied due to missing mapping. Packaging failed."
 				props.error = "true"
 			}
+		}
+		if (props.generateSBOM && props.generateSBOM.toBoolean() && !props.error) {
+			sbomUtilities.addEntryToSBOM(deployableArtifact, info)
 		}
 	}
 	
