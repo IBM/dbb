@@ -195,13 +195,12 @@ props.buildReportOrder.each { buildReportFile ->
 					file = output[1].trim()
 					deployType = output[2].trim()
 					String file = buildRecord.getFile()
-					String owningApplication = file.split('/')[0];
 					def dependencySetRecord = buildReport.getRecords().find {
 						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(sourceFile)
 					}
 					buildOutputsMap.put(new DeployableArtifact(file, deployType), [
 						container: rootDir,
-						owningApplication: owningApplication,
+						owningApplication: props.application,
 						record: buildRecord,
 						propertiesRecord: buildResultPropertiesRecord,
 						dependencySetRecord: dependencySetRecord
@@ -214,13 +213,12 @@ props.buildReportOrder.each { buildReportFile ->
 					datasetMembersCount++
 					def (dataset, member) = getDatasetName(output.dataset)
 					String file = buildRecord.getFile()
-					String owningApplication = file.split('/')[0];
 					def dependencySetRecord = buildReport.getRecords().find {
 						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 					}
 					buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [
 						container: dataset,
-						owningApplication: owningApplication,
+						owningApplication: props.application,
 						record: buildRecord,
 						propertiesRecord: buildResultPropertiesRecord,
 						dependencySetRecord: dependencySetRecord
@@ -568,7 +566,7 @@ def parseInput(String[] cliArgs){
 
 	cli.b(longOpt:'branch', args:1, argName:'branch', 'The git branch processed by the pipeline')
 	cli.a(longOpt:'application', args:1, argName:'application', 'The name of the application')
-
+	
 	// Artifact repository options ::
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifact Repository server. (Optional)')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package on the Artifact repository server. (Optional)')
@@ -588,9 +586,9 @@ def parseInput(String[] cliArgs){
 	cli.boFile(longOpt:'buildReportOrderFile', args:1, argName:'buildReportOrderFile', 'A file that lists build reports in order of processing')
 	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'List of build reports in order of processing ')
 
-    // SBOM generation
-    cli.s(longOpt:'sbom', argName:'sbom', 'Flag to control the generation of SBOM')
-    cli.sa(longOpt:'sbomAuthor', args:1, argName:'sbomAuthor', 'Author of the SBOM, in form "Name <email>"')
+	// SBOM generation
+	cli.s(longOpt:'sbom', argName:'sbom', 'Flag to control the generation of SBOM')
+	cli.sa(longOpt:'sbomAuthor', args:1, argName:'sbomAuthor', 'Author of the SBOM, in form "Name <email>"')
 
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
