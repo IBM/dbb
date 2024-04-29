@@ -554,7 +554,7 @@ A convenient way is to specify the paths to these libraries through the `-cp` fl
 
 To enable the generation of the SBOM file, the `-s/--sbom` flag must be passed.
 It is recommended to specify an author for the SBOM, even when generated through the pipeline, through the`-sa/--sbomAuthor` parameter.
-For instance, it could be the Release Manager of the application for which the pipeline is running. 
+For instance, it could be the Release Manager or the Application Owner of the application for which the pipeline is running. 
 
 As an example, you can invoke the SBOM generation with the following command:
 
