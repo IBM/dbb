@@ -366,7 +366,7 @@ if (buildOutputsMap.size() == 0) {
 		}
 	}
 	
-	if (props.generateSBOM && props.generateSBOM.toBoolean()) {
+	if (props.generateSBOM && props.generateSBOM.toBoolean() && !props.error) {
 		sbomUtilities.writeSBOM("$tempLoadDir/sbom.json", props.fileEncoding)    
 	}
 	

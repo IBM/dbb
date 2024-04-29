@@ -32,11 +32,11 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
    	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type.
    	  2. Artifacts having the same member name and the same deploy type will be present only once in the generated package, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
 
-3. **(Optionally) Generate Software-Bill-Of-Material (SBOM) file **
+3. **(Optionally) Generate Software-Bill-Of-Material (SBOM) file**
    1. Based on the collected build outputs information, an SBOM file following the [CycloneDX](https://cyclonedx.org/) specification is created.  
    More details can be found [in this section](#software-bill-of-material-sbom-generation).
 
-4. **(Optionally) Generate Wazi Deploy application manifest **
+4. **(Optionally) Generate Wazi Deploy application manifest**
    1. Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) is generated and saved as wazideploy_manifest.yml.
 
 5. **Create TAR file**
