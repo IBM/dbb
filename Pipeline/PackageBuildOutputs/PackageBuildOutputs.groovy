@@ -54,7 +54,8 @@ import com.ibm.jzos.ZFile;
 @Field Properties props = null
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
-@Field def sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
+@Field def sbomUtilities
+
 
 props = parseInput(args)
 
@@ -84,8 +85,8 @@ def String tarFileLabel = "Default"
 // Object to store scm information for Wazi Deploy Application Manifest file
 HashMap<String,String> scmInfo = new HashMap<String, String>()
 
-
 if (props.generateSBOM && props.generateSBOM.toBoolean()) {
+	sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
 	sbomUtilities.initializeSBOM(props.sbomAuthor)
 }
 
