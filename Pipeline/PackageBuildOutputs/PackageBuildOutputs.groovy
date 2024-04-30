@@ -693,6 +693,11 @@ def parseInput(String[] cliArgs){
 		assert props.workDir : "Missing property build work directory"
 		assert props.copyModeMap : "Missing property package.copyModeMap"
 
+		// validate SBOM options
+		if (props.generateSBOM && props.generateSBOM.toBoolean()){
+			assert props.application : "Missing property application"
+		}
+
 		// validate publishing options
 		if (props.publish && props.publish.toBoolean()){
 			assert props.get("artifactRepository.url") : "Missing artifact repository URL"
