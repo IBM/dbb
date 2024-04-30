@@ -1,8 +1,8 @@
-# Package Build Outputs in tar format
+# Package Build Outputs in TAR format
 
 ## Summary
 
-This sample shows how to create a tar-file with the build outputs based on the DBB Build Report after a successful build.
+This sample shows how to create a TAR file with the build outputs based on the DBB Build Report after a successful build.
 
 The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and to pull them into the build process. The `ArtifactRepositoryHelpers.groovy` allow you to upload and download packages from Artifactory. 
 The `ArtifactRepositoryHelpers` script is a very simple implementation sufficient for a show case, **_we recommend_** to use the Artifactory publishers which are available with your CI pipeline coordinator.
@@ -12,7 +12,7 @@ This sample Groovy script to package build outputs:
 - Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
   - It processes the MVSExec, CopyToPDS and the USS_Record types
 - (Optionally) generates the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) file.
-- Copies outputs to a temporary directory on Unix System Services and creates a tar file based on the temporary directory.
+- Copies outputs to a temporary directory on Unix System Services and creates a TAR file based on the temporary directory.
 
 The support for zFS files in the packaging process is performed through the use of an `USS_RECORD` type record in the DBB BuildReport. 
 
@@ -24,27 +24,30 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
    1. Read [command line parameters](#command-line-options-summary---packagebuildoutputs).
    1. Read the properties file that is passed via `--packagingPropertiesFile`.
 
-1. **Process the DBB build report(s)**
+2. **Process the DBB build report(s)**
    1. If one or multiple DBB build reports are passed to the script via either `--buildReportOrder` or `--buildReportOrderFile`, the script loops through the provided DBB build reports. If no build report is specified, the script reads DBB's `BuildReport.json` file from the pipeline work directory specified by the `--workDir` parameter. For each build report, the following steps are performed:
       1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*.
       2. Remove output entries that have no `deployType` set and remove unwanted outputs such as outputs with the `deployType` equal to `ZUNIT-TESTCASE`.
-   2. If processing multiple build reports, a cumulative hashmap of output records is created to be able to combine outputs from multiple pipeline builds into a single tar file.
+   2. If processing multiple build reports, a cumulative hashmap of output records is created to be able to combine outputs from multiple pipeline builds into a single TAR file.
    	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type.
    	  2. Artifacts having the same member name and the same deploy type will be present only once in the generated package, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
 
-1. **(Optionally) Generate Wazi Deploy application manifest **
+3. **(Optionally) Generate Software-Bill-Of-Material (SBOM) file**
+   1. Based on the collected build outputs information, an SBOM file following the [CycloneDX](https://cyclonedx.org/) specification is created.  
+   More details can be found [in this section](#software-bill-of-material-sbom-generation).
+
+4. **(Optionally) Generate Wazi Deploy application manifest**
    1. Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) is generated and saved as wazideploy_manifest.yml.
 
-2. **Create Tar-file**
+5. **Create TAR file**
     1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
-    2. It packages these load files into a tar file, and adds the BuildReport.json and optionally other build logs from the build workspace.
+    2. It packages these load files into a TAR file, and adds the BuildReport.json and optionally other build logs from the build workspace.
 
-3. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
-    1. Publishes the tar file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. Consider a Nexus RAW, or a Artifactory Generic as the repository type. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
+6. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
+    1. Publishes the TAR file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. Consider a Nexus RAW, or a Artifactory Generic as the repository type. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
 
 Notes: 
 * The script doesn't manage the deletions of artifacts. Although they are reported in the DBB Build Reports, deletions are not handled by this script.
-
 
 ## Invocation samples 
 
@@ -347,7 +350,7 @@ Overview of the various ways to specify the structure within the repository:
 The password for the artifact repository can also represent the APIKey. It is recommended to store that inside the secret store of your pipeline orchestrator.
 
 ```
-groovyz /var/jenkins/pipeline/PublishLoadModule.groovy \
+groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy \
         --workDir /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025 \
         -p \
         -aprop appArtifactRepository.properties \
@@ -470,6 +473,10 @@ Parameter | Description
                                                  in the package tar file. (Optional)                                                                                              
 
   -wd,--generateWaziDeployAppManifest            Flag indicating to generate and add the Wazi Deploy Application Manifest file
+  
+  -s,--sbom                                      Flag to control the generation of SBOM
+  
+  -sa,--sbomAuthor <sbomAuthor>                  Author of the SBOM, in form "Name <email>"
 
   -h,--help                                      Prints this message
 
@@ -517,6 +524,46 @@ usage: ArtifactRepositoryHelpers.groovy [options]
  -U,--user <arg>              Artifactory user id
  -v,--verbose                 Flag to turn on script trace
 ```
+
+
+## Software-Bill-Of-Material (SBOM) generation
+
+This `PackageBuildOutputs.groovy` script is able to generate an SBOM file based on the information contained in the DBB Build Report.
+It will process the different records of the DBB Build Report, to collect each deployable artifact's required properties and dependencies when documenting a valid SBOM file.
+
+This sample script is using the [CycloneDX](https://cyclonedx.org/) specification to document the necessary elements of the SBOM file.
+The output file is written in JSON, following the [Cyclone DX 1.5](https://cyclonedx.org/docs/1.5/json/) schema.
+
+To implement the correct objects when generating an SBOM file, the script uses the [CycloneDX Java library](https://github.com/CycloneDX/cyclonedx-core-java).
+This library makes use of other libraries like [Jackson](https://github.com/FasterXML/jackson), which also comes with dependencies.
+The list of required libraries are:
+
+- cyclonedx-core-java (8.x version)
+- jackson-core (tested with 2.16.1 version)
+- jackson-annotations (tested with 2.16.1 version)
+- jackson-databind (tested with 2.16.1 version)
+- jackson-dataformat-xml (tested with 2.16.1 version)
+- json-schema-validator (tested with 1.2.0 version)
+- packageurl-java (tested with 1.5.0 version)         
+
+These libraries (available as JAR files) must be made available on z/OS Unix System Services.
+The easiest way it to download the JAR packages manually (or through maven) and upload them to a specific location on z/OS, where the script can use them.
+
+Also, these libraries must be available in the Java CLASSPATH.
+A convenient way is to specify the paths to these libraries through the `-cp` flag when invoking DBB.
+
+To enable the generation of the SBOM file, the `-s/--sbom` flag must be passed.
+It is recommended to specify an author for the SBOM, even when generated through the pipeline, through the`-sa/--sbomAuthor` parameter.
+For instance, it could be the Release Manager or the Application Owner of the application for which the pipeline is running. 
+
+As an example, you can invoke the SBOM generation with the following command:
+
+~~~~
+/usr/lpp/dbb/v2r0/bin/groovyz -cp /u/mdalbin/SBOM/cyclonedx-core-java-8.0.3.jar:/u/mdalbin/SBOM/jackson-annotations-2.16.1.jar:/u/mdalbin/SBOM/jackson-core-2.16.1.jar:/u/mdalbin/SBOM/jackson-databind-2.16.1.jar:/u/mdalbin/SBOM/jackson-dataformat-xml-2.16.1.jar:/u/mdalbin/SBOM/json-schema-validator-1.2.0.jar:/u/mdalbin/SBOM/packageurl-java-1.5.0.jar /u/mdalbin/SBOM/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputsWithSBOM.groovy --workDir /u/ado/workspace/MortgageApplication/feature/consumeRetirementCalculatorServiceImpacts/build-20240312.1/logs --tarFileName MortgageApplication.tar --addExtension -s -sa "David Gilmour <david.gilmour@pinkfloyd.com>"
+~~~~ 
+
+By default, the SBOM file is generated in the `tempPackageDir` and named `sbom.json`.
+This way, it is automatically packaged in the TAR file that is created by the script, ensuring the package and its content are not tampered and correctly documented. 
 
 
 ## Useful reference material
