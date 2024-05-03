@@ -112,7 +112,12 @@ def addEntryToSBOM(DeployableArtifact deployableArtifact, HashMap<String, Object
 	// Add the source file itself
 	Component sourceFileComponent = new Component()
 	sourceFileComponent.setType(Component.Type.APPLICATION)
-	String sourceFile = record.getFile()
+	String sourceFile
+	if (record.getType()=="USS_RECORD") {
+		sourceFile = record.getAttribute("file")
+	} else {
+		sourceFile = record.getFile()
+	}
 	sourceFileComponent.setName(sourceFile)
 	sourceFileComponent.setBomRef(newBomRef())
 	ArrayList<Property> sourceFileProperties = new ArrayList<Property>()

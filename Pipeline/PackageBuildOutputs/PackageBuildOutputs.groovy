@@ -195,9 +195,8 @@ props.buildReportOrder.each { buildReportFile ->
 					rootDir = output[0].trim()
 					file = output[1].trim()
 					deployType = output[2].trim()
-					String file = buildRecord.getFile()
 					def dependencySetRecord = buildReport.getRecords().find {
-						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(sourceFile)
+						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 					}
 					buildOutputsMap.put(new DeployableArtifact(file, deployType), [
 						container: rootDir,
