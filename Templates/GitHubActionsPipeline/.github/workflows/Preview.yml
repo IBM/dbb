@@ -13,7 +13,7 @@ on:
 
 env:
     uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_f${{github.run_number }} # adding a p to before the number,
-    # to avoid a "fatal: destination path 'MortgageApplication' already exists and is not an empty directory." error
+    # to avoid an error caused by repeated build numbers 
     pipelineType: ${{ inputs.pipelineType }}
     branch : ${{ github.ref_name }} 
     application: ${{ github.event.repository.name }}

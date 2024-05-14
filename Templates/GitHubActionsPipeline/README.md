@@ -74,7 +74,7 @@ Variable | Description | File(s)
 --- | --- | ---
 zosHostname | zOS - Host name / IP address for SFTP connection | Feature.yml, Mainline.yml, Release.yml, deployToEnv.yml 
 zosSFTPUser | zOS - Host user for SFPT connection | Feature.yml, Mainline.yml, Release.yml, deployToEnv.yml 
-githubAccessToken | A GitHub Personal Access Token used for authentication, matching the Personal Access Token Secret | pipelineController.yml 
+githubAccessToken | A GitHub Personal Access Token used for authentication, matching the Personal Access Token Secret. In the template, this is secrets.JNEMEC_PAT | pipelineController.yml 
 
 ## Pipeline usage 
 
@@ -89,11 +89,11 @@ When used as intented, the combination of pipeline definitions supports:
 ###### PH, add diagram of how these interact with each other, with short description of what they do. 
 
  - [pipelineController.yml](./workflows/pipelineController.yml)
-    - This pipeline is used to manually trigger other pipelines, as it is the only pipeline with a `workflow_dispatch` trigger. 
+    - This pipeline is used to trigger other pipelines, as it is the only pipeline with a `workflow_dispatch` trigger. 
  - [Feature.yml](./workflows/Feature.yml)
     - Pipeline for feature branch.
- - [Mainline.yml](./workflows/Mainline.yml)
-    - Pipeline for main branch.
+ - [Build.yml](./workflows/Build.yml)
+    - The build pipeline.
  - [Release.yml](./workflows/Release.yml)
     - Pipeline for release branch.
  - [deployToEnv.yml](./workflows/deployToEnv.yml)
@@ -129,7 +129,7 @@ The feature branch pipeline peforms the following:
  - Build 
  - Package & publish package 
 
-This pipeline can be run by manually running the pipelineController, with *pipelineType* as `preview`.
+This pipeline runs automatically when pushing to a feature branch.
 
 Overview of the pipeline:
 ###### PH, need to touch-up
@@ -144,12 +144,12 @@ The basic build pipeline for integration branches performs the following:
  - Deploy to the integration test environment
  - Cleanup
 
-This is the default pipeline, and therefore should run automatically whenever there is a new commit to the repository. 
+This is the default pipeline, and runs automatically whenever there is a new commit to the main branch. 
 Additionally, this pipleine can be run by manually running the pipelineController, with *pipelineType* as `build`.
 
 Overview of the pipeline:
 ###### PH, need to touch-up
-![Mainline Pipeline Diagram](mainline-pipeline.png)
+![Build Pipeline Diagram](build-pipeline.png)
 
 ### Release pipeline
 
@@ -169,7 +169,7 @@ The release pipeline performs the following:
    - This needs to be triggered manually 
 
 This pipeline can be run by manually running the pipelineController, with *pipelineType* as `release`.
-Additionally, this pipeline will automatically calculate the release tag based on the information provided in the [Baseline Reference Config](baselineReference.config) file, store the calculated tag in an artifactVersion artifact, tag a release candidate, and the final release deployed to production. 
+Additionally, this pipeline will automatically calculate the release tag based on the information provided in the Baseline Reference file, store the calculated tag in an artifactVersion artifact, tag a release candidate, and the final release deployed to production. 
 
 Overview of the pipeline:
 ###### PH, need to touch-up
@@ -187,17 +187,13 @@ This is a non-comprehensive list of items that are either a known issue, a work 
 
 ### High Importance 
 - in the release pipeline, deploy-acceptance, deploy-production, and cleanup need manual triggers
-- automatic triggering of workflows
-   - ensuring the correct githubAccessToken is provided, as currently it is only given to workflows via the pipeline controller 
 
 ### Medium Importance 
-- pipelineController.yml needs proper checks for if a pipeline should be allowed to run
-- updating the baseline reference file 
+- the baseline reference file is not automatically updated when a new version is released
 - the `verbose` flag is not implemented on the pipeline controller 
 
 ### Low Importance 
 - code cleanup
-- deployToEnv, nextReleaseName
 - Embedded images aren't displaying correctly 
 
 ## Reference & additional resources 

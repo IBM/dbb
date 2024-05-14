@@ -1,12 +1,5 @@
 name: Feature
 on:
-    workflow_dispatch:
-        inputs:
-            pipelineType:
-                description: Pipeline Type
-                default: preview
-                type: string
-                required: false
     workflow_call:
         secrets:
             githubAccessToken:
@@ -20,7 +13,7 @@ on:
 
 env:
     uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_f${{github.run_number }} # adding an f to before the number,
-    # to avoid a "fatal: destination path 'MortgageApplication' already exists and is not an empty directory." error
+    # to avoid an error caused by repeated build numbers 
     pipelineType: ${{ inputs.pipelineType }}
     branch : ${{ github.ref_name }} 
     application: ${{ github.event.repository.name }}

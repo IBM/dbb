@@ -1,34 +1,32 @@
-# this is supposed to be equivalent to deployment_deployreleasepackage.yml. I'm choosing to put it together by hand instead of 
-# renaming the original file for understanding and organization
 name: deployToEnvironment
 on:
     workflow_call:
-      secrets:
-        githubAccessToken:
-            required: true
-      inputs:
-        environmentName:
-          required: false
-          default: "."
-          type: string
-        pipelineType:
-          description: Pipeline Type
-          default: build
-          type: string
-          required: false
-        uniqueWorkspaceId: 
-          required: false
-          default: "."
-          type: string
-        releaseType:
-          description: Release Type
-          default: patch
-          type: string
-          required: false
+        secrets:
+            githubAccessToken:
+                required: true
+        inputs:
+            environmentName:
+                required: false
+                default: "."
+                type: string
+            pipelineType:
+                description: Pipeline Type
+                default: build
+                type: string
+                required: false
+            uniqueWorkspaceId: 
+                required: false
+                default: "."
+                type: string
+            releaseType:
+                description: Release Type
+                default: patch
+                type: string
+                required: false
 
 env:
     branch : ${{ github.ref_name }} 
-    application: "MortgageApplication" #"${{ github.repository }}"
+    application: ${{ github.event.repository.name }}
     azureArtifactName: "${{ github.repository }}.tar"    
     zosHostname: EOLEB7.dat.ibm.com
     zosSFTPUser: GITHUB@10.3.20.201

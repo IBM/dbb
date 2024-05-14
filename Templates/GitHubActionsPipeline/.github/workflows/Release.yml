@@ -1,28 +1,28 @@
 name: Release
 on:
-  workflow_call:
-    secrets:
-      githubAccessToken:
-        required: true
-    inputs:
-      pipelineType:
-        description: Pipeline Type
-        default: release
-        type: string
-        required: false
-      releaseType:
-        description: Release Type
-        default: patch
-        type: string
-        required: false
+    workflow_call:
+        secrets:
+            githubAccessToken:
+                required: true
+        inputs:
+            pipelineType:
+                description: Pipeline Type
+                default: release
+                type: string
+                required: false
+            releaseType:
+                description: Release Type
+                default: patch
+                type: string
+                required: false
 
              
 env:
     uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }} # adding an r to before the number,
-    # to avoid a "fatal: destination path 'MortgageApplication' already exists and is not an empty directory." error
+    # to avoid an error caused by repeated build numbers 
     branch : ${{ github.ref_name }} 
     application: ${{  github.event.repository.name  }}
-    pipelineType: release #${{ inputs.pipelineType }}
+    pipelineType: ${{ inputs.pipelineType }}
     packageName: ${{github.run_id}}
     zosHostname: EOLEB7.dat.ibm.com
     zosSFTPUser: GITHUB@10.3.20.201
@@ -97,38 +97,20 @@ jobs:
         needs: 
             - Package
         uses: ./.github/workflows/deployToEnv.yml
+        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
           environmentName: Integration
           pipelineType: ${{inputs.pipelineType}}
           uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }}
         secrets:
           githubAccessToken: ${{ secrets.githubAccessToken }} 
-#        runs-on: self-hosted
-#        steps:
-#            - name: Generate deployment plan
-#              run: ssh ${{ env.zosSFTPUser}} ". ./.profile && mkdir -p ${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs && wazideploy-generate.sh -w ${{ env.uniqueWorkspaceId }} -i ${{ env.application }}.tar -r deploy-logs/deployment-plan-report.html"
-#
-#            - name: Deploy to integration
-#              run: ssh ${{ env.zosSFTPUser}}  ". ./.profile && wazideploy-deploy.sh -w ${{ env.uniqueWorkspaceId }} -e EOLEB7-${{ env.application }}-Integration.yaml -i ${{ env.application }}.tar -l deploy-logs/evidences/evidence.yaml"
-# 
-#            - name: Generate and publish deployment report 
-#              run: |
-#                ssh ${{ env.zosSFTPUser}} ". ./.profile && wazideploy-evidence.sh -w ${{ env.uniqueWorkspaceId }} -l deploy-logs/evidence.yaml -o deploy-logs/deployment-report.html"
-#                rm -rf "${{ runner.temp }}/deploy-logs"
-#                mkdir "${{ runner.temp }}/deploy-logs"
-#                sftp -r ${{ env.zosSFTPUser}}:${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs/* "\"${{ runner.temp }}/deploy-logs\""
       
     Deploy-acceptance:
       # this is supposed to only be triggered manually 
-      # triggering a job manually does not seem to be very straightforward in GitHub Actions 
-      # an environment needs to be set up, a reviewer needs to be added to the environment, and the job needs to be set up to require review
-      # https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
-      # https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
-      # I don't have access to create an environment, so this is something that needs to be addressed during a troubleshooting session 
-      # in the meantime, ignore manual trigger requirement, focus on getting it to work with deployment_deployreleasepackage.yml
       needs:
         - Deploy-integration
       uses: ./.github/workflows/deployToEnv.yml
+      # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
       with:
         environmentName: Acceptance
         pipelineType: ${{inputs.pipelineType}}
@@ -142,6 +124,7 @@ jobs:
         needs:
           - Deploy-acceptance
         uses: ./.github/workflows/deployToEnv.yml
+        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
           environmentName: Production
           pipelineType: ${{inputs.pipelineType}}

@@ -1,6 +1,6 @@
-name: Mainline
+name: Build
 on:
-    workflow_call: # for manual run from pipelineController
+    workflow_call:
         secrets:
             githubAccessToken:
                 required: true
@@ -12,8 +12,8 @@ on:
                 required: false
 
 env:
-    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_m${{github.run_number }} # adding an m to before the number,
-    # to avoid a "fatal: destination path 'MortgageApplication' already exists and is not an empty directory." error
+    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_b${{github.run_number }} # adding a b to before the number,
+    # to avoid an error caused by repeated build numbers 
     branch : ${{ github.ref_name }} 
     application: ${{ github.event.repository.name }}
     pipelineType: ${{ inputs.pipelineType }}
