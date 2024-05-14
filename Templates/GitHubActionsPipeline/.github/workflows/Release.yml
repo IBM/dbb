@@ -1,0 +1,160 @@
+name: Release
+on:
+  workflow_call:
+    secrets:
+      githubAccessToken:
+        required: true
+    inputs:
+      pipelineType:
+        description: Pipeline Type
+        default: release
+        type: string
+        required: false
+      releaseType:
+        description: Release Type
+        default: patch
+        type: string
+        required: false
+
+             
+env:
+    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }} # adding an r to before the number,
+    # to avoid a "fatal: destination path 'MortgageApplication' already exists and is not an empty directory." error
+    branch : ${{ github.ref_name }} 
+    application: ${{  github.event.repository.name  }}
+    pipelineType: release #${{ inputs.pipelineType }}
+    packageName: ${{github.run_id}}
+    zosHostname: EOLEB7.dat.ibm.com
+    zosSFTPUser: GITHUB@10.3.20.201
+
+jobs:
+    Setup:
+        runs-on: self-hosted
+        steps:
+          - name: CI-CD pipeline parameter printout
+            run: |
+                echo " "
+                echo "Following are the CI-CD pipeline parameters"
+                echo "*******************************************"
+                echo "uniqueWorkspaceId                  = ${{ env.uniqueWorkspaceId}}"
+                echo "branch                             = ${{ env.branch}}"
+                echo "application                        = ${{ env.application}}"
+                echo "pipelineType                       = ${{ env.pipelineType}}"
+                echo "packageName                        = ${{ env.packageName}}"
+                echo "zosHostname                        = ${{ env.zosHostname}}"
+                echo "zosSFTPUser                        = ${{ env.zosSFTPUser}}"
+          - name: Clone Repo to z/OS Unix System Services
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && gitClone.sh -w ${{ env.uniqueWorkspaceId }} -r https://${{ secrets.githubAccessToken }}@github.com/${{ github.repository }}.git -b ${{ env.branch }}" 
+
+    Build:
+        needs:
+            - Setup
+        runs-on: self-hosted
+        steps:
+          - name: Build git repo
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && dbbBuild.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -b ${{ env.branch }} -p ${{env.pipelineType}}"
+
+    PrepareBuildLogs:
+        needs: 
+            - Build
+        runs-on: self-hosted
+        steps:
+          - name: Prepare Logs
+            run: |
+                ssh ${{ env.zosSFTPUser}} ". ./.profile && prepareLogs.sh -w ${{ env.uniqueWorkspaceId }}"  
+                rm -rf "${{ runner.temp }}/build-logs" 
+                mkdir "${{ runner.temp }}/build-logs" 
+                sftp ${{ env.zosSFTPUser}}:${{ env.uniqueWorkspaceId }}/*.tar "\"${{ runner.temp }}/build-logs\""
+                tar -xvf "${{ runner.temp }}/build-logs/logs.tar" -C "${{ runner.temp }}/build-logs"
+
+          - name: UploadBuildLogs
+            uses: actions/upload-artifact@v4
+            with:
+              name: build_${{github.run_number }}                        # Name used for artifact when it is uploaded
+              path: ${{ runner.temp }}/build-logs                        # Path to build logs artifacts
+              retention-days: 1
+          
+          - name: checkout
+            uses: actions/checkout@v4.1.0
+          
+          - name: Create release candidate tag
+            if: success() && env.pipelineType == 'release'
+            uses: "./.github/actions/tagging_createreleasecandidate" 
+            with:
+              releaseType: ${{inputs.releaseType}}
+              runnerWorkspace: ${{ env.uniqueWorkspaceId}}
+              githubAccessToken: ${{ secrets.githubAccessToken }} 
+
+    Package:
+        needs:
+            - PrepareBuildLogs
+        runs-on: self-hosted
+        steps:
+            - name: Package Build Outputs
+              run: ssh ${{ env.zosSFTPUser}} ". ./.profile && packageBuildOutputs.sh -w ${{ env.uniqueWorkspaceId }} -t ${{ env.application }}.tar -a ${{ env.application }} -b ${{ env.branch }} -p ${{env.pipelineType}} -v ${{ env.packageName }} "
+
+    Deploy-integration:
+        needs: 
+            - Package
+        uses: ./.github/workflows/deployToEnv.yml
+        with:
+          environmentName: Integration
+          pipelineType: ${{inputs.pipelineType}}
+          uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }}
+        secrets:
+          githubAccessToken: ${{ secrets.githubAccessToken }} 
+#        runs-on: self-hosted
+#        steps:
+#            - name: Generate deployment plan
+#              run: ssh ${{ env.zosSFTPUser}} ". ./.profile && mkdir -p ${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs && wazideploy-generate.sh -w ${{ env.uniqueWorkspaceId }} -i ${{ env.application }}.tar -r deploy-logs/deployment-plan-report.html"
+#
+#            - name: Deploy to integration
+#              run: ssh ${{ env.zosSFTPUser}}  ". ./.profile && wazideploy-deploy.sh -w ${{ env.uniqueWorkspaceId }} -e EOLEB7-${{ env.application }}-Integration.yaml -i ${{ env.application }}.tar -l deploy-logs/evidences/evidence.yaml"
+# 
+#            - name: Generate and publish deployment report 
+#              run: |
+#                ssh ${{ env.zosSFTPUser}} ". ./.profile && wazideploy-evidence.sh -w ${{ env.uniqueWorkspaceId }} -l deploy-logs/evidence.yaml -o deploy-logs/deployment-report.html"
+#                rm -rf "${{ runner.temp }}/deploy-logs"
+#                mkdir "${{ runner.temp }}/deploy-logs"
+#                sftp -r ${{ env.zosSFTPUser}}:${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs/* "\"${{ runner.temp }}/deploy-logs\""
+      
+    Deploy-acceptance:
+      # this is supposed to only be triggered manually 
+      # triggering a job manually does not seem to be very straightforward in GitHub Actions 
+      # an environment needs to be set up, a reviewer needs to be added to the environment, and the job needs to be set up to require review
+      # https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
+      # https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
+      # I don't have access to create an environment, so this is something that needs to be addressed during a troubleshooting session 
+      # in the meantime, ignore manual trigger requirement, focus on getting it to work with deployment_deployreleasepackage.yml
+      needs:
+        - Deploy-integration
+      uses: ./.github/workflows/deployToEnv.yml
+      with:
+        environmentName: Acceptance
+        pipelineType: ${{inputs.pipelineType}}
+        uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }}
+      secrets:
+          githubAccessToken: ${{ secrets.githubAccessToken }} 
+        
+
+    Deploy-production:
+        #this is supposed to only be triggered manually
+        needs:
+          - Deploy-acceptance
+        uses: ./.github/workflows/deployToEnv.yml
+        with:
+          environmentName: Production
+          pipelineType: ${{inputs.pipelineType}}
+          uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }}
+          releaseType: ${{inputs.releaseType}}
+        secrets:
+          githubAccessToken: ${{ secrets.githubAccessToken }} 
+
+    Cleanup:
+        needs:
+            - Deploy-production
+        runs-on: self-hosted
+        if: always()
+        steps:
+          - name: Cleanup Build Environment
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && deleteWorkspace.sh -w ${{ env.uniqueWorkspaceId }}"

@@ -1,0 +1,95 @@
+name: Pipeline_Controller
+# since there's issues with having workflow_dispatch working on multiple .yml files, 
+# I'm hoping to have this be a pipeline that can trigger all other pipelines 
+# that would normally have their own functional workflow_dispatch trigger
+on: 
+    workflow_dispatch:
+        inputs:
+            pipelineType:
+                description: Pipeline Type
+                default: build
+                type: string
+                required: false
+            releaseType:
+                description: Release Type 
+                default: n/a
+                type: choice
+                options:
+                    - patch
+                    - minor
+                    - major
+                    - n/a
+                required: false
+    push:
+        branches:
+            - feature/*
+            - release/*
+            - hotfix/*
+            - epic/*
+            - main
+jobs:
+
+    controller:
+        runs-on: self-hosted
+        steps:
+            - name: Pipeline type
+              run: | # something that should be covered by a verbose flag 
+                echo "This is the pipeline controller"               
+#                echo "The current pipeline type is ${{inputs.pipelineType}}"
+#                echo "Is this a feature branch? ${{startsWith(github.ref_name, 'feature/')}}"
+#                echo "Is this a release branch?? ${{startsWith(github.ref_name, 'release/')}}"
+#                echo "inputs.pipelineType == 'preview'? ${{inputs.pipelineType == 'preview'}}"
+#                echo "inputs.pipelineType == 'build'? ${{inputs.pipelineType == 'build'}}"
+#                echo "inputs.pipelineType == 'release'? ${{inputs.pipelineType == 'release'}}"
+            - name: Feature Branch Check
+              if: ${{inputs.pipelineType == 'preview' && github.ref_name != 'feature/**' }}
+              run: | # what should the rc be?
+                  ERRMSG="The preview pipeline type can only be used on feature branches"
+                  echo $ERRMSG
+            - name: Release Branch Check
+              if: ${{inputs.pipelineType == 'release' && github.ref_name != 'release/**'}}
+              run: | # what should the rc be?
+                  ERRMSG="The release pipeline type can only be used on release branches"
+                  echo $ERRMSG
+    feature: 
+        needs: 
+            - controller
+        # this should automatically run on push to feature branches
+        if: ${{startsWith(github.ref_name, 'feature/')}}
+        uses: ./.github/workflows/Feature.yml
+        with:
+            pipelineType: preview
+        secrets:
+            githubAccessToken: ${{ secrets.JNEMEC_PAT }} 
+
+    mainline: 
+        needs: 
+            - controller
+        # this should run on manual trigger with pipelineType = build and automatic trigger
+        if: ${{(inputs.pipelineType == 'build' || inputs.pipelineType == '') && (startsWith(github.ref_name, 'feature/') == false)}}
+        uses: ./.github/workflows/Mainline.yml
+        with:
+            pipelineType: build
+        secrets:
+            githubAccessToken: ${{ secrets.JNEMEC_PAT }} 
+        
+    release: 
+        needs: 
+            - controller
+        if: ${{ inputs.pipelineType == 'release' && startsWith(github.ref_name, 'main')}}
+        uses: ./.github/workflows/Release.yml
+        with:
+            pipelineType: release
+            releaseType: ${{inputs.releaseType}}
+        secrets:
+            githubAccessToken: ${{ secrets.JNEMEC_PAT}} 
+
+    preview:
+        needs:
+            - controller
+        if: ${{ inputs.pipelineType == 'preview' }}
+        uses: ./.github/workflows/Preview.yml
+        with:
+            pipelineType: preview
+        secrets:
+            githubAccessToken: ${{ secrets.JNEMEC_PAT}} 
