@@ -1,7 +1,4 @@
 name: Pipeline_Controller
-# since there's issues with having workflow_dispatch working on multiple .yml files, 
-# I'm hoping to have this be a pipeline that can trigger all other pipelines 
-# that would normally have their own functional workflow_dispatch trigger
 on: 
     workflow_dispatch:
         inputs:
@@ -33,17 +30,17 @@ jobs:
         runs-on: self-hosted
         steps:
             - name: Pipeline type
-              run: | # something that should be covered by a verbose flag 
+              run: | 
                 echo "This is the pipeline controller"               
 #                echo "The current pipeline type is ${{inputs.pipelineType}}"
 #                echo "Is this a feature branch? ${{startsWith(github.ref_name, 'feature/')}}"
-#                echo "Is this a release branch?? ${{startsWith(github.ref_name, 'release/')}}"
+#                echo "Is this a release branch? ${{startsWith(github.ref_name, 'release/')}}"
 #                echo "inputs.pipelineType == 'preview'? ${{inputs.pipelineType == 'preview'}}"
 #                echo "inputs.pipelineType == 'build'? ${{inputs.pipelineType == 'build'}}"
 #                echo "inputs.pipelineType == 'release'? ${{inputs.pipelineType == 'release'}}"
             - name: Release Branch Check
               if: ${{inputs.pipelineType == 'release' && (startsWith(github.ref_name, 'main') == false)  }}
-              run: | # what should the rc be?
+              run: |
                   ERRMSG="The release pipeline should only be run from the main branch"
                   echo $ERRMSG
     feature: 

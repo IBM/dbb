@@ -190,8 +190,7 @@ This is a non-comprehensive list of items that are either a known issue, a work 
 - the `verbose` flag is not implemented on the pipeline controller 
 
 ### Low Importance 
-- code cleanup
-- Embedded images aren't displaying correctly 
+- N/A
 
 ## Reference & additional resources 
 
