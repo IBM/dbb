@@ -36,14 +36,10 @@ The pipeline implements the following stages:
    - [Delete the build workspace](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#411---deleteworkspacesh) on z/OS Unix System Services.
 
 
-
 Depending on your selected deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
 This pipeline uses the GitHub Actions concepts: `Stage`, `Jobs`, [Composite Actions](https://docs.github.com/en/actions/creating-actions/creating-a-composite-action), and the `GitHub CLI`.
 
-(Note for later, not sure what else to add here)
-
-###### PH, summary diagram
 
 ## Prerequsities 
 To leverage this template, access to a GitHub Actions environment is required, and a GitHub Actions runner must be configured to connect to your mainframe environment. 
@@ -85,8 +81,7 @@ When used as intented, the combination of pipeline definitions supports:
  - A [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the main branch.
  - A [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-release-pipeline-with-build-packaging-and-deploy-stages) to build and package the release candidate, including installation to predefined environments such as the production environment. 
 
-
-###### PH, add diagram of how these interact with each other, with short description of what they do. 
+Unlike other pipeline orchestrators, GitHub Actions encourages the use of multiple workflow files that will interact with each other. This template makes use of the following workflow files:
 
  - [pipelineController.yml](./workflows/pipelineController.yml)
     - This pipeline is used to trigger other pipelines, as it is the only pipeline with a `workflow_dispatch` trigger. 
@@ -96,6 +91,8 @@ When used as intented, the combination of pipeline definitions supports:
     - The build pipeline.
  - [Release.yml](./workflows/Release.yml)
     - Pipeline for release branch.
+ - [Preview.yml](./workflows/Preview.yml)
+    - The preview pipeline.
  - [deployToEnv.yml](./workflows/deployToEnv.yml)
     - Reusable pipeline for deploying to a given environment.
  - [actions/createwazideployindex/action.yml](./actions/createwazideployindex/action.yml)
@@ -104,6 +101,9 @@ When used as intented, the combination of pipeline definitions supports:
     - A composite action, used to create the release candidate, and calculate the release version.
  - [actions/tagging_createproductionreleasetag/action.yml](./actions/tagging_createproductionreleasetag/action.yml)
     - A composite action, used to create the production release. 
+
+![pipelineDiagram](pipelineDiagram.png)
+
 
 Please review the pipeline definitions to understand the various triggers for which these pipelines may be executed, and also the conditions when stages, jobs, or steps are executed. 
 
@@ -132,7 +132,6 @@ The feature branch pipeline peforms the following:
 This pipeline runs automatically when pushing to a feature branch.
 
 Overview of the pipeline:
-###### PH, need to touch-up
 ![Feature Pipeline Diagram](feature-pipeline.png)
 
 ### Basic build pipeline for Integration branches 
@@ -148,7 +147,6 @@ This is the default pipeline, and runs automatically whenever there is a new com
 Additionally, this pipleine can be run by manually running the pipelineController, with *pipelineType* as `build`.
 
 Overview of the pipeline:
-###### PH, need to touch-up
 ![Build Pipeline Diagram](build-pipeline.png)
 
 ### Release pipeline
@@ -172,7 +170,6 @@ This pipeline can be run by manually running the pipelineController, with *pipel
 Additionally, this pipeline will automatically calculate the release tag based on the information provided in the Baseline Reference file, store the calculated tag in an artifactVersion artifact, tag a release candidate, and the final release deployed to production. 
 
 Overview of the pipeline:
-###### PH, need to touch-up
 ![Release Pipeline Diagram](release-pipeline.png)
 
 Note: both the basic build pipeline for Integration branches, and the release pipeline deploy to the integration test environment, but go about it in different ways. 
