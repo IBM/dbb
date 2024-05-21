@@ -578,7 +578,7 @@ def parseInput(String[] cliArgs){
 	cli.ad(longOpt:'artifactRepositoryDirectory', args:1, argName:'repoDirectory', 'Directory path in the repository to store the build . (Optional)')
 	cli.aU(longOpt:'artifactRepositoryUser', args:1, argName:'user', 'User to connect to the Artifact repository server. (Optional)')
 	cli.aP(longOpt:'artifactRepositoryPassword', args:1, argName:'password', 'Password to connect to the Artifact repository server. (Optional)')
-	cli.ah(longOpt:'artifactRepositoryHttpClientProtocolVersion', args:1, argName: httpClientProtocolVersion, 'HttpClient.Version setting to override the HTTP protocol version. (Optional)')
+	cli.ah(longOpt:'artifactRepositoryHttpClientProtocolVersion', args:1, argName: 'httpClientProtocolVersion', 'HttpClient.Version setting to override the HTTP protocol version. (Optional)')
 	cli.aprop(longOpt:'artifactRepositoryPropertyFile', args:1, argName:'propertyFile', 'Path of a property file containing application specific artifact repository details. (Optional) ** (Deprecated)')
 
 	// Tracing
