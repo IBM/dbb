@@ -434,6 +434,7 @@ Parameter | Description
 `artifactRepository.directory` | Artifact repository directory to distinguish between prelimiary versions and release candidates, e.q. rel-1.0.0
 `artifactRepository.user` | User name
 `artifactRepository.password` | Password, Personal Access Token
+`artifactRepository.httpClientVersion` | HttpClient.Version setting to override the HTTP protocol version (Optional)
 
 
 ## Command Line Options Summary - PackageBuildOutputs
@@ -508,7 +509,9 @@ Parameter | Description
   
   -aP,--artifactRepositoryPassword <password>
                      Password to connect to the Artifact repository server. (Optional)
-
+  
+  -ah,--artifactRepositoryHttpClientProtocolVersion <protocolVersion>
+                     HttpClient.Version setting to override the HTTP protocol version. (Optional)
 ```
 
 ## Command Line Options Summary - ArtifactRepositoryHelpers
@@ -523,6 +526,7 @@ usage: ArtifactRepositoryHelpers.groovy [options]
  -u,--url <arg>               Artifactory file uri location
  -U,--user <arg>              Artifactory user id
  -v,--verbose                 Flag to turn on script trace
+ -ht,--httpClientVersion      Http Client Protocol Version (Optional)
 ```
 
 

@@ -475,6 +475,7 @@ if (buildOutputsMap.size() == 0) {
 		def apiKey = props.'artifactRepository.user'
 		def user = props.'artifactRepository.user'
 		def password = props.'artifactRepository.password'
+		def httpClientVersion = props.'artifactRepository.httpClientVersion'
 		def repo = props.get('artifactRepository.repo') as String
 
 		//Call the artifactRepositoryHelpers to publish the tar file
@@ -483,7 +484,7 @@ if (buildOutputsMap.size() == 0) {
 		GroovyObject artifactRepositoryHelpers = (GroovyObject) artifactRepositoryHelpersClass.newInstance()
 
 		println ("** Uploading package to Artifact Repository $url...")
-		artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
+		artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean(), httpClientVersion)
 	}
 
 	if (props.error) {
@@ -577,6 +578,7 @@ def parseInput(String[] cliArgs){
 	cli.ad(longOpt:'artifactRepositoryDirectory', args:1, argName:'repoDirectory', 'Directory path in the repository to store the build . (Optional)')
 	cli.aU(longOpt:'artifactRepositoryUser', args:1, argName:'user', 'User to connect to the Artifact repository server. (Optional)')
 	cli.aP(longOpt:'artifactRepositoryPassword', args:1, argName:'password', 'Password to connect to the Artifact repository server. (Optional)')
+	cli.ah(longOpt:'artifactRepositoryHttpClientProtocolVersion', args:1, argName: 'httpClientProtocolVersion', 'HttpClient.Version setting to override the HTTP protocol version. (Optional)')
 	cli.aprop(longOpt:'artifactRepositoryPropertyFile', args:1, argName:'propertyFile', 'Path of a property file containing application specific artifact repository details. (Optional) ** (Deprecated)')
 
 	// Tracing
@@ -652,6 +654,7 @@ def parseInput(String[] cliArgs){
 	if (opts.au) props.'artifactRepository.url' = opts.au
 	if (opts.ar) props.'artifactRepository.repo' = opts.ar
 	if (opts.ad) props.'artifactRepository.directory' = opts.ad
+	if (opts.ah) props.'artifactRepository.httpClientVersion' = opts.ah
 
 	//add any build reports from the file first, then add any from a CLI after.
 	//if no file or CLI, go to default build report
