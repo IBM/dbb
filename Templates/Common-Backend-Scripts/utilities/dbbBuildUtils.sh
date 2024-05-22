@@ -7,7 +7,6 @@ segmentName=""
 computeBuildConfiguration() {
 
     # unset variables
-    Type=""
     HLQ=""
     propOverrides=""
 
