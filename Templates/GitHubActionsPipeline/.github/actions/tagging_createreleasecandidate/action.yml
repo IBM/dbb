@@ -50,8 +50,6 @@ runs:
           secondBranchSegment=$(echo ${{ env.branch }} | awk -F "/" ' { print $2 }') 
           thirdBranchSegment=$(echo ${{ env.branch }} | awk -F "/" ' { print $3 }')
 
-          
-
           case $mainBranchSegment in
             "main")
               baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')

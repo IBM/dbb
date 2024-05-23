@@ -32,12 +32,7 @@ jobs:
             - name: Pipeline type
               run: | 
                 echo "This is the pipeline controller"               
-#                echo "The current pipeline type is ${{inputs.pipelineType}}"
-#                echo "Is this a feature branch? ${{startsWith(github.ref_name, 'feature/')}}"
-#                echo "Is this a release branch? ${{startsWith(github.ref_name, 'release/')}}"
-#                echo "inputs.pipelineType == 'preview'? ${{inputs.pipelineType == 'preview'}}"
-#                echo "inputs.pipelineType == 'build'? ${{inputs.pipelineType == 'build'}}"
-#                echo "inputs.pipelineType == 'release'? ${{inputs.pipelineType == 'release'}}"
+                echo "The current pipeline type is ${{inputs.pipelineType}}"
             - name: Release Branch Check
               if: ${{inputs.pipelineType == 'release' && (startsWith(github.ref_name, 'main') == false)  }}
               run: |
@@ -53,7 +48,7 @@ jobs:
         with:
             pipelineType: preview
         secrets:
-            githubAccessToken: ${{ secrets.JNEMEC_PAT }} 
+            githubAccessToken: ${{ secrets.SAMPLE_PAT }} 
 
     build: 
         needs: 
@@ -65,7 +60,7 @@ jobs:
         with:
             pipelineType: build
         secrets:
-            githubAccessToken: ${{ secrets.JNEMEC_PAT }} 
+            githubAccessToken: ${{ secrets.SAMPLE_PAT }} 
         
     release: 
         needs: 
@@ -77,7 +72,7 @@ jobs:
             pipelineType: release
             releaseType: ${{inputs.releaseType}}
         secrets:
-            githubAccessToken: ${{ secrets.JNEMEC_PAT}} 
+            githubAccessToken: ${{ secrets.SAMPLE_PAT}} 
 
     preview:
         needs:
@@ -88,4 +83,4 @@ jobs:
         with:
             pipelineType: preview
         secrets:
-            githubAccessToken: ${{ secrets.JNEMEC_PAT}} 
+            githubAccessToken: ${{ secrets.SAMPLE_PAT}} 

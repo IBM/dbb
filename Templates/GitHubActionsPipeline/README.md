@@ -68,9 +68,9 @@ The following variables will need to be defined and configured in the pipeline d
 
 Variable | Description | File(s)
 --- | --- | ---
-zosHostname | zOS - Host name / IP address for SFTP connection | Feature.yml, Mainline.yml, Release.yml, deployToEnv.yml 
-zosSFTPUser | zOS - Host user for SFPT connection | Feature.yml, Mainline.yml, Release.yml, deployToEnv.yml 
-githubAccessToken | A GitHub Personal Access Token used for authentication, matching the Personal Access Token Secret. In the template, this is secrets.JNEMEC_PAT | pipelineController.yml 
+zosHostname | zOS - Host name / IP address for SFTP connection | Feature.yml, Build.yml, Release.yml, Preview.yml, deployToEnv.yml 
+zosSFTPUser | zOS - Host user for SFPT connection | Feature.yml, Build.yml, Release.yml, Preview.yml, deployToEnv.yml 
+githubAccessToken | A GitHub Personal Access Token used for authentication, matching the Personal Access Token Secret. In the template, this is secrets.SAMPLE_PAT | pipelineController.yml 
 
 ## Pipeline usage 
 
@@ -131,7 +131,7 @@ The feature branch pipeline peforms the following:
 
 This pipeline runs automatically when pushing to a feature branch.
 
-Overview of the pipeline:
+#### Overview of the pipeline:
 ![Feature Pipeline Diagram](feature-pipeline.png)
 
 ### Basic build pipeline for Integration branches 
@@ -146,7 +146,7 @@ The basic build pipeline for integration branches performs the following:
 This is the default pipeline, and runs automatically whenever there is a new commit to the main branch. 
 Additionally, this pipleine can be run by manually running the pipelineController, with *pipelineType* as `build`.
 
-Overview of the pipeline:
+#### Overview of the pipeline:
 ![Build Pipeline Diagram](build-pipeline.png)
 
 ### Release pipeline
@@ -169,13 +169,12 @@ The release pipeline performs the following:
 This pipeline can be run by manually running the pipelineController, with *pipelineType* as `release`.
 Additionally, this pipeline will automatically calculate the release tag based on the information provided in the Baseline Reference file, store the calculated tag in an artifactVersion artifact, tag a release candidate, and the final release deployed to production. 
 
-Overview of the pipeline:
+#### Overview of the pipeline:
 ![Release Pipeline Diagram](release-pipeline.png)
 
 Note: both the basic build pipeline for Integration branches, and the release pipeline deploy to the integration test environment, but go about it in different ways. 
 The release pipeline does this via invoking the deployToEnv.yml workflow, while the build pipeline does it in a single workflow file. 
 This is done to highlight how the same task can be completed in 2 different ways. 
-
 
 
 ## Known issues / WIP / Missing features
