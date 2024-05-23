@@ -1,4 +1,4 @@
-# Jenkins DevOps pipeline template
+# Jenkins Multibranch pipeline template
 
 This template provides an Jenkinsfile [MultibranchPipeline](MultibranchPipeline) definition as MultiBranch to setup a Jenkins Multibranch pipeline for applications managed in any Git provider.
 
