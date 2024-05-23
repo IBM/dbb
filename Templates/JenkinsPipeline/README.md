@@ -106,7 +106,7 @@ Overview of the pipeline:
 
 ![Jenkins Build Pipeline](images/jenkins-pipeline-basicBuild.png)
 
-Please note the direct links on the Jenkins build result, that take the user to the package and the deployment request:
+Please note the links that are created to the Jenkins build result that take the user to the package and the deployment request within UCD:
 
 ![Jenkins Build Result](images/jenkins-pipeline-basicBuild-result.png)
 
