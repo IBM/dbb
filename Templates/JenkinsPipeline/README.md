@@ -10,7 +10,7 @@ It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/T
 
 The pipeline implements the following stages
 * `Checkout` stage to the Git repository to a workspace directory on z/OS Unix System Services using the integrated Git Plugin of Jenkins.
-* `Pipeline Setup` computing the settings for subsequent stages, that are displayed in the `Parameters and Values' stage.
+* `Pipeline Setup` computing the settings for subsequent stages, that are displayed in the `Parameters and Values` stage.
 * `Build` stage 
   * to invoke zAppBuild via the [dbbBuild.sh](../Common-Backend-Scripts/README.md#42---dbbbuildsh) Common Backend script,
   * to publish log files to the Jenkins build result.
@@ -28,8 +28,6 @@ The pipeline implements the following stages
 Depending on your selected and software analysis and deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
 The pipeline is implemented as a declarative pipeline.
-
-![Gitlab Release Pipeline](images/gitlab-pipeline-release.png)
 
 ## Prerequisites
 
@@ -61,15 +59,15 @@ Please make yourself familiar with the [Git branching for mainframe development]
 
 ### Pipeline variables
 
-In a default setup, the basic pipeline is triggered for each new commit.
+In a default setup, the feature and basic pipelines are triggered for each new commit as soon as the Multibranch integration detects the changes.
 
-It allows overriding value of the below variables when manually requesting the pipeline. This is especially useful when the application team want to create a release candidate package for higher test environments and production.
+The pipeline allows to override the values of the below variables when manually requesting the pipeline. This is especially useful when the application team want to create a release candidate package for higher test environments and production.
 
 Parameter | Description
 --- | ---
 pipelineType     | Pipeline type - either build, release or preview. (Default: build)
-<!-- releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: patch) //-->
 verbose          | Boolean flag to control logging of build framework. (Default: false)
+<!-- releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: patch) //-->
 
 ### Feature Branch pipeline
 
