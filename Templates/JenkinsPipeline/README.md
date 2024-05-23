@@ -19,8 +19,8 @@ The pipeline implements the following stages
   * to create a UrbanCode Component version via the Common Backend script [ucdPackaging.sh](../Common-Backend-Scripts/README.md#45---ucdpackagingsh),
   * to publish packaging log files to the Jenkins build result,
   * to add links to the UCD Component version.
-* `Deploy to INT'` stage to deploy to the development / integration test environment that includes:
-  * to request the Deployment of the UrbanCode Component version via the Common Backend script [ucdDeploy.sh](../Common-Backend-Scripts/README.md#46---ucddeploysh),
+* `Deploy to INT` stage to deploy to the development / integration test environment that includes:
+  * to request the Deployment of the UrbanCode Component version via the Common Backend script [ucdDeploy.sh](../Common-Backend-Scripts/README.md#46---ucddeploysh) to the shared Development/Integration Test environment,
   * to publish deployment log files to the Jenkins build result,
   * to add links to the UCD Deployment request.
  * `Workspace Cleanup` stage to clean up the workspace
@@ -85,22 +85,22 @@ Overview of the pipeline:
 
 ![Jenkins Feature Branch Pipeline](images/jenkins-pipeline-feature-branch.png)
 
-### Basic build pipeline for Integration branches
+Pipelines for Feature, Epic and Release Maintenance branches perform the same steps like a feature branch pipeline. 
 
-The basic build pipeline for integration branches contains the following stages:
+### Basic build pipeline when merging into Main
+
+The basic build pipeline for the main branch contains the following stages:
 
 * Setup
 * Clone
-* Build
+* Build (with TEST options)
 * SonarQube Analysis
 * Create UCD Component version
 * Request UCD Deployment to the integration test environment
 
-This is a default pipeline. It run automatically when there is a new commit to a repository.
+It run automatically when there is a new commit to a repository. The common backend script `dbbBuild.sh` will automatically extract the baseline git tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config) file that is expected to be maintained in the application's git repository.
 
-The pipeline will automatically calculate the release tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config) file that is expected to be maintained in the application's git repository.
-
-You can also run this pipeline manually by setting the *pipelineType* variable `build` or `preview` to run zAppBuild in preview mode.
+You can also run this pipeline manually to override [the pipeline parameters](#pipeline-variables), for instance to set the *pipelineType* variable to `preview` to run zAppBuild in preview mode and skip the packaging steps.
 
 Overview of the pipeline:
 
@@ -112,20 +112,18 @@ Please note the direct links on the Jenkins build result, that take the user to 
 
 ### Release pipeline
 
-When the development team agrees to build a release candidate, the release pipeline type is triggered manually.
+When the development team agrees to build a release candidate, the release pipeline type is triggered manually for the `main` branch. The development team manually requests the pipeline and specifies the *pipelineType* variable as `release`. Per the recommended branching model, release packages are only created from the `main` branch.
 
-It covers the followings steps:
+It covers the similar steps steps like before:
 
 * Setup
 * Clone
-* Build
+* Build (now with the optimize compile options)
 * SonarQube Analysis
 * Create UCD Component version
 * Request UCD Deployment to the integration test environment
 
-The development team manually requests the pipeline and specifies the *pipelineType* variable as `release`. Along with the *release type*, the pipeline will automatically calculate the release tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config) file.
-
-The user can then use UCD to deploy the release candidate package to the higher test environments. With the production deployment, a release tag and a release can be created in the Git repository of choice.
+The user can then use UCD to deploy the release candidate package to the higher test environments. At the time of the production deployment, a release tag and a release can be created in the Git repository of choice. This can be automated as part of the deployment process to create a git tag for the commit of the release pipeline build. 
 
 Overview of the release pipeline:
 
