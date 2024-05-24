@@ -18,8 +18,8 @@ env:
     branch : ${{ github.ref_name }} 
     application: ${{ github.event.repository.name }}
     packageName: ${{github.run_id}}
-    zosHostname: EOLEB7.dat.ibm.com
-    zosSFTPUser: GITHUB@10.3.20.201
+    zosHostname: lpar.dev.ibm.com
+    zosSFTPUser: GITHUB@lpar.dev.ibm.com
     azureArtifactName: "${{ github.repository }}.tar"
 
 jobs:
