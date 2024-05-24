@@ -182,7 +182,8 @@ This is done to highlight how the same task can be completed in 2 different ways
 This is a non-comprehensive list of items that are either a known issue, a work in progress, or something that still needs to be implemented. 
 
 ### High Importance 
-- in the release pipeline, deploy-acceptance, deploy-production, and cleanup need manual triggers
+- In the release pipeline, deploy-acceptance, deploy-production, and cleanup need manual triggers
+  - This will require configuration specific to your environment. You can find the relevant documentation [here.](https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments)
 
 ### Medium Importance 
 - the baseline reference file is not automatically updated when a new version is released

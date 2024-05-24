@@ -43,7 +43,7 @@ jobs:
             - controller
         # this should automatically run on push to feature branches
         if: ${{startsWith(github.ref_name, 'feature/')}}
-        uses: ./.github/workflows/Feature.yml 
+        uses: ./.github/workflows/pipelines/Feature.yml 
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
             pipelineType: preview
@@ -55,7 +55,7 @@ jobs:
             - controller
         # this should run on manual trigger with pipelineType = build and automatic trigger
         if: ${{(inputs.pipelineType == 'build' || inputs.pipelineType == '') && (startsWith(github.ref_name, 'feature/') == false)}}
-        uses: ./.github/workflows/Build.yml
+        uses: ./.github/workflows/pipelines/Build.yml
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
             pipelineType: build
@@ -66,7 +66,7 @@ jobs:
         needs: 
             - controller
         if: ${{ inputs.pipelineType == 'release' && startsWith(github.ref_name, 'main')}}
-        uses: ./.github/workflows/Release.yml
+        uses: ./.github/workflows/pipelines/Release.yml
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
             pipelineType: release
@@ -78,7 +78,7 @@ jobs:
         needs:
             - controller
         if: ${{ inputs.pipelineType == 'preview' }}
-        uses: ./.github/workflows/Preview.yml
+        uses: ./.github/workflows/pipelines/Preview.yml
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
             pipelineType: preview
