@@ -1,30 +1,30 @@
 # Jenkins Pipeline template
 
-This template provides an Jenkinsfile [Jenkinsfile](Jenkinsfile) definition to setup a Jenkins Multibranch pipeline for applications managed in any Git provider.
+This template provides a [Jenkinsfile](Jenkinsfile) definition to setup a Jenkins Multibranch pipeline compatible with any Git provider.
 
 ## Overview and capabilities
 
 This pipeline template is implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) with Jenkins as a the Pipeline Orchestrator.
 
-It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) in the Build, Packaging and Deployment stages.
+It leverages the [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) in the Build, Packaging and Deployment stages.
 
-The pipeline implements the following stages
+The pipeline implements the following stages:
 
-* `Checkout` stage to the Git repository to a workspace directory on z/OS Unix System Services using the integrated Git Plugin of Jenkins.
+* `Checkout` stage to clone the Git repository to a workspace directory on z/OS Unix System Services using the integrated Git Plugin of Jenkins.
 * `Pipeline Setup` computing the settings for subsequent stages, that are displayed in the `Parameters and Values` stage.
 * `Build` stage 
-  * to invoke zAppBuild via the [dbbBuild.sh](../Common-Backend-Scripts/README.md#42---dbbbuildsh) Common Backend script,
+  * to invoke zAppBuild via the [dbbBuild.sh](../Common-Backend-Scripts/README.md#42---dbbbuildsh) Common Backend Script,
   * to publish log files to the Jenkins build result.
 * `SonarQube Analysis` stage to request a SonarQube scan of the application repository.
 * `Packaging` stage
-  * to create a UrbanCode Component version via the Common Backend script [ucdPackaging.sh](../Common-Backend-Scripts/README.md#45---ucdpackagingsh),
+  * to create a UrbanCode Component version via the Common Backend Script [ucdPackaging.sh](../Common-Backend-Scripts/README.md#45---ucdpackagingsh),
   * to publish packaging log files to the Jenkins build result,
   * to add links to the UCD Component version.
 * `Deploy to INT` stage to deploy to the development / integration test environment that includes:
-  * to request the Deployment of the UrbanCode Component version via the Common Backend script [ucdDeploy.sh](../Common-Backend-Scripts/README.md#46---ucddeploysh) to the shared Development/Integration Test environment,
+  * to request the Deployment of the UrbanCode Component version via the Common Backend Script [ucdDeploy.sh](../Common-Backend-Scripts/README.md#46---ucddeploysh) to the shared Development/Integration test environment,
   * to publish deployment log files to the Jenkins build result,
   * to add links to the UCD Deployment request.
- * `Workspace Cleanup` stage to clean up the workspace
+ * `Workspace Cleanup` stage to clean up the workspace.
 
 Depending on your selected and software analysis and deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
@@ -32,32 +32,34 @@ The pipeline is implemented as a declarative pipeline.
 
 ## Prerequisites
 
-The [Common Backend scripts](../Common-Backend-Scripts/) need to be configured for the selected technologies to operate correctly.
+The [Common Backend Scripts](../Common-Backend-Scripts/) need to be configured for the selected technologies to operate correctly.
 
 ## Installation and setup of template
 
 **Note: Please work with your pipeline specialist to review the below section.**
 
-The `Jenkinsfile` can be dropped into the root folder of your Git repository and will automatically provide pipelines for the specified triggers defined in the Jenkins Multibranch Pipeline job configuration.
+The `Jenkinsfile` can be placed into the root folder of your Git repository and will automatically provide pipelines for the specified triggers defined in the Jenkins Multibranch Pipeline job configuration.
 
-Please review the definitions thoroughly with your Jenkins administrator. Ideally, the Jenkinsfile is converted into a [Jenkins Shared Library](https://www.jenkins.io/doc/book/pipeline/shared-libraries/) to provide stronger central controls.
+Please review the definitions thoroughly with your Jenkins administrator. Ideally, the Jenkinsfile is converted into a [Jenkins Shared Library](https://www.jenkins.io/doc/book/pipeline/shared-libraries/) to provide stronger, central control.
 
 Step-by-step instructions to define and configure a Jenkins Multibranch Pipeline is documented at: https://www.jenkins.io/doc/book/pipeline/multibranch/
 
 
 ## Pipeline usage
 
-The pipeline template implements the common clone, build, package and deploy steps to process various configurations according to the defined conventions. It leverages the a declarative checkout of the applications git repository.
+The pipeline template implements the common clone, build, package and deploy steps to process various configurations according to the defined conventions. It leverages the a declarative checkout of the application's Git repository.
 
 It is supporting the following workflows: 
 
-* automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#pipeline-build-of-feature-branches) with a clone and build stage,
-* the [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the branch `main` and
-* a [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) to build and package the release candidate, that then can be deployed via UCD.
+* automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#pipeline-build-of-feature-branches) with a clone and build stage
+* [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) triggered when feature branches are merged into the branch `main`
+* [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) to build, package and deploy a release via UCD
 
-Please review the pipeline stage `Pipeline setup` within the [template](Jenkinsfile#L165) that is configuring the subsequent stages including flags using as conditions when stages and jobs are executed. 
+The `Pipeline setup` stage within the [template](Jenkinsfile#L165) configures the subsequent stages, including flags used as conditions when stages and jobs are executed. Please review this stage.
 
 Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation, that this template is implementing.
+
+This template is implementing the recommended [Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev). If you haven't done yet, we recommend to get familiar with the concepts described in this documentation.
 
 ### Pipeline variables
 
@@ -81,7 +83,7 @@ The pipeline for feature branches executes the following steps:
 * SonarQube Analysis
 * Create UCD Component version
 
-This pipeline can be manually requested to set the *pipelineType* variable `preview` to run zAppBuild in preview mode.
+To run zAppBuild in preview mode, this pipeline can be manually requested with setting the *pipelineType* variable to `preview`.
 
 Overview of the pipeline:  
 
@@ -89,9 +91,9 @@ Overview of the pipeline:
 
 Pipelines for Feature, Epic and Release Maintenance branches perform the same steps like a feature branch pipeline. 
 
-### Basic build pipeline when merging into Main
+### Basic build pipeline when merging into the main branch
 
-The basic build pipeline for the main branch contains the following stages:
+The basic build pipeline for the `main` branch contains the following stages:
 
 * Setup
 * Clone
@@ -100,7 +102,7 @@ The basic build pipeline for the main branch contains the following stages:
 * Create UCD Component version
 * Request UCD Deployment to the integration test environment
 
-It run automatically when there is a new commit to a repository. The common backend script `dbbBuild.sh` will automatically extract the baseline git tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config) file that is expected to be maintained in the application's git repository.
+It run automatically when there is a new commit to a repository. `dbbBuild.sh` (from the Common Backend scripts) will automatically extract the Git tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config). The `baselineReference.config` file is expected to be maintained in the application's git repository.
 
 You can also run this pipeline manually to override [the pipeline parameters](#pipeline-variables), for instance to set the *pipelineType* variable to `preview` to run zAppBuild in preview mode and skip the packaging steps.
 
@@ -108,15 +110,15 @@ Overview of the pipeline:
 
 ![Jenkins Build Pipeline](images/jenkins-pipeline-basicBuild.png)
 
-Please note the links that are created to the Jenkins build result that take the user to the package and the deployment request within UCD:
+Links are created within the Jenkins build result, to take the user to the package and the deployment request within UCD:
 
 ![Jenkins Build Result](images/jenkins-pipeline-basicBuild-result.png)
 
 ### Release pipeline
 
-When the development team agrees to build a release candidate, the release pipeline type is triggered manually for the `main` branch. The development team manually requests the pipeline and specifies the *pipelineType* variable as `release`. Per the recommended branching model, release packages are only created from the `main` branch.
+When the development team agrees to build a release candidate, the release pipeline type is triggered manually for the `main` branch. The development team manually requests the execution of the pipeline and sets the *pipelineType* variable as `release`. Per the recommended branching model, release packages are only created from the `main` branch.
 
-It covers the similar steps steps like before:
+It supports the same steps steps as the basic build pipeline:
 
 * Setup
 * Clone
@@ -125,7 +127,7 @@ It covers the similar steps steps like before:
 * Create UCD Component version
 * Request UCD Deployment to the integration test environment
 
-The user can then use UCD to deploy the release candidate package to the higher test environments. At the time of the production deployment, a release tag and a release can be created in the Git repository of choice. This can be automated as part of the deployment process to create a git tag for the commit of the release pipeline build. 
+The user can then use UCD to deploy the release candidate package to the higher test environments. At the time of the production deployment, a release tag and a release can be created in the Git repository of choice. This can be automated as part of the deployment process to create a Git tag for the commit of the release pipeline build. 
 
 Overview of the release pipeline:
 

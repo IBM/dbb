@@ -10,4 +10,4 @@ Azure DevOps Pipeline Template | Template to setup a [AzureDevOps pipeline](http
 Gitlab CI/CD Pipeline Template | .gitlab-ci.yml template to setup a [Gitlab CI/CD pipeline](https://docs.gitlab.com/ee/ci/pipelines/) to build, package and deploy Gitlab platform. | [GitlabCIPipeline/README.md](GitlabCIPipeline/README.md)
 Jenkins Multibranch Pipeline Template | Multibranch pipeline template to setup a [Jenkins CI/CD pipeline](https://www.jenkins.io/doc/book/pipeline/multibranch/) to build, package and deploy with any Git provider. | [JenkinsPipeline/README.md](JenkinsPipeline/README.md)
 
-Please use the [Github discussion](https://github.com/IBM/dbb/discussions) board for exchange on these templates.
+Please use the [Github discussion](https://github.com/IBM/dbb/discussions) board for feedback and comments on these templates.

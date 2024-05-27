@@ -1,4 +1,4 @@
-// Name: MultiBranchPipeline
+// Name: Jenkinsfile
 //
 // Description: A sample Jenkins Declarative Multibranch pipeline job that demonstrates how to
 // implement the IBM recommended Git flow branching model. 
