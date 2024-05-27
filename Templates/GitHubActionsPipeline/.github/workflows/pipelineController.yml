@@ -46,7 +46,7 @@ jobs:
         uses: ./.github/workflows/pipelines/Feature.yml 
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
-            pipelineType: preview
+            pipelineType: build
         secrets:
             githubAccessToken: ${{ secrets.SAMPLE_PAT }} 
 
