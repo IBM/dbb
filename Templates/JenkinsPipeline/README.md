@@ -1,14 +1,15 @@
-# Jenkins Multibranch pipeline template
+# Jenkins Pipeline template
 
-This template provides an Jenkinsfile [MultibranchPipeline](MultibranchPipeline) definition as MultiBranch to setup a Jenkins Multibranch pipeline for applications managed in any Git provider.
+This template provides an Jenkinsfile [Jenkinsfile](Jenkinsfile) definition to setup a Jenkins Multibranch pipeline for applications managed in any Git provider.
 
 ## Overview and capabilities
 
 This pipeline template is implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) with Jenkins as a the Pipeline Orchestrator.
 
-It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) to implement the Build, Packaging and Deployment stages.
+It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) in the Build, Packaging and Deployment stages.
 
 The pipeline implements the following stages
+
 * `Checkout` stage to the Git repository to a workspace directory on z/OS Unix System Services using the integrated Git Plugin of Jenkins.
 * `Pipeline Setup` computing the settings for subsequent stages, that are displayed in the `Parameters and Values` stage.
 * `Build` stage 
@@ -37,25 +38,26 @@ The [Common Backend scripts](../Common-Backend-Scripts/) need to be configured f
 
 **Note: Please work with your pipeline specialist to review the below section.**
 
-The `MultibranchPipeline` can be dropped into the root folder of your Git repository and will automatically provide pipelines for the specified triggers as soon as the Multibranch pipeline is configured in Jenkins.
+The `Jenkinsfile` can be dropped into the root folder of your Git repository and will automatically provide pipelines for the specified triggers defined in the Jenkins Multibranch Pipeline job configuration.
 
-Please review the definitions thoroughly with your Jenkins administrator. Ideally, the MultibranchPipeline is converted into a [Jenkins Shared Library](https://www.jenkins.io/doc/book/pipeline/shared-libraries/) to provide stronger central controls.
+Please review the definitions thoroughly with your Jenkins administrator. Ideally, the Jenkinsfile is converted into a [Jenkins Shared Library](https://www.jenkins.io/doc/book/pipeline/shared-libraries/) to provide stronger central controls.
 
-Step-by-step instructions to configure a Multibranch pipeline is documented the Jenkins books under: https://www.jenkins.io/doc/book/pipeline/multibranch/
+Step-by-step instructions to define and configure a Jenkins Multibranch Pipeline is documented at: https://www.jenkins.io/doc/book/pipeline/multibranch/
 
 
 ## Pipeline usage
 
-The pipeline implements the common build, package and deploy steps to process various configurations according to the defined conventions.
-It is a single Jenkins Multibranch pipeline definition supporting various workflows. It supports: 
+The pipeline template implements the common clone, build, package and deploy steps to process various configurations according to the defined conventions. It leverages the a declarative checkout of the applications git repository.
+
+It is supporting the following workflows: 
 
 * automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#pipeline-build-of-feature-branches) with a clone and build stage,
 * the [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the branch `main` and
 * a [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) to build and package the release candidate, that then can be deployed via UCD.
 
-Please check the pipeline definition to understand the various triggers for which this pipeline is executed and also the conditions when stages and jobs are executed.
+Please review the pipeline stage `Pipeline setup` within the [template](Jenkinsfile#L165) that is configuring the subsequent stages including flags using as conditions when stages and jobs are executed. 
 
-Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation.
+Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation, that this template is implementing.
 
 ### Pipeline variables
 
