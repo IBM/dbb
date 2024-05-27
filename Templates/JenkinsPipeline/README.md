@@ -57,8 +57,6 @@ It is supporting the following workflows:
 
 The `Pipeline setup` stage within the [template](Jenkinsfile#L165) configures the subsequent stages, including flags used as conditions when stages and jobs are executed. Please review this stage.
 
-Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation, that this template is implementing.
-
 This template is implementing the recommended [Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev). If you haven't done yet, we recommend to get familiar with the concepts described in this documentation.
 
 ### Pipeline variables
@@ -102,7 +100,7 @@ The basic build pipeline for the `main` branch contains the following stages:
 * Create UCD Component version
 * Request UCD Deployment to the integration test environment
 
-It run automatically when there is a new commit to a repository. `dbbBuild.sh` (from the Common Backend scripts) will automatically extract the Git tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config). The `baselineReference.config` file is expected to be maintained in the application's git repository.
+It runs automatically when there is a new commit to a repository. `dbbBuild.sh` (from the Common Backend Scripts) will automatically extract the Git tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config). The `baselineReference.config` file is expected to be maintained in the application's git repository.
 
 You can also run this pipeline manually to override [the pipeline parameters](#pipeline-variables), for instance to set the *pipelineType* variable to `preview` to run zAppBuild in preview mode and skip the packaging steps.
 
@@ -118,7 +116,7 @@ Links are created within the Jenkins build result, to take the user to the packa
 
 When the development team agrees to build a release candidate, the release pipeline type is triggered manually for the `main` branch. The development team manually requests the execution of the pipeline and sets the *pipelineType* variable as `release`. Per the recommended branching model, release packages are only created from the `main` branch.
 
-It supports the same steps steps as the basic build pipeline:
+It supports the same steps as the basic build pipeline:
 
 * Setup
 * Clone
