@@ -15,7 +15,7 @@
 //
 //   JenkinsAgent             - Label of the Jenkins Agent where the pipeline
 //                              will execute in the Jenkins environment.
-def JenkinsAgent              = "ztec-201-STC" // Jenkins Node/Label under z/OS Unix System Services
+def JenkinsAgent              = "ztec-201-STC" // Jenkins Node/Label under z/OS UNIX System Services
 def JenkinsX86Agent			  = "x86-builder"  // Jenkins Node/Label to drive distributed actions, such as requisting SonarQube scan
 
 // Debug Variables
@@ -30,7 +30,7 @@ def pipeverbose               = true  // Enabled Pipeline Debug Messages (true/f
 //                               preview
 //                               build (default)
 //                               release
-//     ReleaseType            - Defininig the information for the semantic versioning to compute release candidate tags and release names.
+//     ReleaseType            - Defining the information for the semantic versioning to compute release candidate tags and release names.
 //                              TODO - Further enhancement to automatically compute release candidate tag
 def PipelineType			  = "build"
 def ReleaseType               = ""
