@@ -89,6 +89,7 @@ def ucdComponent              = "${AppName}"             // Match the AppName pr
 def ucdVersionName            = "${AppName}"             // Match the AppName property
 def ucdBuzToolLogName         = "buztool.log"            // Buztool Log Name.
 def ucdBuzToolLog             = ""                       // Buztool Path and Log Name.
+def baseLineReferenceFile     = ""
 
 // UrbanCode Deploy Request Deployment
 //
@@ -239,7 +240,8 @@ pipeline {
 						ucdDoPackaging  = true  // Perform the Packaging.
 						ucdDoDeployment = true  // Perform the Deployment.
 
-						ucdVersionName = "${ucdVersionName}-Main-${PipelineTypeUpper}-${BuildNumber}" // Package Version Name.
+						ucdVersionName = "${ucdVersionName}-Main-${PipelineTypeUpper}" // Package Version Name Prefix.
+						baselineReferenceFile = "${BuildDir}/${AppName}/application-conf/baselineReference.config"
 
 						BranchOkay = true
 					}
@@ -252,7 +254,7 @@ pipeline {
 						ucdDoPackaging  = true  // Perform the Packaging. Up to the developer to install it.
 						ucdDoDeployment = false // Do Not Perform the Deployment.
 
-						ucdVersionName = "${ucdVersionName}-${AppBranch}-${BuildNumber}".replaceAll("/",".") // Prelimenary Package Version Name.
+						ucdVersionName = "${ucdVersionName}-${AppBranch}".replaceAll("/",".") // Prelimenary Package Version Name Prefix.
 
 						BranchOkay = true
 					}
@@ -486,11 +488,77 @@ pipeline {
 
 					println("${PipelineName}[INFO]: BuzTool Log = ${ucdBuzToolLog}.")
 					
-					PackageCmd = "ucdPackaging.sh -w ${BuildDir} -v ${ucdVersionName} -c ${ucdComponent}  -u ${env.BUILD_URL} -b ${AppBranch} -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
-					println("${PipelineName}[INFO]: Package Command = ${PackageCmd}")						
+					PackageCmd = """
+						set +x
+						# Compute the next release name for release pipelines
+						if [ "${PipelineType}" = "release" ]; then
+
+							echo ${PipelineName}[INFO] Compute the Git tag for the next release.
+							echo ${PipelineName}[INFO] Retrieve baseline reference information from "${baselineReferenceFile}".
+							# Retrieve the baseline reference from the baselineReferenceFile       
+							if [ ! -f "${baselineReferenceFile}" ]; then
+								echo ${PipelineName}[ERROR] Applications baseline reference configuration file ${baselineReferenceFile} was not found.
+								exit 1
+							else
+								
+								# Extract the current branch 
+								export mainBranchSegment=`echo "${AppBranch}" | awk -F "/" '{ print \$1 }'`
+								export secondBranchSegment=`echo "${AppBranch}" | awk -F "/" '{ print \$2 }'`
+								export thirdBranchSegment=`echo "${AppBranch}" | awk -F "/" '{ print \$3 }'`
+
+								echo ${PipelineName}[INFO] Branch: $AppBranch
+								# debug echo ${PipelineName}[INFO] Release segment: \${mainBranchSegment}, \${secondBranchSegment}, \${thirdBranchSegment}
+								echo ${PipelineName}[INFO] Selected Release Type: $releaseType
+
+
+								# Find base line version of the current branch from the baseLineReferenceFile
+								case \${mainBranchSegment} in
+									"main")
+										export baselineRef=`cat "${baselineReferenceFile}" | grep "^\${mainBranchSegment}" | awk -F "=" '{ print \$2 }'`
+								;;
+									"release")
+										export baselineRef=`cat "${baselineReferenceFile}" | grep "^release/\${secondBranchSegment}" | awk -F "=" '{ print \$2 }'`
+								;;
+								esac
+								
+								if [ -z \${baselineRef} ]; then
+									echo ${PipelineName}[ERROR] No baseline ref was found for branch name ${AppBranch} in ${baselineReferenceFile}.
+									exit 1
+								else
+									echo ${PipelineName}[INFO] Baseline Reference: \${baselineRef}
+								fi
+								# Compute the name of the next release based on the releaseType
+								if [ "${releaseType}" = "patch" ]; then
+									export newVersion=`echo \${baselineRef} | sed 's/^["refs/tags/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{\$3 += 1 ; print}'`
+								fi
+								if [ "${releaseType}" = "minor" ]; then
+									export newVersion=`echo \${baselineRef} | sed 's/^["refs/tags/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{\$2 += 1 ; \$3 = 0; print}'`
+								fi
+								if [ "${releaseType}" = "major" ]; then
+									export newVersion=`echo \${baselineRef} | sed 's/^["refs/tag/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{\$1 += 1 ; \$2 = 0; \$3 = 0; print}'`
+								fi
+
+								export newVersionTag=\$(echo "rel-\${newVersion}")
+								echo "${PipelineName}[INFO] Computed tag for the next release: \${newVersionTag}"
+							fi
+						fi
+
+						if [ -z \${newVersionTag} ]; then
+							ucdVer="${ucdVersionName}-${BuildNumber}"
+						else
+							ucdVer="${ucdVersionName}-\${newVersionTag}-${BuildNumber}"
+						fi
+
+						CMD="ucdPackaging.sh -w ${BuildDir} -v \${ucdVer} -c ${ucdComponent}  -u ${env.BUILD_URL} -b ${AppBranch} -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
+						
+						echo "${PipelineName}[INFO]: Package Command = \${CMD}"
+						echo ""
+						\${CMD}
+					"""
+											
 					
 					tee("${ucdBuzToolLog}") {
-					Packagerc = sh(script: "${PackageCmd}", returnStatus: true)
+					Packagerc = sh(script: "${PackageCmd}", label: "Packaging command ucdPackaging.sh", returnStatus: true)
 					}
 
 					if (Packagerc == 0) {

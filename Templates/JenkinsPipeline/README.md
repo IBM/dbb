@@ -69,7 +69,7 @@ Parameter | Description
 --- | ---
 pipelineType     | Pipeline type - either build, release or preview. (Default: build)
 verbose          | Boolean flag to control logging of build framework. (Default: false)
-<!-- releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: patch) //-->
+releaseType      | Release type - major, minor, patch as input to compute the name of the next release version. (Default: patch).
 
 ### Feature Branch pipeline
 
