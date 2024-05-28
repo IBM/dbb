@@ -95,7 +95,7 @@ jobs:
     Deploy-integration:
         needs: 
             - Package
-        uses: ./.github/workflows/pipelines/deployToEnv.yml
+        uses: ./.github/workflows/deployToEnv.yml
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
           environmentName: Integration
@@ -108,7 +108,7 @@ jobs:
       # this is supposed to only be triggered manually, see note in readme 
       needs:
         - Deploy-integration
-      uses: ./.github/workflows/pipelines/deployToEnv.yml
+      uses: ./.github/workflows/deployToEnv.yml
       # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
       with:
         environmentName: Acceptance
@@ -122,7 +122,7 @@ jobs:
         #this is supposed to only be triggered manually, see note in readme 
         needs:
           - Deploy-acceptance
-        uses: ./.github/workflows/pipelines/deployToEnv.yml
+        uses: ./.github/workflows/deployToEnv.yml
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
           environmentName: Production

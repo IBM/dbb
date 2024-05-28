@@ -80,3 +80,13 @@ jobs:
          - name: Package build outputs
            run: ssh ${{env.zosSFTPUser}} ". ./.profile && packageBuildOutputs.sh -w ${{ env.uniqueWorkspaceId }} -t ${{ env.application }}.tar -a ${{ env.application }} -b ${{ env.branch }} -p ${{env.pipelineType}} -v ${{ env.packageName }} "
 
+
+    Cleanup:
+        needs:
+          - Package
+        runs-on: self-hosted
+        if: always()
+        steps:
+          - name: Cleanup Build Environment
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && deleteWorkspace.sh -w ${{ env.uniqueWorkspaceId }}"
+                
