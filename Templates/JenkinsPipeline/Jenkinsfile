@@ -251,8 +251,8 @@ pipeline {
 
 						dbbDoBuild      = true  // Perform DBB Build.
 						sonarQubeDoScan = true  // Perform Sonar scan.
-						ucdDoPackaging  = true  // Perform the Packaging. Up to the developer to install it.
-						ucdDoDeployment = false // Do Not Perform the Deployment.
+						ucdDoPackaging  = true  // Perform the Packaging. 
+						ucdDoDeployment = false // Do Not Perform the Deployment. Up to the developer to install it.
 
 						ucdVersionName = "${ucdVersionName}-${AppBranch}".replaceAll("/",".") // Prelimenary Package Version Name Prefix.
 
@@ -264,8 +264,8 @@ pipeline {
 						
 						dbbDoBuild      = true  // Perform DBB Build.
 						sonarQubeDoScan = true  // Perform Sonar scan.
-						ucdDoPackaging  = true  // Perform the Packaging. Up to the developer to install it.
-						ucdDoDeployment = false // Do Not Perform the Deployment.
+						ucdDoPackaging  = true  // Perform the Packaging. 
+						ucdDoDeployment = false // Do Not Perform the Deployment. Up to the developer to install it.
 
 						ucdVersionName = "${ucdVersionName}-${AppBranch}-${BuildNumber}".replaceAll("/",".")
 
@@ -548,6 +548,8 @@ pipeline {
 						else
 							ucdVer="${ucdVersionName}-\${newVersionTag}-${BuildNumber}"
 						fi
+						# This log message is fetched for to specify the version name in the deployment stage
+						echo "${PipelineName}[INFO] Computed UCD component version name: \${ucdVer}" 
 
 						CMD="ucdPackaging.sh -w ${BuildDir} -v \${ucdVer} -c ${ucdComponent}  -u ${env.BUILD_URL} -b ${AppBranch} -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
 						
@@ -569,7 +571,22 @@ pipeline {
 							sh "chtag -c UTF-8 shiplist-utf-8.xml"
 						}
 						
-						println("${PipelineName}[INFO]: Gathering UCD Component Version URL.")
+						println("${PipelineName}[INFO]: Gathering UCD Component Version Name and URL.")
+
+						// Locate the UCD Component Version Name in the output log.
+						def ucdVersionNamePattern = java.util.regex.Pattern.compile(".*Computed UCD component version name: (.*)")
+						def ucdVersionMatcher = ucdVersionNamePattern.matcher(readFile("${ucdBuzToolLog}"))
+						if (ucdVersionMatcher.find()) {
+							ucdVersionName = "${ucdVersionMatcher.group(1)}"
+							ucdVersionMatcher = null // Prevent java.io.NotSerializableException: java.util.regex.Matcher Exception.
+							println("${PipelineName}[INFO]: UCD Component Version Name: ${ucdVersionName}")
+						} else {
+							Msg = "Fetching the UCD Component Version Name failed. Please check ${ucdBuzToolLogName}."
+							println("${PipelineName}[WARN]: ${Msg}")
+							createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+							currentBuild.result = "FAILURE" // Mark the job as failed.
+							ucdDoDeployment = false // Do not deploy if packaging failed.
+						}
 						
 						// Locate the UCD Component Version URL in the output log.
 						def buzpattern = java.util.regex.Pattern.compile("version.url -> (.*)")
@@ -577,8 +594,8 @@ pipeline {
 						if (buzmatcher.find()) {
 							def buzrequestURL = "${buzmatcher.group(1)}"
 							buzmatcher = null // Prevent java.io.NotSerializableException: java.util.regex.Matcher Exception.
-							println("${PipelineName}[INFO]: UCD Component Version: ${buzrequestURL}")
-							createSummary icon:"accept.svg", text: "${MsgHdr} <a href=\'$buzrequestURL\' target=\'_other\'>UCD Component Version</a>"
+							println("${PipelineName}[INFO]: UCD Component Version URL: ${buzrequestURL}")
+							createSummary icon:"accept.svg", text: "${MsgHdr} <a href=\'$buzrequestURL\' target=\'_other\'>UCD Component Version (name: $ucdVersionName)</a>"
 						}
 						// End of if (Packagerc == 0)
 					} else {
@@ -631,17 +648,24 @@ pipeline {
 							tee("${ucdDeploymentLog}") {
 								UcdDeployrc = sh(script: "${UcdDeployCmd}", returnStatus: true)
 							}
-							
-							println("${PipelineName}[INFO]: Gathering UCD Deployment Request URL.")
-							
-							// Locate the UCD Deployment Request URL in the output log.
-							def ucdpattern = java.util.regex.Pattern.compile("Follow Process Request: (.*)")
-							def ucdmatcher = ucdpattern.matcher(readFile("${ucdDeploymentLog}"))
-							if (ucdmatcher.find()) {
-								def ucdrequestURL = "${ucdmatcher.group(1)}"
-								ucdmatcher = null // Prevent java.io.NotSerializableException: java.util.regex.Matcher Exception.
-								println("${PipelineName}[INFO]: UCD Deployment Request: ${ucdrequestURL}")
-								createSummary icon:"accept.svg", text: "${MsgHdr} <a href=\'$ucdrequestURL\' target=\'_other\'>UCD Deployment Request</a>"
+
+							if (UcdDeployrc == 0) {
+								println("${PipelineName}[INFO]: Gathering UCD Deployment Request URL.")
+								
+								// Locate the UCD Deployment Request URL in the output log.
+								def ucdpattern = java.util.regex.Pattern.compile("Follow Process Request: (.*)")
+								def ucdmatcher = ucdpattern.matcher(readFile("${ucdDeploymentLog}"))
+								if (ucdmatcher.find()) {
+									def ucdrequestURL = "${ucdmatcher.group(1)}"
+									ucdmatcher = null // Prevent java.io.NotSerializableException: java.util.regex.Matcher Exception.
+									println("${PipelineName}[INFO]: UCD Deployment Request: ${ucdrequestURL}")
+									createSummary icon:"accept.svg", text: "${MsgHdr} <a href=\'$ucdrequestURL\' target=\'_other\'>UCD Deployment Request</a>"
+									}		
+							} else {
+								Msg = "UCD Deployment request resulted in a return code=${UcdDeployrc}. Refer to ${ucdDeploymentLogName}."
+								println("${PipelineName}[WARN]: ${Msg}")
+								createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+								currentBuild.result = "FAILURE" // Mark the job as failed.
 							}
 						}
 					}
