@@ -175,6 +175,7 @@ computeBuildConfiguration() {
                 Type="${Type} --debug"
             fi
             echo $PGM": [WARNING] [Utilities/dbbBuildUtils.sh/computeBuildConfiguration] The branch name (${Branch}) does not match any case of the recommended naming conventions for branches. Performing an impact build."
+            echo $PGM":            Read about our recommended naming conventions at https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#naming-conventions ."
             ;;
         esac
 
