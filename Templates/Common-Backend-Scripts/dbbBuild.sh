@@ -370,15 +370,11 @@ validateOptions() {
   esac
 
   if [ -z "${dbbMetadataStoreJdbcId}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] DBB database user is required. rc="$rc
-    echo $ERRMSG
+    echo $PGM": [WARNING] Db2 JDBC User not set. The usage of the Db2 DBB Metadatastore is recommended."
   fi
 
   if [ -z "${dbbMetadataStoreJdbcPwdFile}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] DBB database password file is required. rc="$rc
-    echo $ERRMSG
+    echo $PGM": [WARNING] Db2 JDBC Password file not set. The usage of the Db2 DBB Metadatastore is recommended."
   else
     if [ ! -f "${dbbMetadataStoreJdbcPwdFile}" ]; then
       rc=8
@@ -478,7 +474,13 @@ if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] Invoking the zAppBuild Build Framework."
 
   # Assemble build command
-  CMD="$DBB_HOME/bin/groovyz ${DBBLogger} ${BuildGroovy} --workspace $(getWorkDirectory) --application ${App} --outDir ${outDir} --hlq ${HLQ} --id ${dbbMetadataStoreJdbcId} --pwFile ${dbbMetadataStoreJdbcPwdFile} ${zAppBuildVerbose} --logEncoding UTF-8"
+  CMD="$DBB_HOME/bin/groovyz ${DBBLogger} ${BuildGroovy} --workspace $(getWorkDirectory) --application ${App} --outDir ${outDir} --hlq ${HLQ} ${zAppBuildVerbose} --logEncoding UTF-8"
+  if [ ! -z "${dbbMetadataStoreJdbcId}" ]; then
+    CMD="${CMD} --id ${dbbMetadataStoreJdbcId}" # Appending JDBC User Id if defined
+  fi
+  if [ ! -z "${dbbMetadataStoreJdbcPwdFile}" ]; then
+    CMD="${CMD} --pwFile ${dbbMetadataStoreJdbcPwdFile}" # Appending JDBC Password file if defined
+  fi  
   if [ ! -z "${dbbMetadataStoreJdbcUrl}" ]; then
     CMD="${CMD} --url ${dbbMetadataStoreJdbcUrl}" # Appending JDBC URL if defined
   fi
@@ -489,7 +491,7 @@ if [ $rc -eq 0 ]; then
     CMD="${CMD} --propOverwrites ${propOverrides}" # Appending propOverrides if defined
   fi
 
-  CMD="${CMD} ${Type}" # Append Build Type
+  CMD="${CMD} ${Type}" # Append zAppBuild Build Type
   echo $PGM": [INFO] ${CMD}"
   ${CMD} #TLD: I commented this out for testing purposed
   rc=$?
