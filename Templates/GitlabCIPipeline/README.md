@@ -18,14 +18,15 @@ The pipeline implements the following stages
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the Gitlab Artifacts.
-  * (Optional) to cleanup the working directory on Gitlab and the build workpsace on  z/OS Unix System Services. This job can be trigger manually when you donnot need to deploy to higher test environment.
+  * to store the Wazi Deploy evidence files at a shared location to support later reporting scenarios.
 * `Deploy Acceptance` and `Deploy Production` stages to deploy to controlled test environments via the [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) that includes:
   * to deploy the package with the Wazi Deploy to targeted environment [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the Gitlab Artifacts.
+  * to store the Wazi Deploy evidence files at a shared location to support later reporting scenarios.
 * `Finalize` stage to create a release tag from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#scaling-up).
 * `Cleanup` stage: 
-  * to clean up project directory on Gitlab server
+  * to clean up project directory on Gitlab server, and
   * to [delete the build workspace](../Common-Backend-Scripts/README.md#411---deleteworkspacesh) on z/OS Unix System Services.
 
 Depending on your selected deployment technology, review the definitions and (de-)/activate the appropriate steps.
