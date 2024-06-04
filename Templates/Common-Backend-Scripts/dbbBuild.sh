@@ -370,11 +370,11 @@ validateOptions() {
   esac
 
   if [ -z "${dbbMetadataStoreJdbcId}" ]; then
-    echo $PGM": [WARNING] Db2 JDBC User not set. The usage of the Db2 DBB Metadatastore is recommended."
+    echo $PGM": [WARNING] Db2 JDBC User not set. It is recommended to use Db2 for the DBB Metadatastore."
   fi
 
   if [ -z "${dbbMetadataStoreJdbcPwdFile}" ]; then
-    echo $PGM": [WARNING] Db2 JDBC Password file not set. The usage of the Db2 DBB Metadatastore is recommended."
+    echo $PGM": [WARNING] Db2 JDBC Password file not set. It is recommended to use Db2 for the DBB Metadatastore."
   else
     if [ ! -f "${dbbMetadataStoreJdbcPwdFile}" ]; then
       rc=8
