@@ -104,7 +104,7 @@ Clone:
         reports:
             junit: "$CI_PROJECT_DIR/BUILD-OUTPUT/*.xml"
     script: |
-        zowe rse issue unix-shell ". ~/.bash_profile && dbbBuild.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -t '--fullBuild' ${verbose}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        zowe rse issue unix-shell ". ~/.bash_profile && dbbBuild.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} ${verbose}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Build job passed.
@@ -205,7 +205,7 @@ Clone:
             # Find base line version of the current branch from the baseLineReferenceFile
             case ${mainBranchSegment} in
                 "main")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
+                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
               ;;
                 "release")
                     # echo [INFO] Extract baseline for release branch
@@ -235,7 +235,7 @@ Clone:
             echo [INFO] Computed tag for the next release: ${newVersionTag}
 
             # Compute the name of the next release candidate 
-            export releaseCandidate=$(git tag --list "${newVersionTag}_*rc*" --sort=-committerdate | head -n 1)
+            export releaseCandidate=$(git tag --list "${newVersionTag}_*rc*" --sort=version:refname | tail -n 1)
             echo [INFO] Current release candidate tag: ${releaseCandidate}
 
             if [ -z "${releaseCandidate}" ]; then
@@ -271,7 +271,7 @@ Packaging:
     dependencies: []
     script: |
 
-        zowe rse issue unix ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -t ${application}.tar -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -v ${packageName}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        zowe rse issue unix-shell ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -t ${application}.tar -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -v ${packageName}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Packaging job passed.
@@ -290,7 +290,7 @@ Packaging:
         - if: $CI_COMMIT_BRANCH =~ /epic\/.*/  && $pipelineType != "preview"
     script: |
 
-        zowe rse issue unix ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -i ${application}.tar" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -i ${application}.tar" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Generate deployment plan job passed.
@@ -310,7 +310,7 @@ Packaging:
     dependencies: []
     script: |
         
-        zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileIntegration} -i ${application}.tar -l deploy/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileIntegration} -i ${application}.tar -l deploy/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Deploy to integration job passed.
@@ -322,7 +322,7 @@ Packaging:
 3-Generate and publish deployment report for Integration:
     needs: ["2-Deploy to Integration"]
     stage: Deploy Integration
-    tags: [shell]    
+    tags: [shell]
     rules:
         - if: $CI_COMMIT_BRANCH == "main" && $pipelineType != "preview"
         - if: $CI_COMMIT_BRANCH =~ /release\/.*/  && $pipelineType != "preview"
@@ -343,7 +343,7 @@ Packaging:
             - "${integrationReportDir}/evidence.yaml"
     script: |
         type zowe
-        zowe rse issue unix ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Generated deployment evidence.
@@ -429,7 +429,7 @@ Packaging:
           when: manual          
     dependencies: []
     script: |
-        zowe rse issue unix ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileAcceptance} -i ${application}.tar -l deploy-acceptance/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileAcceptance} -i ${application}.tar -l deploy-acceptance/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Deploy to acceptance job passed.
