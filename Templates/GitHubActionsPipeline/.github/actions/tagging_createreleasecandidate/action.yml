@@ -88,7 +88,7 @@ runs:
         #-3- Compute the name of the next release candidate
         if [ $rc -eq 0 ]; then
           # validates if a release candidate exits (PH, this should be using github cli instead)
-          releaseCandidate=$(git tag --list "${newVersionTag}_*rc*" --sort=-committerdate | head -n 1)
+          releaseCandidate=$(git tag --list "${newVersionTag}_*rc*" --sort=version:refname | tail -n 1)
           echo "${newVersionTag}" > releaseTag.txt
           if [ -z "${releaseCandidate}" ]; then
             # initial version tag
