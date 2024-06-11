@@ -39,7 +39,7 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
 To leverages this template, access to a Gitlab CI/CD environment is required, and an Gitlab runner must be configured to connect to your mainframe environment. Please review the setup instructions of this [document](https://www.ibm.com/support/pages/system/files/inline-files/Integrating%20IBM%20zOS%20platform%20in%20CICD%20pipelines%20with%20GitLab%20-%20v1.7_1.pdf).
 
-The template leverages [Zowe CLI](https://docs.zowe.org/stable/user-guide/cli-installcli/) to issue command invoking the [Common Backend scripts](../Common-Backend-Scripts/) on USS. It specifically uses the `issue unix-shell` command which allows streaming of the console outputs back the Zowe CLI task.
+The template leverages [Zowe CLI](https://docs.zowe.org/stable/user-guide/cli-installcli/) to issue command invoking the [Common Backend scripts](../Common-Backend-Scripts/) on USS. It specifically uses the `issue unix-shell` command which allows streaming of the console outputs back to the Zowe Command-Line Interface, that was introduced in IBM RSE API Plug-in for Zowe CLI version 4.0.0 (see [Changelog](https://marketplace.visualstudio.com/items/IBM.zopeneditor/changelog))
 
 * Zowe `base` and `rse` profiles needs to be configured in the `zowe.config.json` file under `.zowe` directory
 
