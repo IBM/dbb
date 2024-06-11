@@ -243,7 +243,7 @@ tempBuildOutputsMap.each { deployableArtifact, info ->
 
 if (buildOutputsMap.size() == 0) {
     println("** No items to package in the provided build reports. Exiting.")
-    System.exit(0)
+    System.exit(4)
 }
 
 // generate ship list file. specification of UCD ship list can be found at

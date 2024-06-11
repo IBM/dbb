@@ -22,6 +22,11 @@ import java.nio.file.Paths
  * Version 2 - 2023-04
  * 
  * Implemented a retry mechanism for upload and download (with Connection Keep-alive for upload)
+ *
+ * Version 3 - 2024-05
+ * 
+ * Supporting different HTTP client configurations
+ *
  */
 
 @Field int MAX_RESEND = 10;
@@ -39,7 +44,7 @@ def <T> CompletableFuture<HttpResponse<T>>
 
 run(args)
 
-def upload(String url, String fileName, String user, String password, boolean verbose) throws IOException {
+def upload(String url, String fileName, String user, String password, boolean verbose, String httpClientVersion) throws IOException {
 	System.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection")
     println( "** ArtifactRepositoryHelper started for upload of $fileName to $url" );
     
@@ -63,12 +68,23 @@ def upload(String url, String fileName, String user, String password, boolean ve
     HttpClient httpClient = httpClientBuilder.build();
     
     // build http request
-    HttpRequest request = HttpRequest.newBuilder()
+    HttpRequest.Builder httpRequestBuilder = HttpRequest.newBuilder()
     .uri(URI.create("$url"))
     .header("Content-Type", "binary/octet-stream")
 	.header("Connection","Keep-Alive")
-    .PUT(BodyPublishers.ofFile(Paths.get(fileName)))
-    .build();
+    .PUT(BodyPublishers.ofFile(Paths.get(fileName)));
+
+    // set http client version if set
+    if (httpClientVersion) {
+        def httpVer = HttpClient.Version.valueOf(httpClientVersion)
+        if (httpVer) {
+           httpRequestBuilder.version(httpVer)
+        } else {
+	        println("*! $httpClientVersion is invalid. Using default HTTP Client protocol version.");
+        }
+    }
+	
+	HttpRequest request =  httpRequestBuilder.build()
 
 	println("** Uploading $fileName to $url...");
 	
@@ -163,6 +179,7 @@ def run(String[] cliArgs) {
     cli.fD(longOpt:'fileToDownload', args:1, 'The full path of the file to download')
     cli.U(longOpt:'user', args:1, required:true, 'Artifactory user id')
     cli.P(longOpt:'password', args:1, required:true, 'Artifactory password')
+	cli.ht(longOpt:'httpClientVersion', args:1, 'HTTP Client protocol version')
     cli.v(longOpt:'verbose', 'Flag to turn on script trace')
     def opts = cli.parse(cliArgs)
 

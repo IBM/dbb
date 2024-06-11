@@ -1,0 +1,758 @@
+// Name: Jenkinsfile
+//
+// Description: A sample Jenkins Declarative Multibranch pipeline job that demonstrates how to
+// implement the IBM recommended Git flow branching model. 
+// https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/
+// The pipeline uses Jenkins, IBM Dependency Based Build, SonarQube Scan and UrbanCode Deploy
+// and the Common Backend scripts
+//
+// Refer to README.md for more information.
+//
+
+// Jenkins
+//
+// Information required to identify Jenkins specific configuration values.
+//
+//   JenkinsAgent             - Label of the Jenkins Agent where the pipeline
+//                              will execute in the Jenkins environment.
+def JenkinsAgent              = "ztec-201-STC" // Jenkins Node/Label under z/OS UNIX System Services
+def JenkinsX86Agent			  = "x86-builder"  // Jenkins Node/Label to drive distributed actions, such as requisting SonarQube scan
+
+// Debug Variables
+def pipeverbose               = true  // Enabled Pipeline Debug Messages (true/false).
+
+// Lifecycle
+//   
+// Variables for lifecycle management
+//
+//     PipelineType           - The type of pipeline relating to the development lifecycle. Set by the user via
+//                              pipeline parameter. Potential values:
+//                               preview
+//                               build (default)
+//                               release
+//     ReleaseType            - Defining the information for the semantic versioning to compute release candidate tags and release names.
+//                              TODO - Further enhancement to automatically compute release candidate tag
+def PipelineType			  = "build"
+def ReleaseType               = ""
+
+// Application
+//
+//     AppName                - Name of the Application folder within the application repository.
+//     AppHLQ                 - Build destination High-Level Qualifier for any pipeline
+//
+def AppName                   = "MortgageApplication"
+def AppHLQ                    = "JENKINS.PIPELINE"
+
+// Generic Build Solution (zAppBuild)
+//
+//   Variables that pertain to the generic build solution zAppBuild and Common Backend Script dbbBuild.sh
+//
+//     zAppBuildVerbose       - Verbose string passed to the DBB Build script. Set later on based on the
+//                              value of pipeline verbose variable.
+//     dbbDoBuild             - If true, perform the DBB Build. Computed in Branch Contol stage
+def zAppBuildVerbose          = ""
+def dbbDoBuild                = true
+
+// Software Analysis with SonarQube
+//
+//   Variables that pertain to the software analysis stage
+//
+//     sonarQubeConnection    - Name of the configured sonarQube Connection in Jenkins
+//     sonarQubeDoScan        - If true, perform the Sonar analysis. Computed in Branch Contol stage
+def sonarQubeConnection       = "zsonar1" // Configured SonarQube connection
+def sonarQubeDoScan           = true 
+
+// UrbanCode Deploy Packaging
+//
+//   Variables that pertain to the Package stage using UrbanCode Deploy buztool and the Common Backend Script ucdPackaging.sh
+//
+//     ucdDoPackaging         - Internal Package Switch. Controls whether the packaging step should be executed.
+//     ucdApplication         - UCD Application.
+//                              Default - AppName
+//     ucdComponent           - UCD Component.
+//                              Default - AppName
+//
+//     ucdVersionName         - UCD Component Name Prefix. The Version Name will be updated later to contain
+//                              this prefix value, along with the name of the pipeline type and the
+//                              build number in the format of "ucdVersionName-pipelineType-buildnumber"
+//                              Default - AppName
+//     ucdDoPackaging         - If true, perform the Packaging.
+//     ucdDoDeployment        - If true, perform the Deployment.
+
+//     ucdBuzToolLogName      - File Name of the Packaging Log.
+//     ucdBuzToolLog          - Location of the Packaging Log. Path and name will be set later on based on
+//                              the DBB Workspace and Build Number.
+//     ucdDoDeployment        - Deployment Switch. Controls whether the deployment step should be executed.
+def ucdDoPackaging            = true                     // If true, perform Package Step.
+def ucdApplication            = "${AppName}"             // Match the AppName property
+def ucdComponent              = "${AppName}"             // Match the AppName property
+def ucdVersionName            = "${AppName}"             // Match the AppName property
+def ucdBuzToolLogName         = "buztool.log"            // Buztool Log Name.
+def ucdBuzToolLog             = ""                       // Buztool Path and Log Name.
+def baseLineReferenceFile     = ""
+
+// UrbanCode Deploy Request Deployment
+//
+//   Variables that pertain to the Deploy stage using UrbanCode Deploy and the Common Backend Script ucdDeploy.sh
+//
+//     ucdApplicationProcess  - UCD Application Process name to perform application deployment
+//     ucdEnvironment         - UCD Environment Name for which the pipeline will request a deployment
+//     ucdDeploymentLogName   - File Name of the UCD Deployment Log.
+//     ucdDeploymentLog       - Location of the UCD Deployment Log. Path and name will be set later on based on
+//                              the Jenkins build Workspace name.
+def ucdDoDeployment           = false                 // If true, perform Deployment Step.
+def ucdApplicationProcess     = "appDeployment"
+def ucdEnvironment            = "Integration-Test"    
+def ucdDeploymentLogName      = "ucd-deploy.log"      // Deployment Log Name.
+def ucdDeploymentLog          = ""                    // Deployment Path and Log Name.
+
+// Jenkins
+//
+//   Variables that pertain to Jenkins.
+//
+//     PipelineName           - Supplied by Jenkins JOB_NAME Environmental Variable.
+//     BuildNumber            - Supplied by Jenkins BUILD_NUMBER Environemntal Variable. Value will be
+//                              eight (8) characters in length, padded to the left with zeros (0).
+def PipelineName              = ""
+def BuildNumber               = ""
+
+// Branch Controls
+//
+//   Variables that pertain to Repository Branches.
+//
+//     BranchOkay               - Process controls for Branches that have been defined.
+def BranchOkay                = false
+
+// Internal Constants and Variables
+def BuildCmd                  = ""         // DBB Build Command.
+def Buildrc                   = 0          // DBB Build Command Return Code.
+def BuildOutputList           = ""         // List of timestamped directories under Jenkins Build Directory.
+def BuildOutputDir            = ""         // DBB Build Output Directory (Discovered).
+def BuildFile                 = ""         // Will contain the contents of the DBB buildFile.txt.
+def BuildHasFiles             = true       // DBB buildFile.txt indicates changed files.
+
+def PackageCmd                = ""         // Packaging Command.
+def Packagerc                 = 0          // Packaging Command Return Code.
+
+def UcdDeployCmd              = ""         // UCD Deploy Command.
+def UcdDeployrc               = 0          // UCD Deploy Command Return Code.
+
+def autoCancelled             = false      // Cancellation Flag.
+def DefaultEncoding           = "IBM-1047" // Default Encoding.
+def Msg                       = ""         // Message String.
+def MsgHdr                    = ""         // HTML Header String ID for Jenkins Build Log.
+def StartDateTime             = ""         // Pipeline Start Date/Time.
+
+// Okay, Let's Begin
+StartDateTime = new Date()
+
+//
+// Pipeline - Begin the Pipeline.
+//
+pipeline {
+	
+	agent { label JenkinsAgent }
+
+	options {
+		checkoutToSubdirectory("${AppName}") // Added AppName for checkout dir of implizit checkout
+		disableConcurrentBuilds() 			 // throttle builds
+	}
+	environment {
+		GIT_TRACE       = 'false'               // Trace git for testing  true/false,1,2.
+		GIT_TRACE_SETUP = 'false'               // really cool trace tools.
+	}
+	
+	stages {
+		
+		stage ('Pipeline Setup') {
+			steps {
+				script {
+
+					// Required Input Parameters
+					properties([
+						parameters([
+							choice(
+								choices : ["build", "release", "preview"],
+								description: 'Please select the pipeline type',
+								defaultValue: 'build',
+								name: 'PipelineType'
+							),
+							choice(
+								choices : ["major", "minor", "patch"],
+								description: 'Please provide the release type for automated computing of tags',
+								defaultValue: 'patch',
+								name: 'ReleaseType'
+							),
+							choice(
+								choices : ["no", "yes"],
+								description: 'Enable pipeline logging',
+								defaultValue: 'no',
+								name: 'PipelineVerboseLogging'
+							)
+						])
+					])
+
+					println("${PipelineName}[INFO]: Start Date/Time              = " + StartDateTime)
+			
+					// Assess user provided parameters
+					if (params.PipelineVerboseLogging.equals("yes")){
+						zAppBuildVerbose = "-v"
+						pipeverbose = true
+					} else {
+						zAppBuildVerbose = ""
+						pipeverbose = false
+					}
+
+					PipelineType = params.PipelineType
+					ReleaseType = params.ReleaseType
+
+					Buildrc = 0
+
+					if (pipeverbose) {
+						println("${PipelineName}[DEBUG]:   Format yyyyMMdd.hhmmss.mmm = " + StartDateTime.format("yyyyMMdd.hhmmss.mmm"))
+						println("${PipelineName}[DEBUG]:   Format yyyyMMdd.HHmmss.mmm = " + StartDateTime.format("yyyyMMdd.HHmmss.mmm"))
+						sh "env"
+					}
+					
+					// Pick up the AppBranch from Jenkins.
+					AppBranch = "${env.BRANCH_NAME}"
+					
+					// Fetch the Pipeline Name and Build Number.  Set up and format the DBB Working
+					// directory for the build results.
+					PipelineName   = env.JOB_NAME.split("/")
+					PipelineName   = PipelineName[0]
+
+					BuildNumber    = "${env.BUILD_NUMBER}"
+					BuildNumber    = BuildNumber.padLeft(8,"0") // Make Build Directories easier to sort.
+					
+					//Build directory
+					BuildDir       = "${WORKSPACE}"
+					baselineReferenceFile = "${BuildDir}/${AppName}/application-conf/baselineReference.config"
+
+
+					// Branch Control Setup
+					Branch         = env.BRANCH_NAME.toUpperCase()
+					BranchOkay     = false
+					PipelineTypeUpper = PipelineType.toUpperCase()
+					
+					// Configure the stages for the main branch
+					if  ( (Branch.startsWith('MAIN') == true) ) {
+
+						dbbDoBuild      = true  // Perform DBB Build.
+						sonarQubeDoScan = true  // Perform Sonar scan.
+						ucdDoPackaging  = true  // Perform the Packaging.
+						ucdDoDeployment = true  // Perform the Deployment.
+
+						ucdVersionName = "${ucdVersionName}-Main-${PipelineTypeUpper}" // Package Version Name Prefix.
+
+						BranchOkay = true
+					}
+
+					// Configure the stages for feature and hotfix branches
+					if  (Branch.startsWith('FEATURE') == true || Branch.startsWith('HOTFIX') == true) {
+
+						dbbDoBuild      = true  // Perform DBB Build.
+						sonarQubeDoScan = true  // Perform Sonar scan.
+						ucdDoPackaging  = true  // Perform the Packaging. 
+						ucdDoDeployment = false // Do Not Perform the Deployment. Up to the developer to install it.
+
+						ucdVersionName = "${ucdVersionName}-${AppBranch}".replaceAll("/",".") // Prelimenary Package Version Name Prefix.
+
+						BranchOkay = true
+					}
+
+					// Configure the stages for RELEASE and EPIC branches
+					if  (Branch.startsWith('RELEASE') == true || Branch.startsWith('EPIC') == true) {
+						
+						dbbDoBuild      = true  // Perform DBB Build.
+						sonarQubeDoScan = true  // Perform Sonar scan.
+						ucdDoPackaging  = true  // Perform the Packaging. 
+						ucdDoDeployment = false // Do Not Perform the Deployment. Up to the developer to install it.
+
+						ucdVersionName = "${ucdVersionName}-${AppBranch}-${BuildNumber}".replaceAll("/",".")
+
+						BranchOkay = true
+					}
+
+					// Manage preview pipelines
+					if  ( (PipelineTypeUpper.startsWith('PREVIEW') == true) ) {
+						dbbDoBuild          = true
+						// Skip any subsequent steps
+						sonarQubeDoScan     = false
+						ucdDoPackaging      = false
+						ucdDoDeployment     = false
+					}
+					
+					// If Branch Proceesing has not been defined, gracefully terminate the Pipeline.
+					if (BranchOkay == false) {
+						autoCancelled       = true
+						dbbDoBuild          = false
+						sonarQubeDoScan     = false
+						ucdDoPackaging      = false
+						ucdDoDeployment     = false
+					}
+
+					println("${PipelineName}[INFO]: AppBranch = ${AppBranch} .")
+					
+				}
+			}
+		} // End: stage ('Pipeline Setup')
+
+		stage ('Parameters and Values') {
+			steps {
+				script {
+					println("**************************************************************")
+					println("* Parameters and Variable Values")
+					println("*")
+					println("*   Lifecycle")
+					println("*     PipelineType            : ${PipelineType}")
+					println("*     ReleaseType             : ${ReleaseType}")
+					println("*")
+					println("*   Jenkins")
+					println("*     env.JOB_NAME            : ${env.JOB_NAME}")
+					println("*     env.GIT_URL             : ${env.GIT_URL}")
+					println("*     env.GIT_BRANCH          : ${env.GIT_BRANCH}")
+					println("*     env.BRANCH_NAME         : ${env.BRANCH_NAME}")
+					println("*     env.BUILD_NUMBER        : ${env.BUILD_NUMBER}")
+					println("*     env.CHANGE_URL          : ${env.CHANGE_URL}") // If this is a PR build
+					println("*     WORKSPACE               : ${WORKSPACE}")
+					println("*     BuildNumber             : ${BuildNumber}")
+					println("*     PipelineName            : ${PipelineName}")
+					println("*     JenkinsAgent            : ${JenkinsAgent}")
+					println("*")
+					println("*   Application")
+					println("*     AppBranch               : ${AppBranch}")
+					println("*     AppName                 : ${AppName}")
+					println("*     AppHLQ                  : ${AppHLQ}")
+					println("*     BuildDir                : ${BuildDir}")
+					println("*")
+					println("*   Build/zAppBuild")
+					println("*     zAppBuildVerbose        : ${zAppBuildVerbose}")
+					println("*     dbbDoBuild              : ${dbbDoBuild}")
+					println("*")
+					println("*   Anaylsis/SonarQube")
+					println("*     sonarQubeConnection     : ${sonarQubeConnection}")
+					println("*     sonarQubeDoScan         : ${sonarQubeDoScan}")
+					println("*")										
+					println("*   Packaging/UCD")
+					println("*     ucdDoPackaging          : ${ucdDoPackaging}")
+					println("*     ucdApplication          : ${ucdApplication}")
+					println("*     ucdComponent            : ${ucdComponent}")
+					println("*     ucdVersionName          : ${ucdVersionName}")
+					println("*     ucdBuzToolLogName       : ${ucdBuzToolLogName}")
+					println("*")
+					println("*   Deployment/UCD")
+					println("*     ucdDoDeployment         : ${ucdDoDeployment}")
+					println("*     ucdApplicationProcess   : ${ucdApplicationProcess}")
+					println("*     ucdEnvironemnt          : ${ucdEnvironment}")
+					println("*     ucdDeploymentLogName    : ${ucdDeploymentLogName}")
+					println("*")
+					println("*   General")
+					println("*     DefaultEncoding         : ${DefaultEncoding}")
+					println("*     autoCancelled           : ${autoCancelled}")
+					println("*")
+					println("*   Environmental")
+					println("*     HOME                    : ${HOME}")
+					println("*     CLASSPATH               : ${CLASSPATH}")
+					println("*     PATH                    : ${PATH}")
+					println("*     JAVA_HOME               : ${JAVA_HOME}")
+					println("*     JENKINS_HOME            : $JENKINS_HOME")
+					println("*")
+					println("**************************************************************")
+				}
+			}
+		} // End: stage ('Parameters and Values')
+
+	
+		stage('Build') {
+			when {
+				expression { return ((dbbDoBuild == true) && (autoCancelled == false)) }
+			}
+			steps {
+				script {
+					println("${PipelineName}[INFO]: DBB Build Starting.")
+					MsgHdr = "<strong>Build Step:</strong>"
+					
+					Buildrc = 0
+											
+						if (pipeverbose) {
+							sh "echo ${PipelineName}[DEBUG]: HOME        = ${HOME}"
+							sh "echo ${PipelineName}[DEBUG]: DBB_HOME    = ${DBB_HOME}"
+							sh "echo ${PipelineName}[DEBUG]: DBB_CONF    = ${DBB_CONF}"
+							sh "echo ${PipelineName}[DEBUG]: CLASSPATH   = ${CLASSPATH}"
+						}
+						
+						BuildCmd = "dbbBuild.sh -w ${BuildDir} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -q ${AppHLQ} ${zAppBuildVerbose}"
+						println("${PipelineName}[INFO]: Build Command = ${BuildCmd}")
+					
+						Buildrc = sh(script: "${BuildCmd}", returnStatus: true)
+
+						
+						if (pipeverbose) {
+							sh "echo ${PipelineName}[DEBUG]: HOME        = ${HOME}"
+							sh "echo ${PipelineName}[DEBUG]: DBB_HOME    = ${DBB_HOME}"
+							sh "echo ${PipelineName}[DEBUG]: DBB_CONF    = ${DBB_CONF}"
+							sh "echo ${PipelineName}[DEBUG]: CLASSPATH   = ${CLASSPATH}"
+						}
+						
+						BuildOutputDir = "${BuildDir}/logs"
+
+						println("${PipelineName}[INFO]: Build Output Folder = ${BuildOutputDir}")
+					
+						if (pipeverbose) {
+							// Show the contents of the DBB Build Directory.
+							dir ("${BuildOutputDir}") {
+								sh "pwd ; ls -alT"
+							}
+						}
+					
+						// Check to see if the build has any files
+						if (Buildrc == 0) {
+						
+							dir ("${BuildOutputDir}") {
+								BuildFile = findFiles(glob: "buildList.txt")
+							}
+						
+							if (pipeverbose) {
+								println("${PipelineName}[DEBUG]: BuildFile           = " + BuildFile)
+								println("${PipelineName}[DEBUG]: BuildFile.length    = " + BuildFile.length)
+								println("${PipelineName}[DEBUG]: BuildFile[0].length = " + BuildFile[0].length)
+							}
+						
+							BuildHasFiles = (BuildFile.length > 0) && (BuildFile[0].length > 0)
+						
+							if (BuildHasFiles) {
+								Msg     = "Build resulted in updated files."
+								println("${PipelineName}[INFO]: ${Msg}")
+								createSummary icon:"accept.svg", text: "${MsgHdr} ${Msg}"
+							} else {
+								Buildrc = 4
+								Msg     = "Build resulted in no updated files."
+								println("${PipelineName}[WARN]: ${Msg}")
+								createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
+								ucdDoPackaging  = false // Do not package if nothing was built.
+								ucdDoDeployment = false // Do not deploy is nothing was built.
+							}
+						} else {
+							Msg = "Build resulted in a return code=${Buildrc}. Refer to Jenkins Console Output Log."
+							println("${PipelineName}[WARN]: ${Msg}")
+							createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+						
+							ucdDoPackaging  = false // Do not package if nothing was built.
+							ucdDoDeployment = false // Do not deploy is nothing was built.
+
+							if (Buildrc == 4) { // Mark Build unstable
+								unstable "DBB Build Warning. No source changes detected."
+							} else { // Mark Stage as Error
+								sonarQubeDoScan = false // Do not scan the repo.
+								catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+									sh "echo 'DBB Build Error. Please check log.' && exit ${Buildrc}"
+								}
+							}
+
+						}
+				}
+			}
+			post {
+				always {
+					// Pick up files created by the build.
+					 dir ("${BuildOutputDir}") {
+					 	archiveArtifacts allowEmptyArchive: true,
+					 		artifacts: '*.log,*.json,*.html,*.txt',
+					 		excludes: '*clist',
+					 		onlyIfSuccessful: false
+					 }
+				}
+			}
+		} // End: stage('Build')
+
+		stage('SonarQube Analysis') {
+			// Application repository is automatically checked out
+			agent { label JenkinsX86Agent }
+
+			when {
+				expression { return ((sonarQubeDoScan == true) && (autoCancelled == false)) }
+			}
+
+			steps {
+				// Pull scanner configuration
+				dir ("${WORKSPACE}/${AppName}") {
+					withSonarQubeEnv(sonarQubeConnection) {
+						sh "sonar-scanner"
+					}
+				}
+
+			}
+  		} // End: stage('SonarQube Analysis')
+
+		stage('Packaging') {
+			when {
+				expression { return ((ucdDoPackaging == true) && (autoCancelled == false)) }
+			}
+			steps {
+				script {
+					println("${PipelineName}[INFO]: Packaging Starting.")
+					MsgHdr = "<strong>Packaging Step:</strong>"
+
+					ucdBuzToolLog = "${BuildOutputDir}/${ucdBuzToolLogName}"
+
+					println("${PipelineName}[INFO]: BuzTool Log = ${ucdBuzToolLog}.")
+					
+					PackageCmd = """
+						set +x
+						# Compute the next release name for release pipelines
+						if [ "${PipelineType}" = "release" ]; then
+
+							echo ${PipelineName}[INFO] Compute the Git tag for the next release.
+							echo ${PipelineName}[INFO] Retrieve baseline reference information from "${baselineReferenceFile}".
+							# Retrieve the baseline reference from the baselineReferenceFile       
+							if [ ! -f "${baselineReferenceFile}" ]; then
+								echo ${PipelineName}[ERROR] Applications baseline reference configuration file ${baselineReferenceFile} was not found.
+								exit 1
+							else
+								
+								# Extract the current branch 
+								export mainBranchSegment=`echo "${AppBranch}" | awk -F "/" '{ print \$1 }'`
+								export secondBranchSegment=`echo "${AppBranch}" | awk -F "/" '{ print \$2 }'`
+								export thirdBranchSegment=`echo "${AppBranch}" | awk -F "/" '{ print \$3 }'`
+
+								echo ${PipelineName}[INFO] Branch: $AppBranch
+								# debug echo ${PipelineName}[INFO] Release segment: \${mainBranchSegment}, \${secondBranchSegment}, \${thirdBranchSegment}
+								echo ${PipelineName}[INFO] Selected Release Type: $releaseType
+
+
+								# Find base line version of the current branch from the baseLineReferenceFile
+								case \${mainBranchSegment} in
+									"main")
+										export baselineRef=`cat "${baselineReferenceFile}" | grep "^\${mainBranchSegment}" | awk -F "=" '{ print \$2 }'`
+								;;
+									"release")
+										export baselineRef=`cat "${baselineReferenceFile}" | grep "^release/\${secondBranchSegment}" | awk -F "=" '{ print \$2 }'`
+								;;
+								esac
+								
+								if [ -z \${baselineRef} ]; then
+									echo ${PipelineName}[ERROR] No baseline ref was found for branch name ${AppBranch} in ${baselineReferenceFile}.
+									exit 1
+								else
+									echo ${PipelineName}[INFO] Baseline Reference: \${baselineRef}
+								fi
+								# Compute the name of the next release based on the releaseType
+								if [ "${releaseType}" = "patch" ]; then
+									export newVersion=`echo \${baselineRef} | sed 's/^["refs/tags/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{\$3 += 1 ; print}'`
+								fi
+								if [ "${releaseType}" = "minor" ]; then
+									export newVersion=`echo \${baselineRef} | sed 's/^["refs/tags/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{\$2 += 1 ; \$3 = 0; print}'`
+								fi
+								if [ "${releaseType}" = "major" ]; then
+									export newVersion=`echo \${baselineRef} | sed 's/^["refs/tag/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{\$1 += 1 ; \$2 = 0; \$3 = 0; print}'`
+								fi
+
+								export newVersionTag=\$(echo "rel-\${newVersion}")
+								echo "${PipelineName}[INFO] Computed tag for the next release: \${newVersionTag}"
+							fi
+						fi
+
+						if [ -z \${newVersionTag} ]; then
+							ucdVer="${ucdVersionName}-${BuildNumber}"
+						else
+							ucdVer="${ucdVersionName}-\${newVersionTag}-${BuildNumber}"
+						fi
+						# This log message is fetched in a later step to define the UCD component version for the deployment stage
+						echo "${PipelineName}[INFO] Computed UCD component version name: \${ucdVer}" 
+
+						CMD="ucdPackaging.sh -w ${BuildDir} -v \${ucdVer} -c ${ucdComponent}  -u ${env.BUILD_URL} -b ${AppBranch} -e /var/jenkins/zappbuild_config/MortgageAppArtifactRepository.properties"
+						
+						echo "${PipelineName}[INFO]: Package Command = \${CMD}"
+						echo ""
+						\${CMD}
+					"""
+											
+					
+					tee("${ucdBuzToolLog}") {
+					Packagerc = sh(script: "${PackageCmd}", label: "Packaging command ucdPackaging.sh", returnStatus: true)
+					}
+
+					if (Packagerc == 0) {
+
+						// Create a copy with the correct encoding so it will be viewable in the Jenkins Job Log.
+						dir ("${BuildOutputDir}") {
+							sh "iconv -f ${DefaultEncoding} -t UTF-8 < shiplist.xml > shiplist-utf-8.xml"
+							sh "chtag -c UTF-8 shiplist-utf-8.xml"
+						}
+						
+						println("${PipelineName}[INFO]: Gathering UCD Component Version Name and URL.")
+
+						// Locate the UCD Component Version Name in the output log.
+						ucdVersionName = searchLogOutput(".*Computed UCD component version name: (.*)", readFile("${ucdBuzToolLog}")) // passed into subsequent stage
+						if (ucdVersionName){
+							println("${PipelineName}[INFO]: UCD Component Version Name: ${ucdVersionName}")
+							
+							// Locate the UCD Component Version URL in the output log.
+							def ucdVersionUrl = searchLogOutput("version.url -> (.*)", readFile("${ucdBuzToolLog}"))
+							if (ucdVersionUrl){
+								println("${PipelineName}[INFO]: UCD Component Version URL: ${ucdVersionUrl}")
+								createSummary icon:"accept.svg", text: "${MsgHdr} <a href=\'$ucdVersionUrl\' target=\'_other\'>UCD Component Version (name: $ucdVersionName)</a>"
+							} else {
+								Msg = "Fetching the UCD Component Version URL failed. Please check ${ucdBuzToolLogName}"
+								createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
+							}
+						} else {
+							Msg = "Fetching the UCD Component Version Name failed. Please check ${ucdBuzToolLogName}"
+							println("${PipelineName}[WARN]: ${Msg}")
+							createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+							ucdDoDeployment = false // Do not deploy if packaging failed.
+							// Mark the job and stage as failed.
+							catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+									sh "echo 'Fetching the UCD Component Version Name failed. Please check log.' && exit 1"
+							}	
+						}
+	
+						// End of if (Packagerc == 0)
+					} else {
+						Msg = "Packaging resulted in a return code=${Packagerc}. Refer to ${ucdBuzToolLogName}."
+						println("${PipelineName}[WARN]: ${Msg}")
+						createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+						ucdDoDeployment = false // Do not deploy if packaging failed.
+						// Mark the job and stage as failed.
+						catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+									sh "echo 'Packaging script returned rc=${Packagerc}. Please check log.' && exit ${Packagerc}"
+						}
+					}
+					
+					if (pipeverbose) {
+						dir ("${BuildOutputDir}") {
+							sh "pwd ; ls -alT"
+						}
+					}
+				}
+			}
+			post {
+				always {
+					// Pick up the files created by the packaging
+					dir ("${BuildOutputDir}") {
+						archiveArtifacts allowEmptyArchive: true,
+							artifacts: '*.xml,*.log',
+							excludes: '*clist',
+							onlyIfSuccessful: false
+					}
+				}
+			}
+		} // End: stage('Packaging')
+
+		stage('Deploy to INT') {
+			when {
+				expression { return ((ucdDoDeployment == true) && (autoCancelled == false)) }
+			}
+			steps {
+				script {
+					println("${PipelineName}[INFO]: Deployment Starting.")
+					MsgHdr = "<strong>Deployment Step:</strong>"
+
+					if (BuildHasFiles) {
+						script {
+							ucdDeploymentLog = "${BuildOutputDir}/${ucdDeploymentLogName}"
+							println("${PipelineName}[INFO]: UCD Deployment Log = ${ucdDeploymentLog}")
+							
+							// TODO: Create variable for SSL verify?
+							UcdDeployCmd = "ucdDeploy.sh -a ${ucdApplication} -p ${ucdApplicationProcess} -e ${ucdEnvironment} -d ${ucdComponent}:${ucdVersionName} -k"
+
+							tee("${ucdDeploymentLog}") {
+								UcdDeployrc = sh(script: "${UcdDeployCmd}", returnStatus: true)
+							}
+							if (UcdDeployrc == 0) {
+
+								println("${PipelineName}[INFO]: Gathering UCD Deployment Request URL.")
+								
+								def ucdDeployRequestUrl = searchLogOutput("Follow Process Request: (.*)", readFile("${ucdDeploymentLog}"))
+								if (ucdDeployRequestUrl){
+									println("${PipelineName}[INFO]: UCD Deployment Request: ${ucdDeployRequestUrl}")
+									createSummary icon:"accept.svg", text: "${MsgHdr} <a href=\'$ucdDeployRequestUrl\' target=\'_other\'>UCD Deployment Request</a>"
+								} else {
+									Msg = "Could not retrieve UCD Deployment Request URL."
+									println("${PipelineName}[WARN]: ${Msg}")
+									createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
+								}
+								
+							} else {
+								Msg = "UCD Deployment request resulted in a return code=${UcdDeployrc}. Refer to ${ucdDeploymentLogName}."
+								println("${PipelineName}[WARN]: ${Msg}")
+								createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+								// Mark the job and stage as failed.
+								catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+									sh "echo 'UCD Deployment request resulted in a return code=${UcdDeployrc}. Please check log.' && exit ${UcdDeployrc}"
+								}
+							}
+						}
+					}
+
+					if (pipeverbose) {
+						dir ("${BuildOutputDir}") {
+							sh "pwd ; ls -alT"
+						}
+					}
+				}
+			}
+			post {
+				always {
+					// Pick up the Deployment Console Output (STDOUT).
+					dir ("${BuildOutputDir}") {
+						archiveArtifacts allowEmptyArchive: true,
+							artifacts: ucdDeploymentLogName,
+							onlyIfSuccessful: false
+					}
+				}
+			}
+		} // End: stage('Deployment')
+		stage ('Workspace Cleanup') {
+			when {
+				expression { return (autoCancelled == false) }
+			}
+			steps {
+				script {
+					if (pipeverbose) {
+						println("${PipelineName}[DEBUG]: Final Cleanup before deletes.")
+
+						dir("${WORKSPACE}") {
+							sh "pwd ; ls -al"
+						}
+					}
+					
+					if (pipeverbose) {
+						println("${PipelineName}[DEBUG]: Final Cleanup after deletes.")
+
+						dir("${WORKSPACE}") {
+							sh "pwd ; ls -al"
+						}
+					}
+				}
+			}
+			post {
+			// Clean after build
+				always {
+					cleanWs(cleanWhenNotBuilt: false,
+							deleteDirs: true,
+							disableDeferredWipeout: true,
+							notFailBuild: true)
+				}
+			}
+
+		} // End: stage ('Final Cleanup')
+	} // End: stages
+} // End: pipeline
+
+/**
+ * Methods that perform non-serializable actions
+ */
+
+@NonCPS
+def searchLogOutput(String regexPattern, String logFileContent){
+	pattern = java.util.regex.Pattern.compile(regexPattern)
+	def pMatcher = pattern.matcher(logFileContent)
+	if (pMatcher.find()) {
+		def result = "${pMatcher.group(1)}"
+		return result
+	} else {
+		return null
+	}
+}

@@ -45,12 +45,17 @@ import com.ibm.jzos.ZFile;
  * Version 6 - 2024-03
  *  - Added support to write IBM Wazi Deploy Application Manifest file
  *      
+ * Version 7 - 2024-04
+ *  - Added support to SBOM files
+ *      
  ************************************************************************************/
 
 // start create & publish package
 @Field Properties props = null
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
+@Field def sbomUtilities
+
 
 props = parseInput(args)
 
@@ -79,6 +84,11 @@ def String tarFileLabel = "Default"
 
 // Object to store scm information for Wazi Deploy Application Manifest file
 HashMap<String,String> scmInfo = new HashMap<String, String>()
+
+if (props.generateSBOM && props.generateSBOM.toBoolean()) {
+	sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
+	sbomUtilities.initializeSBOM(props.sbomAuthor)
+}
 
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
@@ -185,10 +195,15 @@ props.buildReportOrder.each { buildReportFile ->
 					rootDir = output[0].trim()
 					file = output[1].trim()
 					deployType = output[2].trim()
+					def dependencySetRecord = buildReport.getRecords().find {
+						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
+					}
 					buildOutputsMap.put(new DeployableArtifact(file, deployType), [
-						rootDir,
-						buildRecord,
-						buildResultPropertiesRecord
+						container: rootDir,
+						owningApplication: props.application,
+						record: buildRecord,
+						propertiesRecord: buildResultPropertiesRecord,
+						dependencySetRecord: dependencySetRecord
 					])
 				}
 			}
@@ -197,10 +212,16 @@ props.buildReportOrder.each { buildReportFile ->
 				buildRecord.getOutputs().each{ output ->
 					datasetMembersCount++
 					def (dataset, member) = getDatasetName(output.dataset)
+					String file = buildRecord.getFile()
+					def dependencySetRecord = buildReport.getRecords().find {
+						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
+					}
 					buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [
-						dataset,
-						buildRecord,
-						buildResultPropertiesRecord
+						container: dataset,
+						owningApplication: props.application,
+						record: buildRecord,
+						propertiesRecord: buildResultPropertiesRecord,
+						dependencySetRecord: dependencySetRecord
 					])
 				}
 			}
@@ -245,11 +266,7 @@ props.buildReportOrder.each { buildReportFile ->
 			scmInfo.put("uri", "multipleBuildReports")
 		}
 	}
-
 }
-
-
-
 
 if (buildOutputsMap.size() == 0) {
 	println("** There are no build outputs found in all provided build reports. Exiting.")
@@ -275,10 +292,12 @@ if (buildOutputsMap.size() == 0) {
 	println("** Copying build outputs to temporary package directory $tempLoadDir")
 
 	buildOutputsMap.each { deployableArtifact, info ->
-		String container = info[0]
-		Record record = info[1]
-		PropertiesRecord propertiesRecord = info[2]
-
+		String container = info.get("container")
+		String owningApplication = info.get("owningApplication")
+		Record record = info.get("record")
+		PropertiesRecord propertiesRecord = info.get("propertiesRecord")
+		DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
+		
 		def filePath = ""
 		if (record.getType()=="USS_RECORD") {
 			filePath = "$tempLoadDir"
@@ -342,7 +361,15 @@ if (buildOutputsMap.size() == 0) {
 				props.error = "true"
 			}
 		}
+		if (props.generateSBOM && props.generateSBOM.toBoolean() && !props.error) {
+			sbomUtilities.addEntryToSBOM(deployableArtifact, info)
+		}
 	}
+	
+	if (props.generateSBOM && props.generateSBOM.toBoolean() && !props.error) {
+		sbomUtilities.writeSBOM("$tempLoadDir/sbom.json", props.fileEncoding)    
+	}
+	
 
 	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && !props.error) {
 		// print application manifest
@@ -448,6 +475,7 @@ if (buildOutputsMap.size() == 0) {
 		def apiKey = props.'artifactRepository.user'
 		def user = props.'artifactRepository.user'
 		def password = props.'artifactRepository.password'
+		def httpClientVersion = props.'artifactRepository.httpClientVersion'
 		def repo = props.get('artifactRepository.repo') as String
 
 		//Call the artifactRepositoryHelpers to publish the tar file
@@ -456,7 +484,7 @@ if (buildOutputsMap.size() == 0) {
 		GroovyObject artifactRepositoryHelpers = (GroovyObject) artifactRepositoryHelpersClass.newInstance()
 
 		println ("** Uploading package to Artifact Repository $url...")
-		artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean() )
+		artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean(), httpClientVersion)
 	}
 
 	if (props.error) {
@@ -539,7 +567,7 @@ def parseInput(String[] cliArgs){
 
 	cli.b(longOpt:'branch', args:1, argName:'branch', 'The git branch processed by the pipeline')
 	cli.a(longOpt:'application', args:1, argName:'application', 'The name of the application')
-
+	
 	// Artifact repository options ::
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifact Repository server. (Optional)')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package on the Artifact repository server. (Optional)')
@@ -550,6 +578,7 @@ def parseInput(String[] cliArgs){
 	cli.ad(longOpt:'artifactRepositoryDirectory', args:1, argName:'repoDirectory', 'Directory path in the repository to store the build . (Optional)')
 	cli.aU(longOpt:'artifactRepositoryUser', args:1, argName:'user', 'User to connect to the Artifact repository server. (Optional)')
 	cli.aP(longOpt:'artifactRepositoryPassword', args:1, argName:'password', 'Password to connect to the Artifact repository server. (Optional)')
+	cli.ah(longOpt:'artifactRepositoryHttpClientProtocolVersion', args:1, argName: 'httpClientProtocolVersion', 'HttpClient.Version setting to override the HTTP protocol version. (Optional)')
 	cli.aprop(longOpt:'artifactRepositoryPropertyFile', args:1, argName:'propertyFile', 'Path of a property file containing application specific artifact repository details. (Optional) ** (Deprecated)')
 
 	// Tracing
@@ -559,6 +588,9 @@ def parseInput(String[] cliArgs){
 	cli.boFile(longOpt:'buildReportOrderFile', args:1, argName:'buildReportOrderFile', 'A file that lists build reports in order of processing')
 	cli.bO(longOpt:'buildReportOrder', args:1, argName:'buildReportOrder', 'List of build reports in order of processing ')
 
+	// SBOM generation
+	cli.s(longOpt:'sbom', argName:'sbom', 'Flag to control the generation of SBOM')
+	cli.sa(longOpt:'sbomAuthor', args:1, argName:'sbomAuthor', 'Author of the SBOM, in form "Name <email>"')
 
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
@@ -622,6 +654,7 @@ def parseInput(String[] cliArgs){
 	if (opts.au) props.'artifactRepository.url' = opts.au
 	if (opts.ar) props.'artifactRepository.repo' = opts.ar
 	if (opts.ad) props.'artifactRepository.directory' = opts.ad
+	if (opts.ah) props.'artifactRepository.httpClientVersion' = opts.ah
 
 	//add any build reports from the file first, then add any from a CLI after.
 	//if no file or CLI, go to default build report
@@ -652,12 +685,20 @@ def parseInput(String[] cliArgs){
 	}
 	props.buildReportOrder = buildReports
 
-
+	props.generateSBOM = (opts.sbom) ? 'true' : 'false'
+	if (opts.sbomAuthor) {
+		props.sbomAuthor = opts.sbomAuthor
+	}    
 
 	// validate required props
 	try {
 		assert props.workDir : "Missing property build work directory"
 		assert props.copyModeMap : "Missing property package.copyModeMap"
+
+		// validate SBOM options
+		if (props.generateSBOM && props.generateSBOM.toBoolean()){
+			assert props.application : "Missing property application"
+		}
 
 		// validate publishing options
 		if (props.publish && props.publish.toBoolean()){

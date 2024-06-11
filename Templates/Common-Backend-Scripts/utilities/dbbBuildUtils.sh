@@ -7,7 +7,6 @@ segmentName=""
 computeBuildConfiguration() {
 
     # unset variables
-    Type=""
     HLQ=""
     propOverrides=""
 
@@ -167,25 +166,17 @@ computeBuildConfiguration() {
 
             ;;
         *)
-            # Treat other branches as feature branch.
-            # Assuming <initiative>/<feature> as naming convention
-            # Comment: We might want to verify that the epic branch exists.
-
+            # User did not follow the recommended naming conventions for branches. The branch name does not match any case of the recommended naming conventions.
+            # See https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#naming-conventions 
             HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}"
             if [ -z "${Type}" ]; then
                 Type="--impactBuild"
                 # appending the --debug flag to compile with TEST options
                 Type="${Type} --debug"
             fi
-            # override the mainBuildBranch to clone the dependency collection for the initative.
-            propOverrides="mainBuildBranch=epic/${mainBranchSegment}"
-
+            echo $PGM": [WARNING] [Utilities/dbbBuildUtils.sh/computeBuildConfiguration] The branch name (${Branch}) does not match any case of the recommended naming conventions for branches. Performing an impact build."
+            echo $PGM":            Read about our recommended naming conventions at https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#naming-conventions ."
             ;;
-
-            # rc=8
-            # ERRMSG=$PGM": [ERROR] [Utilities/dbbBuildUtils.sh(computeBuildConfiguration())] No build conventions/rules for branch name (${Branch}) have been defined. rc="$rc
-            # echo $ERRMSG
-            # ;;
         esac
 
         # append pipeline preview if specified
