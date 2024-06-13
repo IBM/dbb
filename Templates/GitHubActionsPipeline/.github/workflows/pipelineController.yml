@@ -60,7 +60,7 @@ jobs:
         needs: 
             - controller
         # this should run on manual trigger with pipelineType = build and automatic trigger
-        if: ${{(inputs.pipelineType == 'build' || inputs.pipelineType == '') && (startsWith(github.ref_name, 'feature/') == false)}}
+        if: ${{(inputs.pipelineType == 'build' || inputs.pipelineType == '') && (startsWith(github.ref_name, 'main')||startsWith(github.ref_name, 'release/')||startsWith(github.ref_name, 'epic/'))}}
         uses: ./.github/workflows/Build.yml
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:

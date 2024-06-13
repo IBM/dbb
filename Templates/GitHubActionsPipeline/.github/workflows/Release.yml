@@ -111,7 +111,6 @@ jobs:
         uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }}
       secrets:
           githubAccessToken: ${{ secrets.githubAccessToken }} 
-        
 
     Deploy-production:
         #this is supposed to only be triggered manually, see note in readme 

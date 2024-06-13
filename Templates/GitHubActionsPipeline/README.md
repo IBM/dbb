@@ -122,6 +122,17 @@ pipelineType | Which type of pipeline is being run, either preview, build, or re
 releaseType | Used only for the release pipeline, which type of release is being released, either patch, minor, or major. Defaults to n/a.
 verbose (wip) | Boolean flag to control logging of build framework. Defaults to false.
 
+### Preview pipeline
+
+The preview branch pipeline peforms the following: 
+ - Clone
+ - Build 
+
+This pipeline can be manually triggered from any branch.
+
+#### Overview of the pipeline:
+![Preview Pipeline Diagram](preview-pipeline.png)
+
 ### Feature branch pipeline
 
 The feature branch pipeline peforms the following: 
