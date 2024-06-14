@@ -1,0 +1,136 @@
+name: Release
+on:
+    workflow_call:
+        secrets:
+            githubAccessToken:
+                required: true
+        inputs:
+            pipelineType:
+                description: Pipeline Type
+                default: release
+                type: string
+                required: false
+            releaseType:
+                description: Release Type
+                default: patch
+                type: string
+                required: false
+
+env:
+    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }} # adding an r to before the number,
+    # to avoid an error caused by repeated build numbers 
+    branch : ${{ github.ref_name }} 
+    application: ${{  github.event.repository.name  }}
+    pipelineType: ${{ inputs.pipelineType }}
+    packageName: ${{github.run_id}}
+    zosHostname: lpar.dev.ibm.com
+    zosSFTPUser: GITHUB@lpar.dev.ibm.com
+
+jobs:
+    Setup:
+        runs-on: self-hosted
+        steps:
+          - name: CI-CD pipeline parameter printout
+            run: |
+                echo " "
+                echo "Following are the CI-CD pipeline parameters"
+                echo "*******************************************"
+                echo "uniqueWorkspaceId                  = ${{ env.uniqueWorkspaceId}}"
+                echo "branch                             = ${{ env.branch}}"
+                echo "application                        = ${{ env.application}}"
+                echo "pipelineType                       = ${{ env.pipelineType}}"
+                echo "packageName                        = ${{ env.packageName}}"
+                echo "zosHostname                        = ${{ env.zosHostname}}"
+                echo "zosSFTPUser                        = ${{ env.zosSFTPUser}}"
+          - name: Clone Repo to z/OS Unix System Services
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && gitClone.sh -w ${{ env.uniqueWorkspaceId }} -r https://${{ secrets.githubAccessToken }}@github.com/${{ github.repository }}.git -b ${{ env.branch }}" 
+
+    Build:
+        needs:
+            - Setup
+        runs-on: self-hosted
+        steps:
+          - name: Build git repo
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && dbbBuild.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -b ${{ env.branch }} -p ${{env.pipelineType}}"
+          - name: Prepare Logs
+            if: ${{ always() }}
+            run: |
+                ssh ${{ env.zosSFTPUser}} ". ./.profile && prepareLogs.sh -w ${{ env.uniqueWorkspaceId }}"  
+                rm -rf "${{ runner.temp }}/build-logs" 
+                mkdir "${{ runner.temp }}/build-logs" 
+                sftp ${{ env.zosSFTPUser}}:${{ env.uniqueWorkspaceId }}/*.tar "\"${{ runner.temp }}/build-logs\""
+                tar -xvf "${{ runner.temp }}/build-logs/logs.tar" -C "${{ runner.temp }}/build-logs"
+
+          - name: UploadBuildLogs
+            uses: actions/upload-artifact@v4
+            with:
+              name: build_${{github.run_number }}                        # Name used for artifact when it is uploaded
+              path: ${{ runner.temp }}/build-logs                        # Path to build logs artifacts
+              retention-days: 1
+          
+          - name: checkout
+            uses: actions/checkout@v4.1.0
+          
+          - name: Create release candidate tag
+            if: success() && env.pipelineType == 'release'
+            uses: "./.github/actions/tagging_createreleasecandidate" 
+            with:
+              releaseType: ${{inputs.releaseType}}
+              runnerWorkspace: ${{ env.uniqueWorkspaceId}}
+              githubAccessToken: ${{ secrets.githubAccessToken }} 
+
+    Package:
+        needs:
+            - Build
+        runs-on: self-hosted
+        steps:
+            - name: Package Build Outputs
+              run: ssh ${{ env.zosSFTPUser}} ". ./.profile && packageBuildOutputs.sh -w ${{ env.uniqueWorkspaceId }} -t ${{ env.application }}.tar -a ${{ env.application }} -b ${{ env.branch }} -p ${{env.pipelineType}} -v ${{ env.packageName }} "
+
+    Deploy-integration:
+        needs: 
+            - Package
+        uses: ./.github/workflows/deployToEnv.yml
+        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
+        with:
+          environmentName: Integration
+          pipelineType: ${{inputs.pipelineType}}
+          uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }}
+        secrets:
+          githubAccessToken: ${{ secrets.githubAccessToken }} 
+      
+    Deploy-acceptance:
+      # this is supposed to only be triggered manually, see note in readme 
+      needs:
+        - Deploy-integration
+      uses: ./.github/workflows/deployToEnv.yml
+      # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
+      with:
+        environmentName: Acceptance
+        pipelineType: ${{inputs.pipelineType}}
+        uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }}
+      secrets:
+          githubAccessToken: ${{ secrets.githubAccessToken }} 
+
+    Deploy-production:
+        #this is supposed to only be triggered manually, see note in readme 
+        needs:
+          - Deploy-acceptance
+        uses: ./.github/workflows/deployToEnv.yml
+        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
+        with:
+          environmentName: Production
+          pipelineType: ${{inputs.pipelineType}}
+          uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }}
+          releaseType: ${{inputs.releaseType}}
+        secrets:
+          githubAccessToken: ${{ secrets.githubAccessToken }} 
+
+    Cleanup:
+        needs:
+            - Deploy-production
+        runs-on: self-hosted
+        if: always()
+        steps:
+          - name: Cleanup Build Environment
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && deleteWorkspace.sh -w ${{ env.uniqueWorkspaceId }}"

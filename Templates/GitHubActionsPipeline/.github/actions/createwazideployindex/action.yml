@@ -1,0 +1,66 @@
+name: createWaziDeployIndex
+inputs:
+  evidenceFolder:
+    required: false
+    default: "."
+    type: string
+  environmentName:
+    required: false
+    default: "."
+    type: string
+  buildNumber:
+    required: false
+    default: "."
+    type: string
+  zosSFTPUser:
+    required: false
+    default: "."
+    type: string
+runs:
+  using: composite
+  steps:
+  - name: Copy Evidence File to Evidence Inventory
+    run: |
+      # local Variables
+      rc=0
+      PGM="deployment/createWaziDeployIndex.yml"
+      evidenceFile="${{ runner.temp }}/${{ inputs.evidenceFolder }}/evidences/evidence.yaml" 
+      evidencesPath=/home/github-runner/wazi_deploy_evidences/${{ env.application }}/${{ inputs.environmentName }}
+      buildNumber="${{ inputs.buildNumber }}"
+
+      rc=0
+
+      # check evidence file
+      if [ ! -f "${evidenceFile}" ]; then
+          rc=8
+          ERRMSG=$PGM": [ERROR] Evidence file (${evidenceFile}) was not found. rc="$rc
+          echo $ERRMSG
+      fi
+
+      # create evidence dir
+      if [ $rc -eq 0 ]; then
+
+          CMD="mkdir -p $evidencesPath"
+          ${CMD}
+          rc=$?
+      fi
+
+      # Copy evidence File, broken
+      if [ $rc -eq 0 ]; then
+
+          CMD="cp ${evidenceFile} $evidencesPath/evidence-${{ inputs.buildNumber }}.yaml"
+          ${CMD}
+          rc=$?
+      fi
+
+      # Error Handling
+      if [ $rc -eq 0 ]; then
+          echo "${PGM}: [INFO] - Copy Evidence File (evidence-${{ inputs.buildNumber }}.yaml) to Evidence Inventory ($evidencesPath) completed."
+      else
+
+          echo "${PGM}: [WARNING] - Copy Evidence File to Evidence Inventory Failed"
+          exit 1
+      fi
+      
+    shell: bash
+    
