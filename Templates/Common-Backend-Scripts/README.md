@@ -142,7 +142,8 @@ Artifact Name |  Description | Script details
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](README.md#48---wazideploy-deploysh)
 [wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](README.md#49---wazideploy-evidencesh)
 [prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](README.md#410---preparelogssh)
-[deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](README.md#411---deleteworkspacesh)
+[generateCleanupCommands.sh](generateCleanupCommands.sh) | Pipeline Shell Script to generate necessary DBB Metadatastore cleanup tasks including the deletion of the build datasets. | [script details](README.md#411---generatecleanupcommandssh)
+[deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](README.md#412---deleteworkspacesh)
 
 
 ### 4.1 - gitClone.sh
@@ -889,9 +890,9 @@ It _greps_ the information and invokes a download action.
 
 ### 4.11 - generateCleanupCommands.sh
 
-Script to generate and run the necessary cleanup steps of DBB Metdatastore Collections and Build Groups (Build results), and the Deletion of the Build datasets using the [DeletePDS.groovy](../../Utilities/DeletePDS/README.md) utility.
+Script to generate and run the necessary cleanup steps of DBB Metadatastore collections and build groups (build results), and the deletion of the build datasets using the [DeletePDS.groovy](../../Utilities/DeletePDS/README.md) utility.
 
-The script lists all existing DBB collections while filtering on the provided application name filter following the existing zAppBuild naming conventions. It inspects if a corresponding Git branch exists in the Git repository. If no branch is found, it generates the necessary command files that contain the delete statements. The generated scripts can be can automatically executed.
+The script lists all the existing DBB collections obtained by applying a filter based on the zAppBuild naming conventions. It checks if Git branches corresponding to the provided application name exist in the Git repository. If one or more branches are found, it generates the necessary command files that contain the removal statements. The generated scripts can be can automatically executed, if the `-p` flag is passed to the script.
 
 #### Invocation
 
@@ -904,17 +905,17 @@ generateCleanupCommands.sh -w MortApp/main/build-1 -a MortApp -p
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory** - an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
--a `<application>` | **Application name** to be analyed for stale DBB Metadatastore objects and Build Datasets.
--p | Flag to control if the generated delete cmd files should be executed by the pipeline. If the steps are not executed through the script, it is recommended to publish the generated files to the pipeline run, that an administrator can take care of them.
+-a `<application>` | **Application name** to be analyzed for stale DBB Metadatastore objects and build datasets.
+-p | Flag to control if the generated commands files should be executed by the pipeline. If the commands are not executed by the script, it is recommended to publish the generated files to the pipeline orchestrator, where an administrator can review and eventually execute them manually.
 
-#### Additional Notes
+#### Additional notes
 
-This script can be embedded into a pipeline execution, but can also be used in a stand-alone setup. For a pipeline implementation, this task can be included in the release process to facilate the cleanup of stale DBB Collections and DBB Build Groups, as well to make delete the build datasets.
+This script can be embedded into a pipeline execution, but can also be used in a standalone setup. For a pipeline implementation, this task can be included in the release process to facilitate the cleanup of stale DBB collections and DBB build groups, and to delete the build datasets as well.
 
-For the standalone implementation follow the below process:
+For the standalone implementation, use the following process:
 1. Have the Common Backend Scripts installed to z/OS Unix System Services and have them configured. 
 2. Clone the application repository including all remote references.
-3. Assemble the generateCleanupCommands command like in the above sample. The user executing the script needs proper permissions on the DBB Metadatastore.
+3. Execute the `generateCleanupCommands.sh` script like in the above sample. The user executing the script needs proper permissions on the DBB Metadatastore.
 
 Please note that the script leverages the [utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) to compute the build high-level qualifier (HLQ).
 
