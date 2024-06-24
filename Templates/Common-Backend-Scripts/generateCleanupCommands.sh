@@ -224,13 +224,13 @@ validateOptions() {
             ERRMSG=$PGM": [ERROR] Application Directory (${AppDir}) was not found. rc="$rc
             echo $ERRMSG
         else
-        CMD="git -C $AppDir rev-parse --is-inside-work-tree"
+            CMD="git -C $AppDir rev-parse --is-inside-work-tree"
             isGitDir=$(${CMD})
-        rc=$?
+            rc=$?
             if [ ! "${isGitDir}" == "true" ]; then
                 rc=8
-            ERRMSG=$PGM": [ERROR] $AppDir is not a git directory or the git command ($CMD) failed. Check Log. rc="$rc
-            echo $ERRMSG
+                ERRMSG=$PGM": [ERROR] $AppDir is not a git directory or the git command ($CMD) failed. Check Log. rc="$rc
+                echo $ERRMSG
             fi
         fi
     fi
