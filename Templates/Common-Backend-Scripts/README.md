@@ -142,7 +142,8 @@ Artifact Name |  Description | Script details
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](README.md#48---wazideploy-deploysh)
 [wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](README.md#49---wazideploy-evidencesh)
 [prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](README.md#410---preparelogssh)
-[deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](README.md#411---deleteworkspacesh)
+[generateCleanupCommands.sh](generateCleanupCommands.sh) | Pipeline Shell Script to generate necessary DBB Metadatastore cleanup tasks including the deletion of the build datasets. | [script details](README.md#411---generatecleanupcommandssh)
+[deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](README.md#412---deleteworkspacesh)
 
 
 ### 4.1 - gitClone.sh
@@ -887,7 +888,112 @@ It _greps_ the information and invokes a download action.
     fi
 ```
 
-### 4.11 - deleteWorkspace.sh
+### 4.11 - generateCleanupCommands.sh
+
+Script to generate and run the necessary cleanup steps of DBB Metadatastore collections and build groups (build results), and the deletion of the build datasets using the [DeletePDS.groovy](../../Utilities/DeletePDS/README.md) utility.
+
+The script lists all the existing DBB collections obtained by applying a filter based on the zAppBuild naming conventions. It checks if Git branches corresponding to the provided application name exist in the Git repository. If one or more branches are found, it generates the necessary command files that contain the removal statements. The generated scripts can be can automatically executed, if the `-p` flag is passed to the script.
+
+#### Invocation
+
+The `generateCleanupCommands.sh` script can be invoked as follows:
+
+```
+generateCleanupCommands.sh -w MortApp/main/build-1 -a MortApp -p
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-w `<workspace>` | **Workspace directory** - an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
+-a `<application>` | **Application name** to be analyzed for stale DBB Metadatastore objects and build datasets.
+-p | Flag to control if the generated commands files should be executed by the pipeline. If the commands are not executed by the script, it is recommended to publish the generated files to the pipeline orchestrator, where an administrator can review and eventually execute them manually.
+
+#### Additional notes
+
+This script can be embedded into a pipeline execution, but can also be used in a standalone setup. For a pipeline implementation, this task can be included in the release process to facilitate the cleanup of stale DBB collections and DBB build groups, and to delete the build datasets as well.
+
+For the standalone implementation, use the following process:
+1. Have the Common Backend Scripts installed to z/OS Unix System Services and have them configured. 
+2. Clone the application repository including all remote references.
+3. Execute the `generateCleanupCommands.sh` script like in the above sample. The user executing the script needs proper permissions on the DBB Metadatastore.
+
+Please note that the script leverages the [utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) to compute the build high-level qualifier (HLQ).
+
+#### Script output
+
+The section below contains the output that is produced by the `generateCleanupCommands.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+
+```
+". ./.profile && generateCleanupCommands.sh -w /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104 -a MortgageApplication -p"
+generateCleanupCommands.sh: [INFO] Generate Cleanup Command File. Version=1.0.0
+generateCleanupCommands.sh: [INFO] Creating output directory. /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds
+generateCleanupCommands.sh: [INFO] **************************************************************
+generateCleanupCommands.sh: [INFO] ** Start Gen Cleanup Cmds on HOST/USER: z/OS ZT01 05.00 02 8561/GITHUB
+generateCleanupCommands.sh: [INFO] **                   Workspace: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104
+generateCleanupCommands.sh: [INFO] **                 Application: MortgageApplication
+generateCleanupCommands.sh: [INFO] **                      AppDir: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/MortgageApplication
+generateCleanupCommands.sh: [INFO] **    Cmd obsolete collections: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd
+generateCleanupCommands.sh: [INFO] **   Cmd obsolete build groups: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd
+generateCleanupCommands.sh: [INFO] ** Cmd obsolete build datasets: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd
+generateCleanupCommands.sh: [INFO] **      DBB Metadastore Config: --type file --location /u/github/
+generateCleanupCommands.sh: [INFO] **     Process Cleanup Scripts: true
+generateCleanupCommands.sh: [INFO] **************************************************************
+
+generateCleanupCommands.sh: [STAGE] Retrieve all collections with application qualifier MortgageApplication
+generateCleanupCommands.sh: [STAGE] Verifying Git references
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-main has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-main a corresponding branch (main) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-main-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-main-outputs a corresponding branch (main) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/johnpipelinetesting has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/johnpipelinetesting a corresponding branch (feature/johnpipelinetesting) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/johnpipelinetesting-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/johnpipelinetesting-outputs a corresponding branch (feature/johnpipelinetesting) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/20-some-more-testing has a corresponding active Git branch
+generateCleanupCommands.sh:        DBB Collection MortgageApplication-feature/20-some-more-testing does not have a corresponding branch (feature/20-some-more-testing). It can be deleted.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/20-some-more-testing-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        DBB Collection MortgageApplication-feature/20-some-more-testing-outputs does not have a corresponding branch (feature/20-some-more-testing). It can be deleted.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/pipeline-trigger-testing has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/pipeline-trigger-testing a corresponding branch (feature/pipeline-trigger-testing) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/pipeline-trigger-testing-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/pipeline-trigger-testing-outputs a corresponding branch (feature/pipeline-trigger-testing) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/18-add-generate-cleanup-instructions has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/18-add-generate-cleanup-instructions a corresponding branch (feature/18-add-generate-cleanup-instructions) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/18-add-generate-cleanup-instructions-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/18-add-generate-cleanup-instructions-outputs a corresponding branch (feature/18-add-generate-cleanup-instructions) was detected.
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale collections for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd created. 
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale build groups for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd created. 
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale build datasets for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd created. 
+generateCleanupCommands.sh: [STAGE] Executing Cleanup of DBB Metadatastore Objects
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd
+BGZTK0195I Successfully deleted collection "MortgageApplication-feature/20-some-more-testing"
+BGZTK0195I Successfully deleted collection "MortgageApplication-feature/20-some-more-testing-outputs"
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd
+BGZTK0195I Successfully deleted group "MortgageApplication-feature/20-some-more-testing"
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd
+** Deleting all datasets filtered with HLQ 'GITHUB.MORTGAGE.F20'
+*** Deleting 'GITHUB.MORTGAGE.F20.COBOL'
+*** Deleting 'GITHUB.MORTGAGE.F20.COPY'
+*** Deleting 'GITHUB.MORTGAGE.F20.DBRM'
+*** Deleting 'GITHUB.MORTGAGE.F20.LOAD'
+*** Deleting 'GITHUB.MORTGAGE.F20.OBJ'
+** Deleted 5 entries.
+** Build finished
+generateCleanupCommands.sh: [INFO] Generate Cleanup Cmds Complete. rc=0
+
+```  
+
+</details>
+
+
+
+### 4.12 - deleteWorkspace.sh
 
 Script delete the workspace and all empty directories in the working tree. 
 
@@ -1000,7 +1106,6 @@ deleteWorkspace.sh: [INFO] Workspace directory successfully deleted.
 ```  
 
 </details>
-
 
 ## Disclaimer
 
