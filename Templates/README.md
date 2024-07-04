@@ -24,8 +24,8 @@ Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 --- | --- | --- | --- | ---
 **Communication between CI platform and mainframe** | ssh | IBM RSE API Plug-in for Zowe CLI | ssh | zos-agent
 **Git Provider** | Azure DevOps | GitLab | GitHub | Any Git provider
-**Deployment technology** | Wazi Deploy | Wazi Deploy | Wazi Deploy | IBM DevOps Deploy (a.k.a. UCD)
-**Additional integration technologies** | Azure DevOps CLI | GitLab REST interface | GitHub CLI | SonarQube sonar-scanner
+**Deployment technology** | Wazi Deploy | Wazi Deploy | Wazi Deploy | IBM DevOps Deploy (a.k.a. UCD)
+**Additional integration technologies** | Azure DevOps CLI | GitLab REST interface | GitHub CLI | SonarQube sonar-scanner
 
 ### Feature Branch pipeline implementations
 
@@ -38,7 +38,7 @@ Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 **Publish Build Logs** | :small_blue_diamond: prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond: prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond: prepareLogs.sh and zowe CLI rse to load and attach logs | Jenkins artifactPublisher plugin
 **Code Quality and Scans** | - | - | - | SonarQube Scan
 **Create package** | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: ucdPackaging.sh to create UCD component version
-**Package Upload** | Upload to Azure Artifacts | Enable upload to enterprise artifact repository | enable upload to enterprise artifact repository | Depending on UCD buztool configuration
+**Package Upload** | Upload to Azure Artifacts | Enable upload to enterprise artifact repository | Enable upload to enterprise artifact repository | Depending on UCD buztool configuration
 **Workspace Cleanup** | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | Jenkins Workspace plugin
 
 ### Integration branch pipeline implementations
@@ -55,7 +55,7 @@ Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 **Package Upload** | Upload to Azure Artifacts | - | - | Depending on UCD buztool configuration
 *Deployment to Integration Test environment* | | | | 
 **Deployment Integration Test environment** | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: ucdDeploy.sh
-**Publish deployment logs** | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload |  Create UCD Deployment Link in Pipeline run
+**Publish deployment logs** | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | Create UCD Deployment Link in Pipeline run
 **Workspace Cleanup** | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | Jenkins Plugin
 
 ### Release pipeline implementations
