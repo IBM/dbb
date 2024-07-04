@@ -38,7 +38,7 @@ These steps are implemented when requesting a release pipeline.
 Capability | :small_blue_diamond: :small_orange_diamond: :small_red_triangle: | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 --- | --- | --- | --- | --- | ---
 **Clone Git repository** | :small_blue_diamond: :small_orange_diamond: :small_red_triangle: | :o: gitClone.sh | :o: gitClone.sh | :o: gitClone.sh | Jenkins Git Plugin
-**Build** | :small_blue_diamond: :small_orange_diamond: :small_red_triangle: | :o: dbbBuild.sh | :o: dbbBuild.sh | :o: dbbBuild.sh | :o: dbbBuild.sh
+**Build** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :o: dbbBuild.sh | :o: dbbBuild.sh | :o: dbbBuild.sh | :o: dbbBuild.sh
 **Publish Build Logs** | :small_blue_diamond: :small_orange_diamond: :small_red_triangle: | :o: prepareLogs.sh and sftp to load and attach logs | :o: prepareLogs.sh and sftp to load and attach logs | :o: prepareLogs.sh and zowe CLI rse to load and attach logs | Jenkins artifactPublisher plugin
 **Code Quality and Scans** | :small_blue_diamond: :small_orange_diamond: :small_red_triangle: | - | - | - | SonarQube Scan
 **Creation of the release candidate tag** | :small_blue_diamond: :small_orange_diamond: :small_red_triangle: | Computation of the release candidate and planned release name <br> Creation of the release candidate Tag in ADO via the ADO CLI | Computation of the release candidate and planned release name <br> Creation of the release candidate Git tag in Gitlab via REST | Computation of the release candidate and planned release name <br> Creation of a pre-release via GH CLI for the release candidate | Computation of the UCD package name. No tagging in Git (independent of the Git provider).
