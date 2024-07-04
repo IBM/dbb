@@ -38,7 +38,7 @@ Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 **Publish Build Logs** | :small_blue_diamond: prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond: prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond: prepareLogs.sh and zowe CLI rse to load and attach logs | Jenkins artifactPublisher plugin
 **Code Quality and Scans** | - | - | - | SonarQube Scan
 **Create package** | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: ucdPackaging.sh to create UCD component version
-**Package Upload** | Upload to Azure Artifacts | Enable upload to enterprise artifact repository | Enable upload to enterprise artifact repository | Depending on UCD buztool configuration
+**Publish Package** | Upload to Azure Artifacts | Enable upload to enterprise artifact repository | Enable upload to enterprise artifact repository | Depending on UCD buztool configuration
 **Workspace Cleanup** | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | Jenkins Workspace plugin
 
 ### Integration branch pipeline implementations
@@ -52,7 +52,7 @@ Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 **Publish Build Logs** | :small_blue_diamond: prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond: prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond: prepareLogs.sh and ZOWE CLI rse to load and attach logs | Jenkins artifactPublisher plugin
 **Code Quality and Scans** | - | - | - | SonarQube Scan
 **Create package** | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: ucdPackaging.sh to create UCD component version <br> Create Link to UCD in Pipeline run
-**Package Upload** | Upload to Azure Artifacts | - | - | Depending on UCD buztool configuration
+**Publish Package** | Upload to Azure Artifacts | - | - | Depending on UCD buztool configuration
 *Deployment to Integration Test environment* | | | | 
 **Deployment Integration Test environment** | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: ucdDeploy.sh
 <br> | <br> | Copy WD Evidence File to Evidence Inventory | Copy WD Evidence File to Evidence Inventory | <br>
@@ -71,7 +71,7 @@ Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 **Code Quality and Scans** | - | - | - | SonarQube Scan
 **Creation of the release candidate tag** | Computation of the release candidate and planned release name <br> Creation of the release candidate Tag in ADO via the ADO CLI | Computation of the release candidate and planned release name <br> Creation of the release candidate Git tag in Gitlab via REST | Computation of the release candidate and planned release name <br> Creation of a pre-release via GH CLI for the release candidate | Computation of the UCD package name. No tagging in Git (independent of the Git provider).
 **Create package** | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: ucdPackaging.sh to create UCD component version <br> Create Link to UCD to Pipeline run
-**Package Upload** (Recommendation -Enable upload to enterprise artifact repository) | Upload to Azure Artifacts | - | - | Depending on UCD buztool configuration
+**Publish Package** (Recommendation -Enable upload to enterprise artifact repository) | Upload to Azure Artifacts | - | - | Depending on UCD buztool configuration
 *Deployment to Integration Test environment* | | | | 
 **Deployment Integration Test environment** | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: ucdDeploy.sh. Create Link to UCD Deployment request to Pipeline run
 **Publish deployment logs** | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | Create UCD Deployment Link in Pipeline run
