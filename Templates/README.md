@@ -16,7 +16,7 @@ Please use the [Github discussion](https://github.com/IBM/dbb/discussions) board
 
 ## Capabilities of Pipeline Templates 
 
-The below tables provide an overview of the implemented capabilities of the pipeline templates. The information can be used to lookup and understand the variations in the implementations. The icon :small_blue_diamond: indicates this step uses a [Common Backend Script](Common-Backend-Scripts/).
+The below tables provide an overview of the implemented capabilities of the pipeline templates. The information can be used to lookup and understand the variations in the implementations. The icon :small_blue_diamond: indicates that this step uses a [Common Backend Script](Common-Backend-Scripts/).
 
 ### Communication and Tool selection
 
