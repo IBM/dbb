@@ -18,32 +18,41 @@ Please use the [Github discussion](https://github.com/IBM/dbb/discussions) board
 
 The below tables provide an overview of the implemented capabilities of the pipeline templates. The information can be used to lookup and understand the variations in the implementations. 
 
+### Communication and Tool selection
+
+Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
+--- | --- | --- | --- | ---
+Communication | ssh | zowe cli rse plugin | ssh | zos-agent
+Git Provider | Azure DevOps | GitLab | GitHub | Any Git provider
+Deployment technology | Wazi Deploy | Wazi Deploy | Wazi Deploy | IBM DevOps Deploy (a.k.a. UCD)
+Additional integration technologies | Azure DevOps CLI | GitLab REST interface | GitHub CLI | -
+
 ### Feature Branch pipeline implementations
 
 Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 --- | --- | --- | --- | ---
-Git Clone | (CBS) gitClone.sh | (CBS)  gitClone.sh | (CBS)  gitClone.sh | Jenkins Git Plugin
-Build  | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh
-Publish Build Logs  | (CBS)  prepareLogs.sh and sftp to load and attach logs | (CBS)  prepareLogs.sh and sftp to load and attach logs | (CBS)  prepareLogs.sh and zowe cli rse to load and attach logs | Jenkins artifactPublisher Plugin
-Packaging  | (CBS) packageBuildOutputs.sh | (CBS) packageBuildOutputs.sh | (CBS) packageBuildOutputs.sh | (CBS) ucdPackaging.sh to create UCD component version
+Git Clone | :small_blue_diamond: gitClone.sh | :small_blue_diamond:  gitClone.sh | :small_blue_diamond:  gitClone.sh | Jenkins Git Plugin
+Build  | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh
+Publish Build Logs  | :small_blue_diamond:  prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond:  prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond:  prepareLogs.sh and zowe cli rse to load and attach logs | Jenkins artifactPublisher Plugin
+Packaging  | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: ucdPackaging.sh to create UCD component version
 Package Upload | Upload to Azure Artifacts | - | - | UCD buztool configuration
-Workspace Cleanup | (CBS) deleteWorkspace.sh | (CBS) deleteWorkspace.sh | (CBS) deleteWorkspace.sh | Jenkins Plugin
+Workspace Cleanup | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | Jenkins Plugin
 
 ### Integration branch pipeline implementations
 
-These steps are implemented when merging changes to the main, release maintenance or an epic branch.
+These steps are implemented when merging changes to the `main`, `release` maintenance or an `epic` branch.
 
 Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 --- | --- | --- | --- | ---
-Git Clone | (CBS) gitClone.sh | (CBS)  gitClone.sh | (CBS)  gitClone.sh | Jenkins Git Plugin
-Build  | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh
-Publish Build Logs  | (CBS)  prepareLogs.sh and sftp to load and attach logs | (CBS)  prepareLogs.sh and sftp to load and attach logs | (CBS)  prepareLogs.sh and zowe cli rse to load and attach logs | Jenkins artifactPublisher Plugin
-Packaging  | (CBS) packageBuildOutputs.sh | (CBS) packageBuildOutputs.sh | (CBS) packageBuildOutputs.sh | (CBS) ucdPackaging.sh to create UCD component version <br> Create Link to UCD in Pipeline run
+Git Clone | :small_blue_diamond: gitClone.sh | :small_blue_diamond:  gitClone.sh | :small_blue_diamond:  gitClone.sh | Jenkins Git Plugin
+Build  | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh
+Publish Build Logs  | :small_blue_diamond:  prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond:  prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond:  prepareLogs.sh and zowe cli rse to load and attach logs | Jenkins artifactPublisher Plugin
+Packaging  | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: ucdPackaging.sh to create UCD component version <br> Create Link to UCD in Pipeline run
 Package Upload | Upload to Azure Artifacts | - | - | UCD buztool configuration
 *Deployment to Integration Test environment*  |   |   |   |  
-Deployment Integration Test Environment | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh  | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh <br> | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh <br> | (CBS) ucdDeploy.sh
-Publish deployment logs | (CBS) prepareLogs.sh <br> and sftp upload | (CBS) prepareLogs.sh <br> and sftp upload  | (CBS) prepareLogs.sh <br> and sftp upload  |  Create UCD Deployment Link in Pipeline run
-Workspace Cleanup | (CBS) deleteWorkspace.sh | (CBS) deleteWorkspace.sh | (CBS) deleteWorkspace.sh | Jenkins Plugin
+Deployment Integration Test Environment | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh  | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: ucdDeploy.sh
+Publish deployment logs | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload  | :small_blue_diamond: prepareLogs.sh <br> and sftp upload  |  Create UCD Deployment Link in Pipeline run
+Workspace Cleanup | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | Jenkins Plugin
 
 ### Release pipeline implementations
 
@@ -51,22 +60,22 @@ These steps are implemented when requesting a release pipeline.
 
 Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 --- | --- | --- | --- | ---
-Git Clone | (CBS) gitClone.sh | (CBS)  gitClone.sh | (CBS)  gitClone.sh | Jenkins Git Plugin
-Build  | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh | (CBS)  dbbBuild.sh
-Publish Build Logs  | (CBS)  prepareLogs.sh and sftp to load and attach logs | (CBS)  prepareLogs.sh and sftp to load and attach logs | (CBS)  prepareLogs.sh and zowe cli rse to load and attach logs | Jenkins artifactPublisher Plugin
+Git Clone | :small_blue_diamond: gitClone.sh | :small_blue_diamond:  gitClone.sh | :small_blue_diamond:  gitClone.sh | Jenkins Git Plugin
+Build  | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh | :small_blue_diamond:  dbbBuild.sh
+Publish Build Logs  | :small_blue_diamond:  prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond:  prepareLogs.sh and sftp to load and attach logs | :small_blue_diamond:  prepareLogs.sh and zowe cli rse to load and attach logs | Jenkins artifactPublisher Plugin
 Creation of the release candidate tag | Computation of the release candidate and planned release name <br> Creation of the release candidate Tag in ADO via the ADO CLI | Computation of the release candidate and planned release name <br> Creation of the release candidate Git tag in Gitlab via REST | Computation of the release candidate and planned release name <br> Creation of a pre-release via GH Cli for the release candidate | Computation of the UCD package name. No tagging in Git (independent of the Git provider).
-Packaging  | (CBS) packageBuildOutputs.sh | (CBS) packageBuildOutputs.sh | (CBS) packageBuildOutputs.sh | (CBS) ucdPackaging.sh to create UCD component version <br> Create Link to UCD to Pipeline run
+Packaging  | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: packageBuildOutputs.sh | :small_blue_diamond: ucdPackaging.sh to create UCD component version <br> Create Link to UCD to Pipeline run
 Package Upload (Note - enable upload to enterprise artifact repository) | Upload to Azure Artifacts | - | - | UCD buztool configuration
 *Deployment to Integration Test environment*  |   |   |   |  
-Deployment Integration Test Environment | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh  | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh <br> | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh <br> | (CBS) ucdDeploy.sh. Create Link to UCD Deployment request to Pipeline run
-Publish deployment logs | (CBS) prepareLogs.sh <br> and sftp upload | (CBS) prepareLogs.sh <br> and sftp upload  | (CBS) prepareLogs.sh <br> and sftp upload  |  Create UCD Deployment Link in Pipeline run
+Deployment Integration Test Environment | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh  | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: ucdDeploy.sh. Create Link to UCD Deployment request to Pipeline run
+Publish deployment logs | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload  | :small_blue_diamond: prepareLogs.sh <br> and sftp upload  |  Create UCD Deployment Link in Pipeline run
 *Deployment to Acceptance Test environment*  |   |   |   |  
 Retrieve Deployment Package | Download from ADO package registry | The package from pipeline working directory is used | The package from pipeline working directory is used | Not part of the pipeline template
-Deployment Acceptance Test Environment | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh  | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh <br> | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh <br> | Not part of the pipeline template
-Publish deployment logs | (CBS) prepareLogs.sh <br> and sftp upload | (CBS) prepareLogs.sh <br> and sftp upload  | (CBS) prepareLogs.sh <br> and sftp upload  |  Not part of the pipeline template
+Deployment Acceptance Test Environment | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh  | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | Not part of the pipeline template
+Publish deployment logs | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload  | :small_blue_diamond: prepareLogs.sh <br> and sftp upload  |  Not part of the pipeline template
 *Deployment to Production Test environment*  |   |   |   |  
 Retrieve Deployment Package | Download from ADO package registry | The package from pipeline working directory is used | The package from pipeline working directory is used | Not part of the pipeline template
-Deployment Production Test Environment | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh  | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh <br> | (CBS) wazideploy-generate.sh <br> (CBS) wazideploy-deploy.sh <br> (CBS) wazideploy-evidence.sh <br> | (Not part of the pipeline template
-Publish deployment logs | (CBS) prepareLogs.sh <br> and sftp upload | (CBS) prepareLogs.sh <br> and sftp upload  | (CBS) prepareLogs.sh <br> and sftp upload  |  Not part of the pipeline template
+Deployment Production Test Environment | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh  | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | :small_blue_diamond: wazideploy-generate.sh <br> :small_blue_diamond: wazideploy-deploy.sh <br> :small_blue_diamond: wazideploy-evidence.sh <br> | (Not part of the pipeline template
+Publish deployment logs | :small_blue_diamond: prepareLogs.sh <br> and sftp upload | :small_blue_diamond: prepareLogs.sh <br> and sftp upload  | :small_blue_diamond: prepareLogs.sh <br> and sftp upload  |  Not part of the pipeline template
 Release Finalisation | Creation of the release candidate Tag in ADO via the ADO CLI | Creation of a Release and Release-tag via GH Cli for the release | Computation of the release candidate and planned release name <br> Creation of the release Git tag in Gitlab via REST <br> Automated update of the `baselineReference.conf` file | No automated tagging
-Workspace Cleanup | (CBS) deleteWorkspace.sh | (CBS) deleteWorkspace.sh | (CBS) deleteWorkspace.sh | Jenkins Plugin
+Workspace Cleanup | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | :small_blue_diamond: deleteWorkspace.sh | Jenkins Plugin
