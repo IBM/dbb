@@ -1,6 +1,6 @@
 # Pipeline Templates
 
-This category provides templates to implement a CI/CD pipeline covering the entire development lifecycle. These assets are developed based on [The Git-based process you need for Mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) and help you to quickly setup your pipeline environment. Please make yourself familiar with the outlined Git branching model.
+This category provides templates to implement a CI/CD pipeline covering the entire development lifecycle. These assets are developed based on [The Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) and help you to quickly setup your pipeline environment. Prior to implementing these template, you should get familiar with the outlined Git branching model.
 
 ## Table of Contents 
 Asset | Description | Documentation Link
@@ -16,29 +16,33 @@ Please use the [Github discussion](https://github.com/IBM/dbb/discussions) board
 
 ## Capabilities of Pipeline Templates 
 
-The below tables provide an overview of the implemented capabilities of the pipeline templates. The information can be used to lookup and understand the variations in the implementations. The icon :red_circle: indicates that this step uses a [Common Backend Script](Common-Backend-Scripts/).
+The below tables provide an overview of the implemented capabilities of the pipeline templates. The information can be used to lookup and understand the variations in the implementations. The :red_circle: icon indicates that this step uses a [Common Backend Script](Common-Backend-Scripts/).
 
-### Communication and tool selection
+### Technology in use with CI/CD orchestrators
 
- <br>  | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
+ <br>  | Azure DevOps | GitLab CI | GitHub Actions | Jenkins
 --- | --- | --- | --- | ---
+**CI Runner/Agent topology** | ADO runner | gitlab-runner shell executor | GitHub Actions runner | Jenkins node on z/OS
 **Git Provider** | Azure DevOps | GitLab | GitHub | Any Git provider
 **Deployment technology** | IBM Wazi Deploy | IBM Wazi Deploy | IBM Wazi Deploy | IBM DevOps Deploy (a.k.a. UCD)
-**CI Runner/Agent** topology | ADO runner on x86 | GitLab shell executor | GitHub Actions runner on x86 | Jenkins node on z/OS
-Communication between CI platform and mainframe | ssh | IBM RSE API Plug-in for Zowe CLI | ssh | zos-agent
-**Additional integration technologies** | Azure DevOps CLI | GitLab REST interface | GitHub CLI | SonarQube sonar-scanner
+**Communication between CI platform and z/OS** | SSH | IBM RSE API Plug-in for Zowe CLI | SSH | Jenkins-managed
+**Additional integration technologies** | Azure DevOps CLI | GitLab REST interface | GitHub CLI | 
+**Pipeline extensions** |       |       |      | SonarQube sonar-scanner
 
 ### Implemented pipeline tasks
 
-All templates implement the recommended working practice, that is documented within the [IBM zDevOps Guide](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev). It constitutes of 
-**feature branch pipelines** to provide an early feedback to developers about the impacted components of their changes, building a preliminary package that can be tested in an isolated environment, an **integration pipeline** that is triggered when merging changes into an integration branch such as the `main`, `release` maintenance or `epic` branch; and a **release pipeline**, that builds all contributed changes for the iteration, creates a release candidate package and allows to drive deployments into controlled test environments.
+All templates implement the recommended working practice, that is documented within the [IBM zDevOps Guide](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev).
+It is made of
+* a **feature branch pipeline**, that provides an early feedback to developers about the impacted components of their changes, building a preliminary package that can be tested in an isolated environment,
+* an **integration pipeline**, that is triggered when merging changes into an integration branch such as the `main`, `release` maintenance or `epic` branch
+* a **release pipeline**, that builds all contributed changes for the iteration, creates a release candidate package and allows to drive deployments into controlled test environments.
 
 The below table provides an overview of the capabilities that are implemented in the various templates. Please note the second column that indicates the pipeline types that include the capability: 
 * :small_blue_diamond: feature branch pipeline
-* :small_orange_diamond: basic build pipeline and
-* :small_red_triangle: the release pipeline
+* :small_orange_diamond: build pipeline for integration or release pipeline
+* :small_red_triangle: release pipeline only
 
-Capability | :small_blue_diamond::small_orange_diamond::small_red_triangle: | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
+Capability | Pipeline templates | Azure DevOps | GitLab CI | GitHub Actions | Jenkins
 --- | --- | --- | --- | --- | ---
 **Clone Git repository** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: gitClone.sh | :red_circle: gitClone.sh | :red_circle: gitClone.sh | Jenkins Git Plugin
 **Build** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh
