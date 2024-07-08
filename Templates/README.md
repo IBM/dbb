@@ -32,7 +32,10 @@ Capability | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 All templates implement the recommended working practice, that is documented within the [IBM zDevOps Guide](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev). It constitutes of 
 **feature branch pipelines** to provide an early feedback to developers about the impacted components of their changes, building a preliminary package that can be tested in an isolated environment, an **integration pipeline** that is triggered when merging changes into an integration branch such as the `main`, `release` maintenance or `epic` branch; and a **release pipeline**, that builds all contributed changes for the iteration, creates a release candidate package and allows to drive deployments into controlled test environments.
 
-The below table provides an overview of the capabilities that are implemented in the various templates. Please pay attention to the second column that indicates the pipeline is types that contains the includes the capability: :small_blue_diamond: - feature branch pipeline, :small_orange_diamond: basic build pipeline and :small_red_triangle: the release pipeline.
+The below table provides an overview of the capabilities that are implemented in the various templates. Please note the second column that indicates the pipeline types that include the capability: 
+* :small_blue_diamond: feature branch pipeline
+* :small_orange_diamond: basic build pipeline and
+* :small_red_triangle: the release pipeline
 
 Capability | :small_blue_diamond::small_orange_diamond::small_red_triangle: | Azure DevOps | GitLabCI | GitHub Actions | Jenkins
 --- | --- | --- | --- | --- | ---
