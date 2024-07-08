@@ -43,7 +43,7 @@ The below table provides an overview of the capabilities that are implemented in
 * :small_red_triangle: release pipeline only
 
 Capability | Pipeline templates | Azure DevOps | GitLab CI | GitHub Actions | Jenkins
---- | --: | --- | --- | --- | ---
+--- | :-: | --- | --- | --- | ---
 **Clone Git repository** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: gitClone.sh | :red_circle: gitClone.sh | :red_circle: gitClone.sh | Jenkins Git Plugin
 **Build** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh
 **Publish Build Logs** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: prepareLogs.sh and sftp to load and attach logs | :red_circle: prepareLogs.sh and sftp to load and attach logs | :red_circle: prepareLogs.sh and zowe CLI rse to load and attach logs | Jenkins artifactPublisher plugin
