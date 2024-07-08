@@ -37,7 +37,7 @@ It is made of:
 * an **integration pipeline**, that is triggered when merging changes into an integration branch such as the `main`, `release` maintenance or `epic` branch
 * a **release pipeline**, that builds all contributed changes for the iteration, creates a release candidate package and allows to drive deployments into controlled test environments.
 
-The below table provides an overview of the capabilities that are implemented in the various templates. The second column in the table indicates for which types of pipeline the capability in available: 
+The below table provides an overview of the capabilities that are implemented in the various templates. The second column in the table indicates for which types of pipeline the capability in available:   
 :small_blue_diamond: feature branch pipeline  
 :small_orange_diamond: build pipeline for integration or release pipeline  
 :small_red_triangle: release pipeline only
