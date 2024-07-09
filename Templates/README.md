@@ -39,8 +39,8 @@ It is made of:
 
 The below table provides an overview of the capabilities that are implemented in the various templates. The second column in the table indicates for which types of pipeline the capability is available:   
 :small_blue_diamond: feature branch pipeline  
-:small_orange_diamond: build pipeline for integration or release pipeline  
-:small_red_triangle: release pipeline only
+:small_orange_diamond: build pipeline for integration branches
+:small_red_triangle: release pipeline
 
 Capability | Pipeline types | Azure DevOps | GitLab CI | GitHub Actions | Jenkins
 --- | :-: | --- | --- | --- | ---
