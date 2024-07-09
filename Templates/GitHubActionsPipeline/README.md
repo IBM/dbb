@@ -83,23 +83,23 @@ When used as intented, the combination of pipeline definitions supports:
 
 Unlike other pipeline orchestrators, GitHub Actions encourages the use of multiple workflow files that will interact with each other. This template makes use of the following workflow files:
 
- - [pipelineController.yml](./workflows/pipelineController.yml)
+ - [pipelineController.yml](./.github/workflows/pipelineController.yml)
     - This pipeline is used to trigger other pipelines, as it is the only pipeline with a `workflow_dispatch` trigger. 
- - [Feature.yml](./workflows/Feature.yml)
+ - [Feature.yml](./.github/workflows/Feature.yml)
     - Pipeline for feature branch.
- - [Build.yml](./workflows/Build.yml)
+ - [Build.yml](./.github/workflows/Build.yml)
     - The build pipeline.
- - [Release.yml](./workflows/Release.yml)
+ - [Release.yml](./.github/workflows/Release.yml)
     - Pipeline for release branch.
- - [Preview.yml](./workflows/Preview.yml)
+ - [Preview.yml](./.github/workflows/Preview.yml)
     - The preview pipeline.
- - [deployToEnv.yml](./workflows/deployToEnv.yml)
+ - [deployToEnv.yml](./.github/workflows/deployToEnv.yml)
     - Reusable pipeline for deploying to a given environment.
- - [actions/createwazideployindex/action.yml](./actions/createwazideployindex/action.yml)
+ - [actions/createwazideployindex/action.yml](./.github/actions/createwazideployindex/action.yml)
     - A composite action, used to copy the evidence file into the evidence inventory.
- - [actions/tagging_createreleasecandidate/action.yml](./actions/tagging_createreleasecandidate/action.yml)
+ - [actions/tagging_createreleasecandidate/action.yml](./.github/actions/tagging_createreleasecandidate/action.yml)
     - A composite action, used to create the release candidate, and calculate the release version.
- - [actions/tagging_createproductionreleasetag/action.yml](./actions/tagging_createproductionreleasetag/action.yml)
+ - [actions/tagging_createproductionreleasetag/action.yml](./.github/actions/tagging_createproductionreleasetag/action.yml)
     - A composite action, used to create the production release. 
 
 ![pipelineDiagram](pipelineDiagram.png)
