@@ -48,6 +48,9 @@ import com.ibm.jzos.ZFile;
  * Version 7 - 2024-04
  *  - Added support to SBOM files
  *      
+ * Version 8 - 2024-07
+ *  - Reworked error management and fixed few glitches
+ *      
  ************************************************************************************/
 
 // start create & publish package
@@ -74,7 +77,6 @@ props.sort().each { k,v->
 BuildProperties.setProperty("dbb.file.tagging", "true") // Enable dbb file tagging
 
 // Map of last level dataset qualifier to DBB CopyToHFS CopyMode.
-//def copyModeMap = evaluate(props.copyModeMap)
 def copyModeMap = parseCopyModeMap(props.copyModeMap)
 
 
@@ -94,11 +96,11 @@ if (props.generateSBOM && props.generateSBOM.toBoolean()) {
 
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
-	println("** Read build report data from ${buildReportFile}.")
+	println("** Read build report data from '${buildReportFile}'.")
 	def jsonOutputFile = new File(buildReportFile)
 
 	if(!jsonOutputFile.exists()){
-		println("*! Error: Build report data at $buildReportFile not found.")
+		println("*! [ERROR] Packaging failed: Build report '$buildReportFile' not found.")
 		System.exit(1)
 	}
 
@@ -231,9 +233,9 @@ props.buildReportOrder.each { buildReportFile ->
 	}
 
 	if ( datasetMembersCount + zFSFilesCount == 0 ) {
-		println("** No items to package in ${buildReportFile}.")
+		println("** No items to package in '$buildReportFile'.")
 	} else {
-		println("** Deployable files detected in $buildReportFile")
+		println("** Deployable artifacts detected in '$buildReportFile':")
 		buildRecords.each { record ->
 			if (record.getType()=="USS_RECORD") {
 				if (!record.getAttribute("outputs").isEmpty()) {
@@ -291,7 +293,7 @@ if (buildOutputsMap.size() == 0) {
 
 	println("*** Number of build outputs to package: ${buildOutputsMap.size()}")
 
-	println("** Copying build outputs to temporary package directory $tempLoadDir")
+	println("** Copying build outputs to temporary package directory '$tempLoadDir'")
 
 	buildOutputsMap.each { deployableArtifact, info ->
 		String container = info.get("container")
@@ -322,11 +324,11 @@ if (buildOutputsMap.size() == 0) {
 
 		if (deployableArtifact.zFSArtifact) {
 			def originalFile = new File(container + "/" + deployableArtifact.file)
-			println "   Copy ${originalFile.toPath()} to ${file.toPath()}"
+			println "   Copy '${originalFile.toPath()}' to '${file.toPath()}'."
 			try {
 				Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 			} catch (IOException exception) {
-				println "!* [ERROR] An error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
+				println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
 				rc = Math.max(rc, 1) 
 			}
 		} else {
@@ -339,7 +341,7 @@ if (buildOutputsMap.size() == 0) {
 					copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
 					copy.setDataset(container)
 
-					println "   Copy $container(${deployableArtifact.file}) to $filePath/$fileName with DBB Copymode $currentCopyMode"
+					println "   Copy '$container(${deployableArtifact.file})' to '$filePath/$fileName' with DBB Copymode '$currentCopyMode'"
 					copy.dataset(container).member(deployableArtifact.file).file(file).execute()
 
 					// Tagging binary files
@@ -360,11 +362,11 @@ if (buildOutputsMap.size() == 0) {
 					}
 
 				} else {
-					println "*! [ERROR] The file '$container(${deployableArtifact.file})' doesn't exist. Packaging failed."
+					println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' doesn't exist."
 					rc = Math.max(rc, 1) 
 				}
 			} else {
-				println "*! [ERROR] Copying $container(${deployableArtifact.file}) could not be copied due to missing mapping. Packaging failed."
+				println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' could not be copied due to missing mapping."
 				rc = Math.max(rc, 1) 
 			}
 		}
@@ -389,7 +391,7 @@ if (buildOutputsMap.size() == 0) {
 		// log buildReportOrder file and add build reports to tar file
 		File buildReportOrder = new File("$tempLoadDir/buildReportOrder.txt")
 
-		println("** Generate package build report order file to $buildReportOrder")
+		println("** Generate package build report order file to '$buildReportOrder'")
 
 		buildReportOrder.write('')
 		String buildReportFileName
@@ -413,7 +415,7 @@ if (buildOutputsMap.size() == 0) {
 	
 		Path packagingPropertiesFilePath = Paths.get(props.packagingPropertiesFile)
 		Path copiedPackagingPropertiesFilePath = Paths.get(tempLoadDir.getPath() + "/" + packagingPropertiesFilePath.getFileName().toString())
-		if(props.verbose) println("** Copy packaging properties config file to $copiedPackagingPropertiesFilePath")
+		if(props.verbose) println("** Copy packaging properties config file to '$copiedPackagingPropertiesFilePath'")
 		Files.copy(packagingPropertiesFilePath, copiedPackagingPropertiesFilePath, COPY_ATTRIBUTES)
 
 		println("** Creating tar file at ${tarFile}")
@@ -428,12 +430,12 @@ if (buildOutputsMap.size() == 0) {
 		def processRC = runProcess(processCmd, tempLoadDir)
 		assert processRC == 0 : "Failed to package"
 		rc = Math.max(rc, processRC)
-		println ("** Package successfully created at ${tarFile}")
+		println ("** Package successfully created at '${tarFile}'")
 	}
 
 	//Package additional outputs to tar file.
 	if (props.includeLogs && !props.error) (props.includeLogs).split(",").each { logPattern ->
-		println("** Adding files with file pattern $logPattern from ${props.workDir} to ${tarFile}")
+		println("** Adding files with file pattern '$logPattern' from '${props.workDir}' to '${tarFile}'")
 		processCmd = [
 			"sh",
 			"-c",
@@ -441,7 +443,7 @@ if (buildOutputsMap.size() == 0) {
 		]
 
 		processRC = runProcess(processCmd, new File(props.workDir))
-		assert processRC == 0 : "Failed to append $logPattern."
+		assert processRC == 0 : "Failed to append '$logPattern'."
 		rc = Math.max(rc, processRC)
 	}
 
@@ -457,7 +459,7 @@ if (buildOutputsMap.size() == 0) {
 		]
 
 		processRC = runProcess(processCmd, new File(props.workDir))
-		assert processRC == 0 : "Failed to list contents of tarfile $tarFile."
+		assert processRC == 0 : "Failed to list contents of tarfile '$tarFile'."
 		rc = Math.max(rc, processRC)
 	}
 
@@ -478,15 +480,15 @@ if (buildOutputsMap.size() == 0) {
 		Class artifactRepositoryHelpersClass = new GroovyClassLoader(getClass().getClassLoader()).parseClass(artifactRepoHelpersFile)
 		GroovyObject artifactRepositoryHelpers = (GroovyObject) artifactRepositoryHelpersClass.newInstance()
 
-		println ("** Uploading package to Artifact Repository $url...")
+		println ("** Upload package to Artifact Repository '$url'.")
 		artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean(), httpClientVersion)
 	}
 
 	if (rc > 0) {
-		println ("** PackageBuildOutputs.groovy failed (rc=$rc). Please inspect console output.")
+		println ("** Packaging failed with rc=$rc. Please inspect console output.")
 		System.exit(rc)
 	} else {
-		println ("** PackageBuildOutputs.groovy completed successfully")
+		println ("** Packaging completed successfully.")
 		System.exit(rc)
 	}
 }
