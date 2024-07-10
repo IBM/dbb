@@ -141,7 +141,7 @@ props.buildReportOrder.each { buildReportFile ->
 	}
 
 	if (props.deployTypeFilter){
-		println("** Filtering Output Records on following deployTypes: ${props.deployTypeFilter}...")
+		println("** Filter Output Records on following deployTypes: ${props.deployTypeFilter}...")
 		buildRecords.each {
 			// filtered executes
 			def filteredOutputs =  it.getOutputs().findAll{ o ->
@@ -172,7 +172,7 @@ props.buildReportOrder.each { buildReportFile ->
 		}
 	} else {
 		// Remove outputs without deployType + ZUNIT-TESTCASEs
-		println("** Removing output records w/o deployType or with deployType=ZUNIT-TESTCASE")
+		println("** Remove output records without deployType or with deployType=ZUNIT-TESTCASE")
 		buildRecords.each {
 			def unwantedOutputs =  it.getOutputs().findAll{ o ->
 				o.deployType == null || o.deployType == 'ZUNIT-TESTCASE'
@@ -293,7 +293,7 @@ if (buildOutputsMap.size() == 0) {
 
 	println("*** Number of build outputs to package: ${buildOutputsMap.size()}")
 
-	println("** Copying build outputs to temporary package directory '$tempLoadDir'")
+	println("** Copy build outputs to temporary package directory '$tempLoadDir'")
 
 	buildOutputsMap.each { deployableArtifact, info ->
 		String container = info.get("container")
@@ -324,7 +324,7 @@ if (buildOutputsMap.size() == 0) {
 
 		if (deployableArtifact.zFSArtifact) {
 			def originalFile = new File(container + "/" + deployableArtifact.file)
-			println "   Copy '${originalFile.toPath()}' to '${file.toPath()}'."
+			println "   Copy '${originalFile.toPath()}' to '${file.toPath()}'"
 			try {
 				Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 			} catch (IOException exception) {
@@ -418,7 +418,7 @@ if (buildOutputsMap.size() == 0) {
 		if(props.verbose) println("** Copy packaging properties config file to '$copiedPackagingPropertiesFilePath'")
 		Files.copy(packagingPropertiesFilePath, copiedPackagingPropertiesFilePath, COPY_ATTRIBUTES)
 
-		println("** Creating tar file at ${tarFile}")
+		println("** Create tar file at ${tarFile}")
 		// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
 		// To save all attributes to be restored on z/OS and non-z/OS systems : tar -UX
 		def processCmd = [
@@ -435,7 +435,7 @@ if (buildOutputsMap.size() == 0) {
 
 	//Package additional outputs to tar file.
 	if (props.includeLogs && !props.error) (props.includeLogs).split(",").each { logPattern ->
-		println("** Adding files with file pattern '$logPattern' from '${props.workDir}' to '${tarFile}'")
+		println("** Add files with file pattern '$logPattern' from '${props.workDir}' to '${tarFile}'")
 		processCmd = [
 			"sh",
 			"-c",
