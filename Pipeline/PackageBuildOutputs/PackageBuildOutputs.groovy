@@ -55,12 +55,12 @@ import com.ibm.jzos.ZFile;
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
 @Field def sbomUtilities
-
+def rc = 0
 
 props = parseInput(args)
 
 def startTime = new Date()
-props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
+props.startTime = startTime.format("yyyyMMdd.HHmmss.SSS")
 println("** PackageBuildOutputs start at $props.startTime")
 println("** Properties at startup:")
 props.sort().each { k,v->
@@ -73,8 +73,10 @@ props.sort().each { k,v->
 // Enable file tagging
 BuildProperties.setProperty("dbb.file.tagging", "true") // Enable dbb file tagging
 
-// Map of last level dataset qualifier to DBB CopyToFS CopyMode.
-def copyModeMap = evaluate(props.copyModeMap)
+// Map of last level dataset qualifier to DBB CopyToHFS CopyMode.
+//def copyModeMap = evaluate(props.copyModeMap)
+def copyModeMap = parseCopyModeMap(props.copyModeMap)
+
 
 // Hashmap of BuildOutput to Record
 Map<DeployableArtifact, Map> buildOutputsMap = new HashMap<DeployableArtifact, Map>()
@@ -198,7 +200,7 @@ props.buildReportOrder.each { buildReportFile ->
 					def dependencySetRecord = buildReport.getRecords().find {
 						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 					}
-					buildOutputsMap.put(new DeployableArtifact(file, deployType), [
+					buildOutputsMap.put(new DeployableArtifact(file, deployType, true), [
 						container: rootDir,
 						owningApplication: props.application,
 						record: buildRecord,
@@ -216,7 +218,7 @@ props.buildReportOrder.each { buildReportFile ->
 					def dependencySetRecord = buildReport.getRecords().find {
 						it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 					}
-					buildOutputsMap.put(new DeployableArtifact(member, output.deployType), [
+					buildOutputsMap.put(new DeployableArtifact(member, output.deployType, false), [
 						container: dataset,
 						owningApplication: props.application,
 						record: buildRecord,
@@ -287,7 +289,7 @@ if (buildOutputsMap.size() == 0) {
 	!tempLoadDir.exists() ?: tempLoadDir.deleteDir()
 	tempLoadDir.mkdirs()
 
-	println( "*** Number of build outputs to package: ${buildOutputsMap.size()}")
+	println("*** Number of build outputs to package: ${buildOutputsMap.size()}")
 
 	println("** Copying build outputs to temporary package directory $tempLoadDir")
 
@@ -299,7 +301,7 @@ if (buildOutputsMap.size() == 0) {
 		DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
 		
 		def filePath = ""
-		if (record.getType()=="USS_RECORD") {
+		if (deployableArtifact.zFSArtifact) {
 			filePath = "$tempLoadDir"
 		} else {
 			filePath = "$tempLoadDir/$container"
@@ -318,10 +320,15 @@ if (buildOutputsMap.size() == 0) {
 		new File(directory).mkdirs()
 
 
-		if (record.getType()=="USS_RECORD") {
+		if (deployableArtifact.zFSArtifact) {
 			def originalFile = new File(container + "/" + deployableArtifact.file)
 			println "   Copy ${originalFile.toPath()} to ${file.toPath()}"
-			Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+			try {
+				Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+			} catch (IOException exception) {
+				println "!* [ERROR] An error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
+				rc = Math.max(rc, 1) 
+			}
 		} else {
 			// set copyMode based on last level qualifier
 			currentCopyMode = copyModeMap[container.replaceAll(/.*\.([^.]*)/, "\$1")]
@@ -353,31 +360,31 @@ if (buildOutputsMap.size() == 0) {
 					}
 
 				} else {
-					println "*! The file '$container(${deployableArtifact.file})' doesn't exist. Copy is skipped. Packaging failed."
-					props.error = "true"
+					println "*! [ERROR] The file '$container(${deployableArtifact.file})' doesn't exist. Packaging failed."
+					rc = Math.max(rc, 1) 
 				}
 			} else {
-				println "*! Copying $container(${deployableArtifact.file}) could not be copied due to missing mapping. Packaging failed."
-				props.error = "true"
+				println "*! [ERROR] Copying $container(${deployableArtifact.file}) could not be copied due to missing mapping. Packaging failed."
+				rc = Math.max(rc, 1) 
 			}
 		}
-		if (props.generateSBOM && props.generateSBOM.toBoolean() && !props.error) {
+		if (props.generateSBOM && props.generateSBOM.toBoolean() && rc < 1) {
 			sbomUtilities.addEntryToSBOM(deployableArtifact, info)
 		}
 	}
 	
-	if (props.generateSBOM && props.generateSBOM.toBoolean() && !props.error) {
+	if (props.generateSBOM && props.generateSBOM.toBoolean() && rc < 1) {
 		sbomUtilities.writeSBOM("$tempLoadDir/sbom.json", props.fileEncoding)    
 	}
 	
 
-	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && !props.error) {
+	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && rc < 1) {
 		// print application manifest
 		// wazideploy_manifest.yml is the default name of the manifest file
 		wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/wazideploy_manifest.yml"), props.fileEncoding, props.verbose)
 	}
 
-	if (!props.error) {
+	if (rc == 0) {
 
 		// log buildReportOrder file and add build reports to tar file
 		File buildReportOrder = new File("$tempLoadDir/buildReportOrder.txt")
@@ -403,19 +410,11 @@ if (buildOutputsMap.size() == 0) {
 				writer.write("${copiedBuildReportFilePath.toString()}\n")
 			}
 		}
-	}
-
-	if (!props.error) {
-
+	
 		Path packagingPropertiesFilePath = Paths.get(props.packagingPropertiesFile)
 		Path copiedPackagingPropertiesFilePath = Paths.get(tempLoadDir.getPath() + "/" + packagingPropertiesFilePath.getFileName().toString())
 		if(props.verbose) println("** Copy packaging properties config file to $copiedPackagingPropertiesFilePath")
 		Files.copy(packagingPropertiesFilePath, copiedPackagingPropertiesFilePath, COPY_ATTRIBUTES)
-
-	}
-
-
-	if (!props.error) {
 
 		println("** Creating tar file at ${tarFile}")
 		// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
@@ -426,16 +425,11 @@ if (buildOutputsMap.size() == 0) {
 			"tar cUXf $tarFile *"
 		]
 
-		def rc = runProcess(processCmd, tempLoadDir)
-		assert rc == 0 : "Failed to package"
-
+		def processRC = runProcess(processCmd, tempLoadDir)
+		assert processRC == 0 : "Failed to package"
+		rc = Math.max(rc, processRC)
 		println ("** Package successfully created at ${tarFile}")
-
-
 	}
-
-
-
 
 	//Package additional outputs to tar file.
 	if (props.includeLogs && !props.error) (props.includeLogs).split(",").each { logPattern ->
@@ -446,13 +440,14 @@ if (buildOutputsMap.size() == 0) {
 			"tar rUXf $tarFile $logPattern"
 		]
 
-		rc = runProcess(processCmd, new File(props.workDir))
-		assert rc == 0 : "Failed to append $logPattern."
+		processRC = runProcess(processCmd, new File(props.workDir))
+		assert processRC == 0 : "Failed to append $logPattern."
+		rc = Math.max(rc, processRC)
 	}
 
 
 
-	if(props.verbose && props.verbose.toBoolean() && !props.error) {
+	if (props.verbose && props.verbose.toBoolean() && (rc  == 0)) {
 		println ("** List package contents.")
 
 		processCmd = [
@@ -461,13 +456,13 @@ if (buildOutputsMap.size() == 0) {
 			"tar tvf $tarFile"
 		]
 
-		rc = runProcess(processCmd, new File(props.workDir))
-		assert rc == 0 : "Failed to list contents of tarfile $tarFile."
-
+		processRC = runProcess(processCmd, new File(props.workDir))
+		assert processRC == 0 : "Failed to list contents of tarfile $tarFile."
+		rc = Math.max(rc, processRC)
 	}
 
 	//Set up the artifact repository information to publish the tar file
-	if (props.publish && props.publish.toBoolean() && !props.error){
+	if (props.publish && props.publish.toBoolean() && (rc == 0)){
 		// Configuring artifact repositoryHelper parms
 		def String remotePath = (props.versionName) ? (props.versionName + "/" + tarFileName) : (tarFileLabel + "/" + tarFileName)
 		def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + props.'artifactRepository.directory' + "/" + remotePath ).normalize().toString() // Normalized URL
@@ -487,14 +482,13 @@ if (buildOutputsMap.size() == 0) {
 		artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean(), httpClientVersion)
 	}
 
-	if (props.error) {
-		rc = 1
-		println ("** PackageBuildOutputs.groovy failed to completed successfully. Please insepect console output. rc=$rc")
+	if (rc > 0) {
+		println ("** PackageBuildOutputs.groovy failed (rc=$rc). Please inspect console output.")
 		System.exit(rc)
 	} else {
 		println ("** PackageBuildOutputs.groovy completed successfully")
+		System.exit(rc)
 	}
-
 }
 
 
@@ -522,7 +516,6 @@ def extractDirectoryAndFile(String fullname) {
 	String directory = filePath.getParent();
 	return [directory, file];
 }
-
 
 
 /**
@@ -735,6 +728,20 @@ def relativizePath(String path) {
 }
 
 /*
+ * parseCopyModeMap - Parses the CopyModeMap provided in the PackageBuildOutputs.properties file, without using 'evaluate()'
+ */
+def parseCopyModeMap(String copyModeMapString) {
+	HashMap<String, String> copyModeMap = new HashMap<String, String>()
+	def copyModes = copyModeMapString.replaceAll("[\\[\\]\"]", "").trim().split(",")
+	copyModes.each() { copyMode ->
+		def copyModeParts = copyMode.split(":")
+		copyModeMap.put(copyModeParts[0].trim(), copyModeParts[1].trim())
+	}
+	return copyModeMap
+}
+
+
+/*
  * The DeployableArtifact class represent an artifact that can be deployed
  * It defines a file (typically the member name of a dataset (the container) or a file in a zFS directory)
  * and a deployType. Instances of this class are used in the main Map object to represent unique artifacts.
@@ -742,10 +749,12 @@ def relativizePath(String path) {
 class DeployableArtifact {
 	private final String file;
 	private final String deployType;
+	private final Boolean zFSArtifact;
 
-	DeployableArtifact(String file, String deployType) {
+	DeployableArtifact(String file, String deployType, Boolean zFSArtifact) {
 		this.file = file;
 		this.deployType = deployType;
+		this.zFSArtifact = zFSArtifact;
 	}
 
 	@Override
@@ -755,7 +764,7 @@ class DeployableArtifact {
 	}
 
 	public boolean equals(DeployableArtifact other) {
-		return other.file.equals(file) & other.deployType.equals(deployType);
+		return other.file.equals(file) & other.deployType.equals(deployType) & (other.zFSArtifact == zFSArtifact);
 	}
 
 	@Override
@@ -784,8 +793,7 @@ def retrieveBuildResultProperty(PropertiesRecord buildResultPropertiesRecord, St
 
 		if (property) {
 			return property.getValue()
-		} else
-		{
+		} else {
 			return null
 		}
 	}
