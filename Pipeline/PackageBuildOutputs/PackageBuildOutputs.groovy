@@ -701,7 +701,7 @@ def parseInput(String[] cliArgs){
 	}    
 
 	if (!props.workDir) {
-		println("*! [ERROR] Missing Build Working Directory ('-w') property.")
+		println("*! [ERROR] Missing required Working Directory parameter ('--workDir'). ")
 		rc = 2
 	}
 
