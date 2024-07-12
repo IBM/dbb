@@ -380,7 +380,7 @@ if (buildOutputsMap.size() == 0) {
 	}
 	
 
-	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && rc < 1) {
+	if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && rc == 0) {
 		// print application manifest
 		// wazideploy_manifest.yml is the default name of the manifest file
 		wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/wazideploy_manifest.yml"), props.fileEncoding, props.verbose)
