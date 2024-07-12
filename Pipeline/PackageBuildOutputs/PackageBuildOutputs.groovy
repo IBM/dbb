@@ -731,7 +731,7 @@ def parseInput(String[] cliArgs){
 			rc = 2
 		}
 		if (!props.'artifactRepository.password') {
-			println("*! [ERROR] Missing Artifact Repository Password property required when publishing package.")
+			println("*! [ERROR] Missing Artifact Repository Password property. It is required when publishing the package via ArtifactRepositoryHelpers.")
 			rc = 2
 		}
 		if (!props.'artifactRepository.directory') {
