@@ -735,7 +735,7 @@ def parseInput(String[] cliArgs){
 			rc = 2
 		}
 		if (!props.'artifactRepository.directory') {
-			println("*! [ERROR] Missing Artifact Repository Directory property required when publishing package.")
+			println("*! [ERROR] Missing Artifact Repository Directory property. It is required when publishing the package via ArtifactRepositoryHelpers.")
 			rc = 2
 		}
 	}
