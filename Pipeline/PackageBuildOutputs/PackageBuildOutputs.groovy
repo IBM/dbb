@@ -64,10 +64,6 @@ def startTime = new Date()
 
 props = parseInput(args)
 
-// Just printing the Usage and exiting
-if (rc == 1) {
-	System.exit(0)	
-}
 props.startTime = startTime.format("yyyyMMdd.HHmmss.SSS")
 println("** PackageBuildOutputs start at $props.startTime")
 println("** Properties at startup:")
@@ -77,7 +73,7 @@ props.sort().each { k,v->
 	else
 		println "   $k -> $v"
 }
-if (rc > 1) {
+if (rc != 0) {
 	println("*! [ERROR] One or several properties were missing in the configuration. Review the console output.")
 	System.exit(rc)
 }
@@ -606,7 +602,7 @@ def parseInput(String[] cliArgs){
 	def opts = cli.parse(cliArgs)
 	if (opts.h) { // if help option used, print usage and exit
 		cli.usage()
-		rc = 1
+		System.exit(0)	
 	}
 
 	def props = new Properties()
