@@ -719,7 +719,7 @@ def parseInput(String[] cliArgs){
 	// validate publishing options
 	if (props.publish && props.publish.toBoolean()){
 		if (!props.'artifactRepository.url') {
-			println("*! [ERROR] Missing Artifact Repository URL property required when publishing package.")
+			println("*! [ERROR] Missing Artifact Repository URL property. It is required when publishing the package via ArtifactRepositoryHelpers.")
 			rc = 2
 		}
 		if (!props.'artifactRepository.repo') {
