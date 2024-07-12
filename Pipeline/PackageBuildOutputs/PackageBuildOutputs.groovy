@@ -747,7 +747,7 @@ def parseInput(String[] cliArgs){
 			rc = 2
 		}
 		if (!props.addExtension || !props.addExtension.toBoolean()) {
-			println("*! [ERROR] Missing AddExtension ('-ae') property required when generating Wazi Deploy Application Manifest file.")
+			println("*! [ERROR] Missing AddExtension parameter ('--addExtension'). It is required for generating the Wazi Deploy Application Manifest file.")
 			rc = 2
 		}
 	}
