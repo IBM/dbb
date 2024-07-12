@@ -370,12 +370,12 @@ if (buildOutputsMap.size() == 0) {
 				rc = Math.max(rc, 1) 
 			}
 		}
-		if (props.generateSBOM && props.generateSBOM.toBoolean() && rc < 1) {
+		if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
 			sbomUtilities.addEntryToSBOM(deployableArtifact, info)
 		}
 	}
 	
-	if (props.generateSBOM && props.generateSBOM.toBoolean() && rc < 1) {
+	if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
 		sbomUtilities.writeSBOM("$tempLoadDir/sbom.json", props.fileEncoding)    
 	}
 	
@@ -434,7 +434,7 @@ if (buildOutputsMap.size() == 0) {
 	}
 
 	//Package additional outputs to tar file.
-	if (props.includeLogs && !props.error) (props.includeLogs).split(",").each { logPattern ->
+	if (props.includeLogs && rc == 0) (props.includeLogs).split(",").each { logPattern ->
 		println("** Add files with file pattern '$logPattern' from '${props.workDir}' to '${tarFile}'")
 		processCmd = [
 			"sh",
@@ -449,7 +449,7 @@ if (buildOutputsMap.size() == 0) {
 
 
 
-	if (props.verbose && props.verbose.toBoolean() && (rc  == 0)) {
+	if (props.verbose && props.verbose.toBoolean() && rc  == 0) {
 		println ("** List package contents.")
 
 		processCmd = [
@@ -464,7 +464,7 @@ if (buildOutputsMap.size() == 0) {
 	}
 
 	//Set up the artifact repository information to publish the tar file
-	if (props.publish && props.publish.toBoolean() && (rc == 0)){
+	if (props.publish && props.publish.toBoolean() && rc == 0){
 		// Configuring artifact repositoryHelper parms
 		def String remotePath = (props.versionName) ? (props.versionName + "/" + tarFileName) : (tarFileLabel + "/" + tarFileName)
 		def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + props.'artifactRepository.directory' + "/" + remotePath ).normalize().toString() // Normalized URL
@@ -536,7 +536,7 @@ def runProcess(ArrayList cmd, File dir){
 
 	def rc = p.exitValue();
 	if(rc!=0){
-		println("*! Error executing $cmd \n" + error.toString())
+		println("*! [ERROR] Error executing $cmd \n" + error.toString())
 		//System.exit(1)
 	}
 	return rc
@@ -660,7 +660,7 @@ def parseInput(String[] cliArgs){
 		}
 
 		if(opts.t == false) {
-			println("*! Error: tarFilename is only optional when no build report order is specified")
+			println("*! [ERROR] tarFilename is only optional when no build report order is specified")
 			System.exit(3)
 		}
 
@@ -670,7 +670,7 @@ def parseInput(String[] cliArgs){
 			buildReports.add(it)
 		}
 		if(opts.t == false) {
-			println("*! Error: tarFilename is only optional when no build report order is specified")
+			println("*! [ERROR] tarFilename is only optional when no build report order is specified")
 			System.exit(3)
 		}
 	} else if (buildReports.isEmpty()){
