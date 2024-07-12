@@ -727,7 +727,7 @@ def parseInput(String[] cliArgs){
 			rc = 2
 		}
 		if (!props.'artifactRepository.user') {
-			println("*! [ERROR] Missing Artifact Repository Username property required when publishing package.")
+			println("*! [ERROR] Missing Artifact Repository Username property. It is required when publishing the package via ArtifactRepositoryHelpers.")
 			rc = 2
 		}
 		if (!props.'artifactRepository.password') {
