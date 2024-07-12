@@ -60,9 +60,14 @@ def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).p
 @Field def sbomUtilities
 @Field def rc = 0
 
+def startTime = new Date()
+
 props = parseInput(args)
 
-def startTime = new Date()
+// Just printing the Usage and exiting
+if (rc == 1) {
+	System.exit(0)	
+}
 props.startTime = startTime.format("yyyyMMdd.HHmmss.SSS")
 println("** PackageBuildOutputs start at $props.startTime")
 println("** Properties at startup:")
@@ -72,11 +77,11 @@ props.sort().each { k,v->
 	else
 		println "   $k -> $v"
 }
-
-if (rc != 0 && rc != 1) {
+if (rc > 1) {
 	println("*! [ERROR] One or several properties were missing in the configuration. Review the console output.")
 	System.exit(rc)
 }
+
 
 // Enable file tagging
 BuildProperties.setProperty("dbb.file.tagging", "true") // Enable dbb file tagging
