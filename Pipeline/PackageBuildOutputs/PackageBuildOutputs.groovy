@@ -675,7 +675,7 @@ def parseInput(String[] cliArgs){
 		}
 
 		if (opts.t == false) {
-			println("*! [ERROR] Property 'tarFilename' is only optional when no build report order is specified.")
+			println("*! [ERROR] Missing required property 'tarFilename'. 'tarFilename' is only optional when no build report order is specified.")
 			rc = 2
 		}
 
