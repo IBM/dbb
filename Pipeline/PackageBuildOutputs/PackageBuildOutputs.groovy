@@ -723,7 +723,7 @@ def parseInput(String[] cliArgs){
 			rc = 2
 		}
 		if (!props.'artifactRepository.repo') {
-			println("*! [ERROR] Missing Artifact Repository Name property required when publishing package.")
+			println("*! [ERROR] Missing Artifact Repository Name property. It is required when publishing the package via ArtifactRepositoryHelpers.")
 			rc = 2
 		}
 		if (!props.'artifactRepository.user') {
