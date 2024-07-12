@@ -743,7 +743,7 @@ def parseInput(String[] cliArgs){
 	// assess required options to generate Wazi Deploy application manifest
 	if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
 		if (!props.branch) {
-			println("*! [ERROR] Missing branch ('-b') property required when generating Wazi Deploy Application Manifest file.")
+			println("*! [ERROR] Missing branch parameter ('--branch'). It is required for generating the Wazi Deploy Application Manifest file.")
 			rc = 2
 		}
 		if (!props.addExtension || !props.addExtension.toBoolean()) {
