@@ -20,7 +20,7 @@ public class DTLDependencyScanner extends AbstractDependencyScanner {
 		return (LogicalFile) scanMetadata;
 	}
 
-    private static Pattern entityPattern = Pattern.compile("<[:!][eE][nN][tT][iI][tT][yY]\\s%?(?<payload> ?[a-zA-Z0-9\\$@%]*)\\s[sS][yY][sS][tT][eE][mM].*>"); //$NON-NLS-1$
+    private static Pattern entityPattern = Pattern.compile("<[:!][eE][nN][tT][iI][tT][yY]\\s*%?(?<payload> ?[a-zA-Z0-9\\$@%]*)\\s*[sS][yY][sS][tT][eE][mM].*>"); //$NON-NLS-1$
     private static Pattern inclPattern = Pattern.compile("<\\?(?<payload>.*)>"); //$NON-NLS-1$
 
 	
