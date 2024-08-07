@@ -17,6 +17,7 @@ import com.ibm.dbb.build.report.records.*
 def initWaziDeployManifestGenerator(Properties props) {
 	// Artifacts
 	wdManifest.artifacts = new ArrayList<Artifact>()
+	wdManifest.deleted_artifacts = new ArrayList<DeletedArtifact>()
 
 	// Metadata
 	wdManifest.metadata = new Metadata()
@@ -67,6 +68,26 @@ def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, String pa
 	}
 	// add type
 	artifact.type =deployableArtifact.deployType
+
+	// adding artifact into applicationManifest
+	wdManifest.artifacts.add(artifact)
+}
+
+/**
+ *
+ */
+def appendArtifactDeletionToAppManifest(DeployableArtifact deployableArtifact, String path, Record record){
+	Artifact artifact = new Artifact()
+	artifact.name = deployableArtifact.file
+	artifact.description = (record.file) ? record.file : deployableArtifact.file
+	// Add properties
+	artifact.properties = new ArrayList()
+	ElementProperty pathProperty = new ElementProperty()
+	pathProperty.key = "path"
+	pathProperty.value = path
+	artifact.properties.add(pathProperty)
+	// add type
+	artifact.type = deployableArtifact.deployType
 
 	// adding artifact into applicationManifest
 	wdManifest.artifacts.add(artifact)
@@ -130,7 +151,7 @@ class WaziDeployManifest {
 	String kind = "ManifestState"
 	Metadata metadata
 	ArrayList<Artifact> artifacts
-
+	ArrayList<DeletedArtifact> deleted_artifacts
 }
 
 class Metadata {
@@ -167,6 +188,13 @@ class Artifact {
 	ArrayList<ElementProperty> properties
 	String type
 	String hash
+}
+
+class DeletedArtifact {
+	String name
+	String description
+	ArrayList<ElementProperty> properties
+	String type
 }
 
 class ElementProperty {

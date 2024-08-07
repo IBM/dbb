@@ -144,6 +144,14 @@ props.buildReportOrder.each { buildReportFile ->
 				it.getType()=="USS_RECORD" && !it.getAttribute("outputs").isEmpty()
 			} catch (Exception e){}
 		}
+
+		// find all deletions using the DELETE_RECORD of zAppBuild
+		def deletionRecords = buildReport.getRecords().findAll {
+        	try {
+            // Obtain delete records, which got added by zAppBuild
+            it.getType()=="DELETE_RECORD"
+        	} catch (Exception e) {println e}
+		}
 	
 		if (props.deployTypeFilter){
 			println("** Filter Output Records on following deployTypes: ${props.deployTypeFilter}...")
@@ -175,6 +183,7 @@ props.buildReportOrder.each { buildReportFile ->
 				def filteredOutputsStrings = String.join(";", filteredOutputs)
 				it.setAttribute("outputs", filteredOutputsStrings)
 			}
+
 		} else {
 			// Remove outputs without deployType + ZUNIT-TESTCASEs
 			println("** Remove output records without deployType or with deployType=ZUNIT-TESTCASE")
@@ -186,10 +195,11 @@ props.buildReportOrder.each { buildReportFile ->
 			}
 		}
 	
-		buildRecords += ussBuildRecords
+		buildRecords += ussBuildRecords // append USS records
 	
 		def datasetMembersCount = 0
 		def zFSFilesCount = 0
+		def deletionCount = 0
 	
 		// adding files and executes with outputs to Hashmap to remove redundant data
 		buildRecords.each{ buildRecord ->
@@ -236,8 +246,49 @@ props.buildReportOrder.each { buildReportFile ->
 				}
 			}
 		}
+
+		deletionRecords.each { deleteRecord ->
+				deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
+        		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
+            		String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
+					def (dataset, member) = getDatasetName(cleansedDeletedFile)
+					
+					// search for an existing deployableArtifacts record
+					deployableRecords = buildOutputsMap.find {it.member == member}
+					
+					if (deployableRecords){
+						deployableRecords.each {deployableArtifact, info -> 
+							String container = info.get("container")
+							if (container == dataset && member == deployableArtifact.file) {
+								deployType = deployableArtifact.deployType
+								// remove any existing change
+								buildOutputsMap.remove(deployableArtifact)
+								// add deletion
+								buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
+									container: dataset,
+									owningApplication: props.application,
+									record: buildRecord,
+									propertiesRecord: buildResultPropertiesRecord,
+									dependencySetRecord: dependencySetRecord
+									])
+							}
+						}
+					} else {
+						deployType = "LOAD" // default type. DELETE_RECORD does not contain deployType attribute
+						buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
+							container: dataset,
+							owningApplication: props.application,
+							record: buildRecord,
+							propertiesRecord: buildResultPropertiesRecord,
+							dependencySetRecord: dependencySetRecord
+							])
+					}
+        		}
+		}
+
 	
-		if ( datasetMembersCount + zFSFilesCount == 0 ) {
+		// Print summary of BuildReport
+		if ( datasetMembersCount + zFSFilesCount + deletionCount == 0 ) {
 			println("** No items to package in '$buildReportFile'.")
 		} else {
 			println("** Deployable artifacts detected in '$buildReportFile':")
@@ -259,6 +310,12 @@ props.buildReportOrder.each { buildReportFile ->
 					record.getOutputs().each {println("   ${it.dataset}, ${it.deployType}")}
 				}
 			}
+
+			// Log deleted files
+        	if (deletionCount != 0) {
+            	println("**  Deleted files detected in $buildReportFile")
+            	deletionRecords.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
+       		 }
 		}
 	
 		// generate scmInfo for Wazi Deploy Application Manifest file
@@ -339,7 +396,7 @@ if (rc == 0) {
 					println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
 					rc = Math.max(rc, 1) 
 				}
-			} else {
+			} else if  (deployableArtifact.artifactType.equals("DatasetMember")) {
 				// set copyMode based on last level qualifier
 				currentCopyMode = copyModeMap[container.replaceAll(/.*\.([^.]*)/, "\$1")]
 				if (currentCopyMode != null) {
@@ -377,7 +434,15 @@ if (rc == 0) {
 					println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' could not be copied due to missing mapping."
 					rc = Math.max(rc, 1) 
 				}
+			} else if  (deployableArtifact.artifactType.equals("DatasetMemberDelete")) {
+					// generate delete instruction for Wazi Deploy
+					if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+						wdManifestGeneratorUtilities.appendArtifactDeletionToAppManifest(deployableArtifact, "$container/$fileName", record)
+					}
 			}
+
+
+
 			if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
 				sbomUtilities.addEntryToSBOM(deployableArtifact, info)
 			}
