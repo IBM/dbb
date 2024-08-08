@@ -79,7 +79,7 @@ def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, String pa
 def appendArtifactDeletionToAppManifest(DeployableArtifact deployableArtifact, String path, Record record){
 	Artifact artifact = new Artifact()
 	artifact.name = deployableArtifact.file
-	artifact.description = (record.file) ? record.file : deployableArtifact.file
+	artifact.description = (record.getAttribute("file")) ? record.getAttribute("file") : deployableArtifact.file
 	// Add properties
 	artifact.properties = new ArrayList()
 	ElementProperty pathProperty = new ElementProperty()
@@ -90,7 +90,7 @@ def appendArtifactDeletionToAppManifest(DeployableArtifact deployableArtifact, S
 	artifact.type = deployableArtifact.deployType
 
 	// adding artifact into applicationManifest
-	wdManifest.artifacts.add(artifact)
+	wdManifest.deleted_artifacts.add(artifact)
 }
 
 def setScmInfo(HashMap<String, String> scmInfoMap) {
@@ -112,6 +112,7 @@ def writeApplicationManifest(File yamlFile, String fileEncoding, String verbose)
 		kind wdManifest.kind
 		metadata wdManifest.metadata
 		artifacts  wdManifest.artifacts
+		deleted_artifacts wdManifest.deleted_artifacts
 	}
 
 	if (verbose && verbose.toBoolean()) {

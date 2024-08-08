@@ -254,10 +254,15 @@ props.buildReportOrder.each { buildReportFile ->
 					def (dataset, member) = getDatasetName(cleansedDeletedFile)
 					
 					// search for an existing deployableArtifacts record
-					deployableRecords = buildOutputsMap.find {it.member == member}
+				ArrayList<DeployableArtifact> filteredDeployableArtifacts = new ArrayList()
+				buildOutputsMap.each { DeployableArtifact dA, info ->
+					if (dA.file == deleteRecord.getAttribute("file")) {
+						filteredDeployableArtifacts.add(dA, info)
+					}
+				}
 					
-					if (deployableRecords){
-						deployableRecords.each {deployableArtifact, info -> 
+				if (filteredDeployableArtifacts){
+					filteredDeployableArtifacts.each {deployableArtifact, info ->
 							String container = info.get("container")
 							if (container == dataset && member == deployableArtifact.file) {
 								deployType = deployableArtifact.deployType
@@ -274,13 +279,12 @@ props.buildReportOrder.each { buildReportFile ->
 							}
 						}
 					} else {
-						deployType = "LOAD" // default type. DELETE_RECORD does not contain deployType attribute
+					deployType = dataset.replaceAll(/.*\.([^.]*)/, "\$1") // DELETE_RECORD does not contain deployType attribute. Use LLQ
 						buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
 							container: dataset,
 							owningApplication: props.application,
-							record: buildRecord,
-							propertiesRecord: buildResultPropertiesRecord,
-							dependencySetRecord: dependencySetRecord
+							record: deleteRecord,
+							propertiesRecord: buildResultPropertiesRecord
 							])
 					}
         		}
@@ -313,7 +317,7 @@ props.buildReportOrder.each { buildReportFile ->
 
 			// Log deleted files
         	if (deletionCount != 0) {
-            	println("**  Deleted files detected in $buildReportFile")
+				println("**  Deleted files detected in '$buildReportFile':")
             	deletionRecords.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
        		 }
 		}
