@@ -441,7 +441,7 @@ if (rc == 0) {
 			} else if  (deployableArtifact.artifactType.equals("DatasetMemberDelete")) {
 					// generate delete instruction for Wazi Deploy
 					if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-						wdManifestGeneratorUtilities.appendArtifactDeletionToAppManifest(deployableArtifact, "$container/$fileName", record)
+						wdManifestGeneratorUtilities.appendArtifactDeletionToAppManifest(deployableArtifact, "$container/$fileName", record, propertiesRecord)
 					}
 			}
 
