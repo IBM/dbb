@@ -250,49 +250,51 @@ props.buildReportOrder.each { buildReportFile ->
 		deletionRecords.each { deleteRecord ->
 				deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
         		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
-            		String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
+            		
+					String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
 					def (dataset, member) = getDatasetName(cleansedDeletedFile)
 					
 					// search for an existing deployableArtifacts record
-				ArrayList<DeployableArtifact> filteredDeployableArtifacts = new ArrayList()
-				buildOutputsMap.each { DeployableArtifact dA, info ->
-					if (dA.file == deleteRecord.getAttribute("file")) {
-						filteredDeployableArtifacts.add(dA, info)
-					}
-				}
+					ArrayList<DeployableArtifact> filteredDeployableArtifacts = new ArrayList()
 					
-				if (filteredDeployableArtifacts){
-					filteredDeployableArtifacts.each {deployableArtifact, info ->
-							String container = info.get("container")
-							if (container == dataset && member == deployableArtifact.file) {
-								deployType = deployableArtifact.deployType
-								// remove any existing change
-								buildOutputsMap.remove(deployableArtifact)
-								// add deletion
-								buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
-									container: dataset,
-									owningApplication: props.application,
-									record: buildRecord,
-									propertiesRecord: buildResultPropertiesRecord,
-									dependencySetRecord: dependencySetRecord
-									])
-							}
+					buildOutputsMap.each { DeployableArtifact deployableArtifact, Map info ->
+						if (deployableArtifact.file == deleteRecord.getAttribute("file")) {
+							filteredDeployableArtifacts.add(deployableArtifact, info)
 						}
-					} else {
-					deployType = dataset.replaceAll(/.*\.([^.]*)/, "\$1") // DELETE_RECORD does not contain deployType attribute. Use LLQ
-						buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
-							container: dataset,
-							owningApplication: props.application,
-							record: deleteRecord,
-							propertiesRecord: buildResultPropertiesRecord
-							])
 					}
-        		}
+					
+					if (filteredDeployableArtifacts){
+						filteredDeployableArtifacts.each {deployableArtifact, info ->
+								String container = info.get("container")
+								if (container == dataset && member == deployableArtifact.file) {
+									deployType = deployableArtifact.deployType
+									// remove any existing change
+									buildOutputsMap.remove(deployableArtifact)
+									// add deletion
+									buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
+										container: dataset,
+										owningApplication: props.application,
+										record: buildRecord,
+										propertiesRecord: buildResultPropertiesRecord,
+										dependencySetRecord: dependencySetRecord
+										])
+								}
+							}
+						} else {
+						deployType = dataset.replaceAll(/.*\.([^.]*)/, "\$1") // DELETE_RECORD does not contain deployType attribute. Use LLQ
+							buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
+								container: dataset,
+								owningApplication: props.application,
+								record: deleteRecord,
+								propertiesRecord: buildResultPropertiesRecord
+								])
+						}
+	        	}
 		}
 
 	
 		// Print summary of BuildReport
-		if ( datasetMembersCount + zFSFilesCount + deletionCount == 0 ) {
+		if ( datasetMembersCount + zFSFilesCount == 0 ) {
 			println("** No items to package in '$buildReportFile'.")
 		} else {
 			println("** Deployable artifacts detected in '$buildReportFile':")
@@ -315,11 +317,12 @@ props.buildReportOrder.each { buildReportFile ->
 				}
 			}
 
-			// Log deleted files
-        	if (deletionCount != 0) {
-				println("**  Deleted files detected in '$buildReportFile':")
-            	deletionRecords.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
-       		 }
+		}
+		
+		// Log detected deleted files
+		if (deletionCount != 0) {
+			println("**  Deleted files detected in '$buildReportFile':")
+			deletionRecords.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
 		}
 	
 		// generate scmInfo for Wazi Deploy Application Manifest file

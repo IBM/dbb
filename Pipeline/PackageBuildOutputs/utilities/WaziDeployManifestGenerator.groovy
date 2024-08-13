@@ -15,10 +15,6 @@ import com.ibm.dbb.build.report.records.*
 @Field WaziDeployManifest wdManifest = new WaziDeployManifest()
 
 def initWaziDeployManifestGenerator(Properties props) {
-	// Artifacts
-	wdManifest.artifacts = new ArrayList<Artifact>()
-	wdManifest.deleted_artifacts = new ArrayList<Artifact>()
-
 	// Metadata
 	wdManifest.metadata = new Metadata()
 
@@ -73,6 +69,7 @@ def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, String pa
 	artifact.hash =  (gitHashInfo) ? gitHashInfo : "UNDEFINED"
 
 	// adding artifact into applicationManifest
+	if (!wdManifest.artifacts) wdManifest.artifacts = new ArrayList<Artifact>()
 	wdManifest.artifacts.add(artifact)
 }
 
@@ -100,7 +97,7 @@ def appendArtifactDeletionToAppManifest(DeployableArtifact deployableArtifact, S
 			if (propValue) {
 				artifactProperty.key = property
 				artifactProperty.value = propValue
-				artifact.properties.add(artifactProperty)
+				deleted_artifact.properties.add(artifactProperty)
 			}
 		}
 	}
@@ -113,6 +110,7 @@ def appendArtifactDeletionToAppManifest(DeployableArtifact deployableArtifact, S
 	deleted_artifact.hash =  (gitHashInfo) ? gitHashInfo : "UNDEFINED"
 
 	// adding artifact into applicationManifest
+	if (!wdManifest.deleted_artifacts) wdManifest.deleted_artifacts = new ArrayList<Artifact>()
 	wdManifest.deleted_artifacts.add(deleted_artifact)
 
 }
@@ -132,13 +130,32 @@ def writeApplicationManifest(File yamlFile, String fileEncoding, String verbose)
 	println("** Generate Wazi Deploy Application Manifest file to $yamlFile")
 	def yamlBuilder = new YamlBuilder()
 
-	yamlBuilder {
-		apiVersion wdManifest.apiVersion
-		kind wdManifest.kind
-		metadata wdManifest.metadata
-		artifacts  wdManifest.artifacts
-		deleted_artifacts wdManifest.deleted_artifacts
+	if (wdManifest.artifacts && wdManifest.deleted_artifacts) { 
+		yamlBuilder {
+			apiVersion wdManifest.apiVersion
+			kind wdManifest.kind
+			metadata wdManifest.metadata
+			artifacts  wdManifest.artifacts
+			deleted_artifacts wdManifest.deleted_artifacts
+		}
+	} else if (wdManifest.artifacts) {
+		yamlBuilder {
+			apiVersion wdManifest.apiVersion
+			kind wdManifest.kind
+			metadata wdManifest.metadata
+			artifacts  wdManifest.artifacts
+		}
+	} else if (wdManifest.deleted_artifacts) {
+		yamlBuilder {
+			apiVersion wdManifest.apiVersion
+			kind wdManifest.kind
+			metadata wdManifest.metadata
+			deleted_artifacts wdManifest.deleted_artifacts
+		}
+	} else {
+		println "*!* Generate WaziDeployManifest did not recorded any artifacts or deleted_artifacts."
 	}
+		
 
 	if (verbose && verbose.toBoolean()) {
 		println yamlBuilder.toString()
