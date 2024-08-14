@@ -43,143 +43,116 @@ import java.nio.file.Path
 parseInput(args)
 
 def startTime = new Date()
-props.startTime = startTime.format("yyyyMMdd.hhmmss.mmm")
+props.startTime = startTime.format("yyyyMMdd.HHmmss.SSS")
 println("** Run Code Review started at $props.startTime")
 println("** Properties at startup:")
-props.each{k,v->
+props.each { k,v ->
 	println "   $k -> $v"
 }
 
 // read build report data
-println("** Read build report data from $props.workDir/BuildReport.json")
+println("** Read build report data from '$props.workDir/BuildReport.json'")
 def jsonOutputFile = new File("${props.workDir}/BuildReport.json")
 
-if(!jsonOutputFile.exists()){
-	println("** Build report data at $props.workDir/BuildReport.json not found")
+if (!jsonOutputFile.exists()) {
+	println("!* [Error] Build Report not found at '$props.workDir/BuildReport.json'. Exiting.")
 	System.exit(1)
 }
 
-def buildReport= BuildReport.parse(new FileInputStream(jsonOutputFile))
+def buildReport = BuildReport.parse(new FileInputStream(jsonOutputFile))
 
-// parse build report to find the build outputs to be deployed.
-println("** Find source code processed in the build report.")
-
-// the following example finds all the source code with the provided file extension
+// Parse build report to find the build outputs to be deployed.
+// The following example finds all the source code with the provided file extension
 List<PathMatcher> fileFilter = createIncludePatterns(props.codereview_includedFiles)
-def sources= buildReport.getRecords().findAll{
-	it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS && matches(it.getSource().getAbsolutePath(), fileFilter)
+def sources = buildReport.getRecords().findAll {
+	it.getType() == DefaultRecordFactory.TYPE_COPY_TO_PDS && matches(it.getSource().getAbsolutePath(), fileFilter)
 }
 
-// the following example finds all the source code with the provided file extension
+// The following example finds all the source code with the provided file extension
 List<PathMatcher> fileIncludeFilter = createIncludePatterns(props.codereview_includedIncludeFiles)
-def includes= buildReport.getRecords().findAll{
+def includes= buildReport.getRecords().findAll {
 	it.getType()==DefaultRecordFactory.TYPE_COPY_TO_PDS && matches(it.getSource().getAbsolutePath(), fileIncludeFilter)
 }
 
-println("** Found source code processed in the build report.")
-sources.each {		 println(" ${it.getSource()} ,  ${it.getDestination()}")	}
+if (sources.size == 0) {
+	println("!* [Warning] No source files found in the Build Report. Skipping Code Review.")
+	System.exit(0)
+}
+println("** Found source code processed in the build report:")
+sources.each {
+	println("   ${it.getSource()}, ${it.getDestination()}")
+}
+
 println("** Found include files processed in the build report to extract SYSLIB.")
 
-if (sources.size == 0){
-	println("!! No source files found in the build report to process. Skipping Code Review.")
+// List to collect the Copybook libraries for the syslib
+List syslib = new ArrayList<String>()
+includes.each {
+	println("   ${it.getSource()}, ${it.getDestination()}")
+	syslib.add(it.getDestination().take(it.getDestination().indexOf("(")))
 }
-else
-{
+syslib = syslib.toUnique()
 
-	// List to collect the Copybook libraries for the syslib
-	List syslib = new ArrayList<String>()
-	includes.each {
-		println(" ${it.getSource()} ,  ${it.getDestination()}")
-		syslib.add(it.getDestination().take(it.getDestination().indexOf("(")))
+//If no SYSLIB found and no SYSLIB passed in codereview_syslib and no Property Group file passed, fails and exits
+if (syslib.size() == 0 && !props.codereview_syslib && !props.codereview_PropertyGroupFile) {
+	println("!* [Error] SYSLIB concatenation is empty and no Property Group file was provided. Exiting.")
+	System.exit(2)
+}
+
+println("** Create JCL Stream for IDZ Code Review")
+String jobcard = props.codereview_jobcard.replace("\\n", "\n")
+JobExec codeReview = createCodeReviewExec(jobcard, props.codereview_crRulesFile, props.codereview_ccrRulesFile, props.codereview_PropertyGroupFile, sources, syslib)
+
+if (props.preview.toBoolean()) {
+	println "** Preview only."
+} else {
+	// Execute jclExec
+	println("** Execute IDZ Code Review Application via JCL.")
+	codeReview.execute()
+
+	// Retrieve the maxRC from property
+	int codeReview_maxRC
+	if (props.codereview_maxRC) {
+		codeReview_maxRC = props.codereview_maxRC.toInteger()
+		println("*** Maximum acceptable return code is ${props.codereview_maxRC}")
+	} else {
+		codeReview_maxRC = 3
+		println("*** Maximum acceptable return code is 3 (default)")
 	}
-	syslib = syslib.toUnique()
 
-	//If no SYSLIB found and no SYSLIB passed in codereview_syslib and no Property Group file passed, fails and exits
-	if (syslib.size() == 0 && !props.codereview_syslib && !props.codereview_PropertyGroupFile) {
-		println "*** SYSLIB Concatenation is empty and no Property Group file was provided. Exiting..."
-		System.exit(2)
-	}
-	
-	println("** Create JCL Stream for IDZ Code Review")
-	String jobcard = props.codereview_jobcard.replace("\\n", "\n")
-	JCLExec codeRev=createCodeReviewExec(jobcard, props.codereview_crRulesFile, props.codereview_ccrRulesFile, props.codereview_PropertyGroupFile, sources, syslib)
-
-	if (props.preview.toBoolean()){
-		println "** Preview only."
-	}
-	else {
-
-		// Execute jclExec
-		println "** Execute IDZ Code Review Application via JCL."
-		codeRev.execute()
-		// Get Job information
-		println "   Job '${codeRev.getSubmittedJobId()}' ended with maxRC = ${codeRev.maxRC}"
-
-		// Splitting the String into a StringArray using CC as the seperator
-		def jobRcStringArray = codeRev.maxRC.split("CC")
-
-		// Retrieve the maxRC from property
-		int codeReview_maxRC
-		if (props.codereview_maxRC) {
-			codeReview_maxRC = props.codereview_maxRC.toInteger()
-			println "   Maximum acceptable return code is ${props.codereview_maxRC}"
+	// Splitting the String into a StringArray using CC as the separator
+	def jobRcStringArray = codeReview.maxRC.split("CC")
+	// This evals the number of items in the ARRAY! Don't get confused with the returnCode itself
+	if (jobRcStringArray.length > 1){
+		// Ok, the string can be splitted because it contains the keyword CC : Splitting by CC the second record contains the actual RC
+		rc = jobRcStringArray[1].toInteger()
+		// manage processing the RC, up to your logic. You might want to flag the build as failed.
+		if (rc <= codeReview_maxRC) {
+			println("*** Job '${codeReview.submittedJobId}' completed with RC=$rc")
 		} else {
-			codeReview_maxRC = 3
-			println "   Maximum acceptable return code is 3 (default)"
+			println("*** Job '${codeReview.submittedJobId}' failed with RC=$rc")
 		}
+		
+		println("** Saving spool output to ${props.workDir}")
+		def logFile = new File("${props.workDir}/CodeReviewSpool-${codeReview.getSubmittedJobId()}.txt")
+		codeReview.saveOutput(logFile, props.logEncoding)
 
-		// This evals the number of items in the ARRAY! Dont get confused with the returnCode itself
-		if ( jobRcStringArray.length > 1 ){
-			// Ok, the string can be splitted because it contains the keyword CC : Splitting by CC the second record contains the actual RC
-			rc = jobRcStringArray[1].toInteger()
-			// manage processing the RC, up to your logic. You might want to flag the build as failed.
-			if (rc <= codeReview_maxRC) {
-				println   "** Job '${codeRev.submittedJobId}' completed with RC=$rc "
-			} else {
-				println   "** Job '${codeRev.submittedJobId}' failed with RC=$rc "
-			}
-			
-			println "** Saving spool output to ${props.workDir}"
-			def logFile = new File("${props.workDir}/CodeReviewSpool-${codeRev.getSubmittedJobId()}.txt")
-			codeRev.saveOutput(logFile, props.logEncoding)
-	
-			codeRev.getAllDDNames().each({ ddName ->
-				if (ddName == 'XML') {
-					def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
-					saveJobOutput(codeRev, ddName, ddfile, false)
-				}
-				if (ddName == 'JUNIT') {
-					def ddfile = new File("${props.workDir}/CodeReview${ddName}.xml")
-					saveJobOutput(codeRev, ddName, ddfile, false)
-				}
-				if (ddName == 'CSV') {
-					def ddfile = new File("${props.workDir}/CodeReview${ddName}.csv")
-					saveJobOutput(codeRev, ddName, ddfile, false)
-				}
-			})
-	
-			
-			if (rc > codeReview_maxRC) {
-				System.exit(1)
+		codeReview.getAllDDNames().each() { ddName ->
+			if (ddName.equals("XML") || ddName.equals("JUNIT") || ddName.equals("CSV")) {
+				def ddFile = new File("${props.workDir}/CodeReview-${ddName}.xml")
+				codeReview.saveOutput(ddName, ddFile, props.logEncoding)
 			}
 		}
-		else {
-			// We don't see the CC, assume an failure
-			println   "***  Job ${codeRev.submittedJobId} failed with ${codeRev.maxRC}"
-			System.exit(1)
-		}
-	}
-}
 
-/*
- * Ensures backward compatibility
- */
-def saveJobOutput ( JCLExec codeRev, String ddName, File file, boolean removeASA) {
-	try {
-		codeRev.saveOutput(ddName, file, props.logEncoding, removeASA)
-	} catch ( Exception ex ) {
-		println "*? Warning the output file $file\n*? will have an extra space at the beginning of each line.\n*? Updating DBB to the latest PTF with ASA control characters API for JCLExec is highly recommended."
-		codeRev.saveOutput(ddName, file, props.logEncoding)
+		if (rc > codeReview_maxRC) {
+			System.exit(rc)
+		} else {
+			System.exit(0)
+		}
+	} else {
+		// We don't see the CC, assume an failure
+		println("*** Job ${codeReview.submittedJobId} failed with ${codeReview.maxRC}")
+		System.exit(codeReview.maxRC)
 	}
 }
 
@@ -202,25 +175,31 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 	// add identified syslib
 	syslib.each { jcl+="//         DD DISP=SHR,DSN=${it} \n"}
 	// add syslib libraries from property file
-	if (props.codereview_syslib){
-		props.codereview_syslib.split(',').each { jcl+="//         DD DISP=SHR,DSN=${it} \n" }
+	if (props.codereview_syslib) {
+		props.codereview_syslib.split(',').each {
+			jcl+="//         DD DISP=SHR,DSN=${it} \n"
+		}
 	}
 
-	if ( PropertyGroupFile ) {
+	if (PropertyGroupFile) {
 		def lines = formatJCLPath("//PROPERTY  DD PATH='$PropertyGroupFile'")
 		lines.each{ jcl += it + "\n" }
 	}
 		
-	if ( customRuleFile  ) {
+	if (customRuleFile) {
 		def lines = formatJCLPath("//CUSTRULE  DD PATH='$customRuleFile'")
-		lines.each{ jcl += it + "\n" }
+		lines.each {
+			jcl += it + "\n"
+		}
 	}
 	def lines = formatJCLPath("//RULES  DD PATH='$ruleFile'")
-	lines.each{ jcl += it + "\n" }
+	lines.each {
+		jcl += it + "\n"
+	}
 
 	jcl += "//LIST   DD *\n"
 	def languageMapping = new PropertyMappings("codereview_languageMapping")
-	memberList.each{
+	memberList.each {
 		hfsFile = CopyToPDS.createMemberName(it.getSource().getName())
 		pdsMember = it.getDestination().take(it.getDestination().indexOf("("))
 		if (languageMapping.isMapped("COBOL", it.getSource().getAbsolutePath()))
@@ -229,7 +208,7 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 			jcl += "  L=PL/1 M=$hfsFile D=$pdsMember \n"
 	}
 
-	if ( props.codereview_codepage  ) {
+	if (props.codereview_codepage) {
 		jcl += """\
 //CODEPAGE DD *
   $props.codereview_codepage
@@ -243,11 +222,11 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 //*
 //
 """
-	println "$jcl"
+	println(jcl)
 
 	// Create jclExec
-	def codeRev = new JCLExec().text(jcl)
-	return codeRev
+	def codeReview = new JobExec().text(jcl)
+	return codeReview
 }
 
 /**
@@ -262,7 +241,7 @@ def parseInput(String[] cliArgs){
 	cli.pgFile(longOpt:'propertyGroupFile', args:1, 'Absolute path of the Property Group file. Optional if SYSLIB concatenation is found by the script, otherwise required.')
 	cli.cp(longOpt:'codepage', args:1, '(Optional) Code Page of the source members to be processed. By default, IBM-037 is used by Code Review if none is specified.')
 	cli.l(longOpt:'logEncoding', args:1, '(Optional) Defines the Encoding for output files (JCL spool, reports), default UTF-8')
-	cli.p(longOpt:'preview', '(Optional) Preview JCL for CR, do not submit it')
+	cli.p(longOpt:'preview', '(Optional) Preview JCL for Code Review, do not submit it')
 	cli.rc(longOpt:'maxRC', args:1, '(Optional) Maximum acceptable return code. If not provided, will look for it in the codereview.properties file.')
 	cli.h(longOpt:'help', '(Optional) Prints this message.')
 
@@ -273,40 +252,40 @@ def parseInput(String[] cliArgs){
 	}
 
 	// Identify config file
-	if (opts.props){ // if property file is supplied via cli
+	if (opts.props) { // if property file is supplied via cli
 		buildPropFile = new File(opts.props)
-
 	} else { // looking at the default location
 		def scriptDir = getScriptDir()
 		buildPropFile = new File("$scriptDir/codereview.properties")
 	}
 	// Import properties from config file
-	if (buildPropFile.exists()){
+	if (buildPropFile.exists()) {
 		props.buildPropFile = buildPropFile.getAbsolutePath()
 		props.load(buildPropFile)
-	}else{
-		println "!! codereview.properties not found. Existing."
+	} else {
+		println("!* [Error] Property File 'codereview.properties' not found. Exiting.")
 		System.exit(1)
 	}
 
 	// Set command line arguments
-	if (opts.w) props.workDir = opts.w
+	if (opts.w)
+		props.workDir = opts.w
 	props.logEncoding = (opts.l) ? opts.l : "UTF-8"
 	props.preview = (opts.p) ? 'true' : 'false'
 
-	if ( opts.cr )
+	if (opts.cr)
 		props.codereview_crRulesFile = opts.cr
 
-	if ( opts.ccr )
+	if (opts.ccr)
 		props.codereview_ccrRulesFile = opts.ccr
 
-	if ( opts.pgFile )
+	if (opts.pgFile)
 		props.codereview_PropertyGroupFile = opts.pgFile
 
-	if ( opts.cp )
+	if (opts.cp)
 		props.codereview_codepage = opts.cp
 	
-	if ( opts.rc )
+	if (opts.rc)
 		props.codereview_maxRC = opts.rc
 
 	// Validate required properties
@@ -344,37 +323,33 @@ def createIncludePatterns(String includedFiles) {
 def matches(String file, List<PathMatcher> pathMatchers) {
 	def result = pathMatchers.any { matcher ->
 		Path path = FileSystems.getDefault().getPath(file);
-		if ( matcher.matches(path) )
-		{
+		if (matcher.matches(path)) {
 			return true
 		}
 	}
 	return result
 }
 
-def formatJCLPath(String line)
-{
+def formatJCLPath(String line) {
 	int len = line.length();
 	List<String> result = new ArrayList<String>();
 	int offset= 0;
 	int i = 0;
 	int j = 0;
-	while (i < len)
-	{
-		if ( offset == 71 ) {
+	while (i < len)	{
+		if (offset == 71) {
 			result.add(line.substring(j,i));
-			j=i;
-			offset=16;
+			j = i;
+			offset = 16;
 		} else {
 			offset++;
 		}
 		i++;
 	}
-	if ( j < i )
+	if (j < i)
 		result.add(line.substring(j,i));
-	for ( i=1; i < result.size(); i++ ) {
+	for (i=1; i < result.size(); i++) {
 		result.set(i, "//             " + result.get(i));
 	}
 	return result;
 }
-
