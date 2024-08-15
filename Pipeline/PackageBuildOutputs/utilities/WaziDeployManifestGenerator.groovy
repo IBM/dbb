@@ -15,9 +15,6 @@ import com.ibm.dbb.build.report.records.*
 @Field WaziDeployManifest wdManifest = new WaziDeployManifest()
 
 def initWaziDeployManifestGenerator(Properties props) {
-	// Artifacts
-	wdManifest.artifacts = new ArrayList<Artifact>()
-
 	// Metadata
 	wdManifest.metadata = new Metadata()
 
@@ -39,13 +36,12 @@ def initWaziDeployManifestGenerator(Properties props) {
 }
 
 /**
- *
+ * Append Artifact Record to Wazi Deploy Application Manifest 
  */
 def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, String path, Record record, PropertiesRecord propertiesRecord){
+
 	Artifact artifact = new Artifact()
 	artifact.name = deployableArtifact.file
-	def gitHashInfo = retrieveBuildResultProperty (propertiesRecord, "githash")
-	artifact.hash =  (gitHashInfo) ? gitHashInfo : "UNDEFINED"
 	artifact.description = (record.file) ? record.file : deployableArtifact.file
 	// Add properties
 	artifact.properties = new ArrayList()
@@ -68,9 +64,57 @@ def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, String pa
 	// add type
 	artifact.type =deployableArtifact.deployType
 
+	// add hash
+	def gitHashInfo = retrieveBuildResultProperty (propertiesRecord, "githash")
+	artifact.hash =  (gitHashInfo) ? gitHashInfo : "UNDEFINED"
+
 	// adding artifact into applicationManifest
+	if (!wdManifest.artifacts) wdManifest.artifacts = new ArrayList<Artifact>()
 	wdManifest.artifacts.add(artifact)
 }
+
+/**
+ * Append Artifact Deletion Record to Wazi Deploy Application Manifest 
+ */
+def appendArtifactDeletionToAppManifest(DeployableArtifact deployableArtifact, String path, Record record, PropertiesRecord propertiesRecord){
+
+	Artifact deleted_artifact = new Artifact()
+	deleted_artifact.name = deployableArtifact.file
+	deleted_artifact.description = (record.getAttribute("file")) ? record.getAttribute("file") : deployableArtifact.file
+
+	// Add properties
+	deleted_artifact.properties = new ArrayList()
+	ElementProperty pathProperty = new ElementProperty()
+	pathProperty.key = "path"
+	pathProperty.value = path
+	deleted_artifact.properties.add(pathProperty)
+
+	// Add optional properties
+	if (propertiesRecord) {
+		["githash", "giturl"].each {property ->
+			ElementProperty artifactProperty = new ElementProperty()
+			def propValue =  retrieveBuildResultProperty (propertiesRecord, property)
+			if (propValue) {
+				artifactProperty.key = property
+				artifactProperty.value = propValue
+				deleted_artifact.properties.add(artifactProperty)
+			}
+		}
+	}
+	
+	// add type
+	deleted_artifact.type = deployableArtifact.deployType
+
+	// add hash
+	def gitHashInfo = retrieveBuildResultProperty (propertiesRecord, "githash")
+	deleted_artifact.hash =  (gitHashInfo) ? gitHashInfo : "UNDEFINED"
+
+	// adding artifact into applicationManifest
+	if (!wdManifest.deleted_artifacts) wdManifest.deleted_artifacts = new ArrayList<Artifact>()
+	wdManifest.deleted_artifacts.add(deleted_artifact)
+
+}
+
 
 def setScmInfo(HashMap<String, String> scmInfoMap) {
 	wdManifest.metadata.annotations.scmInfo = new ScmInfo()
@@ -86,12 +130,32 @@ def writeApplicationManifest(File yamlFile, String fileEncoding, String verbose)
 	println("** Generate Wazi Deploy Application Manifest file to $yamlFile")
 	def yamlBuilder = new YamlBuilder()
 
-	yamlBuilder {
-		apiVersion wdManifest.apiVersion
-		kind wdManifest.kind
-		metadata wdManifest.metadata
-		artifacts  wdManifest.artifacts
+	if (wdManifest.artifacts && wdManifest.deleted_artifacts) { 
+		yamlBuilder {
+			apiVersion wdManifest.apiVersion
+			kind wdManifest.kind
+			metadata wdManifest.metadata
+			artifacts  wdManifest.artifacts
+			deleted_artifacts wdManifest.deleted_artifacts
+		}
+	} else if (wdManifest.artifacts) {
+		yamlBuilder {
+			apiVersion wdManifest.apiVersion
+			kind wdManifest.kind
+			metadata wdManifest.metadata
+			artifacts  wdManifest.artifacts
+		}
+	} else if (wdManifest.deleted_artifacts) {
+		yamlBuilder {
+			apiVersion wdManifest.apiVersion
+			kind wdManifest.kind
+			metadata wdManifest.metadata
+			deleted_artifacts wdManifest.deleted_artifacts
+		}
+	} else {
+		println "*!* Generate WaziDeployManifest did not recorded any artifacts or deleted_artifacts."
 	}
+		
 
 	if (verbose && verbose.toBoolean()) {
 		println yamlBuilder.toString()
@@ -130,7 +194,7 @@ class WaziDeployManifest {
 	String kind = "ManifestState"
 	Metadata metadata
 	ArrayList<Artifact> artifacts
-
+	ArrayList<Artifact> deleted_artifacts
 }
 
 class Metadata {
