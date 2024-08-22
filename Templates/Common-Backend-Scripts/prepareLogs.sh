@@ -159,9 +159,9 @@ validateOptions() {
         # Compute the outDir parameter
         outDir=$(getLogDir)
 
-        if [ ! -d "$(outDir)" ]; then
+        if [ ! -d "$outDir" ]; then
             rc=8
-            ERRMSG=$PGM": [ERROR] The '$outDir' logs directory was not found. Skipping creation of tar file. rc="$rc
+            ERRMSG=$PGM": [ERROR] The logs directory '$outDir' was not found. Skipping creation of tar file. rc="$rc
             echo $ERRMSG
         fi
 
