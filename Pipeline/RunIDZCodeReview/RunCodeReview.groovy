@@ -94,14 +94,14 @@ includes.each {
 syslib = syslib.toUnique()
 
 //If no SYSLIB found and no SYSLIB passed in codereview_syslib and no Property Group file passed, fails and exits
-if (syslib.size() == 0 && !props.codereview_syslib && !props.codereview_PropertyGroupFile) {
+if (syslib.size() == 0 && !props.codereview_syslib && !props.codereview_propertyGroupFile) {
 	println("!* [Error] SYSLIB concatenation is empty and no Property Group file was provided. Exiting.")
 	System.exit(2)
 }
 
 println("** Create JCL Stream for IDZ Code Review")
 String jobcard = props.codereview_jobcard.replace("\\n", "\n")
-JobExec codeReview = createCodeReviewExec(jobcard, props.codereview_crRulesFile, props.codereview_ccrRulesFile, props.codereview_PropertyGroupFile, sources, syslib)
+JobExec codeReview = createCodeReviewExec(jobcard, props.codereview_crRulesFile, props.codereview_ccrRulesFile, props.codereview_propertyGroupFile, sources, syslib)
 
 if (props.preview.toBoolean()) {
 	println "** Preview only."
@@ -160,7 +160,7 @@ if (props.preview.toBoolean()) {
  * CodeReviewExec - creates a JCLExec command for CodeReview
  * TODO: Externalize SYSLIB
  */
-def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile, String PropertyGroupFile, List memberList, List syslib) {
+def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile, String propertyGroupFile, List memberList, List syslib) {
 	// Execute JCL from a String value in the script
 	def jcl = jobcard
 	jcl += """\
@@ -182,7 +182,7 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 	}
 
 	if (propertyGroupFile) {
-		def lines = formatJCLPath("//PROPERTY  DD PATH='$PropertyGroupFile'")
+		def lines = formatJCLPath("//PROPERTY  DD PATH='$propertyGroupFile'")
 		lines.each{ jcl += it + "\n" }
 	}
 		
@@ -280,7 +280,7 @@ def parseInput(String[] cliArgs){
 		props.codereview_ccrRulesFile = opts.ccr
 
 	if (opts.pgFile)
-		props.codereview_PropertyGroupFile = opts.pgFile
+		props.codereview_propertyGroupFile = opts.pgFile
 
 	if (opts.cp)
 		props.codereview_codepage = opts.cp
