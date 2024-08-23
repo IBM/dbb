@@ -12,7 +12,7 @@ import java.nio.file.Path
 
 /**
  * This script invokes IDz CodeReview application via JCL based on the provided BuildReport.json
- *
+ * This script requires DBB 2.0.1 as it uses JobExec API, instead of the JCLExec API that is deprecated.
  * usage: RunCodeReview.groovy --workDir <path-to-dbb-buildreport> [options]
  *
  * 	options:
