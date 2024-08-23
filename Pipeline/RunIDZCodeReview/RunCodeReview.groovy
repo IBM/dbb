@@ -55,7 +55,7 @@ println("** Read build report data from '$props.workDir/BuildReport.json'")
 def jsonOutputFile = new File("${props.workDir}/BuildReport.json")
 
 if (!jsonOutputFile.exists()) {
-	println("!* [Error] Build Report not found at '$props.workDir/BuildReport.json'. Exiting.")
+	println("*! [Error] Build Report not found at '$props.workDir/BuildReport.json'. Exiting.")
 	System.exit(1)
 }
 
@@ -75,7 +75,7 @@ def includes= buildReport.getRecords().findAll {
 }
 
 if (sources.size == 0) {
-	println("!* [Warning] No source files found in the Build Report. Skipping Code Review.")
+	println("*! [Warning] No source files found in the Build Report. Skipping Code Review.")
 	System.exit(0)
 }
 println("** Found source code processed in the build report:")
@@ -95,7 +95,7 @@ syslib = syslib.toUnique()
 
 //If no SYSLIB found and no SYSLIB passed in codereview_syslib and no Property Group file passed, fails and exits
 if (syslib.size() == 0 && !props.codereview_syslib && !props.codereview_propertyGroupFile) {
-	println("!* [Error] SYSLIB concatenation is empty and no Property Group file was provided. Exiting.")
+	println("*! [Error] SYSLIB concatenation is empty and no Property Group file was provided. Exiting.")
 	System.exit(2)
 }
 
@@ -263,7 +263,7 @@ def parseInput(String[] cliArgs){
 		props.buildPropFile = buildPropFile.getAbsolutePath()
 		props.load(buildPropFile)
 	} else {
-		println("!* [Error] Property File 'codereview.properties' not found. Exiting.")
+		println("*! [Error] Property File 'codereview.properties' not found. Exiting.")
 		System.exit(1)
 	}
 
