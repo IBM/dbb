@@ -181,7 +181,7 @@ def createCodeReviewExec(String jobcard, String ruleFile, String customRuleFile,
 		}
 	}
 
-	if (PropertyGroupFile) {
+	if (propertyGroupFile) {
 		def lines = formatJCLPath("//PROPERTY  DD PATH='$PropertyGroupFile'")
 		lines.each{ jcl += it + "\n" }
 	}
