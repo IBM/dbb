@@ -703,18 +703,19 @@ def parseInput(String[] cliArgs){
 	if (opts.a) props.application = opts.a
 	if (opts.b) props.branch = opts.b
 
-	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : false
-	
-	props.addExtension = (opts.ae) ? 'true' : 'false'
+	// cli overrides defaults set in 'packageBuildOutputs.properties'
+	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : props.generateWaziDeployAppManifest
+	props.addExtension = (opts.ae) ? 'true' : props.addExtension
+	props.publish = (opts.p) ? 'true' : props.publish
+	props.generateSBOM = (opts.sbom) ? 'true' : props.generateSBOM
+
 	props.verbose = (opts.verb) ? 'true' : 'false'
 
 	// default log encoding if not specified via config passed in via --properties
 	if (!props.fileEncoding) props.fileEncoding = "IBM-1047"
 
 	// Optional Artifact repository info to deploy package
-
 	if (opts.v) props.versionName = opts.v
-	props.publish = (opts.p) ? 'true' : 'false'
 
 	// read of artifact repository file
 	if (opts.aprop) {
@@ -763,7 +764,6 @@ def parseInput(String[] cliArgs){
 	}
 	props.buildReportOrder = buildReports
 
-	props.generateSBOM = (opts.sbom) ? 'true' : 'false'
 	if (opts.sbomAuthor) {
 		props.sbomAuthor = opts.sbomAuthor
 	}    
