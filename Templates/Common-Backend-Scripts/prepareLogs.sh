@@ -1,6 +1,6 @@
 #!/bin/env bash
 #===================================================================================
-# NAME: prepare-logs.sh
+# NAME: prepareLogs.sh
 #
 # DESCRIPTION: Gathers DBB build log files into a single tarfile and echoes the filename
 #
@@ -25,7 +25,8 @@
 # Date       Who Vers Description
 # ---------- --- ---- --------------------------------------------------------------
 # 2023/08/28 LI  1.00 Initial Release
-#===================================================================================Help() {
+# 2024/08/08 DB  1.10 Verify that log dir exists
+#===================================================================================
 Help() {
     echo $PGM" - Prepare Logs ("$PGMVERS")                              "
     echo "                                                              "
@@ -70,7 +71,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -158,6 +159,12 @@ validateOptions() {
         # Compute the outDir parameter
         outDir=$(getLogDir)
 
+        if [ ! -d "$outDir" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] The logs directory '$outDir' was not found. Skipping creation of tar file. rc="$rc
+            echo $ERRMSG
+        fi
+
         if [ ! -d "$(getWorkDirectory)" ]; then
             rc=8
             ERRMSG=$PGM": [ERROR] Workspace Directory ($(getWorkDirectory)) was not found. rc="$rc
@@ -198,19 +205,20 @@ if [ $rc -eq 0 ]; then
     baseDir=$(basename $PWD)
     cd ..
 
-    echo $PGM": [INFO] **  Directory contents:"
+    echo $PGM": [INFO] List directory contents"
     CMD="ls -RlTr $baseDir"
     echo $PGM": [INFO] ${CMD}"
-    ${CMD} #TLD: I commented this out for testing purposed
+    ${CMD}
     rc=$?
 fi
 
 if [ $rc -eq 0 ]; then
 
     # Package files via tar so they can be downloaded in pipeline orchestrator's next steps
+    echo $PGM": [INFO] Create tar file"
     CMD="tar -cf $baseDir.tar $baseDir"
     echo $PGM": [INFO] ${CMD}"
-    ${CMD} #TLD: I commented this out for testing purposed
+    ${CMD}
     rc=$?
 fi
 
