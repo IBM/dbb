@@ -95,6 +95,16 @@ Help() {
     echo "                                                              "
     echo "                Ex: Pipeline Build ID (Build.buildid.tar)     "
     echo "                                                              "
+    echo "       -s                   - flag to enable generation       "
+    echo "                              of an SBOM file                 "
+    echo "                                                              "
+    echo "       -sa "<sbomAuthor>"   - Name and email of               "
+    echo "                              the SBOM author                 "
+    echo "                              enclosed with quotes            "
+    echo "                              (Optional)                      "
+    echo "                                                              "
+    echo "                 Ex: Build Engineer <engineer@example.com>    "
+    echo "                                                              "
     echo "       -h                  - Display this Help.               "
     echo "                                                              "
     exit 0
@@ -130,6 +140,9 @@ PipelineType=""
 Branch=""
 
 addExtension=""
+
+generateSBOM=""
+sbomAuthor=""
 
 publish=""
 artifactVersionName=""            # required for publishing to artifact repo
@@ -173,7 +186,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts ":h:w:a:t:b:v:p:u" opt; do
+    while getopts ":h:w:a:t:b:v:p:usr:" opt; do
         case $opt in
         h)
             Help
@@ -224,6 +237,20 @@ if [ $rc -eq 0 ]; then
             ;;
         u)
             publish="true"
+            ;;
+        s)
+            generateSBOM="true"
+            ;;
+        r)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] SBOM Author is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            sbomAuthor="$argument"
             ;;
         p)
             argument="$OPTARG"
@@ -456,6 +483,12 @@ if [ $rc -eq 0 ]; then
             echo $PGM": [INFO] **    ArtifactRepo Repo Dir:" ${artifactRepositoryDirectory}
         fi
     fi
+    if [ ! -z "${generateSBOM}" ]; then
+        echo $PGM": [INFO] **      Generate SBOM:" ${generateSBOM}
+    fi
+    if [ ! -z "${sbomAuthor}" ]; then
+        echo $PGM": [INFO] **        SBOM Author:" ${sbomAuthor}
+    fi
     echo $PGM": [INFO] **                 DBB_HOME:" ${DBB_HOME}
     echo $PGM": [INFO] **************************************************************"
     echo ""
@@ -465,8 +498,12 @@ fi
 # Invoke the Package Build Outputs script
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the Package Build Outputs script."
+    
+    if [ ! -z "${cycloneDXlibraries}" ]; then
+    	cycloneDXlibraries="-cp ${cycloneDXlibraries}"
+    fi
 
-    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${PackagingScript} --workDir ${logDir}"
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${cycloneDXlibraries} ${PackagingScript} --workDir ${logDir}"
 
     # add tarfile name
     if [ ! -z "${tarFileName}" ]; then
@@ -523,8 +560,17 @@ if [ $rc -eq 0 ]; then
         fi
     fi
 
+    # SBOM options
+    if [ "$generateSBOM" == "true" ]; then
+        CMD="${CMD} --sbom"
+	    if [ ! -z "${sbomAuthor}" ]; then
+	        CMD="${CMD} --sbomAuthor \"${sbomAuthor}\""
+	    fi
+    fi
+
+
     echo $PGM": [INFO] ${CMD}"
-    ${CMD}
+    /bin/env bash -c "${CMD}"
     rc=$?
 
     if [ $rc -eq 0 ]; then
