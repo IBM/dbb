@@ -483,11 +483,9 @@ if [ $rc -eq 0 ]; then
             echo $PGM": [INFO] **    ArtifactRepo Repo Dir:" ${artifactRepositoryDirectory}
         fi
     fi
-    if [ ! -z "${generateSBOM}" ]; then
-        echo $PGM": [INFO] **      Generate SBOM:" ${generateSBOM}
-    fi
+    echo $PGM": [INFO] **            Generate SBOM:" ${generateSBOM}
     if [ ! -z "${sbomAuthor}" ]; then
-        echo $PGM": [INFO] **        SBOM Author:" ${sbomAuthor}
+        echo $PGM": [INFO] **              SBOM Author:" ${sbomAuthor}
     fi
     echo $PGM": [INFO] **                 DBB_HOME:" ${DBB_HOME}
     echo $PGM": [INFO] **************************************************************"
