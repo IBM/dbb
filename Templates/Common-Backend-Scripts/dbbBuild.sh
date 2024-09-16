@@ -400,7 +400,7 @@ validateOptions() {
   fi
 
   if [ ${LoggerConfig} -eq 1 ]; then
-    DBBLogger="--classpath ${AppDir}/application-conf"
+    DBBLogger="-classpath ${AppDir}/application-conf"
   fi
 
 }
