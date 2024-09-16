@@ -95,15 +95,12 @@ Help() {
     echo "                                                              "
     echo "                Ex: Pipeline Build ID (Build.buildid.tar)     "
     echo "                                                              "
-    echo "       -s                   - flag to enable generation       "
-    echo "                              of an SBOM file                 "
-    echo "                                                              "
-    echo "       -sa "<sbomAuthor>"   - Name and email of               "
+    echo "       -s "<sbomAuthor>"    - Name and email of               "
     echo "                              the SBOM author                 "
-    echo "                              enclosed with quotes            "
+    echo "                              enclosed with double quotes     "
     echo "                              (Optional)                      "
     echo "                                                              "
-    echo "                 Ex: Build Engineer <engineer@example.com>    "
+    echo "                 Ex: \"Build Engineer <engineer@example.com>\"  "
     echo "                                                              "
     echo "       -h                  - Display this Help.               "
     echo "                                                              "
@@ -186,7 +183,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts ":h:w:a:t:b:v:p:usr:" opt; do
+    while getopts ":h:w:a:t:b:v:p:us:" opt; do
         case $opt in
         h)
             Help
@@ -239,9 +236,6 @@ if [ $rc -eq 0 ]; then
             publish="true"
             ;;
         s)
-            generateSBOM="true"
-            ;;
-        r)
             argument="$OPTARG"
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
@@ -250,6 +244,7 @@ if [ $rc -eq 0 ]; then
                 echo $ERRMSG
                 break
             fi
+            generateSBOM="true"
             sbomAuthor="$argument"
             ;;
         p)

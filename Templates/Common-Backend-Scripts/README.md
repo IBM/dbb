@@ -373,6 +373,7 @@ CLI parameter | Description
 -b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. See function `computeArtifactRepositoryDirectory()` in the pipelineBackend.config file.
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
 -v `<artifactVersion>` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
+-s `"<sbomAuthor>"` | (Optional) Name and email of the SBOM author enclosed with double quotes. Ex: "Build Engineer \<engineer@example.com\>" 
 
 #### Script conventions
 
@@ -385,6 +386,10 @@ If it is the `main` branch, the pipeline type (-p) is evaluated to
 * **Branch**/**pipelineType <build/release>**/**artifactVersion**
  
 while **artifactVersion** is appended by the `PackageBuildOutputs.groovy` script.
+
+**SBOM Generation**
+
+The generation of an SBOM is controlled by the `generateSBOM` property defined in the [pipelineBackend.config](pipelineBackend.config) file. The default SBOM Author is also specified in the [pipelineBackend.config](pipelineBackend.config) file in the `sbomAuthor` property, but this property can be overridden with the `-s` parameter of this script. When the SBOM Author is provided as a parameter, it automatically enables the SBOM generation, even if set to `false` in the [pipelineBackend.config](pipelineBackend.config) file.
 
 #### Output 
 
