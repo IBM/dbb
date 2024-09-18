@@ -36,18 +36,20 @@
 /* Who   When     What                                               */         
 /* ----- -------- -------------------------------------------------- */         
 /* LD    14/05/19 Initial version                                    */         
+/* LD    11/09/24 Add some new environment variables                 */         
 /*                                                                   */         
 /*********************************************************************/         
                                                                                 
   Address ISPEXEC                                                               
                                                                                 
-  JAVA_HOME    = '/usr/lpp/java/J8.0_64'                                        
+  JAVA_HOME    = '/usr/lpp/java/J11.0_64'                                       
   Rocket_HOME  = '/var/rocket'                                                  
   Bash_HOME    = '/var/rocket'                                                  
   Gitcore_HOME = '/var/rocket'                                                  
   Man_HOME     = '/var/rocket'                                                  
   Perl5_HOME   = '/var/rocket'                                                  
-  DBB_HOME     = '/var/dbb103'                                                  
+  DBB_HOME     = '/var/dbb200'                                                  
+  DBB_CONF     = '/etc/dbbv2'                                                   
   ICONV_HOME   = '/bin/iconv'                                                   
   CAINFO       = 'export GIT_SSL_CAINFO=/var/rocket/cacert.pem'                 
                                                                                 
@@ -58,10 +60,11 @@
   BGZMAN   = Man_HOME                                                           
   BGZPERL5 = Perl5_HOME                                                         
   BGZDBBH  = DBB_HOME                                                           
+  BGZDBBC  = DBB_CONF                                                           
   BGZICONV = ICONV_HOME                                                         
   BGZCAINF = CAINFO                                                             
                                                                                 
   'VPUT (BGZJAVAH,BGZROCKH,BGZBASH,BGZCGIT,BGZMAN,BGZPERL5) SHARED'             
-  'VPUT (BGZDBBH,BGZICONV,BGZCAINF) SHARED'                                     
+  'VPUT (BGZDBBH,BGZDBBC,BGZICONV,BGZCAINF) SHARED'                             
                                                                                 
 Exit                                                                            

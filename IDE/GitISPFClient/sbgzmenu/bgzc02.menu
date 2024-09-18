@@ -10,21 +10,22 @@ BGZC024 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES
 'Codes E (Edit), EA (Edit ASCII), EU (Edit UTF-8), V (View), VA (View ASCII),' +
 ' VU (View UTF-8), B (Browse), D (Delete) R (Rename), ST (Status), AD (Add), ' +
 'CO (Commit), PS (Push), CP (Commit & Push), PL (Pull), CM (Command Prompt) U' +
-'B (DBB user build) and UL (View DBB log) allowed'                              
+'B (DBB user build), DF (Diff), LG (Log Graph) and UL (View DBB log) allowed'   
 BGZC025 'Edit/View failed' .TYPE=WARNING .HELP=* .ALARM=YES                     
 '&BGZLNGER.'                                                                    
 BGZC026 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES             
 'Codes E (Edit), EA (Edit ASCII), V (View), VA (View ASCII), B (Browse), D (D' +
 'elete, R (Rename), ST (Status), AD (Add), CO (Commit), PS (Push), CP (Commit' +
-' & Push), PL (Pull), CM (Command Prompt) UB (DBB user build) and UL (View DB' +
-'B log) allowed'                                                                
+' & Push), PL (Pull), CM (Command Prompt), UB (DBB user build), DF (Diff), ' +  
+'LG (Log Graph) ' +                                                             
+and UL (View DBB log) allowed'                                                  
 BGZC027 .TYPE=NOTIFY .HELP=* .ALARM=NO                                          
 'File'                                                                          
 BGZC028 .TYPE=NOTIFY .HELP=* .ALARM=NO                                          
 'Dir'                                                                           
 BGZC029 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES             
 'Code L (List), ST (Status), AD (Add), CO (Commit), PU (Push), CP (Commit & P' +
-'ush), PL (Pull), and CM (Command Prompt) allowed'                              
+'ush), PL (Pull), DF (Diff), LG (Log Graph) and CM (Command Prompt) allowed'    
 /* COPYRIGHT IBM CORP 2019 */                                                   
 /* ISPDTLC Release: 7.4.  Level: PID                                  */        
 /* z/OS 02.04.00.  Created - Date: 20 Aug 2020, Time: 05:58           */        

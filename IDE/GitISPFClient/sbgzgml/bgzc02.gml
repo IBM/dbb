@@ -33,7 +33,8 @@ Codes E (Edit), EA (Edit ASCII), EU (Edit UTF-8),
       V (View), VA (View ASCII), VU (View UTF-8),                               
       B (Browse), D (Delete) R (Rename),                                        
 ST (Status), AD (Add), CO (Commit), PS (Push), CP (Commit & Push), PL (Pull),   
-CM (Command Prompt) UB (DBB user build) and UL (View DBB log) allowed           
+CM (Command Prompt), UB (DBB user build), DF (Diff), LG (Log Graph)             
+and UL (View DBB log) allowed                                                   
                                                                                 
 <MSG SUFFIX=5  MSGTYPE=Warning ALARM=YES HELP=*                                 
      SMSG="Edit/View failed">                                                   
@@ -44,7 +45,8 @@ CM (Command Prompt) UB (DBB user build) and UL (View DBB log) allowed
 Codes E (Edit), EA (Edit ASCII), V (View), VA (View ASCII), B (Browse),         
 D (Delete, R (Rename),                                                          
 ST (Status), AD (Add), CO (Commit), PS (Push), CP (Commit & Push), PL (Pull),   
-CM (Command Prompt) UB (DBB user build) and UL (View DBB log) allowed           
+CM (Command Prompt), UB (DBB user build), DF (Diff), LG (Log Graph)             
+and UL (View DBB log) allowed                                                   
                                                                                 
 <MSG SUFFIX=7  MSGTYPE=Info ALARM=NO HELP=*>                                    
 File                                                                            
@@ -56,7 +58,7 @@ Dir
      SMSG="Invalid select code     ">                                           
 Code L (List),                                                                  
 ST (Status), AD (Add), CO (Commit), PU (Push), CP (Commit & Push), PL (Pull),   
-and CM (Command Prompt) allowed                                                 
+DF (Diff), LG (Log Graph) and CM (Command Prompt) allowed                       
                                                                                 
 </MSGMBR>                                                                       
 <:--              COPYRIGHT IBM CORP 2019       -->                             

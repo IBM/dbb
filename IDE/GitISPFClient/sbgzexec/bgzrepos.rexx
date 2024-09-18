@@ -25,10 +25,17 @@
 /* Who   When     What                                               */         
 /* ----- -------- -------------------------------------------------- */         
 /* XH    11/01/19 Initial version                                    */         
+/* DTS00 09/08/24 Added DF, LG, FE, and ST now shows merge conflicts */         
 /*                                                                   */         
 /*********************************************************************/         
                                                                                 
    Address ISPEXEC                                                              
+                                                                                
+   /*get home directory */                                                      
+   sh_rc = bpxwunix('pwd',,stdout.,stderr.)                                     
+   home_dir=stdout.1                                                            
+   BGZFLOG = home_dir'/dbbub.log'                                               
+   'VPUT (BGZFLOG) SHARED'                                                      
                                                                                 
    /* Get the password option from preference (Y or N)  */                      
    'TBOPEN BGZPREFS SHARE'                                                      
@@ -128,6 +135,13 @@
          'SETMSG MSG(BGZC015)'                                                  
          Iterate                                                                
        End                                                                      
+                                                                                
+       /* Need to strip any trailing / */                                       
+       revDir = Reverse(BGZNDIR)                                                
+       Do while (Substr(revDir,1,1) = '/')                                      
+         revDir = Substr(revDir,2)                                              
+       End                                                                      
+       BGZNDIR = Reverse(revDir)                                                
                                                                                 
        /* Create the USS directory if not already existing */                   
        Address SYSCALL 'readdir 'BGZNDIR' ls. lsst.'                            
@@ -330,6 +344,39 @@
            Call BGZUSLST                                                        
          End                                                                    
                                                                                 
+         When BGZRPCMD = 'DF' Then                                              
+         Do                                                                     
+           BGZRPCMD = ''                                                        
+           'TBMOD BGZCLONE'                                                     
+                                                                                
+           diffopts = '--ignore-space-at-eol'                                   
+           'VGET BGZENVIR SHARED'                                               
+           shellcmd=BGZENVIR || 'cd' BGZUSDIR';' ||,                            
+                  'git diff --stat'    diffopts 'HEAD;' ||,                     
+                  'echo "\n";git diff' diffopts 'HEAD'                          
+                                                                                
+           Git_rc = BGZCMD('diff' shellcmd)                                     
+         End                                                                    
+                                                                                
+         When BGZRPCMD = 'LG' Then                                              
+         Do                                                                     
+           BGZRPCMD = ''                                                        
+           'TBMOD BGZCLONE'                                                     
+           /* git log --graph */                                                
+           'VGET BGZENVIR SHARED'                                               
+           shellcmd = BGZENVIR || 'cd' BGZUSDIR';' ||,                          
+             'echo "Full Repository Log\n";',                                   
+             'git -c color.ui=always log --graph --abbrev-commit ',             
+             '--date=format:"%a %b %d %H:%I %Y" --decorate ',                   
+             '--decorate-refs-exclude="refs/remotes/origin/HEAD" ',             
+             '--format=format:"' ||,                                            
+             'Commit: %C(yellow)%h%C(reset)%C(magenta)%d%C(reset)%n' ||,        
+             'Author: %C(green)%an%C(reset) %C(blue)- %ad ' ||,                 
+                     '%C(cyan)(%C(blue)%ar%C(cyan))%C(reset)%n' ||,             
+             '        %C(white)%s%n" --all'                                     
+           Git_rc = BGZCMD('log' shellcmd)                                      
+         End                                                                    
+                                                                                
          When BGZRPCMD = 'ST' Then                                              
          Do                                                                     
            BGZRPCMD = ''                                                        
@@ -339,9 +386,17 @@
            'VGET BGZENVIR SHARED'                                               
            shellcmd  = ''                                                       
              shellcmd = shellcmd || BGZENVIR                                    
+           shellcmd=shellcmd || 'cd' BGZUSDIR';'                                
+           /* Check if there's an active merge */                               
+           checkMergeCmd = shellcmd || 'git merge HEAD > /dev/null 2>&1'        
+           Git_rc = BGZCMD('mergecheck' checkMergeCmd)                          
                                                                                 
-           shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,                            
-                  'git status'                                                  
+           shellcmd=shellcmd || 'git status;'                                   
+           If (Git_rc \= 0) Then Do                                             
+             /* If actively merging, list conflicts as well */                  
+             shellcmd = shellcmd || 'echo "Conflicts:\n";' ||,                  
+                                    'git diff --cc'                             
+           End                                                                  
            Git_rc = BGZCMD('status' shellcmd)                                   
                                                                                 
          End                                                                    
@@ -372,6 +427,7 @@
                                                                                 
          When BGZRPCMD = 'CO' | BGZRPCMD = 'CP' Then                            
          Do                                                                     
+           BGZRPCMD = ''                                                        
            /* Call BGZCOMIT rexx for Git commit Command */                      
            Git_rc = BGZCOMIT(BGZREPOS BGZUSDIR)                                 
                                                                                 
@@ -443,6 +499,19 @@
            'VGET (BGZBRANC) PROFILE'                                            
            'VGET (BGZNEWBR) PROFILE'                                            
            'TBMOD BGZCLONE'                                                     
+         End                                                                    
+                                                                                
+         When BGZRPCMD = 'FE' Then                                              
+         Do                                                                     
+           /* Fetch --prune         */                                          
+           Git_rc = 0                                                           
+           'VGET BGZENVIR SHARED'                                               
+           shellcmd = ''                                                        
+           shellcmd = shellcmd || BGZENVIR                                      
+                                                                                
+           shellcmd = shellcmd || 'cd' BGZUSDIR';' ||,                          
+                        'git fetch --prune'                                     
+           Git_rc = BGZCMD('fetch' shellcmd)                                    
          End                                                                    
                                                                                 
          When BGZRPCMD = 'RM' Then                                              
@@ -566,6 +635,12 @@ GetCMD: PROCEDURE
       Cmd = 'CM'                                                                
     When BGZSEL = '10' Then                                                     
       Cmd = 'RM'                                                                
+    When BGZSEL = '11' Then                                                     
+      Cmd = 'FE'                                                                
+    When BGZSEL = '12' Then                                                     
+      Cmd = 'LG'                                                                
+    When BGZSEL = '13' Then                                                     
+      Cmd = 'DF'                                                                
     Otherwise                                                                   
       Cmd = ''                                                                  
   End                                                                           

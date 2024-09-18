@@ -53,11 +53,19 @@ list:
      <DT>CP                                                                     
      <DD>Request a Git commit and push command for the cloned repository        
      <DT>PL                                                                     
-     <DD>Request a Git pull command for the cloned repository                   
+     <DD>Request a Git pull command for the cloned repository.                  
+         <p><hp>git pull branch</hp> does a <hp>git fetch branch</hp>           
+         followed by <hp>git checkout branch</hp>                               
+     <DT>FE                                                                     
+     <DD>Fetch the selected branch from the origin repository                   
      <DT>CM                                                                     
      <DD>Enter any Git command for the selected repository                      
      <DT>UB                                                                     
      <DD>Request a DBB user build of this file                                  
+     <DT>DF                                                                     
+     <DD>Request a Git Diff command. If performed against a file it            
+         will Diff the file. If performed against a directory it               
+         will Diff from the directory selected.                                
 </DL>                                                                           
 <P>                                                                             
 To create a new file, enter <HP>S FILENAME</HP> on the                          

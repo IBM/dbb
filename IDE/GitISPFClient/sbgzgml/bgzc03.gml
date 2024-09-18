@@ -20,7 +20,9 @@ when specify password is selected in preferences.
 <MSG SUFFIX=1 MSGTYPE=WARNING ALARM=YES HELP=*                                  
      SMSG="Invalid select code     ">                                           
 Codes CB (Change working branch), PB (Push branch on github),                   
-DB (Delete local branch) and JU (Jump to working directory) allowed             
+DB (Delete local branch), FE (Fetch origin), JU (Jump to Unix),                 
+MB (Merge Branch), LG (Log Graph), DF (Branch Diff), ST (Git Status)            
+and CM (Command Prompt) allowed'                                                
                                                                                 
 <MSG SUFFIX=2 MSGTYPE=Warning ALARM=YES HELP=*                                  
      SMSG="Remove dir failed">                                                  

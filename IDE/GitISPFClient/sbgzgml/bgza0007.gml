@@ -24,6 +24,21 @@ enter an action shortcut character from the following list:
    <DD>Push the branch to your remote repository, so others can use it          
    <DT>DB                                                                       
    <DD>Delete the local feature branch                                          
+   <DT>JU                                                                       
+   <DD>Open the z/OS UNIX browser to the UNIX directory list                    
+   <DT>FE                                                                       
+   <DD>Fetch the selected branch from the origin repository                     
+   <DT>MB                                                                       
+   <DD>Merge the selected branch into the current branch                        
+   <DT>LG                                                                       
+   <DD>View a graph of the Git Log for the selected branch                      
+   <DT>DF                                                                       
+   <DD>Request a Git Diff between the selected branch and the                   
+       branch currently checked out                                             
+   <DT>ST                                                                       
+   <DD>Request a Git Status of the current repository                           
+   <DT>CM                                                                       
+   <DD>Enter any Git command for the current repository                         
 </DL>                                                                           
 </info>                                                                         
 </area>                                                                         

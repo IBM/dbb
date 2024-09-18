@@ -1,38 +1,33 @@
-/* REXX */  
-/*********************************************************************/
-/*                                                                   */
-/* IBM ISPF Git Interface                                            */
-/*                                                                   */
-/*********************************************************************/
-/*                                                                   */
-/* NAME := BGZGIT                                                    */
-/*                                                                   */
-/* DESCRIPTIVE NAME := Main Line Driver                              */
-/*                                                                   */
-/* PARAMETERS :                                                      */
-/*                                                                   */
-/*   HLQ   - High Level Qualifier of the installation datasets.      */
-/*           If not provided, this will be discovered.               */
-/*                                                                   */
-/*   LANG  - Sub-qualifier for the PAnel/Messages Libraries          */
-/*           Default = "ENU"                                         */
-/*                                                                   */
-/*                                                                   */
-/* Change History                                                    */
-/*                                                                   */
-/* Who   When     What                                               */
-/* ----- -------- -------------------------------------------------- */
-/* XH    24/01/19 Initial version                                    */
-/* TLD   31/05/23 FIX: Added view of git command results to correct  */
-/*                CLIST variable value overflow exception.           */
-/*                                                                   */
-/*********************************************************************/                                                                    
+/* REXX */                                                                      
+/*********************************************************************/         
+/*                                                                   */         
+/* IBM ISPF Git Interface                                            */         
+/*                                                                   */         
+/*********************************************************************/         
+/*                                                                   */         
+/* NAME := BGZGIT                                                    */         
+/*                                                                   */         
+/* DESCRIPTIVE NAME := Main Line Driver                              */         
+/*                                                                   */         
+/* PARAMETERS :                                                      */         
+/*                                                                   */         
+/*   HLQ   - High Level Qualifier of the installation datasets.      */         
+/*           If not provided, this will be discovered.               */         
+/*                                                                   */         
+/*   LANG  - Sub-qualifier for the PAnel/Messages Libraries          */         
+/*           Default = "ENU"                                         */         
+/*                                                                   */         
+/*                                                                   */         
+/* Change History                                                    */         
+/*                                                                   */         
+/* Who   When     What                                               */         
+/* ----- -------- -------------------------------------------------- */         
+/* XH    24/01/19 Initial version                                    */         
+/*                                                                   */         
+/*********************************************************************/         
                                                                                 
-   Arg HLQ LANG 
-                                                                
-   /* Temporary work file allocation attributes */                          
-   WrkAtr = "SPACE(5,5) TRACK RECFM(F,B) BLKSIZE(2560) LRECL(256) DSORG(PS)"                                                                                
-
+   Arg HLQ LANG                                                                 
+                                                                                
    If HLQ = '' Then                                                             
    Do                                                                           
      Parse source srcin                                                         
@@ -71,11 +66,7 @@
    If rc = 0 Then                                                               
    Do                                                                           
      "LIBDEF ISPTLIB DATASET ID("PROFDSN",'"HLQ".SBGZTLIB')"                    
-     "LIBDEF ISPTABL DATASET ID("PROFDSN")"  
-
-     /* Allocate a temporary work file for the git command output */
-     Address TSO "ALLOC F(SBGZWRK) NEW REU UNIT(VIO) "WrkAtr         
-                                   
+     "LIBDEF ISPTABL DATASET ID("PROFDSN")"                                     
    End                                                                          
    Else                                                                         
    Do                                                                           
@@ -95,8 +86,7 @@
    "LIBDEF ISPMLIB"                                                             
    "LIBDEF ISPLLIB"                                                             
    "LIBDEF ISPTLIB"                                                             
-   "LIBDEF ISPTABL" 
-   Address TSO "FREE F(SBGZWRK)" /* Free the Temporary Work File */                                                             
+   "LIBDEF ISPTABL"                                                             
    Address TSO "ALTLIB DEACTIVATE APPLICATION(EXEC)"                            
                                                                                 
 Exit 0                                                                          
