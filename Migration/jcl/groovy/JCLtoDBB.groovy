@@ -7,7 +7,6 @@
  * requires us to generate the scriptMappings.txt that has the same language
  * definition names matching with what in DBB.xml file.   
  */
-@groovy.transform.BaseScript com.ibm.dbb.groovy.ScriptLoader baseScript
 import groovy.util.*
 import groovy.transform.*
 import groovy.time.*
