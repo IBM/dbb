@@ -54,7 +54,14 @@
    If TB_RC = 0 Then
    'TBCLOSE BGZPREFS'
 
+   'CONTROL ERRORS RETURN'
    'TBOPEN BGZCLONE'
+   If rc = 12 Then
+   Do
+     'SETMSG MSG(BGZA005)'
+     Exit
+   End
+   'CONTROL ERRORS RETURN'
    /* If it didn't exist yet, create it. */
    If RC = 8 Then
    Do
@@ -428,6 +435,7 @@
          When BGZRPCMD = 'CO' | BGZRPCMD = 'CP' Then
          Do
            BGZRPCMD = ''
+           'TBMOD BGZCLONE'
            /* Call BGZCOMIT rexx for Git commit Command */
            Git_rc = BGZCOMIT(BGZREPOS BGZUSDIR)
 
@@ -453,8 +461,6 @@
                'TBMOD BGZCLONE'
              End
            End
-           BGZRPCMD = ''
-           'TBMOD BGZCLONE'
 
          End
 
@@ -493,6 +499,8 @@
 
          When BGZRPCMD = 'BR' Then
          Do
+           BGZRPCMD = ''
+           'TBMOD BGZCLONE'
            /* Call BGZBRANC rexx for Git add Command */
            Call BGZBRANC (BGZREPOS BGZUSDIR 'Display')
            BGZRPCMD = ''
@@ -503,6 +511,8 @@
 
          When BGZRPCMD = 'FE' Then
          Do
+           BGZRPCMD = ''
+           'TBMOD BGZCLONE'
            /* Fetch --prune         */
            Git_rc = 0
            'VGET BGZENVIR SHARED'
