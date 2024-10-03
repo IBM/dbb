@@ -33,6 +33,9 @@
 <:ENTITY choice_08_text "Git Branch">                                           
 <:ENTITY choice_09_text "Git Command Prompt">                                   
 <:ENTITY choice_10_text "Remove Working Directory">                             
+<:ENTITY choice_11_text "Git Fetch --prune">                                    
+<:ENTITY choice_12_text "Git Log Graph">                                        
+<:ENTITY choice_13_text "Git Diff">                                             
                                                                                 
 <:-- panel instruction text line - maximum text length = 68 bytes   -->         
  <:ENTITY panel_instruct1                                                       

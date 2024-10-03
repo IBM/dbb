@@ -31,6 +31,8 @@
   <:ENTITY hlq_prompt       "Build destination HLQ">                            
   <:ENTITY dsn_no_quotes    "(Fully qualified, no quotes)">                     
   <:ENTITY viewlog_prompt   "View build output on completion">                  
+  <:ENTITY daemon_prompt    "Use DBB shared daemon">                            
+  <:ENTITY depload_prompt   "Build dependent load modules">                     
  <:-- End of translatable panel text section                          -->       
  )>         <:-- DO NOT DELETE THIS LINE -->                                    
  <:-- common panel body file imbed -->                                          

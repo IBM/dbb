@@ -27,6 +27,8 @@
                                                                                 
   Parse Arg EDVWOPT MODE OBJECT                                                 
                                                                                 
+  x = syscalls('ON')                                                            
+                                                                                
   Parse var OBJECT ObjName'<>' NewExist                                         
                                                                                 
   EditRC   = 0                                                                  
@@ -38,6 +40,7 @@
   Mixed    = ''                                                                 
   Confirm  = ''                                                                 
   Encod    = ''                                                                 
+  doChtag  = 0;                                                                 
   BGZCFMCN = ' '                                                                
   BGZENCD = ''                                                                  
   BGZEMIX  = ''                                                                 
@@ -84,6 +87,10 @@
       If BGZENCD = '2' Then Encod    = 'UTF8'                                   
       If Substr(EDVWOPT,1,1) = 'E' Then                                         
       Do                                                                        
+        Address Syscall "lstat (ObjName) st."                                   
+        If st.0 = 0 Then                                                        
+          doChtag = 1;                                                          
+                                                                                
         'CONTROL ERRORS RETURN'                                                 
         'EDIT FILE(ObjName) 'Panel iMacro  Profile Format Reclen,               
                              Mixed Confirm Encod                                
@@ -94,6 +101,26 @@
           'VPUT (BGZEDITM) SHARED'                                              
         End                                                                     
         'CONTROL ERRORS CANCEL'                                                 
+        If doChtag = 1 Then                                                     
+        Do                                                                      
+          Select                                                                
+            When  BGZENCD = '1' Then                                            
+            Do                                                                  
+              Call bpxwunix 'chtag -tc 819 'ObjName                             
+              Call bpxwunix 'extattr -F BIN 'ObjName                            
+            End                                                                 
+            When  BGZENCD = '2' Then                                            
+            Do                                                                  
+              Call bpxwunix 'chtag -tc UTF-8 'ObjName                           
+              Call bpxwunix 'extattr -F NA 'ObjName                             
+            End                                                                 
+            Otherwise                                                           
+            Do                                                                  
+              Call bpxwunix 'chtag -tc IBM-1047 'ObjName                        
+              Call bpxwunix '/bin/extattr -F NA 'ObjName                        
+            End                                                                 
+          End                                                                   
+        End                                                                     
       End                                                                       
       If Substr(EDVWOPT,1,1) = 'V' Then                                         
       Do                                                                        

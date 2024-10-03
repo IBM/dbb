@@ -27,6 +27,7 @@
 /* ----- -------- -------------------------------------------------- */         
 /* XH    15/01/19 Initial version                                    */         
 /* XH    14/05/19 Propose Delete Rename and S on uss files           */         
+/* DS    19/08/24 Add new line commands. See help panel for details  */         
 /*                                                                   */         
 /*********************************************************************/         
                                                                                 
@@ -50,6 +51,11 @@
   If TB_RC = 0 Then                                                             
    'TBCLOSE BGZPREFS'                                                           
                                                                                 
+  /*get home directory */                                                       
+  sh_rc = bpxwunix('pwd',,stdout.,stderr.)                                      
+  home_dir=stdout.1                                                             
+  BGZFLOG = home_dir'/dbbub.log'                                                
+  'VPUT (BGZFLOG) SHARED'                                                       
                                                                                 
   TabNum = 1                                                                    
   Call Dispuss                                                                  
@@ -340,6 +346,23 @@ DISPUSS:
               'REMPOP'                                                          
           End                                                                   
                                                                                 
+          When BGZUSCMD = 'LG' Then                                             
+          Do                                                                    
+            /* git log --graph */                                               
+            'VGET BGZENVIR SHARED'                                              
+            shellcmd = BGZENVIR || 'cd' BGZUSLOC';' ||,                         
+              'echo "Log for Branch:' BGZBRANC'\n";',                           
+              'git -c color.ui=always log --graph --abbrev-commit ',            
+              '--date=format:"%a %b %d %H:%I %Y" --decorate ',                  
+              '--decorate-refs-exclude="refs/remotes/origin/HEAD" ',            
+              '--format=format:"' ||,                                           
+              'Commit: %C(yellow)%h%C(reset)%C(magenta)%d%C(reset)%n' ||,       
+              'Author: %C(green)%an%C(reset) %C(blue)- %ad ' ||,                
+                      '%C(cyan)(%C(blue)%ar%C(cyan))%C(reset)%n' ||,            
+              '        %C(white)%s%n"'                                          
+            Git_rc = BGZCMD('log' shellcmd)                                     
+          End                                                                   
+                                                                                
           When BGZUSCMD = 'ST' Then                                             
           Do                                                                    
             BGZUSCMD = ''                                                       
@@ -352,9 +375,17 @@ DISPUSS:
             'VGET BGZENVIR SHARED'                                              
             shellcmd  = ''                                                      
               shellcmd = shellcmd || BGZENVIR                                   
+            shellcmd=shellcmd || 'cd' BGZUSLOC';'                               
+            /* Check if there's an active merge */                              
+            checkMergeCmd = shellcmd || 'git merge HEAD > /dev/null 2>&1'       
+            Git_rc = BGZCMD('mergecheck' checkMergeCmd)                         
                                                                                 
-            shellcmd=shellcmd || 'cd' BGZUSLOC';' ||,                           
-                   'git status'                                                 
+            shellcmd=shellcmd || 'git status;'                                  
+            If (Git_rc \= 0) Then Do                                            
+              /* If actively merging, list conflicts as well */                 
+              shellcmd = shellcmd || 'echo "Conflicts:\n";' ||,                 
+                                     'git diff --cc'                            
+            End                                                                 
             Git_rc = BGZCMD('status' shellcmd)                                  
           End                                                                   
                                                                                 
@@ -423,10 +454,44 @@ DISPUSS:
             Git_rc = BGZCMD('pull' shellcmd)                                    
           End                                                                   
                                                                                 
+          When BGZUSCMD = 'FE' Then                                             
+          Do                                                                    
+            /* Push branch to origin */                                         
+            Git_rc = 0                                                          
+            'VGET BGZENVIR SHARED'                                              
+            shellcmd  = ''                                                      
+              shellcmd = shellcmd || BGZENVIR                                   
+                                                                                
+            branchName = BGZBRANC                                               
+                                                                                
+            shellcmd=shellcmd || 'cd' BGZUSSDR';' ||,                           
+                   'git fetch origin ' branchName                               
+            Git_rc = BGZCMD('fetchbr' shellcmd)                                 
+                                                                                
+          End                                                                   
+                                                                                
           When BGZUSCMD = 'CM' Then                                             
           Do                                                                    
             /* Call BGZCOMMP rexx for Git Command */                            
             Call BGZCOMMP (BGZUSREP BGZUSSDR)                                   
+          End                                                                   
+                                                                                
+          When BGZUSCMD = 'DF' Then                                             
+          Do                                                                    
+                                                                                
+            diffopts = '--ignore-space-at-eol '                                 
+                                                                                
+            /* Run a Git Diff */                                                
+            If BGZUSTYP = 'Dir' Then                                            
+              target = BGZUSSDR'/'BGZUSFIL                                      
+            Else                                                                
+              target = '*/'BGZUSFIL                                             
+                                                                                
+            shellcmd=BGZENVIR || 'cd' BGZUSLOC';' ||,                           
+                   'git diff --stat'    diffopts 'HEAD --' target ';',          
+                   'echo "\n";git diff' diffopts 'HEAD --' target               
+                                                                                
+            Git_rc = BGZCMD('diff' shellcmd)                                    
           End                                                                   
                                                                                 
           When BGZUSCMD = 'UB' Then                                             
@@ -654,15 +719,15 @@ Getuss:
                                                                                 
   Git_rc = 0                                                                    
   'VGET BGZENVIR SHARED'                                                        
-  /* Need to craeet a temporary ISPF table to hold info */                      
+  /* Need to create a temporary ISPF table to hold info */                      
                                                                                 
   'TBCREATE BGZTEMP KEYS(BGZROW),                                               
                     NAMES(BGSTDCMD,BGZLINE,BGZFILE) NOWRITE'                    
   shellcmd  = ''                                                                
-    shellcmd = shellcmd || BGZENVIR                                             
+  shellcmd = shellcmd || BGZENVIR                                               
                                                                                 
   shellcmd=shellcmd || 'cd' BGZUSLOC';' ||,                                     
-         'git status --porcelain'                                               
+         'git status --porcelain;'                                              
   Git_rc = BGZCMD('stage' shellcmd)                                             
                                                                                 
   /* Now read the Status list */                                                
@@ -878,6 +943,12 @@ GetUDCMD: PROCEDURE
       Cmd = 'UB'                                                                
     When BGZSEL = '19' Then                                                     
       Cmd = 'UL'                                                                
+    When BGZSEL = '20' Then                                                     
+      Cmd = 'FE'                                                                
+    When BGZSEL = '21' Then                                                     
+      Cmd = 'DF'                                                                
+    When BGZSEL = '22' Then                                                     
+      Cmd = 'LG'                                                                
     Otherwise                                                                   
       Cmd = ''                                                                  
   End                                                                           

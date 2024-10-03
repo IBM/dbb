@@ -12,8 +12,9 @@ BGZC015 'Invalid zOS UNIX dir' .TYPE=WARNING .HELP=* .ALARM=YES
 'The zOS UNIX directory must start with the / character'                        
 BGZC016 'Invalid select code     ' .TYPE=WARNING .HELP=* .ALARM=YES             
 'Codes JU (Jump USS), ST (Status), AD (add), CO (Commit), PS (Push), CP (Comm' +
-'it & Push), PL (Pull), BR (Branch), CM (Git Command) and RM (Remove Working ' +
-'Directory) allowed'                                                            
+'it & Push), PL (Pull), BR (Branch), CM (Command Prompt), FE (Fetch prune), ' + 
+'DF (Git Diff), LG (Log Graph) ' +                                              
+'and RM (Remove Working Directory) allowed'                                     
 BGZC017 .TYPE=WARNING .HELP=* .ALARM=YES                                        
 '_TAG_REDIR_ERR'                                                                
 BGZC018 .TYPE=WARNING .HELP=* .ALARM=YES                                        

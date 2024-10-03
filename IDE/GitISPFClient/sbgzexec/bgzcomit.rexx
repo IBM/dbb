@@ -73,6 +73,13 @@
      'TBSKIP BGZTEMP'                                                           
    End                                                                          
                                                                                 
+   /* Read MERGE_MSG file if applicable */                                      
+   /* Auto-populates the default merge message when continuing a merge */       
+   msgFile = BGZUSDIR'/.git/MERGE_MSG'                                          
+   Address syscall "readfile (msgFile) msgfiledata."                            
+   If (msgfiledata.0 > 0) Then                                                  
+     BGZCOMM = BGZCNVRT('UTF-8' 'IBM-1047' msgfiledata.1)                       
+                                                                                
    /* Code to display modfile on panel  */                                      
    ReturnAdd = 0                                                                
    Do Until (ReturnAdd <> 0)                                                    

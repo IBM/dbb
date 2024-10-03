@@ -22,6 +22,7 @@
 'Enter new branch to create or<hp>"/"</hp>against existing branch               
 for options'>                                                                   
 <:ENTITY branch_prompt "Branch Name">                                           
+<:ENTITY remote_prompt "Show remotes">                                          
 <:-- End of translatable panel text section                          -->        
 )>         <:-- DO NOT DELETE THIS LINE -->                                     
                                                                                 

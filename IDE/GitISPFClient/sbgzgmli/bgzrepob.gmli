@@ -35,7 +35,7 @@
 <source type=reinit>                                                            
 </source>                                                                       
 <source type=proc>                                                              
-VER (&bgzRPCMD,LIST,JU,ST,AD,CO,PS,CP,PL,BR,CM,RM,/,MSG=bgzC016)                
+VER (&bgzRPCMD,LIST,JU,ST,AD,CO,PS,CP,PL,BR,CM,RM,FE,DF,LG,/,MSG=bgzC016)       
 </source>                                                                       
 </panel>                                                                        
 <:--              COPYRIGHT IBM CORP 2019       -->                             

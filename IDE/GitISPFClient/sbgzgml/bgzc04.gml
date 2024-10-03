@@ -20,6 +20,14 @@ Invalid Git repository specified. A Git repository ends with .git
      SMSG="Invalid select code     ">                                           
 Codes E (Edit) and D (Delete) allowed                                           
                                                                                 
+<MSG SUFFIX=2 MSGTYPE=WARNING ALARM=YES HELP=*                                  
+     SMSG="Properties not created  ">                                           
+Codes E (Edit) and D (Delete) allowed.                                          
+Press Enter to go into next screen to add --application parameter               
+                                                                                
+<MSG SUFFIX=3 MSGTYPE=WARNING ALARM=YES HELP=*                                  
+     SMSG="Invalid option          ">                                           
+Enter "/" or blank in the selection field                                       
                                                                                 
 </MSGMBR>                                                                       
 <:--              COPYRIGHT IBM CORP 2019       -->                             

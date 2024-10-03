@@ -23,12 +23,18 @@
 <divider>                                                                       
 <region dir=vert>                                                               
  <selfld name=bgzSEL selwidth=* init=no autotab=no listtype=radio               
-         choicecols=1 choicedepth=8 pmtloc=above                                
-         entwidth=1 pmtwidth=24>&selfld_01_text;                                
+         choicecols=2 choicedepth=8 pmtloc=above                                
+         entwidth=2 pmtwidth=24>&selfld_01_text;                                
      <choice><ps var=bgzSEL value=1>&choice_01_text;</ps>                       
      <choice><ps var=bgzSEL value=2>&choice_02_text;</ps>                       
      <choice><ps var=bgzSEL value=3>&choice_03_text;</ps>                       
      <choice><ps var=bgzSEL value=4>&choice_04_text;</ps>                       
+     <choice><ps var=bgzSEL value=4>&choice_05_text;</ps>                       
+     <choice><ps var=bgzSEL value=4>&choice_06_text;</ps>                       
+     <choice><ps var=bgzSEL value=4>&choice_07_text;</ps>                       
+     <choice><ps var=bgzSEL value=4>&choice_08_text;</ps>                       
+     <choice><ps var=bgzSEL value=4>&choice_09_text;</ps>                       
+     <choice><ps var=bgzSEL value=4>&choice_10_text;</ps>                       
  </selfld>                                                                      
 </region>                                                                       
 <divider>                                                                       
