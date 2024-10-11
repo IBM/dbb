@@ -3,6 +3,8 @@ mainBranchSegment=""
 secondBranchSegment=""
 baselineReferenceFile=""
 segmentName=""
+mergeBaseCommit=""
+baseBranch=""
 
 computeBuildConfiguration() {
 
@@ -104,17 +106,29 @@ computeBuildConfiguration() {
                 # appending the --debug flag to compile with TEST options
                 Type="${Type} --debug"
 
-                # evaluate the feature branch build behaviour
-                if [ "${featureBranchBuildBehaviour}" == "cumulative" ]; then
+                ## evaluate the feature branch build behaviour
+                # compute the base branchName
                     if [ ! -z "${thirdBranchSegment}" ]; then
                         # epic branch workflow
-                        Type="${Type} --baselineRef origin/epic/${secondBranchSegment}"
+                    baseBranch="origin/epic/${secondBranchSegment}"
                     else 
                         # default dev workflow
-                        Type="${Type} --baselineRef origin/main"
-                    fi
-                    
+                    baseBranch="origin/main"
                 fi
+
+                # assess the featureBranchBuildBehaviour setting
+                case $featureBranchBuildBehaviour in
+                cumulative)
+                    Type="${Type} --baselineRef $baseBranch"
+                    ;;
+                merge-base)
+                    getMergeBaseCommit
+                    Type="${Type} --baselineRef $mergeBaseCommit"
+                    ;;
+                *)
+                    ## nothing to do
+                    ;;
+                esac
 
             fi
             ;;
@@ -140,13 +154,27 @@ computeBuildConfiguration() {
                 propOverrides="mainBuildBranch=release/${secondBranchSegment}"
 
                 # evaluate the feature branch build behaviour
-                if [ "${featureBranchBuildBehaviour}" == "cumulative" ]; then
                     if [ ! -z "${thirdBranchSegment}" ]; then
                         # define baseline reference
-                        Type="${Type} --baselineRef origin/release/${secondBranchSegment}"
-                    fi
-                    
+                    baseBranch="origin/release/${secondBranchSegment}"
+                else
+                    echo $PGM": [WARNING] [Utilities/dbbBuildUtils.sh/computeBuildConfiguration] The hotfix branch name (${Branch}) does not match any case of the recommended naming conventions for branches. Performing an impact build."
+                    echo $PGM":            Read about our recommended naming conventions at https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#naming-conventions ."
                 fi
+
+                # assess the featureBranchBuildBehaviour setting
+                case $featureBranchBuildBehaviour in
+                cumulative)
+                    Type="${Type} --baselineRef $baseBranch"
+                    ;;
+                merge-base)
+                    getMergeBaseCommit
+                    Type="${Type} --baselineRef $mergeBaseCommit"
+                    ;;
+                *)
+                    ## nothing to do
+                    ;;
+                esac
 
             fi
             ;;
@@ -200,6 +228,9 @@ computeBuildConfiguration() {
         thirdBranchSegmentTrimmed=""
         branchConvention=""
         segmentName=""
+        mergeBaseCommit=""
+        baseBranch=""
+
     fi
 }
 
@@ -233,6 +264,38 @@ getBaselineReference() {
     ##DEBUG ## echo -e "baselineRef \t: ${baselineRef}"    ## DEBUG
 }
 
+# Private method to retrive the merge-base as the baseline reference
+# Requires the baseBranch to be computed
+
+getMergeBaseCommit() {
+
+    # Execute Git cmd to obtain merge-base
+    if [ -z "${baseBranch}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] To compute the merge base commit, it requires to define the baseBranch variable. rc="$rc
+        echo $ERRMSG
+    fi
+
+    # Execute Git cmd to obtain merge-base
+    CMD="git -C ${AppDir} merge-base ${Branch} ${baseBranch}"
+    mergeBaseCommit=$($CMD)
+    rc=$?
+
+    if [ $rc -ne 0 ]; then
+        ERRMSG=$PGM": [ERROR] Command ($CMD) failed. Git command to obtain the merge base commit failed for feature branch ${Branch}. See above error log. rc="$rc
+        echo $ERRMSG
+    fi
+
+    if [ $rc -eq 0 ]; then
+
+        if [ -z "${mergeBaseCommit}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Computation of Merge base commit failed for feature branch ${Branch}. rc="$rc
+            echo $ERRMSG
+        fi
+    fi
+
+}
 
 #
 # computation of branch segments
