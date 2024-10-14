@@ -211,7 +211,11 @@ gitClone.sh: [INFO] Clone Repository Complete. rc=0
 
 ### 4.2 - dbbBuild.sh
 
-This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. As designed, it makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild. The [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script is used to compute the build configuration depending on the workflow to define zAppBuild CLI parameters. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf`` directory in order to compute the baseline reference and its changes.
+This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. 
+
+Per it's design it is following the recommended working practice. It makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild to set the baseline Git hash. This is used to identify all the merged changes for the upcoming deliverable (that can be a planned release, a emergency fix, or a significant development initiative)
+
+The computation of the build configuration is performed by the [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf` directory in order to compute the baseline reference.
 
 #### Git branches naming convention requirements
 
@@ -329,12 +333,16 @@ dbbBuild.sh: [INFO] DBB Build Complete. rc=0
 
 ### 4.3 - Script utility - dbbBuildUtils.sh
 
-The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a utility script providing the `computeBuildConfiguration()` method to compute the zAppBuild's options and parameters:
+The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a core utility script providing the `computeBuildConfiguration()` method to compute the zAppBuild's options and parameters according to the branch naming conventions. For instance
 
-* `build type`, such as `--impactBuild`
-* the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file.
+* `build type`, such as the `--impactBuild` zAppBuild build option,
+  * the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file for integration branches, 
+* the configured topic branch build behavior (see parameter `featureBranchBuildBehaviour` in pipelineBackend.config), that can either be configured as
+  * `merge-base` (default) for cumulative builds or all the changes added to the feature branch that flow to the integration branch. This setting automatically computes the merge-base commit, which defines the commit when the feature branch was forked.
+  * `incremental` for standard zAppBuild `--impactBuild` behavior.
+  * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`. 
 * flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules).
-* the `mainBuildBranch` to configure feature branches to clone the correct dependency metadata collections and to identify the correct offset of changes.
+* the `mainBuildBranch` to configure feature branch pipelines to clone the corresponding DBB dependency metadata collections.
 
 #### Baseline references requirements
 
