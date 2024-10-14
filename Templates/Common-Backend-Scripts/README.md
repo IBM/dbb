@@ -338,7 +338,7 @@ The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a core utility script 
 * `build type`, such as the `--impactBuild` zAppBuild build option,
   * the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file for integration branches, 
 * the configured topic branch build behavior (see parameter `featureBranchBuildBehaviour` in pipelineBackend.config), that can either be configured as
-  * `merge-base` (default) for cumulative builds or all the changes added to the feature branch that flow to the integration branch. This setting automatically computes the merge-base commit, which defines the commit when the feature branch was forked.
+  * `merge-base` (default) for cumulative builds that include all the changes added to the feature branch that flow to the integration branch. This setting automatically computes the merge-base commit, which defines the commit when the feature branch was forked.
   * `incremental` for standard zAppBuild `--impactBuild` behavior.
   * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`. 
 * flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules).
