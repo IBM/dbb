@@ -213,7 +213,7 @@ gitClone.sh: [INFO] Clone Repository Complete. rc=0
 
 This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. 
 
-Per it's design it is following the recommended working practice. It makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild to set the baseline Git hash. This is used to identify all the merged changes for the upcoming deliverable (that can be a planned release, a emergency fix, or a significant development initiative)
+By design, the script implements the recommended working practice. It makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild to set the baseline Git hash. This is used to identify all the committed changes for the upcoming deliverable (that can be a planned release, a emergency fix, or a significant development initiative)
 
 The computation of the build configuration is performed by the [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf` directory in order to compute the baseline reference.
 
