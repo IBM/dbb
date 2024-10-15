@@ -41,16 +41,20 @@
  <region dir=horiz align=no>                                                    
   <dtacol pmtwidth=24 vardcl=no>                                                
    <dtafld datavar=bgzblhlq                                                     
-         entwidth=46 caps=off required=yes usage=in>&hlq_prompt;                
+         entwidth=46 caps=on required=yes usage=in>&hlq_prompt;                 
            <scrfld displen=256 indvar=bgzhind>                                  
   </dtacol>                                                                     
  </region>                                                                      
  <divider type=text format=start>&dsn_no_quotes;</divider>                      
  <divider></divider>                                                            
- <dtacol pmtwidth=31 vardcl=no>                                                 
-  <dtafld datavar=bgzbllog                                                      
-         entwidth=1 caps=off required=no usage=in>&viewlog_prompt;              
- </dtacol>                                                                      
+ <region dir=horiz indent=3 align=no>                                           
+   <selfld type=multi pmtwidth=30 init=no pmtloc=above                          
+           choicecols=2 choicedepth=2                                           
+           selwidth=*>&ins_option;                                              
+     <choice name=bgzbllog>&viewlog_prompt;                                     
+     <choice name=bgzdodmn>&daemon_prompt;                                      
+   </selfld>                                                                    
+ </region>                                                                      
  <grphdr>&group_header_1;                                                       
  <info width=*>                                                                 
   <p compact indent=2>&panel_instruct_1;                                        
@@ -60,7 +64,10 @@
 </area>                                                                         
 <cmdarea name=bgzcmd caps=on>                                                   
 <source type=proc>                                                              
-   IF (&BGZBLHLQ NE &Z) VER(&BGZBLHLQ,DSNAME)                                   
+VER(&BGZBLLOG,LIST,/,&Z,MSG=BGZC043)                                            
+VER(&BGZDODMN,LIST,/,&Z,MSG=BGZC043)                                            
+VER(&BGZBLDDP,LIST,/,&Z,MSG=BGZC043)                                            
+IF (&BGZBLHLQ NE &Z) VER(&BGZBLHLQ,DSNAME)                                      
 </source>                                                                       
 </panel>                                                                        
 <:--              COPYRIGHT IBM CORP 2019       -->                             

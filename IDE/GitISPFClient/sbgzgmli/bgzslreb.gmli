@@ -29,6 +29,9 @@
      <choice><ps var=bgzSEL value=8>&choice_08_text;</ps>                       
      <choice><ps var=bgzSEL value=9>&choice_09_text;</ps>                       
      <choice><ps var=bgzSEL value=10>&choice_10_text;</ps>                      
+     <choice><ps var=bgzSEL value=10>&choice_11_text;</ps>                      
+     <choice><ps var=bgzSEL value=10>&choice_12_text;</ps>                      
+     <choice><ps var=bgzSEL value=10>&choice_13_text;</ps>                      
  </selfld>                                                                      
 </region>                                                                       
 <divider>                                                                       

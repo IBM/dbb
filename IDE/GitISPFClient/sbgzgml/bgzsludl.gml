@@ -48,6 +48,9 @@
 <:ENTITY choice_17_text "Git Command Prompt ">                                  
 <:ENTITY choice_18_text "DBB User Build ">                                      
 <:ENTITY choice_19_text "View last DBB build log ">                             
+<:ENTITY choice_20_text "Git Fetch">                                            
+<:ENTITY choice_21_text "Git Diff">                                             
+<:ENTITY choice_22_text "Git Log Graph">                                        
                                                                                 
 <:ENTITY panel_width "76">                                                      
 <:-- End of translatable panel text section                          -->        

@@ -24,6 +24,8 @@
 </info>                                                                         
 <divider>                                                                       
 </divider>                                                                      
+<dtafld datavar=bgzshrmt usage=in entwidth=1 vardcl=no                          
+        pmtwidth=12>&remote_prompt                                              
 <area>                                                                          
   <grphdr div=none                                                              
   indent=5>&branch_prompt                                                       
@@ -44,7 +46,7 @@
 <source type=reinit>                                                            
 </source>                                                                       
 <source type=proc>                                                              
-VER (&bgzBRCMD,LIST,CB,PB,DB,JU,/,MSG=bgzC031)                                  
+VER (&bgzBRCMD,LIST,CB,PB,DB,JU,FE,MB,ST,CM,DF,LG,/,MSG=bgzC031)                
 </source>                                                                       
 </panel>                                                                        
 <:--              COPYRIGHT IBM CORP 2019       -->                             

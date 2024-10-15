@@ -103,7 +103,11 @@ bgzsludl.penu' +
        '#clonePath/IDE/GitISPFClient/sbgzpenu/+
 bgzcfclo.penu' +
        BIN LC
- OPUTX 'DOHERTL.D210803.SBGZTLIB(BGZKEYS)' +
+ OPUTX '#hlqual.SBGZPENU(BGZDIFF)' +
+       '#clonePath/IDE/GitISPFClient/sbgzpenu/+
+bgzdiff.penu' +
+       BIN LC
+ OPUTX '#hlqual.SBGZTLIB(BGZKEYS)' +
        '#clonePath/IDE/GitISPFClient/sbgztlib/+
 bgzkeys.gmlkey' +
        BIN LC

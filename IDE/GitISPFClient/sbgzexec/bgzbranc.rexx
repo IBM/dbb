@@ -24,19 +24,16 @@
 /* Who   When     What                                               */         
 /* ----- -------- -------------------------------------------------- */         
 /* XH    14/02/19 Initial version                                    */         
-/* TLD   31/05/23 FIX: Added view of git command results to correct  */
-/*                CLIST variable value overflow exception.           */
-/*                                                                   */
-/*********************************************************************/
-  Parse Source ENVIR CALLTYPE PGM SPECIFICS;                           
-  PGM = SUBSTR(PGM,1,8)                                                
-                                                                       
-  DEBUG = "N"           /* Enable Debug Messages (Y|N)               */
-  ShowRemotes = "Y"     /* Toggle flag to control whether remote     */
-                        /* branchs are to appear in the git branch   */
-                        /* dialogue and processed. This was added to */
-                        /* preserve a code block that was previously */
-                        /* commented out. Default=Y, N to suppress.  */
+/* TLD   31/05/23 FIX: Added view of git command results to correct  */         
+/*                CLIST variable value overflow exception.           */         
+/* LMD   11/09/24 Add multiple commands. Press help on the panel for */         
+/*                details. For example DF - Diff, ME - Merge, etc    */         
+/*                                                                   */         
+/*********************************************************************/         
+  Parse Source ENVIR CALLTYPE PGM SPECIFICS;                                    
+  PGM = SUBSTR(PGM,1,8)                                                         
+                                                                                
+  DEBUG = "N"           /* Enable Debug Messages (Y|N)               */         
                                                                                 
    Parse Arg BGZREPOS BGZUSDIR NoDisp                                           
                                                                                 
@@ -44,6 +41,12 @@
    Rebuild = 1                                                                  
                                                                                 
    Address ISPEXEC                                                              
+   'VGET BGZSHRMT PROFILE'                                                      
+   If rc = 8 Then                                                               
+   Do                                                                           
+     BGZSHRMT = '/'                                                             
+     'VPUT BGZSHRMT PROFILE'                                                    
+   End                                                                          
                                                                                 
    Do Until (ReturnBranch = 0)                                                  
      If Rebuild = 1 Then                                                        
@@ -53,6 +56,9 @@
        Git_rc = 0                                                               
        'VGET BGZENVIR SHARED'                                                   
        /* Need to create a temporary ISPF table to hold info */                 
+       'CONTROL  ERRORS RETURN'                                                 
+       'TBEND    BGZTEMP'                                                       
+       'CONTROL  ERRORS CANCEL'                                                 
        'TBCREATE BGZTEMP KEYS(BGZLINE),                                         
                          NAMES(BGZBRCMD) NOWRITE'                               
                                                                                 
@@ -60,28 +66,31 @@
        shellcmd = shellcmd || BGZENVIR                                          
                                                                                 
        shellcmd = shellcmd || 'cd' BGZUSDIR';' ||,                              
-              'git branch -a'                                                   
+              'git branch -a --no-color'                                        
        Git_rc = BGZCMD('branch' shellcmd)                                       
-       
-       If (ShowRemotes = "N") Then
-         Do                                                                         
-           /* Delete rows that start with remotes/origin/  */                
-           'TBTOP BGZTEMP'                                                          
-           'TBSKIP BGZTEMP'                                                         
-           Do While RC = 0                                                          
-             branch = Substr(BGZLINE,1,17)                                          
-             If Verify(branch,'  remotes/origin/') = 0 Then                         
-               Do                                                                     
-                 'TBDELETE BGZTEMP'                                                   
-               End                                                                    
-             'TBSKIP BGZTEMP'                                                       
-           End                                                                      
-         End /* Of If (ShowRemotes = "N") Then ... */ 
-                                          
+       'VGET BGZSHRMT PROFILE'                                                  
+                                                                                
+       If (BGZSHRMT = " ") Then                                                 
+       Do                                                                       
+         /* Delete rows that start with remotes/origin/  */                     
+         'TBTOP BGZTEMP'                                                        
+         'TBSKIP BGZTEMP'                                                       
+         Do While RC = 0                                                        
+           branch = Substr(BGZLINE,1,17)                                        
+           If Verify(branch,'  remotes/origin/') = 0 Then                       
+           Do                                                                   
+             'TBDELETE BGZTEMP'                                                 
+           End                                                                  
+           'TBSKIP BGZTEMP'                                                     
+         End                                                                    
+       End /* Of If (ShowRemotes = "N") Then ... */                             
+                                                                                
        /* Just using this module to get the current branch */                   
        If NoDisp = 'noDisplay' Then                                             
          Return Git_rc                                                          
      End                                                                        
+                                                                                
+     store_BGZSHRMT = BGZSHRMT                                                  
                                                                                 
      /* Code to display branch on panel  */                                     
      'TBTOP BGZTEMP'                                                            
@@ -89,6 +98,7 @@
      'TBDISPL BGZTEMP PANEL(BGZBRANC)'                                          
      TB_RC = RC                                                                 
      'VGET (ZVERB)'                                                             
+                                                                                
      If TB_RC = 8 | Zverb = 'CANCEL' Then                                       
      Do                                                                         
        ReturnBranch = 0                                                         
@@ -130,6 +140,12 @@
          Iterate                                                                
        End                                                                      
      End                                                                        
+     If BGZSHRMT /= store_BGZSHRMT Then                                         
+     Do                                                                         
+       store_BGZSHRMT = BGZSHRMT                                                
+       'VPUT BGZSHRMT PROFILE'                                                  
+       Rebuild = 1                                                              
+     End                                                                        
                                                                                 
      Do While ZTDSELS > 0                                                       
        'TBMOD BGZTEMP'                                                          
@@ -167,19 +183,19 @@
            shellcmd  = ''                                                       
            shellcmd = shellcmd || BGZENVIR                                      
                                                                                 
-           /* Check to see if working with a Remote Branch. */
-           /* If true, isolate the branch name. Otherwise   */
-           /* assume local branch.                          */
-           If (DEBUG = "Y") Then
-             Say PGM": BGZBRAN = "BGZBRAN
-                 
-           Parse var BGZBRAN 'remotes/origin/'Branch          
-                                                   
-           If (Strip(Branch) = "") Then                       
-             Branch = BGZBRAN                                 
-
-           If (DEBUG = "Y") Then
-             Say PGM": Branch = "Branch
+           /* Check to see if working with a Remote Branch. */                  
+           /* If true, isolate the branch name. Otherwise   */                  
+           /* assume local branch.                          */                  
+           If (DEBUG = "Y") Then                                                
+             Say PGM": BGZBRAN = "BGZBRAN                                       
+                                                                                
+           Parse var BGZBRAN 'remotes/origin/'Branch                            
+                                                                                
+           If (Strip(Branch) = "") Then                                         
+             Branch = BGZBRAN                                                   
+                                                                                
+           If (DEBUG = "Y") Then                                                
+             Say PGM": Branch = "Branch                                         
                                                                                 
            shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,                            
                   'git checkout ' ||'"'Branch'"'                                
@@ -197,6 +213,84 @@
                                                                                 
          End                                                                    
                                                                                 
+         When BGZBRCMD = 'LG' Then                                              
+         Do                                                                     
+           /* git log --graph */                                                
+           'VGET BGZENVIR SHARED'                                               
+           shellcmd = BGZENVIR || 'cd' BGZUSDIR';' ||,                          
+             'echo "Log for Branch:' BGZBRAN '\n";',                            
+             'git -c color.ui=always log --graph --abbrev-commit ',             
+             '--date=format:"%a %b %d %H:%I %Y" --decorate ',                   
+             '--decorate-refs-exclude="refs/remotes/origin/HEAD" ',             
+             '--format=format:"' ||,                                            
+             'Commit: %C(yellow)%h%C(reset)%C(magenta)%d%C(reset)%n'||,         
+             'Author: %C(green)%an%C(reset) %C(blue)%ad '||,                    
+                     '%C(cyan)(%C(blue)%ar%C(cyan))%C(reset)%n' ||,             
+             '        %C(white)%s%n"' BGZBRAN                                   
+           Git_rc = BGZCMD('log' shellcmd)                                      
+         End                                                                    
+                                                                                
+         When BGZBRCMD = 'DF' Then                                              
+         Do                                                                     
+                                                                                
+           diffopts = '--ignore-space-at-eol'                                   
+                                                                                
+           /* Run a Git Diff between branches */                                
+           shellcmd=BGZENVIR || 'cd' BGZUSDIR';' ||,                            
+                  'git diff --stat'    diffopts BGZBRAN '--;',                  
+                  'echo "\n";git diff' diffopts BGZBRAN '--;'                   
+                                                                                
+           Git_rc = BGZCMD('diff' shellcmd)                                     
+         End                                                                    
+                                                                                
+         When BGZBRCMD = 'MB' Then                                              
+         Do                                                                     
+           /* Push branch to origin */                                          
+           Git_rc = 0                                                           
+           'VGET BGZENVIR SHARED'                                               
+           shellcmd  = ''                                                       
+             shellcmd = shellcmd || BGZENVIR                                    
+                                                                                
+           shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,                            
+                  'git merge ' || '"'BGZBRAN'"'                                 
+           Git_rc = BGZCMD('merge' shellcmd)                                    
+           If Git_rc= 0 Then                                                    
+           Do                                                                   
+             ReturnBranch = -1                                                  
+             Rebuild = 1                                                        
+           End                                                                  
+                                                                                
+         End                                                                    
+                                                                                
+         When BGZBRCMD = 'ST' Then                                              
+         Do                                                                     
+           /* Git Status command  */                                            
+           Git_rc = 0                                                           
+           'VGET BGZENVIR SHARED'                                               
+           shellcmd  = ''                                                       
+             shellcmd = shellcmd || BGZENVIR                                    
+           shellcmd=shellcmd || 'cd' BGZUSDIR';'                                
+           /* Check if there's an active merge */                               
+           checkMergeCmd = shellcmd || 'git merge HEAD > /dev/null 2>&1'        
+           Git_rc = BGZCMD('mergecheck' checkMergeCmd)                          
+                                                                                
+           shellcmd=shellcmd || 'git status;'                                   
+           If (Git_rc \= 0) Then                                                
+           Do                                                                   
+             /* If actively merging, list conflicts as well */                  
+             shellcmd = shellcmd || 'echo "Conflicts:\n";' ||,                  
+                                    'git diff --cc'                             
+           End                                                                  
+                                                                                
+           Git_rc = BGZCMD('status' shellcmd)                                   
+           If Git_rc= 0 Then                                                    
+           Do                                                                   
+             ReturnBranch = -1                                                  
+             Rebuild = 1                                                        
+           End                                                                  
+                                                                                
+         End                                                                    
+                                                                                
          When BGZBRCMD = 'PB' Then                                              
          Do                                                                     
            /* Push branch to origin */                                          
@@ -208,6 +302,36 @@
            shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,                            
                   'git push origin ' BGZBRAN                                    
            Git_rc = BGZCMD('pushbra' shellcmd)                                  
+           If Git_rc= 0 Then                                                    
+           Do                                                                   
+             ReturnBranch = -1                                                  
+             Rebuild = 1                                                        
+           End                                                                  
+                                                                                
+         End                                                                    
+                                                                                
+         When BGZBRCMD = 'CM' Then                                              
+         Do                                                                     
+           'VGET BGZENVIR SHARED'                                               
+           /* Call BGZCOMMP rexx for Git Command */                             
+           Call BGZCOMMP (BGZREPOS BGZUSDIR)                                    
+         End                                                                    
+                                                                                
+         When BGZBRCMD = 'FE' Then                                              
+         Do                                                                     
+           /* Push branch to origin */                                          
+           Git_rc = 0                                                           
+           'VGET BGZENVIR SHARED'                                               
+           shellcmd  = ''                                                       
+             shellcmd = shellcmd || BGZENVIR                                    
+                                                                                
+           branchName = BGZBRAN                                                 
+           if pos('remotes/origin/',BGZBRAN) Then                               
+             branchName = Substr(BGZBRAN,16)                                    
+                                                                                
+           shellcmd=shellcmd || 'cd' BGZUSDIR';' ||,                            
+                  'git fetch origin ' branchName                                
+           Git_rc = BGZCMD('fetchbr' shellcmd)                                  
            If Git_rc= 0 Then                                                    
            Do                                                                   
              ReturnBranch = -1                                                  
@@ -261,8 +385,8 @@
                                                                                 
      End                                                                        
                                                                                 
-       If Rebuild = 1 Then                                                      
-         'TBCLOSE BGZTEMP'                                                      
+     If Rebuild = 1 Then                                                        
+       'TBCLOSE BGZTEMP'                                                        
                                                                                 
    End   /* End Do until ReturnBranch <> 0 */                                   
                                                                                 
@@ -285,6 +409,18 @@ GetBrCMD: PROCEDURE
       Cmd = 'DB'                                                                
     When BGZSEL = '4' Then                                                      
       Cmd = 'JU'                                                                
+    When BGZSel = '5' Then                                                      
+      Cmd = 'FE'                                                                
+    When BGZSel = '6' Then                                                      
+      Cmd = 'MB'                                                                
+    When BGZSel = '7' Then                                                      
+      Cmd = 'LG'                                                                
+    When BGZSel = '8' Then                                                      
+      Cmd = 'DF'                                                                
+    When BGZSel = '9' Then                                                      
+      Cmd = 'ST'                                                                
+    When BGZSel = '10' Then                                                     
+      Cmd = 'CM'                                                                
     Otherwise                                                                   
       Cmd = ''                                                                  
   End                                                                           

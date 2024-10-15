@@ -39,14 +39,14 @@
 <source type=proc>                                                              
 VGET (bgzEUTF) SHARED                                                           
 IF (&bgzUSTYP = 'Dir ')                                                         
-  VER (&bgzUSCMD,LIST,L,ST,AD,CO,PS,CP,PL,CM,/,MSG=bgzC029)                     
+  VER (&bgzUSCMD,LIST,L,ST,AD,CO,PS,CP,PL,CM,FE,DF,LG,/,MSG=bgzC029)            
 IF (&bgzUSTYP NE 'Dir ')                                                        
  IF (&bgzEUTF = 'TRUE')                                                         
-  VER(&bgzUSCMD,LIST,E,EA,EU,V,VA,VU,B,D,R,                                     
+  VER(&bgzUSCMD,LIST,E,EA,EU,V,VA,VU,B,D,R,FE,DF,LG,                            
                      ST,AD,CO,PS,CP,PL,CM,UB,UL,/,MSG=bgzC024)                  
 IF (&bgzUSTYP NE 'Dir ')                                                        
  IF (&bgzEUTF = 'FALSE')                                                        
-  VER (&bgzUSCMD,LIST,E,EA,V,VA,B,D,R,                                          
+  VER (&bgzUSCMD,LIST,E,EA,V,VA,B,D,R,FE,DF,LG,                                 
                       ST,AD,CO,PS,CP,PL,CM,UB,UL,/,MSG=bgzC026)                 
 </source>                                                                       
 </panel>                                                                        
