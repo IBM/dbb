@@ -384,21 +384,10 @@ if (rc == 0) {
 					"tar -xUXf ${props.baselinePackageFilePath}"
 				]
 				
-				println("----- $tempLoadDir")
-		
 				def processRC = runProcess(processCmd, tempLoadDir)
 				rc = Math.max(rc, processRC)
 				if (rc == 0) {
 					println("** Baseline Package '${props.baselinePackageFilePath}' successfully extracted.")
-
-					processCmd = [
-						"sh",
-						"-c",
-						"ls -al"
-					]
-					processRC = runProcess(processCmd, tempLoadDir)
-
-
 
 					// Read the existing Wazi Deploy Manifest if any
 					if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
