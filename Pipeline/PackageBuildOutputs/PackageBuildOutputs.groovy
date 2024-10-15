@@ -440,106 +440,102 @@ if (rc == 0) {
 			} else {
 				println("*! [ERROR] The Baseline Package '${props.baselinePackageFilePath}' was not found.")
 				rc = 1
-				if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-					wdManifestGeneratorUtilities.initWaziDeployManifestGenerator(props)
-					wdManifestGeneratorUtilities.setScmInfo(scmInfo)
-				}
 			}				
 		}
 		if (rc == 0) {	
 	
-		println("*** Number of build outputs to package: ${buildOutputsMap.size()}")
-	
-		println("** Copy build outputs to temporary package directory '$tempLoadDir'")
-	
-		buildOutputsMap.each { deployableArtifact, info ->
-			String container = info.get("container")
-			String owningApplication = info.get("owningApplication")
-			Record record = info.get("record")
-			PropertiesRecord propertiesRecord = info.get("propertiesRecord")
-			DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
-			
-				def relativeFilePath = ""
-			if (deployableArtifact.artifactType.equals("zFSFile")) {
-					relativeFilePath = "$binSubfolder"
-			} else {
-					if (deployableArtifact.deployType.equals("OBJ")) {
-						relativeFilePath = "$includeSubfolder/bin"
-					} else {
-						relativeFilePath = "$binSubfolder/${deployableArtifact.deployType}"
-					}
-			}
-	
-			// define file name in USS
-			def fileName = deployableArtifact.file
-	
-			// add deployType to file name
-			if (props.addExtension && props.addExtension.toBoolean()) {
-				fileName = fileName + '.' + deployableArtifact.deployType
-			}
-			def file = new File("$tempLoadDir/$relativeFilePath/$fileName")
-	
-			def (directory, relativeFileName) = extractDirectoryAndFile(file.toPath().toString())
-			new File(directory).mkdirs()
-	
-	
-			if (deployableArtifact.artifactType.equals("zFSFile")) {
-				def originalFile = new File(container + "/" + deployableArtifact.file)
-				println "   Copy '${originalFile.toPath()}' to '${file.toPath()}'"
-				try {
-					Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
-				} catch (IOException exception) {
-					println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
-					rc = Math.max(rc, 1) 
+			println("*** Number of build outputs to package: ${buildOutputsMap.size()}")
+		
+			println("** Copy build outputs to temporary package directory '$tempLoadDir'")
+		
+			buildOutputsMap.each { deployableArtifact, info ->
+				String container = info.get("container")
+				String owningApplication = info.get("owningApplication")
+				Record record = info.get("record")
+				PropertiesRecord propertiesRecord = info.get("propertiesRecord")
+				DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
+				
+					def relativeFilePath = ""
+				if (deployableArtifact.artifactType.equals("zFSFile")) {
+						relativeFilePath = "$binSubfolder"
+				} else {
+						if (deployableArtifact.deployType.equals("OBJ")) {
+							relativeFilePath = "$includeSubfolder/bin"
+						} else {
+							relativeFilePath = "$binSubfolder/${deployableArtifact.deployType}"
+						}
 				}
-			} else if  (deployableArtifact.artifactType.equals("DatasetMember")) {
-				// set copyMode based on last level qualifier
-				currentCopyMode = copyModeMap[container.replaceAll(/.*\.([^.]*)/, "\$1")]
-				if (currentCopyMode != null) {
-					if (ZFile.exists("//'$container(${deployableArtifact.file})'")) {
-						// Copy outputs to HFS
-						CopyToHFS copy = new CopyToHFS()
-						copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
-						copy.setDataset(container)
-	
-							println "   Copy '$container(${deployableArtifact.file})' to '$tempLoadDir/$relativeFilePath/$fileName' with DBB Copymode '$currentCopyMode'"
-						copy.dataset(container).member(deployableArtifact.file).file(file).execute()
-	
-						// Tagging binary files
-						if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
-							StringBuffer stdout = new StringBuffer()
-							StringBuffer stderr = new StringBuffer()
-							Process process = "chtag -b $file".execute()
-							process.waitForProcessOutput(stdout, stderr)
-							if (stderr){
-								println ("*! stderr : $stderr")
-								println ("*! stdout : $stdout")
-							}
-						}
-	
-						// Append record to Wazi Deploy Application Manifest
-						if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-								wdManifestGeneratorUtilities.appendArtifactToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, dependencySetRecord, propertiesRecord)
-						}
-	
-					} else {
-						println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' doesn't exist."
+		
+				// define file name in USS
+				def fileName = deployableArtifact.file
+		
+				// add deployType to file name
+				if (props.addExtension && props.addExtension.toBoolean()) {
+					fileName = fileName + '.' + deployableArtifact.deployType
+				}
+				def file = new File("$tempLoadDir/$relativeFilePath/$fileName")
+		
+				def (directory, relativeFileName) = extractDirectoryAndFile(file.toPath().toString())
+				new File(directory).mkdirs()
+		
+		
+				if (deployableArtifact.artifactType.equals("zFSFile")) {
+					def originalFile = new File(container + "/" + deployableArtifact.file)
+					println "   Copy '${originalFile.toPath()}' to '${file.toPath()}'"
+					try {
+						Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+					} catch (IOException exception) {
+						println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
 						rc = Math.max(rc, 1) 
 					}
-				} else {
-					println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' could not be copied due to missing mapping."
-					rc = Math.max(rc, 1) 
-				}
-			} else if  (deployableArtifact.artifactType.equals("DatasetMemberDelete")) {
-					// generate delete instruction for Wazi Deploy
-					if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-						wdManifestGeneratorUtilities.appendArtifactDeletionToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, propertiesRecord)
+				} else if  (deployableArtifact.artifactType.equals("DatasetMember")) {
+					// set copyMode based on last level qualifier
+					currentCopyMode = copyModeMap[container.replaceAll(/.*\.([^.]*)/, "\$1")]
+					if (currentCopyMode != null) {
+						if (ZFile.exists("//'$container(${deployableArtifact.file})'")) {
+							// Copy outputs to HFS
+							CopyToHFS copy = new CopyToHFS()
+							copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
+							copy.setDataset(container)
+		
+								println "   Copy '$container(${deployableArtifact.file})' to '$tempLoadDir/$relativeFilePath/$fileName' with DBB Copymode '$currentCopyMode'"
+							copy.dataset(container).member(deployableArtifact.file).file(file).execute()
+		
+							// Tagging binary files
+							if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
+								StringBuffer stdout = new StringBuffer()
+								StringBuffer stderr = new StringBuffer()
+								Process process = "chtag -b $file".execute()
+								process.waitForProcessOutput(stdout, stderr)
+								if (stderr){
+									println ("*! stderr : $stderr")
+									println ("*! stdout : $stdout")
+								}
+							}
+		
+							// Append record to Wazi Deploy Application Manifest
+							if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+									wdManifestGeneratorUtilities.appendArtifactToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, dependencySetRecord, propertiesRecord)
+							}
+		
+						} else {
+							println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' doesn't exist."
+							rc = Math.max(rc, 1) 
+						}
+					} else {
+						println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' could not be copied due to missing mapping."
+						rc = Math.max(rc, 1) 
 					}
-			}
+				} else if  (deployableArtifact.artifactType.equals("DatasetMemberDelete")) {
+						// generate delete instruction for Wazi Deploy
+						if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+							wdManifestGeneratorUtilities.appendArtifactDeletionToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, propertiesRecord)
+						}
+				}
 
 
-			if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
-				sbomUtilities.addEntryToSBOM(deployableArtifact, info)
+				if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
+					sbomUtilities.addEntryToSBOM(deployableArtifact, info)
 				}
 			}
 		}
