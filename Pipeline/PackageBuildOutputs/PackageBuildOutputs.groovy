@@ -435,24 +435,28 @@ if (rc == 0) {
 								if (fileNameParts.size() > 1) {
 									fileName = fileNameParts.first()
 									String fileDeployType = fileNameParts.last()
-									String expectedFilePath = "$tempLoadDir/$binSubfolder/$fileDeployType/$fileName"
-									try {
-										Path destinationPath = Paths.get("$tempLoadDir/$binSubfolder/$fileDeployType/${fileName}.${fileDeployType}")						
-										Path destinationDirPath = destinationPath.getParent()
-										destinationDirPath.toFile().mkdirs()
-										Path sourcePath = file.toPath()
-										Files.copy(sourcePath, destinationPath, COPY_ATTRIBUTES, REPLACE_EXISTING);
-										println("\tCopy file '${sourcePath}' to '${destinationPath}'")
-										if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-											// Update Path for the moved file in Wazi Deploy Manifest
-											rc = wdManifestGeneratorUtilities.updateArtifactPathToManifest(fileName, fileDeployType, "$binSubfolder/$fileDeployType/${fileName}.${fileDeployType}")
-											if (rc != 0) {
-												System.exit(rc)
+									if (props.fullPackage && props.fullPackage.toBoolean()) {
+										String expectedFilePath = "$tempLoadDir/$binSubfolder/$fileDeployType/$fileName"
+										try {
+											Path destinationPath = Paths.get("$tempLoadDir/$binSubfolder/$fileDeployType/${fileName}.${fileDeployType}")						
+											Path destinationDirPath = destinationPath.getParent()
+											destinationDirPath.toFile().mkdirs()
+											Path sourcePath = file.toPath()
+											Files.copy(sourcePath, destinationPath, COPY_ATTRIBUTES, REPLACE_EXISTING);
+											println("\tCopy file '${sourcePath}' to '${destinationPath}'")
+											if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+												// Update Path for the moved file in Wazi Deploy Manifest
+												rc = rc + wdManifestGeneratorUtilities.updateArtifactPathToManifest(fileName, fileDeployType, "$binSubfolder/$fileDeployType/${fileName}.${fileDeployType}")
 											}
+										} catch (IOException e) {
+											println("!* [ERROR] Error when moving file '${sourcePath}' to '${destinationPath}' during baseline package extraction.")
+											rc = 1	
 										}
-									} catch (IOException e) {
-										println("!* [ERROR] Error when moving file '${sourcePath}' to '${destinationPath}' during baseline package extraction.")
-										rc = 1	
+									} else {
+										file.delete()
+										if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+											wdManifestGeneratorUtilities.removeArtifactFromManifest(fileName, fileDeployType)
+										}										
 									}
 								}
 							}
@@ -464,6 +468,7 @@ if (rc == 0) {
 					}
 				} else {
 					println("*! [ERROR] Error when extracting baseline package '${created}' with rc=$rc.")
+					rc = 1
 				}		
 			} else {
 				println("*! [ERROR] The Baseline Package '${props.baselinePackageFilePath}' was not found.")
@@ -594,17 +599,19 @@ if (rc == 0) {
 					}
 				}
 			}
+			
+			println ("***** ${buildReportOrderLines.size()} - $buildReportOrderLines")
 	
 			println("** Generate package build report order file to '$buildReportOrder'")
 	
 			props.buildReportOrder.each { buildReportFile ->
-					Path buildReportFilePath = Paths.get(buildReportFile)
+				Path buildReportFilePath = Paths.get(buildReportFile)
 
 				// Always prefix the buildreport with sequence number
 				int nextIndex = buildReportOrderLines.size() + 1
 				Path copiedBuildReportFilePath = Paths.get(tempLoadDir.getPath() + "/" + "$nextIndex".padLeft(3, "0") + "_" + buildReportFilePath.getFileName().toString())
 	
-					Files.copy(buildReportFilePath, copiedBuildReportFilePath, COPY_ATTRIBUTES)
+				Files.copy(buildReportFilePath, copiedBuildReportFilePath, COPY_ATTRIBUTES)
 				buildReportOrderLines.add("${copiedBuildReportFilePath.getFileName().toString()}\n")
 			}
 			buildReportOrder.withWriter(props.fileEncoding) { writer ->
@@ -816,6 +823,7 @@ def parseInput(String[] cliArgs){
 
 	// Full Package baseline
 	cli.bp(longOpt:'baselinePackage', args:1, argName:'baselinePackageFilePath', 'Path to a baseline Package. (Optional)')
+	cli.fp(longOpt:'fullPackageFlag', args:0, 'Flag to enable the creation of a full package. (Optional)')
 
 	// Wazi Deploy Application Manifest generation
 	cli.wd(longOpt:'generateWaziDeployAppManifest', 'Flag indicating to generate and add the Wazi Deploy Application Manifest file.')
@@ -892,6 +900,7 @@ def parseInput(String[] cliArgs){
 	
 	if (opts.af) props.applicationFolderPath = opts.af
 	if (opts.bp) props.baselinePackageFilePath = opts.bp
+	if (opts.fp) props.fullPackage = "true"
 
 
 	// default log encoding if not specified via config passed in via --properties

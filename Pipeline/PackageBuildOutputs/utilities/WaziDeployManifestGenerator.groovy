@@ -142,6 +142,28 @@ def updateArtifactPathToManifest(String artifactName, String artifactType, Strin
 	}
 }
 
+/**
+ * Remove Artifact Record to Wazi Deploy Application Manifest 
+ */
+def removeArtifactFromManifest(String artifactName, String artifactType) {
+	def searchedArtifacts = wdManifest.artifacts.findAll() { artifact ->
+		artifact.name.equals(artifactName) && artifact.type.equals(artifactType)
+	}
+	
+	if (searchedArtifacts) {
+		if (searchedArtifacts.size() == 1) {
+			wdManifest.artifacts.remove(searchedArtifacts[0])
+			return 0
+		} else if (searchedArtifacts.size() > 1) {
+			println("*! [ERROR] Can't remove artifact '${artifactName}.${artifactType}'. Multiple entries in Wazi Deploy Manifest file.")
+			return 1
+		}
+	} else {
+		println("*! [ERROR] Can't remove artifact '${artifactName}.${artifactType}'. No matching entry in Wazi Deploy Manifest file.")
+		return 1
+	}
+}
+
 
 /**
  * Append Artifact Deletion Record to Wazi Deploy Application Manifest 
