@@ -299,6 +299,40 @@ def getFileUsage(ApplicationDescriptor applicationDescriptor, String sourceGroup
 }
 
 /**
+ * Method to return a FileDef that matches what we are looking for
+ * Return null if nothing is found
+ * Return null if multiple entries are found (for artifactsType or files) with a warning message
+ */
+
+def getFileUsageByType(ApplicationDescriptor applicationDescriptor, String artifactsType, String name) {
+	if (applicationDescriptor) {
+		def matchingSourceGroups = applicationDescriptor.sources.findAll() { matchingSourceGroup ->
+			matchingSourceGroup.artifactsType.equals(artifactsType)
+		}
+		if (matchingSourceGroups) {
+			def allMatchingFiles = new ArrayList<FileDef>()
+			matchingSourceGroups.each { matchingSourceGroup ->
+				def matchingFiles = matchingSourceGroup.files.findAll() { matchingFile ->
+					matchingFile.name.equalsIgnoreCase(name)
+				}
+				allMatchingFiles.addAll(matchingFiles)
+			}
+			if (allMatchingFiles.size() == 1) {
+				return allMatchingFiles[0].usage
+			} else {
+				println("*! [WARNING] Multiple Files found matching '${name}'. Skipping search.")
+				return null
+			}
+		} else {
+			return null
+		}
+	} else {
+		return null
+	}
+}
+
+
+/**
  * Method to return an ArraList that contains relative Paths
  * to public & shared include files
  */

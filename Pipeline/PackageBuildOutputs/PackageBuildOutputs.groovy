@@ -8,6 +8,7 @@ import com.ibm.dbb.build.report.BuildReport
 import com.ibm.dbb.build.report.records.*
 import groovy.transform.*
 import groovy.cli.commons.*
+import groovy.io.FileType
 import java.nio.file.*
 import static java.nio.file.StandardCopyOption.*
 import com.ibm.jzos.ZFile;
@@ -58,6 +59,7 @@ import com.ibm.jzos.ZFile;
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
 @Field def applicationDescriptorUtils
+@Field def applicationDescriptor
 @Field def sbomUtilities
 @Field def rc = 0
 String includeSubfolder = "include"
@@ -102,6 +104,19 @@ if (props.generateSBOM && props.generateSBOM.toBoolean()) {
 	sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
 	sbomUtilities.initializeSBOM(props.sbomAuthor)
 }
+
+// Package the public Include Files and service submodules
+// if Path to Application Descriptor file is specified
+if (props.applicationFolderPath) {
+	File applicationDescriptorFile = new File("${props.applicationFolderPath}/applicationDescriptor.yml")
+	if (applicationDescriptorFile.exists()) {
+		applicationDescriptorUtils = loadScript(new File("utilities/applicationDescriptorUtils.groovy"))
+		applicationDescriptor = applicationDescriptorUtils.readApplicationDescriptor(applicationDescriptorFile)
+	} else {
+		println("*! [WARNING] No Application Descriptor file '${props.applicationFolderPath}/applicationDescriptor.yml' found. Skipping packaging of Include Files.")
+	}
+}
+
 
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
@@ -233,20 +248,27 @@ props.buildReportOrder.each { buildReportFile ->
 				}
 			} else {
 				if (buildRecord.getOutputs().size() != 0) {
-					buildRecord.getOutputs().each{ output ->
-						datasetMembersCount++
+					buildRecord.getOutputs().each { output ->
 						def (dataset, member) = getDatasetName(output.dataset)
-						String file = buildRecord.getFile()
-						def dependencySetRecord = buildReport.getRecords().find {
-							it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
+						def fileUsage
+						if (applicationDescriptor && output.deployType.equals("OBJ")) {
+							fileUsage = applicationDescriptorUtils.getFileUsageByType(applicationDescriptor, "Program", member)
 						}
-						buildOutputsMap.put(new DeployableArtifact(member, output.deployType, "DatasetMember"), [
-							container: dataset,
-							owningApplication: props.application,
-							record: buildRecord,
-							propertiesRecord: buildResultPropertiesRecord,
-							dependencySetRecord: dependencySetRecord
-						])
+						// If the artifact is not an Object Deck or has no usage or its usage is not main 
+						if (!output.deployType.equals("OBJ") || !fileUsage || !fileUsage.equals("main")) {
+							datasetMembersCount++
+							String file = buildRecord.getFile()
+							def dependencySetRecord = buildReport.getRecords().find {
+								it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
+							}
+							buildOutputsMap.put(new DeployableArtifact(member, output.deployType, "DatasetMember"), [
+								container: dataset,
+								owningApplication: props.application,
+								record: buildRecord,
+								propertiesRecord: buildResultPropertiesRecord,
+								dependencySetRecord: dependencySetRecord
+							])
+						}
 					}
 				}
 			}
@@ -366,12 +388,6 @@ if (rc == 0) {
 		def tempLoadDir = new File("$props.workDir/tempPackageDir")
 		!tempLoadDir.exists() ?: tempLoadDir.deleteDir()
 		tempLoadDir.mkdirs()
-
-		// Initialize Wazi Deploy Manifest Generator if no baseline package is used
-		if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && !props.baselinePackageFilePath) {
-			wdManifestGeneratorUtilities.initWaziDeployManifestGenerator(props)// Wazi Deploy Application Manifest
-			wdManifestGeneratorUtilities.setScmInfo(scmInfo)
-		}
 		
 		// A baseline Package has been specified, we then extract it in the $tempLoadDir folder
 		if (props.baselinePackageFilePath) {
@@ -390,25 +406,29 @@ if (rc == 0) {
 					println("** Baseline Package '${props.baselinePackageFilePath}' successfully extracted.")
 
 					// Read the existing Wazi Deploy Manifest if any
-					if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-						File wdManifestFile = new File("$tempLoadDir/wazideploy_manifest.yml")
-						if (wdManifestFile.exists()) {
+					File wdManifestFile = new File("$tempLoadDir/wazideploy_manifest.yml")
+					if (wdManifestFile.exists()) {
+						if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
 							// Read the manifest file if it exists
 							wdManifestGeneratorUtilities.readWaziDeployManifestFile(wdManifestFile, props)
 							wdManifestGeneratorUtilities.setScmInfo(scmInfo)
 						} else {
+							wdManifestFile.delete()
+						}
+					} else {
+						if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
 							// Otherwise initialize an empty manifest
 							wdManifestGeneratorUtilities.initWaziDeployManifestGenerator(props)
 							wdManifestGeneratorUtilities.setScmInfo(scmInfo)
 						}
 					}
 	
-					// Search in all subfolders of the archive except the folder
-					// that contains includes $includeSubfolder
-					// Copy the artifacts found to comply with the right structure				
-					
+					// Search in all subfolders of the archive except the folders
+					// that contains includes "$includeSubfolder" and binaries "$binSubfolder"
+					// Copy the artifacts found to comply with the right structure
+					// All the artifact that don't comply will end up in the binSubfolder					
 					tempLoadDir.eachDir() { subfolder ->
-						if (!subfolder.getName().equals(includeSubfolder) && !subfolder.getName().equals(binSubfolder)) {
+						if (!subfolder.getName().equals(includeSubfolder) && !subfolder.getName().equals(binSubfolder)  && !subfolder.getName().equals("tmp")) {
 							subfolder.eachFileRecurse(FileType.FILES) { file ->
 								String fileName = file.getName()
 								def fileNameParts = fileName.split("\\.")
@@ -422,17 +442,25 @@ if (rc == 0) {
 										destinationDirPath.toFile().mkdirs()
 										Path sourcePath = file.toPath()
 										Files.copy(sourcePath, destinationPath, COPY_ATTRIBUTES, REPLACE_EXISTING);
-										println("*** Copy file '${sourcePath}' to '${destinationPath}'")
-										// Update Path for the moved file in Wazi Deploy Manifest
-										rc = wdManifestGeneratorUtilities.updateArtifactPathToManifest(fileName, fileDeployType, "$binSubfolder/$fileDeployType/${fileName}.${fileDeployType}")
+										println("\tCopy file '${sourcePath}' to '${destinationPath}'")
+										if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+											// Update Path for the moved file in Wazi Deploy Manifest
+											rc = wdManifestGeneratorUtilities.updateArtifactPathToManifest(fileName, fileDeployType, "$binSubfolder/$fileDeployType/${fileName}.${fileDeployType}")
+											if (rc != 0) {
+												System.exit(rc)
+											}
+										}
 									} catch (IOException e) {
 										println("!* [ERROR] Error when moving file '${sourcePath}' to '${destinationPath}' during baseline package extraction.")
-										rc = 1;	
+										rc = 1	
 									}
 								}
 							}
 							subfolder.deleteDir()
 						}
+						if (subfolder.getName().equals("tmp")) {
+							subfolder.deleteDir()
+						}						
 					}
 				} else {
 					println("*! [ERROR] Error when extracting baseline package '${created}' with rc=$rc.")
@@ -442,6 +470,7 @@ if (rc == 0) {
 				rc = 1
 			}				
 		}
+		
 		if (rc == 0) {	
 	
 			println("*** Number of build outputs to package: ${buildOutputsMap.size()}")
@@ -455,7 +484,7 @@ if (rc == 0) {
 				PropertiesRecord propertiesRecord = info.get("propertiesRecord")
 				DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
 				
-					def relativeFilePath = ""
+				def relativeFilePath = ""
 				if (deployableArtifact.artifactType.equals("zFSFile")) {
 						relativeFilePath = "$binSubfolder"
 				} else {
@@ -481,7 +510,7 @@ if (rc == 0) {
 		
 				if (deployableArtifact.artifactType.equals("zFSFile")) {
 					def originalFile = new File(container + "/" + deployableArtifact.file)
-					println "   Copy '${originalFile.toPath()}' to '${file.toPath()}'"
+					println "\tCopy '${originalFile.toPath()}' to '${file.toPath()}'"
 					try {
 						Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 					} catch (IOException exception) {
@@ -498,7 +527,7 @@ if (rc == 0) {
 							copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
 							copy.setDataset(container)
 		
-								println "   Copy '$container(${deployableArtifact.file})' to '$tempLoadDir/$relativeFilePath/$fileName' with DBB Copymode '$currentCopyMode'"
+							println "\tCopy '$container(${deployableArtifact.file})' to '$tempLoadDir/$relativeFilePath/$fileName' with DBB Copymode '$currentCopyMode'"
 							copy.dataset(container).member(deployableArtifact.file).file(file).execute()
 		
 							// Tagging binary files
@@ -593,37 +622,29 @@ if (rc == 0) {
 			if (props.verbose) println("** Copy packaging properties config file to '$copiedPackagingPropertiesFilePath'")
 			Files.copy(packagingPropertiesFilePath, copiedPackagingPropertiesFilePath, COPY_ATTRIBUTES, REPLACE_EXISTING)
 	
-			// Package the public copybooks if Path to Application Descriptor file is specified
-			if (props.applicationFolderPath) {
-				File applicationDescriptorFile = new File("${props.applicationFolderPath}/applicationDescriptor.yml")
-				if (applicationDescriptorFile.exists()) {
-					applicationDescriptorUtils = loadScript(new File("utilities/applicationDescriptorUtils.groovy"))
-					def applicationDescriptor = applicationDescriptorUtils.readApplicationDescriptor(applicationDescriptorFile)
-					ArrayList<String> publicIncludeFiles = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Include File", "public")
-					ArrayList<String> sharedIncludeFiles = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Include File", "shared")
-					if (publicIncludeFiles && !publicIncludeFiles.isEmpty()) {
-						if (sharedIncludeFiles && !sharedIncludeFiles.isEmpty()) {
-							publicIncludeFiles.addAll(sharedIncludeFiles)
-						}
-						publicIncludeFiles.forEach() { includeFile ->
-							Path includeFilePath = Paths.get("${props.applicationFolderPath}/${includeFile}")
-							Path targetIncludeFilePath = Paths.get("${tempLoadDir.getPath()}/${includeSubfolder}/src/${includeFilePath.getFileName()}")
-							if (props.verbose) println("** Copy '${includeFilePath}' file to '${targetIncludeFilePath}'")
-							try {
-								//Create target parent folder if it doesn't exist
-								def targetIncludeFilesFolder = targetIncludeFilePath.getParent().toFile()
-								if (!targetIncludeFilesFolder.exists()) {
-									targetIncludeFilesFolder.mkdirs()
-								}								
-								Files.copy(includeFilePath, targetIncludeFilePath, COPY_ATTRIBUTES, REPLACE_EXISTING)
-							} catch (IOException exception) {
-								println "!* [ERROR] Copy failed: an error occurred when copying '${includeFilePath}' to '${targetIncludeFilePath}'"
-								rc = Math.max(rc, 1) 
-							}
+			if (applicationDescriptor) {
+				ArrayList<String> publicIncludeFiles = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Include File", "public")
+				ArrayList<String> sharedIncludeFiles = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Include File", "shared")
+				if (publicIncludeFiles && !publicIncludeFiles.isEmpty()) {
+					if (sharedIncludeFiles && !sharedIncludeFiles.isEmpty()) {
+						publicIncludeFiles.addAll(sharedIncludeFiles)
+					}
+					publicIncludeFiles.forEach() { includeFile ->
+						Path includeFilePath = Paths.get("${props.applicationFolderPath}/${includeFile}")
+						Path targetIncludeFilePath = Paths.get("${tempLoadDir.getPath()}/${includeSubfolder}/src/${includeFilePath.getFileName()}")
+						if (props.verbose) println("** Copy '${includeFilePath}' file to '${targetIncludeFilePath}'")
+						try {
+							//Create target parent folder if it doesn't exist
+							def targetIncludeFilesFolder = targetIncludeFilePath.getParent().toFile()
+							if (!targetIncludeFilesFolder.exists()) {
+								targetIncludeFilesFolder.mkdirs()
+							}								
+							Files.copy(includeFilePath, targetIncludeFilePath, COPY_ATTRIBUTES, REPLACE_EXISTING)
+						} catch (IOException exception) {
+							println "!* [ERROR] Copy failed: an error occurred when copying '${includeFilePath}' to '${targetIncludeFilePath}'"
+							rc = Math.max(rc, 1) 
 						}
 					}
-				} else {
-					println("*! [WARNING] No Application Descriptor file '${props.applicationFolderPath}/applicationDescriptor.yml' found. Skipping packaging of Include Files.")
 				}
 			}
 			
