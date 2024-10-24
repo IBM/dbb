@@ -51,14 +51,23 @@ import com.ibm.jzos.ZFile;
  * Version 8 - 2024-07
  *  - Reworked error management and fixed few glitches
  *      
+ * Version 9 - 2024-10
+ *  - Added the following
+ *    a) Fields and code to generate concert manifest linking to 
+ *       concertBuildManifestGenerator.groovy
+ *    b) Refactoring to generate SBOM details like SerialNumber from this script  
+ *       to be passed to sbomGenerator.groovy and concertBuildManifestGenerator.groovy
  ************************************************************************************/
 
 // start create & publish package
 @Field Properties props = null
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
+@Field def concertManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/concertBuildManifestGenerator.groovy"))
 @Field def sbomUtilities
 @Field def rc = 0
+@Field def sbomSerialNumber
+@Field def sbomFileName
 
 def startTime = new Date()
 
@@ -91,14 +100,15 @@ Map<DeployableArtifact, Map> buildOutputsMap = new HashMap<DeployableArtifact, M
 
 // Field to store default tarFileLabel (buildInfo.label) when cli argument tarFileName is not passed.
 def String tarFileLabel = "Default"
+// Field to store build number, set to default when its not decipherable from build report 
+def String buildNumber = "UNKNOWN"
 
 // Object to store scm information for Wazi Deploy Application Manifest file
 HashMap<String,String> scmInfo = new HashMap<String, String>()
 
-if (props.generateSBOM && props.generateSBOM.toBoolean()) {
-	sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
-	sbomUtilities.initializeSBOM(props.sbomAuthor)
-}
+// Object to store scm information for Wazi Deploy Application Manifest file
+HashMap<String,String> packageInfo = new HashMap<String, String>()
+
 
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
@@ -119,6 +129,7 @@ props.buildReportOrder.each { buildReportFile ->
 		}
 		if (buildInfo.size() != 0) {
 			tarFileLabel = buildInfo[0].label
+			buildNumber = buildInfo[0].label
 		}
 	
 		// retrieve the buildResultPropertiesRecord
@@ -326,7 +337,9 @@ props.buildReportOrder.each { buildReportFile ->
 		}
 	
 		// generate scmInfo for Wazi Deploy Application Manifest file
-		if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+		if ((props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) ||    
+		    (props.generateConcertBuildManifest  && props.generateConcertBuildManifest.toBoolean() )) { 
+		
 			if (props.buildReportOrder.size() == 1) {
 				scmInfo.put("type", "git")
 				gitUrl = retrieveBuildResultProperty (buildResultPropertiesRecord, "giturl")
@@ -348,12 +361,26 @@ if (rc == 0) {
 		println("** There are no build outputs found in all provided build reports. Exiting.")
 		rc = 0
 	} else {
-	
+		// generate SBOM only if build outputs exist
+		if (props.generateSBOM && props.generateSBOM.toBoolean()) {
+			sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
+			sbomSerialNumber = "url:uuid:" + UUID.randomUUID().toString()
+			sbomFileName = "${buildNumber}_sbom.json" 
+			sbomUtilities.initializeSBOM(props.sbomAuthor,sbomSerialNumber)
+
+		}
 		// Local variables
 		// Initialize Wazi Deploy Manifest Generator
 		if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
 			wdManifestGeneratorUtilities.initWaziDeployManifestGenerator(props)// Wazi Deploy Application Manifest
 			wdManifestGeneratorUtilities.setScmInfo(scmInfo)
+		}
+
+		// Initialize Concert Build Manifest Generator
+		if (props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean()) {
+			concertManifestGeneratorUtilities.initConcertBuildManifestGenerator(props,buildNumber)// Concert Build Manifest
+			concertManifestGeneratorUtilities.setScmInfo(scmInfo)
+			concertManifestGeneratorUtilities.setSBOMInfo(sbomFileName,sbomSerialNumber)
 		}
 		def String tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
 		def tarFile = "$props.workDir/${tarFileName}"
@@ -456,7 +483,7 @@ if (rc == 0) {
 		}
 		
 		if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
-			sbomUtilities.writeSBOM("$tempLoadDir/sbom.json", props.fileEncoding)    
+			sbomUtilities.writeSBOM("$tempLoadDir/$sbomFileName", props.fileEncoding)    
 		}
 		
 	
@@ -465,6 +492,7 @@ if (rc == 0) {
 			// wazideploy_manifest.yml is the default name of the manifest file
 			wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/wazideploy_manifest.yml"), props.fileEncoding, props.verbose)
 		}
+
 	
 		if (rc == 0) {
 	
@@ -567,6 +595,23 @@ if (rc == 0) {
 	
 			println ("** Upload package to Artifact Repository '$url'.")
 			artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean(), httpClientVersion)
+
+		// generate PackageInfo for Concert Manifest file   
+			if (props.generateConcertBuildManifest  && props.generateConcertBuildManifest.toBoolean() ) { 
+			
+				packageInfo.put("type", "artifactory")
+				if (url) packageInfo.put("uri", url)
+				if (tarFileName) packageInfo.put("name",tarFileName)
+				// Set package info
+				concertManifestGeneratorUtilities.setPackageInfo(packageInfo)
+			
+				}
+		}
+			
+		if (concertManifestGeneratorUtilities && props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean() && rc == 0) {
+			// print concert deploy manifest
+			// concert_build_manifest.yml is the default name of the manifest file
+			concertManifestGeneratorUtilities.writeBuildManifest(new File("$tempLoadDir/concert_build_manifest.yml"), props.fileEncoding, props.verbose)
 		}
 	}
 }
@@ -643,12 +688,15 @@ def parseInput(String[] cliArgs){
 	// Wazi Deploy Application Manifest generation
 	cli.wd(longOpt:'generateWaziDeployAppManifest', 'Flag indicating to generate and add the Wazi Deploy Application Manifest file.')
 
+	// Concert Build Manifest generation
+	cli.ic(longOpt:'generateConcertBuildManifest', 'Flag indicating to generate and add the IBM Concert Build Manifest file.')
+
 	cli.b(longOpt:'branch', args:1, argName:'branch', 'The git branch processed by the pipeline')
 	cli.a(longOpt:'application', args:1, argName:'application', 'The name of the application')
 	
 	// Artifact repository options ::
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifact Repository server. (Optional)')
-	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package on the Artifact repository server. (Optional)')
+	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package on the Artifact repository server. (Optional)')	
 
 	// Artifact repository info
 	cli.au(longOpt:'artifactRepositoryUrl', args:1, argName:'url', 'URL to the Artifact repository server. (Optional)')
@@ -705,6 +753,7 @@ def parseInput(String[] cliArgs){
 
 	// cli overrides defaults set in 'packageBuildOutputs.properties'
 	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : props.generateWaziDeployAppManifest
+	props.generateConcertBuildManifest = (opts.ic) ? 'true' : props.generateConcertBuildManifest
 	props.addExtension = (opts.ae) ? 'true' : props.addExtension
 	props.publish = (opts.p) ? 'true' : props.publish
 	props.generateSBOM = (opts.sbom) ? 'true' : props.generateSBOM
@@ -819,6 +868,19 @@ def parseInput(String[] cliArgs){
 			rc = 2
 		}
 	}
+
+		// assess required options to generate Concert Build manifest
+	if (props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean()) {
+		if (!props.branch) {
+			println("*! [ERROR] Missing branch parameter ('--branch'). It is required for generating the Concert Build Manifest file.")
+			rc = 2
+		}
+		if (!props.publish || !props.publish.toBoolean()) {
+			println("*! [ERROR] Missing package publish parameter. It is required for generating the Concert Build Manifest file.")
+			rc = 2
+		}
+	}
+
 	return props
 }
 
