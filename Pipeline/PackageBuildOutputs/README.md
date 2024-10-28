@@ -47,7 +47,7 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
 5. **Create TAR file**
     1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
     2. It packages these load files into a TAR file, and adds the BuildReport.json and optionally other build logs from the build workspace.
-    3. If the path to th application's Git repository is provided, it will copy the Include Files classfified as public and shared into the `include` subfolder of tge temporary directory.
+    3. If the path to the application's Git repository is provided, it will perform additional publishing of object decks and Include Files classified as public and shared, into the `include` subfolder of the temporary directory.
 
 6. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
     1. Publishes the TAR file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. Consider a Nexus RAW, or a Artifactory Generic as the repository type. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
@@ -595,24 +595,27 @@ As an example, you can invoke the SBOM generation with the following command:
 By default, the SBOM file is generated in the `tempPackageDir` and named `sbom.json`.
 This way, it is automatically packaged in the TAR file that is created by the script, ensuring the package and its content are not tampered and correctly documented. 
 
+## Publishing interfaces
+
+The CLI option `applicationFolderPath` is used to point to the application's Git repository on z/OS Unix System Services. When specified, this parameter enables the PackageBuildOutputs with additional capabilities, like the packaging of object decks and Include Files based on their usage.
+
+When this CLI option is provided, the script will search for an [Application Descriptor file](https://github.com/IBM/dbb-git-migration-modeler/?tab=readme-ov-file#output-files), named `applicationDescriptor.yml` and located at the root level of the application's Git repository. This file contains information on the usage of each artifact of the application: programs can be "internal submodules" or "service submodule" if statically linked by other programs, include files can be public or shared, if referenced by programs from other applications.
+
+If an Application Descriptor file is found, the required information is leveraged, to include in the created archive:
+- the object decks that were created during the previous build process, when they are issued from a program that is identified as an "internal submodule" or a "service submodule".
+- the public or shared includes files present in the application's Git repository.
+
+These artifacts are placed in the `include` subfolder of the archive, within specific subfolders to segregate artifacts based on their nature:
+- the `include/bin` subfolder contains the object decks that other programs can statically link.
+- the `include/src` subfolder contains the public and shared include files, that other programs can reference.
+
+When used in conjunction with [baseline packages](#baseline-packages), it is possible to have an archive that contains all the interfaces of an application, combining previous versions of object decks (when they have not changed) with the newest material that was just built or changed in the application's Git repository.
+
 ## Baseline Packages
 
 The CLI option `baselinePackage` can be used to specify a path to an existing package on z/OS Unix System Services. This package will then be used as a baseline, on which new artifacts documented in the provided build report(s) will be copied, potentially replacing the content of the baseline package.
 
-During the packaging process, the baseline package is expanded, and reorganization of the content is performed if necessary, to comply with the recommended internal layout. The artifacts are splited in two subfolders in the archive:
-- the `bin` subfolder contains artifacts that are meant to be deployed and constitute the core of the application version.
-- the `include` subfolder contains artifacts that represent interfaces of the application, that other applications can consume or reference (typically, public/shared Include Files like COBOL copybooks, and object decks that are statically linked by "consuming" loadmodules).
-
-Depending on the `fullPackage` flag, the behavior can be different:
-- when this flag is not specified, part of the content of the baseline package is deleted. Only the `include` subfolder is kept, and the `bin` subfolder is removed. The resulting package contains:
-  - the deployable artifacts documented by the provided build report(s) in the `bin` subfolder
-  - the existing interfaces from the baseline package, which can be overriden by public/shared Include Files and newly created object decks.
-- when this flag is specified, the content of the baseline package is preserved. The resulting package contains:
-  - the existing deployable artifacts from the baseline package in `bin`, which can be overridden by the new artifacts documented in the provided build report(s),
-  - the existing interfaces from the baseline package, which can be overridden by public/shared Include Files and newly created object decks.
-
-To determine which artifacts should be provided in the `include` subfolder, 
-
+During the packaging process, the baseline package is expanded. The `include` subfolder remains intact and contains artifacts that represent interfaces of the application, that other applications can consume or reference (typically, public/shared Include Files like COBOL copybooks, and object decks that are statically linked by "consuming" loadmodules). All other subfolders are removed.
 
 ## Useful reference material
 
