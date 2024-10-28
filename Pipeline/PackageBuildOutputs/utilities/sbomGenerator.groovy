@@ -50,15 +50,15 @@ def initializeSBOM(String sbomAuthor, String serialNumber) {
 			author.setEmail(sbomAuthorFields[1].replaceAll(">", "").trim())
 			sbomMetadata.addAuthor(author)
 		} else {
-			println("*! Warning: SBOM Author not correctly formed, expecting 'Name <email>' format. Skipping.")
+			println("*! [WARNING] SBOM Author not correctly formed, expecting 'Name <email>' format. Skipping.")
 		}
 	} else {
-		println("*! Warning: empty SBOM Author. It is recommend to specify a valid Author.")	
+		println("*! [WARNING] empty SBOM Author. It is recommend to specify a valid Author.")	
 	}  
 	if (serialNumber) {
 		sbom.setSerialNumber(serialNumber)	 
 	} else {
-		println("*! Warning: Serial Number has been regenerated.")	
+		println("*! [WARNING] Serial Number has been regenerated.")	
 		sbom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString())
 	}
 	 
