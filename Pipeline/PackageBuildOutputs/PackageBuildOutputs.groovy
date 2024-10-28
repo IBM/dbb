@@ -52,6 +52,14 @@ import com.ibm.jzos.ZFile;
  * Version 8 - 2024-07
  *  - Reworked error management and fixed few glitches
  *      
+ *      
+ *      
+ *      
+ *      
+ * Version 10 - 2024-10
+ *  - Enhanced the packaging with the Application Descriptor file
+ *    and baseline packages which allow full description of interfaces
+ *      
  ************************************************************************************/
 
 // start create & publish package
@@ -62,8 +70,8 @@ def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).p
 @Field def applicationDescriptor
 @Field def sbomUtilities
 @Field def rc = 0
-String includeSubfolder = "include"
-String binSubfolder = "bin"
+@Field String includeSubfolder = "include"
+@Field String binSubfolder = "bin"
 
 def startTime = new Date()
 
@@ -113,7 +121,7 @@ if (props.applicationFolderPath) {
 		applicationDescriptorUtils = loadScript(new File("utilities/applicationDescriptorUtils.groovy"))
 		applicationDescriptor = applicationDescriptorUtils.readApplicationDescriptor(applicationDescriptorFile)
 	} else {
-		println("*! [WARNING] No Application Descriptor file '${props.applicationFolderPath}/applicationDescriptor.yml' found. Skipping packaging of Include Files.")
+		println("*! [WARNING] No Application Descriptor file '${props.applicationFolderPath}/applicationDescriptor.yml' found. Skipping packaging of interfaces.")
 	}
 }
 
@@ -253,9 +261,10 @@ props.buildReportOrder.each { buildReportFile ->
 						def fileUsage
 						if (applicationDescriptor && output.deployType.equals("OBJ")) {
 							fileUsage = applicationDescriptorUtils.getFileUsageByType(applicationDescriptor, "Program", member)
+							println("$dataset($member) - ${output.deployType} - $fileUsage") 
 						}
-						// If the artifact is not an Object Deck or has no usage or its usage is not main 
-						if (!output.deployType.equals("OBJ") || !fileUsage || !fileUsage.equals("main")) {
+						// If the artifact is not an Object Deck or has no usage or its usage is not main
+						if ((output.deployType.equals("OBJ") && fileUsage && !fileUsage.equals("main")) || !output.deployType.equals("OBJ")) { 
 							datasetMembersCount++
 							String file = buildRecord.getFile()
 							def dependencySetRecord = buildReport.getRecords().find {
@@ -428,7 +437,7 @@ if (rc == 0) {
 					// Copy the artifacts found to comply with the right structure
 					// All the artifact that don't comply will end up in the binSubfolder					
 					tempLoadDir.eachDir() { subfolder ->
-						if (!subfolder.getName().equals(includeSubfolder) && !subfolder.getName().equals(binSubfolder)  && !subfolder.getName().equals("tmp")) {
+						if (!subfolder.getName().equals(includeSubfolder)/* && !subfolder.getName().equals(binSubfolder)*/) {
 							subfolder.eachFileRecurse(FileType.FILES) { file ->
 								String fileName = file.getName()
 								def fileNameParts = fileName.split("\\.")
@@ -600,8 +609,6 @@ if (rc == 0) {
 				}
 			}
 			
-			println ("***** ${buildReportOrderLines.size()} - $buildReportOrderLines")
-	
 			println("** Generate package build report order file to '$buildReportOrder'")
 	
 			props.buildReportOrder.each { buildReportFile ->
@@ -653,6 +660,8 @@ if (rc == 0) {
 						}
 					}
 				}
+				// Checks if all binary interfaces (submodules) are in the archive or not
+				checkBinaryInterfaces(tempLoadDir, applicationDescriptor)
 			}
 			
 			if (props.owner) {
@@ -821,9 +830,8 @@ def parseInput(String[] cliArgs){
 
 	cli.af(longOpt:'applicationFolderPath', args:1, argName:'applicationFolderPath', 'Path to the Application\'s Git repository folder')
 
-	// Full Package baseline
+	// Baseline package
 	cli.bp(longOpt:'baselinePackage', args:1, argName:'baselinePackageFilePath', 'Path to a baseline Package. (Optional)')
-	cli.fp(longOpt:'fullPackageFlag', args:0, 'Flag to enable the creation of a full package. (Optional)')
 
 	// Wazi Deploy Application Manifest generation
 	cli.wd(longOpt:'generateWaziDeployAppManifest', 'Flag indicating to generate and add the Wazi Deploy Application Manifest file.')
@@ -898,10 +906,10 @@ def parseInput(String[] cliArgs){
 
 	props.verbose = (opts.verb) ? 'true' : 'false'
 	
-	if (opts.af) props.applicationFolderPath = opts.af
-	if (opts.bp) props.baselinePackageFilePath = opts.bp
-	if (opts.fp) props.fullPackage = "true"
-
+	if (opts.af) {
+		props.applicationFolderPath = opts.af
+		if (opts.bp) props.baselinePackageFilePath = opts.bp
+	}
 
 	// default log encoding if not specified via config passed in via --properties
 	if (!props.fileEncoding) props.fileEncoding = "IBM-1047"
@@ -1039,6 +1047,37 @@ def parseCopyModeMap(String copyModeMapString) {
 		copyModeMap.put(copyModeParts[0].trim(), copyModeParts[1].trim())
 	}
 	return copyModeMap
+}
+
+/*
+ * checksInterfaces - Checks if all interfaces
+ * (public/shared Include Files and submodules)
+ * are present in the archive.
+ * If not, issue a warning message
+ */
+ 
+def checkBinaryInterfaces(File tempLoadDir, applicationDescriptor) {
+	ArrayList<String> binaryServiceInterfaces = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Program", "service submodule")
+	ArrayList<String> binaryInternalInterfaces = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Program", "internal submodule")
+	ArrayList<String> binaryInterfaces = new ArrayList<String>()
+	if (binaryServiceInterfaces) {
+		binaryInterfaces.addAll(binaryServiceInterfaces)
+	}
+	if (binaryInternalInterfaces) {
+		binaryInterfaces.addAll(binaryInternalInterfaces)
+	}
+	ArrayList<String> missingBinaryInterfaces = new ArrayList<String>() 
+	binaryInterfaces.each { binaryInterface ->
+		String sourceFileName = Paths.get(binaryInterface).getFileName().toString()
+		String expectedFileName = "$includeSubfolder/bin/" + sourceFileName.split("\\.")[0].toUpperCase() + ".OBJ"
+		File expectedInterface = new File("${tempLoadDir.getAbsolutePath()}/$expectedFileName")
+		if (!expectedInterface.exists()) {
+			missingBinaryInterfaces.add(expectedFileName)
+		}
+	}
+	if (missingBinaryInterfaces.size() > 0) {
+		println("*! [WARNING] Some binary interfaces are missing in the current archive: ${missingBinaryInterfaces}.")
+	}
 }
 
 
