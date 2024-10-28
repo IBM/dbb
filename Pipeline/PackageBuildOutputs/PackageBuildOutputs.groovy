@@ -52,11 +52,7 @@ import com.ibm.jzos.ZFile;
  * Version 8 - 2024-07
  *  - Reworked error management and fixed few glitches
  *      
- *      
- *      
- *      
- *      
- * Version 10 - 2024-10
+ * Version 9 - 2024-10
  *  - Enhanced the packaging with the Application Descriptor file
  *    and baseline packages which allow full description of interfaces
  *      
