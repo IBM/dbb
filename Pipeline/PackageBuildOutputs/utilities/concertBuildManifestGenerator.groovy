@@ -3,65 +3,60 @@ import groovy.yaml.YamlBuilder
 import com.ibm.dbb.build.report.records.*
 
 /*
- * This is a utility method to generate the Wazi Deploy Application Manifest file  
- * See https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file
- */
-
-/**
- * Initialize application manifest file
- * Should be the constructor
+ * This is a utility method to generate IBM Concert build files
  */
 
 @Field ConcertBuildManifest concertManifest = new ConcertBuildManifest()
 
-def initConcertBuildManifestGenerator(Properties props, String buildNumber) {
+def initConcertBuildManifestGenerator() {
 	// Metadata
 	concertManifest.concert = new Concertdata()
-	concertManifest.concert.builds = new Builds()
-	concertManifest.concert.builds[0].repositories = new Repositories()
-	concertManifest.concert.builds[0].library = new Library()
+	concertManifest.concert.builds = new ArrayList<Build>()
+}
 
-	if (props.application) {
-		concertManifest.concert.builds[0].component_name = props.application
-	} else {
-		concertManifest.concert.builds[0].component_name = "UNDEFINED"
-	} 
-	concertManifest.concert.builds[0].number = buildNumber
-	concertManifest.concert.builds[0].output_file = concertManifest.concert.builds[0].component_name + "_sbom.json"
-
+def addBuild(String application, String version, String buildNumber) {
+	Build build = new Build()
+	build.repositories = new ArrayList<Repository>()
+	build.library = new Library()
+	build.component_name = application
+	build.number = buildNumber
+	build.output_file = application + "_sbom.json"
 	// Metadata information
-	concertManifest.concert.builds[0].version = (props.versionName) ? props.versionName : props.startTime
-
+	build.version = version
+	concertManifest.concert.builds.add(build)
+	return build
 }
 
-def setScmInfo(HashMap<String, String> scmInfoMap) {
-	concertManifest.concert.builds[0].repositories[0].name = concertManifest.concert.builds[0].component_name
-	concertManifest.concert.builds[0].repositories[0].url = scmInfoMap.uri
-	concertManifest.concert.builds[0].repositories[0].branch = scmInfoMap.branch
-	concertManifest.concert.builds[0].repositories[0].commit_sha = scmInfoMap.shortCommit
+def addRepositoryToBuild(Build build, String url, String branch, String shortCommit) {
+	Repository repository = new Repository()
+	repository.name = build.component_name
+	repository.url = url
+	repository.branch = branch
+	repository.commit_sha = shortCommit
+	build.repositories.add(repository)
 }
 
-def setPackageInfo(HashMap<String, String> packageInfoMap) {
-	concertManifest.concert.builds[0].library.scope = 'tar'
-	concertManifest.concert.builds[0].library.name = concertManifest.concert.builds[0].component_name
-	concertManifest.concert.builds[0].library.filename = packageInfoMap.name
-	concertManifest.concert.builds[0].library.version = concertManifest.concert.builds[0].version
-	concertManifest.concert.builds[0].library.url = packageInfoMap.uri
+def addLibraryInfoTobuild(Build build, String filename, String url) {
+	build.library.scope = 'tar'
+	build.library.name = build.component_name
+	build.library.filename = filename
+	build.library.version = build.version
+	build.library.url = url
 }
 
-def setSBOMInfo(String sbomFileName, String sbomSerialNumber) {
-	concertManifest.concert.builds[0].library.cyclonedx_bom_link  = new SBOMInfo()
-	concertManifest.concert.builds[0].library.cyclonedx_bom_link.file = sbomFileName
-	concertManifest.concert.builds[0].library.cyclonedx_bom_link.data = new SBOMdata()
-	concertManifest.concert.builds[0].library.cyclonedx_bom_link.data.serial_number = sbomSerialNumber
-	concertManifest.concert.builds[0].library.cyclonedx_bom_link.data.version = 1
+def addSBOMInfoToBuild(Build build, String sbomFileName, String sbomSerialNumber) {
+	build.library.cyclonedx_bom_link  = new SBOMInfo()
+	build.library.cyclonedx_bom_link.file = sbomFileName
+	build.library.cyclonedx_bom_link.data = new SBOMdata()
+	build.library.cyclonedx_bom_link.data.serial_number = sbomSerialNumber
+	build.library.cyclonedx_bom_link.data.version = 1
 }
 
 /**
  * Write an Concert Build Manifest  a YAML file
  */
 def writeBuildManifest(File yamlFile, String fileEncoding, String verbose){
-	println("** Generate Concert Build  Manifest file to $yamlFile")
+	println("** Generate IBM Concert Build Manifest file to '$yamlFile'")
 	def yamlBuilder = new YamlBuilder()
     
 	yamlBuilder {
@@ -80,7 +75,7 @@ def writeBuildManifest(File yamlFile, String fileEncoding, String verbose){
 }
 
 /**
- * Concert Deploy  Manifest Classes and Helpers
+ * IBM Concert Manifest Classes and Helpers
  */
 
 class ConcertBuildManifest {
@@ -89,19 +84,19 @@ class ConcertBuildManifest {
 }
 
 class Concertdata {
-    Builds[] builds
+    ArrayList<Build> builds
 }
 
-class Builds {
+class Build {
     String component_name
     String output_file
     String number 
     String version
     Library library
-    Repositories[] repositories
+    ArrayList<Repository> repositories
 }
 
-class Repositories {
+class Repository {
     String name
     String url
     String branch

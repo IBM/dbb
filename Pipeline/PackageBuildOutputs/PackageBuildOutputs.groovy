@@ -68,6 +68,7 @@ def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).p
 @Field def rc = 0
 @Field def sbomSerialNumber
 @Field def sbomFileName
+@Field def concertBuild
 
 def startTime = new Date()
 
@@ -105,10 +106,6 @@ def String buildNumber = "UNKNOWN"
 
 // Object to store scm information for Wazi Deploy Application Manifest file
 HashMap<String,String> scmInfo = new HashMap<String, String>()
-
-// Object to store scm information for Wazi Deploy Application Manifest file
-HashMap<String,String> packageInfo = new HashMap<String, String>()
-
 
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
@@ -366,7 +363,7 @@ if (rc == 0) {
 			sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
 			sbomSerialNumber = "url:uuid:" + UUID.randomUUID().toString()
 			sbomFileName = "${buildNumber}_sbom.json" 
-			sbomUtilities.initializeSBOM(props.sbomAuthor,sbomSerialNumber)
+			sbomUtilities.initializeSBOM(props.sbomAuthor, sbomSerialNumber)
 
 		}
 		// Local variables
@@ -378,9 +375,11 @@ if (rc == 0) {
 
 		// Initialize Concert Build Manifest Generator
 		if (props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean()) {
-			concertManifestGeneratorUtilities.initConcertBuildManifestGenerator(props,buildNumber)// Concert Build Manifest
-			concertManifestGeneratorUtilities.setScmInfo(scmInfo)
-			concertManifestGeneratorUtilities.setSBOMInfo(sbomFileName,sbomSerialNumber)
+			// Concert Build Manifest			
+			concertManifestGeneratorUtilities.initConcertBuildManifestGenerator()
+			concertBuild = concertManifestGeneratorUtilities.addBuild(props.application, props.versionName, buildNumber)
+
+			concertManifestGeneratorUtilities.addRepositoryToBuild(concertBuild, scmInfo.uri, scmInfo.branch, scmInfo.shortCommit)
 		}
 		def String tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
 		def tarFile = "$props.workDir/${tarFileName}"
@@ -596,21 +595,18 @@ if (rc == 0) {
 			println ("** Upload package to Artifact Repository '$url'.")
 			artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean(), httpClientVersion)
 
-		// generate PackageInfo for Concert Manifest file   
-			if (props.generateConcertBuildManifest  && props.generateConcertBuildManifest.toBoolean() ) { 
-			
-				packageInfo.put("type", "artifactory")
-				if (url) packageInfo.put("uri", url)
-				if (tarFileName) packageInfo.put("name",tarFileName)
-				// Set package info
-				concertManifestGeneratorUtilities.setPackageInfo(packageInfo)
-			
-				}
+			// generate PackageInfo for Concert Manifest file   
+			if (props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean()) { 
+				concertManifestGeneratorUtilities.addLibraryInfoTobuild(concertBuild, tarFileName, url)
+			}
 		}
 			
 		if (concertManifestGeneratorUtilities && props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean() && rc == 0) {
-			// print concert deploy manifest
 			// concert_build_manifest.yml is the default name of the manifest file
+						
+			if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
+				concertManifestGeneratorUtilities.addSBOMInfoToBuild(concertBuild, sbomFileName, sbomSerialNumber)
+			}			
 			concertManifestGeneratorUtilities.writeBuildManifest(new File("$tempLoadDir/concert_build_manifest.yml"), props.fileEncoding, props.verbose)
 		}
 	}
@@ -851,10 +847,6 @@ def parseInput(String[] cliArgs){
 			println("*! [ERROR] Missing Artifact Repository Password property. It is required when publishing the package via ArtifactRepositoryHelpers.")
 			rc = 2
 		}
-		if (!props.'artifactRepository.directory') {
-			println("*! [ERROR] Missing Artifact Repository Directory property. It is required when publishing the package via ArtifactRepositoryHelpers.")
-			rc = 2
-		}
 	}
 
 	// assess required options to generate Wazi Deploy application manifest
@@ -875,8 +867,8 @@ def parseInput(String[] cliArgs){
 			println("*! [ERROR] Missing branch parameter ('--branch'). It is required for generating the Concert Build Manifest file.")
 			rc = 2
 		}
-		if (!props.publish || !props.publish.toBoolean()) {
-			println("*! [ERROR] Missing package publish parameter. It is required for generating the Concert Build Manifest file.")
+		if (!props.publish) {
+			println("*! [ERROR] Missing publish parameter ('--publish'). It is required for generating the Concert Build Manifest file.")
 			rc = 2
 		}
 	}
