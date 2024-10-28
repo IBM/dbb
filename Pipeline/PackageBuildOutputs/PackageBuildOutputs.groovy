@@ -124,6 +124,7 @@ if (props.applicationFolderPath) {
 
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
+	Map<DeployableArtifact, Map> temporaryBuildOutputsMap = new HashMap<DeployableArtifact, Map>()
 	println("** Read build report data from '${buildReportFile}'.")
 	def jsonOutputFile = new File(buildReportFile)
 
@@ -241,7 +242,8 @@ props.buildReportOrder.each { buildReportFile ->
 						def dependencySetRecord = buildReport.getRecords().find {
 							it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 						}
-						buildOutputsMap.put(new DeployableArtifact(file, deployType, "zFSFile"), [
+						
+						temporaryBuildOutputsMap.put(new DeployableArtifact(file, deployType, "zFSFile"), [
 							container: rootDir,
 							owningApplication: props.application,
 							record: buildRecord,
@@ -257,7 +259,6 @@ props.buildReportOrder.each { buildReportFile ->
 						def fileUsage
 						if (applicationDescriptor && output.deployType.equals("OBJ")) {
 							fileUsage = applicationDescriptorUtils.getFileUsageByType(applicationDescriptor, "Program", member)
-							println("$dataset($member) - ${output.deployType} - $fileUsage") 
 						}
 						// If the artifact is not an Object Deck or has no usage or its usage is not main
 						if ((output.deployType.equals("OBJ") && fileUsage && !fileUsage.equals("main")) || !output.deployType.equals("OBJ")) { 
@@ -266,7 +267,7 @@ props.buildReportOrder.each { buildReportFile ->
 							def dependencySetRecord = buildReport.getRecords().find {
 								it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 							}
-							buildOutputsMap.put(new DeployableArtifact(member, output.deployType, "DatasetMember"), [
+							temporaryBuildOutputsMap.put(new DeployableArtifact(member, output.deployType, "DatasetMember"), [
 								container: dataset,
 								owningApplication: props.application,
 								record: buildRecord,
@@ -280,48 +281,48 @@ props.buildReportOrder.each { buildReportFile ->
 		}
 
 		deletionRecords.each { deleteRecord ->
-				deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
-        		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
-            		
-					String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
-					def (dataset, member) = getDatasetName(cleansedDeletedFile)
-					
-					// search for an existing deployableArtifacts record
-					ArrayList<DeployableArtifact> filteredDeployableArtifacts = new ArrayList()
-					
-					buildOutputsMap.each { DeployableArtifact deployableArtifact, Map info ->
-						if (deployableArtifact.file == deleteRecord.getAttribute("file")) {
-							filteredDeployableArtifacts.add(deployableArtifact, info)
-						}
+			deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
+    		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
+        		
+				String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
+				def (dataset, member) = getDatasetName(cleansedDeletedFile)
+				
+				// search for an existing deployableArtifacts record
+				ArrayList<DeployableArtifact> filteredDeployableArtifacts = new ArrayList()
+				
+				temporaryBuildOutputsMap.each { DeployableArtifact deployableArtifact, Map info ->
+					if (deployableArtifact.file == deleteRecord.getAttribute("file")) {
+						filteredDeployableArtifacts.add(deployableArtifact, info)
 					}
-					
-					if (filteredDeployableArtifacts){
-						filteredDeployableArtifacts.each {deployableArtifact, info ->
-								String container = info.get("container")
-								if (container == dataset && member == deployableArtifact.file) {
-									deployType = deployableArtifact.deployType
-									// remove any existing change
-									buildOutputsMap.remove(deployableArtifact)
-									// add deletion
-									buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
-										container: dataset,
-										owningApplication: props.application,
-										record: buildRecord,
-										propertiesRecord: buildResultPropertiesRecord,
-										dependencySetRecord: dependencySetRecord
-										])
-								}
-							}
-						} else {
-						deployType = dataset.replaceAll(/.*\.([^.]*)/, "\$1") // DELETE_RECORD does not contain deployType attribute. Use LLQ
-							buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
+				}
+				
+				if (filteredDeployableArtifacts){
+					filteredDeployableArtifacts.each {deployableArtifact, info ->
+						String container = info.get("container")
+						if (container == dataset && member == deployableArtifact.file) {
+							deployType = deployableArtifact.deployType
+							// remove any existing change
+							temporaryBuildOutputsMap.remove(deployableArtifact)
+							// add deletion
+							temporaryBuildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
 								container: dataset,
 								owningApplication: props.application,
-								record: deleteRecord,
-								propertiesRecord: buildResultPropertiesRecord
+								record: buildRecord,
+								propertiesRecord: buildResultPropertiesRecord,
+								dependencySetRecord: dependencySetRecord
 								])
 						}
-	        	}
+					}
+				} else {
+					deployType = dataset.replaceAll(/.*\.([^.]*)/, "\$1") // DELETE_RECORD does not contain deployType attribute. Use LLQ
+					temporaryBuildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
+						container: dataset,
+						owningApplication: props.application,
+						record: deleteRecord,
+						propertiesRecord: buildResultPropertiesRecord
+						])
+				}
+        	}
 		}
 
 	
@@ -330,25 +331,14 @@ props.buildReportOrder.each { buildReportFile ->
 			println("** No items to package in '$buildReportFile'.")
 		} else {
 			println("** Deployable artifacts detected in '$buildReportFile':")
-			buildRecords.each { record ->
-				if (record.getType()=="USS_RECORD") {
-					if (!record.getAttribute("outputs").isEmpty()) {
-						ArrayList<ArrayList> outputs = []
-						record.getAttribute("outputs").split(';').collectEntries { entry ->
-							outputs += entry.replaceAll('\\[|\\]', '').split(',')
-						}
-						outputs.each{ output ->
-							rootDir = output[0].trim()
-							file = output[1].trim()
-							deployType = output[2].trim()
-							println("   $rootDir/$file, $deployType")
-						}
-					}
-				} else {
-					record.getOutputs().each {println("   ${it.dataset}, ${it.deployType}")}
-				}
+			temporaryBuildOutputsMap.each { deployableArtifact, info ->
+				String container = info.get("container")
+				String owningApplication = info.get("owningApplication")
+				Record record = info.get("record")
+				PropertiesRecord propertiesRecord = info.get("propertiesRecord")
+				DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
+				println("\t'${deployableArtifact.file}' from '${container}' with Deploy Type '${deployableArtifact.deployType}'")
 			}
-
 		}
 		
 		// Log detected deleted files
@@ -356,6 +346,8 @@ props.buildReportOrder.each { buildReportFile ->
 			println("**  Deleted files detected in '$buildReportFile':")
 			deletionRecords.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
 		}
+		
+		buildOutputsMap.putAll(temporaryBuildOutputsMap)
 	
 		// generate scmInfo for Wazi Deploy Application Manifest file
 		if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
