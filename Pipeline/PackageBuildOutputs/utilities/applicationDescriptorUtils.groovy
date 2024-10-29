@@ -279,10 +279,13 @@ def getFileUsage(ApplicationDescriptor applicationDescriptor, String sourceGroup
 				if (matchingFiles) {
 					if (matchingFiles.size() == 1) {
 						return matchingFiles[0].usage
-					} else {
-						println("*! [WARNING] Multiple Files found matching '${name}'. Skipping search.")
+					} else if (matchingFiles.size() > 1) {
+						println("*! [WARNING] Multiple files found matching '${name}'. Skipping search.")
 						return null
-					}
+					} else {
+						println("*! [WARNING] No file found matching '${name}'. Skipping search.")
+						return null
+          }
 				} else {
 					return null
 				}
@@ -319,10 +322,13 @@ def getFileUsageByType(ApplicationDescriptor applicationDescriptor, String artif
 			}
 			if (allMatchingFiles.size() == 1) {
 				return allMatchingFiles[0].usage
-			} else {
-				println("*! [WARNING] Multiple Files found matching '${name}'. Skipping search.")
+			} else if (allMatchingFiles.size() > 1) {
+			  println("*! [WARNING] Multiple files found matching '${name}'. Skipping search.")
 				return null
-			}
+			} else {
+			  println("*! [WARNING] No file found matching '${name}'. Skipping search.")
+				return null
+      }
 		} else {
 			return null
 		}
