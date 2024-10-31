@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DBB Application Configuration Variables",
+  "description": "DBB Application configuration variables used in the orchestration of DBB builds to override build configuration variables.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "",
+      "pattern": "^1\\.0\\.0$",
+      "errorMessage": "Your IDE configured version of application configuration schema only supports configurations of version 1.0.0."
+    },
+    "application": {
+      "type": "object",
+      "description": "Application Configuration Variables",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the application to override."
+        },
+        "include": {
+          "type": "array",
+          "description": "Included files to merge into configuration.",
+          "items": {
+            "type": "object",
+            "description": "File Include",
+            "additionalProperties": false,
+            "properties": {
+              "file": {
+                "type": "string",
+                "description": "The path of a file."
+              }
+            }
+          }
+        },
+        "tasks": {
+          "type": ["array", "null"],
+          "description": "task variable overrides",
+          "items": {
+            "type": "object",
+            "description": "task variable override",
+            "additionalProperties": false,
+            "properties": {
+              "task": {
+                "type": "string",
+                "description": "Name of an existing task to override"
+              },
+              "sources": {
+                "if": { "type": "array" },
+                "then": {
+                  "type": "array",
+                  "description": "Rule that applies to a list of patterns",
+                  "items": {
+                    "type": "string",
+                    "description": "A glob file pattern for conditional matching"
+                  }
+                },
+                "else": {
+                  "if": { "type": "string" },
+                  "then": {
+                    "type": "string",
+                    "description": "A glob file pattern for conditional matching"
+                  },
+                  "else": { "type": ["array", "string"] }
+                }
+              },
+              "variables": {
+                "type": "array",
+                "description": "",
+                "items": {
+                  "type": "object",
+                  "description": "Properties provided to the current context",
+                  "required": ["name"],
+                  "properties": {
+                    "name": { "$ref": "#/$defs/variableName" },
+                    "value": { "$ref": "#/$defs/variableValue" },
+                    "forFiles": {
+                      "if": { "type": "array" },
+                      "then": {
+                        "type": "array",
+                        "description": "Rule that applies to a list of patterns",
+                        "items": { "$ref": "#/$defs/filePattern" }
+                      },
+                      "else": {
+                        "if": { "type": "string" },
+                        "then": { "$ref": "#/$defs/filePattern" },
+                        "else": { "type": ["array", "string"] }
+                      }
+                    },
+                    "delimiter": {
+                      "description": "The delimiter used when constructing append conditionals or appending lists to this value.",
+                      "type": "string"
+                    },
+                    "restricted": {
+                      "type": "boolean",
+                      "description": "If true, this variable cannot be overridden by included files like the application configuration. Default: false"
+                    },
+                    "select": {
+                      "type": "array",
+                      "description": "",
+                      "items": {
+                        "type": "object",
+                        "description": "A condition and a value to associate with it.",
+                        "required": ["condition"],
+                        "properties": {
+                          "condition": { "$ref": "#/$defs/condition" },
+                          "value": { "$ref": "#/$defs/variableValue" }
+                        }
+                      }
+                    },
+                    "append": {
+                      "type": "array",
+                      "description": "",
+                      "items": {
+                        "type": "object",
+                        "description": "A condition and a value to associate with it.",
+                        "required": ["condition"],
+                        "properties": {
+                          "condition": { "$ref": "#/$defs/condition" },
+                          "value": {
+                            "type": ["string", "boolean", "number", "array"],
+                            "description": "An appended variable value."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "variableName": { "type": "string", "description": "Variable name" },
+    "variableValue": {
+      "description": "Variable value",
+      "type": ["string", "boolean", "number", "array", "object"]
+    },
+    "filePattern": {
+      "type": "string",
+      "description": "A glob file pattern for conditional matching"
+    },
+    "condition": {
+      "type": ["object", "string"],
+      "properties": {
+        "eval": {
+          "type": ["string", "array"],
+          "description": "Conditional statement that will be evaluated by the JEXL Engine.",
+          "items": {
+            "type": "string",
+            "description": "Conditional statement that will be evaluated by the JEXL Engine. All statements must evaluate to true."
+          }
+        },
+        "exists": {
+          "type": ["string", "array"],
+          "description": "Condition is only true if the provided property exists. Evaluations are run after this step if it resolves to true.",
+          "items": {
+            "type": "string",
+            "description": "Condition is only true if the all provided properties exist. Evaluations are run after this step if it resolves to true."
+          }
+        },
+        "notExists": {
+          "type": ["string", "array"],
+          "description": "Condition is only true if the provided property does not exist. Evaluations are run after this step if it resolves to true.",
+          "items": {
+            "type": "string",
+            "description": "Condition is only true if the all provided properties do not exist. Evaluations are run after this step if it resolves to true."
+          }
+        }
+      }
+    }
+  }
+}

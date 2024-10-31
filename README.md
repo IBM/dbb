@@ -38,6 +38,7 @@ Sample | Description
 [Pipeline/RunIDZCodeReview](Pipeline/RunIDZCodeReview) | Post-build script to integrate IBM IDz Code Review application into a pipeline.
 [Pipeline/SimplePackageDeploy](Pipeline/SimplePackageDeploy) | Post-build script to deploy the tar package contents to the target libraries.
 [Scanners](Scanners) | Sample dependency scanner implementations using the extension framework of the DBB toolkit.
+[Schema](Schema) | zBuilder schema used to configure YAML validation for build and application configurations in an IDE.
 [Templates/Common-Backend-Scripts](Templates/Common-Backend-Scripts) | Asset to encapsulate pipeline steps to simplify the pipeline implementation.
 [Utilities/DeletePDS](Utilities/DeletePDS) | Sample script to delete PDSes on z/OS that are no longer needed.
 [Utilities/Jenkins](Utilities/Jenkins) | Utility shell scripts supplied to address issues when running Jenkins remote agents on z/OS UNIX System Services (USS).
