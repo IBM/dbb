@@ -609,6 +609,22 @@ if (rc == 0) {
 				concertManifestGeneratorUtilities.addSBOMInfoToBuild(concertBuild, sbomFileName, sbomSerialNumber)
 			}			
 			concertManifestGeneratorUtilities.writeBuildManifest(new File("$tempLoadDir/concert_build_manifest.yaml"), props.fileEncoding, props.verbose)
+			println("** Add concert build config yaml to tar file at ${tarFile}")
+			// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
+			// To save all attributes to be restored on z/OS and non-z/OS systems : tar -UX
+			def processCmd = [
+				"sh",
+				"-c",
+				"tar rvf $tarFile concert_build_manifest.yaml"
+			]
+	
+			def processRC = runProcess(processCmd, tempLoadDir)
+			rc = Math.max(rc, processRC)
+			if (rc == 0) {
+				println("** Package '${tarFile}' successfully appended with concert manifest yaml.")
+			} else {
+				println("*! [ERROR] Error appending '${tarFile}' with concert manifest yaml rc=$rc.")
+			}
 		}
 	}
 }
