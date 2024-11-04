@@ -888,8 +888,8 @@ def parseInput(String[] cliArgs){
 			println("*! [ERROR] Missing publish parameter ('--publish'). It is required for generating the Concert Build Manifest file.")
 			rc = 2
 		}
-		if (props.bO || props.boFile) {
-			println("*! [ERROR] conflicting parameter ('-bO or -boFile'). IBM Concert Build Manifest file is creating with single builds only.")
+		if (opts.bO || opts.boFile) {
+			println("*! [ERROR] conflicting parameter ('-bO or -boFile'). IBM Concert Build Manifest file is created with single builds only.")
 			rc = 2
 		}
 	}
