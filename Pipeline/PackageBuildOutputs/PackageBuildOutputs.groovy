@@ -63,8 +63,8 @@ import com.ibm.jzos.ZFile;
 @Field Properties props = null
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
-@Field def concertManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/concertBuildManifestGenerator.groovy"))
 @Field def sbomUtilities
+@Field def concertManifestGeneratorUtilities
 @Field def rc = 0
 @Field def sbomSerialNumber
 @Field def sbomFileName
@@ -376,9 +376,10 @@ if (rc == 0) {
 		// Initialize Concert Build Manifest Generator
 		if (props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean()) {
 			// Concert Build Manifest			
+			
+			concertManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/concertBuildManifestGenerator.groovy"))
 			concertManifestGeneratorUtilities.initConcertBuildManifestGenerator()
 			concertBuild = concertManifestGeneratorUtilities.addBuild(props.application, props.versionName, buildNumber)
-
 			concertManifestGeneratorUtilities.addRepositoryToBuild(concertBuild, scmInfo.uri, scmInfo.branch, scmInfo.shortCommit)
 		}
 		def String tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
@@ -602,12 +603,12 @@ if (rc == 0) {
 		}
 			
 		if (concertManifestGeneratorUtilities && props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean() && rc == 0) {
-			// concert_build_manifest.yml is the default name of the manifest file
+			// concert_build_manifest.yaml is the default name of the manifest file
 						
 			if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
 				concertManifestGeneratorUtilities.addSBOMInfoToBuild(concertBuild, sbomFileName, sbomSerialNumber)
 			}			
-			concertManifestGeneratorUtilities.writeBuildManifest(new File("$tempLoadDir/concert_build_manifest.yml"), props.fileEncoding, props.verbose)
+			concertManifestGeneratorUtilities.writeBuildManifest(new File("$tempLoadDir/concert_build_manifest.yaml"), props.fileEncoding, props.verbose)
 		}
 	}
 }

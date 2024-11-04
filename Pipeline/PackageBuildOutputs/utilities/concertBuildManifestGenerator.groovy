@@ -79,7 +79,7 @@ def writeBuildManifest(File yamlFile, String fileEncoding, String verbose){
  */
 
 class ConcertBuildManifest {
-    String specVersion = "1.0.2"
+    String specVersion = "1.0.3"
     Concertdata concert
 }
 

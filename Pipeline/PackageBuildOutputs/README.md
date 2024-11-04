@@ -46,6 +46,9 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
 6. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
     1. Publishes the TAR file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. Consider a Nexus RAW, or a Artifactory Generic as the repository type. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
 
+7. **(Optional) Generate IBM Concert Build manifest**
+   1. Based on the collected build outputs information, the IBM Concert Build Manifest file is generated and saved as concert_build_manifest.yaml. This is a feeder file to publish build information into IBM Concert. It will only be generated if both sbom and packaging options are in effect. 
+
 Notes: 
 * The script doesn't manage the deletions of artifacts. Although they are reported in the DBB Build Reports, deletions are not handled by this script.
 
@@ -566,8 +569,22 @@ As an example, you can invoke the SBOM generation with the following command:
 /usr/lpp/dbb/v2r0/bin/groovyz -cp /u/mdalbin/SBOM/cyclonedx-core-java-8.0.3.jar:/u/mdalbin/SBOM/jackson-annotations-2.16.1.jar:/u/mdalbin/SBOM/jackson-core-2.16.1.jar:/u/mdalbin/SBOM/jackson-databind-2.16.1.jar:/u/mdalbin/SBOM/jackson-dataformat-xml-2.16.1.jar:/u/mdalbin/SBOM/json-schema-validator-1.2.0.jar:/u/mdalbin/SBOM/packageurl-java-1.5.0.jar /u/mdalbin/SBOM/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputsWithSBOM.groovy --workDir /u/ado/workspace/MortgageApplication/feature/consumeRetirementCalculatorServiceImpacts/build-20240312.1/logs --tarFileName MortgageApplication.tar --addExtension -s -sa "David Gilmour <david.gilmour@pinkfloyd.com>"
 ~~~~ 
 
-By default, the SBOM file is generated in the `tempPackageDir` and named `sbom.json`.
+By default, the SBOM file is generated in the `tempPackageDir` and named `<buildnumber>_sbom.json`.
 This way, it is automatically packaged in the TAR file that is created by the script, ensuring the package and its content are not tampered and correctly documented. 
+
+## IBM Concert Build (SBOM) manifest generation
+
+This `PackageBuildOutputs.groovy` script is able to generate an IBM Concert SBOM file based on the information contained in the DBB Build Report and the published package information. The output is a yaml file that adheres to IBM Concert build configuration yaml format. The generation of the CycloneDX SBOM is a pre-requisite as the IBM Concert file will redirect to CycloneDX for detailed information about the build outputs. 
+
+To enable the generation of the IBM Concert manifest/config file, the `-ic/--generateConcertBuildManifest` flag must be passed.
+
+As an example, you can invoke IBM Concert generation with the following command:
+
+~~~~
+/usr/lpp/dbb/v2r0/bin/groovyz -cp /u/mdalbin/SBOM/cyclonedx-core-java-8.0.3.jar:/u/mdalbin/SBOM/jackson-annotations-2.16.1.jar:/u/mdalbin/SBOM/jackson-core-2.16.1.jar:/u/mdalbin/SBOM/jackson-databind-2.16.1.jar:/u/mdalbin/SBOM/jackson-dataformat-xml-2.16.1.jar:/u/mdalbin/SBOM/json-schema-validator-1.2.0.jar:/u/mdalbin/SBOM/packageurl-java-1.5.0.jar /u/mdalbin/SBOM/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputsWithSBOM.groovy --workDir /u/ado/workspace/MortgageApplication/feature/consumeRetirementCalculatorServiceImpacts/build-20240312.1/logs --tarFileName MortgageApplication.tar --addExtension -s -sa "David Gilmour <david.gilmour@pinkfloyd.com>" -ic
+~~~~ 
+
+By default, the concert build manifest file is generated in the `tempPackageDir` and named `concert_build_manifest.yaml`. 
 
 
 ## Useful reference material
