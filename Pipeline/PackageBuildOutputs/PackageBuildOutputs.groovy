@@ -615,7 +615,7 @@ if (rc == 0) {
 			def processCmd = [
 				"sh",
 				"-c",
-				"tar rvf $tarFile concert_build_manifest.yaml"
+				"tar rUXf $tarFile concert_build_manifest.yaml"
 			]
 	
 			def processRC = runProcess(processCmd, tempLoadDir)
