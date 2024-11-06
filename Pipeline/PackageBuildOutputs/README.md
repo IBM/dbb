@@ -574,7 +574,7 @@ This way, it is automatically packaged in the TAR file that is created by the sc
 
 ## IBM Concert Build manifest generation
 
-This `PackageBuildOutputs.groovy` script is able to generate an IBM Concert SBOM file based on the information contained in the DBB Build Report and the published package information. The output is a yaml file that adheres to IBM Concert build configuration yaml format. The generation of the CycloneDX SBOM is a pre-requisite as the IBM Concert file will redirect to CycloneDX for detailed information about the build outputs. 
+This `PackageBuildOutputs.groovy` script is able to generate an IBM Concert Build manifest based on the information contained in the DBB Build Report and the published package information. The output is a YAML file that adheres to IBM Concert Build specification YAML format. The generation of the CycloneDX SBOM is a pre-requisite as the IBM Concert Build manifest will reference the CycloneDX SBOM file for detailed information about the build outputs.
 
 To enable the generation of the IBM Concert manifest/config file, the `-ic/--generateConcertBuildManifest` flag must be passed.
 
