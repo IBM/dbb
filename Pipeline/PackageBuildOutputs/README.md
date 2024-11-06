@@ -572,7 +572,7 @@ As an example, you can invoke the SBOM generation with the following command:
 By default, the SBOM file is generated in the `tempPackageDir` and named `<buildnumber>_sbom.json`.
 This way, it is automatically packaged in the TAR file that is created by the script, ensuring the package and its content are not tampered and correctly documented. 
 
-## IBM Concert Build (SBOM) manifest generation
+## IBM Concert Build manifest generation
 
 This `PackageBuildOutputs.groovy` script is able to generate an IBM Concert SBOM file based on the information contained in the DBB Build Report and the published package information. The output is a yaml file that adheres to IBM Concert build configuration yaml format. The generation of the CycloneDX SBOM is a pre-requisite as the IBM Concert file will redirect to CycloneDX for detailed information about the build outputs. 
 
