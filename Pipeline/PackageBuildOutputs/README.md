@@ -578,7 +578,7 @@ This `PackageBuildOutputs.groovy` script is able to generate an IBM Concert Buil
 
 To enable the generation of the IBM Concert Build manifest, the `-ic/--generateConcertBuildManifest` flag must be passed.
 
-As an example, you can invoke IBM Concert generation with the following command:
+As an example, you can invoke the generation of an IBM Concert Build manifest with the following command:
 
 ~~~~
 /usr/lpp/dbb/v2r0/bin/groovyz -cp /u/mdalbin/SBOM/cyclonedx-core-java-8.0.3.jar:/u/mdalbin/SBOM/jackson-annotations-2.16.1.jar:/u/mdalbin/SBOM/jackson-core-2.16.1.jar:/u/mdalbin/SBOM/jackson-databind-2.16.1.jar:/u/mdalbin/SBOM/jackson-dataformat-xml-2.16.1.jar:/u/mdalbin/SBOM/json-schema-validator-1.2.0.jar:/u/mdalbin/SBOM/packageurl-java-1.5.0.jar /u/mdalbin/SBOM/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputsWithSBOM.groovy --workDir /u/ado/workspace/MortgageApplication/feature/consumeRetirementCalculatorServiceImpacts/build-20240312.1/logs --tarFileName MortgageApplication.tar --addExtension -s -sa "David Gilmour <david.gilmour@pinkfloyd.com>" -ic
