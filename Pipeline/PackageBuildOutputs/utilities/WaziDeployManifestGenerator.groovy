@@ -1,5 +1,6 @@
 import groovy.transform.*
 import groovy.yaml.YamlBuilder
+import groovy.yaml.YamlSlurper
 import com.ibm.dbb.build.report.records.*
 
 /*
@@ -35,10 +36,35 @@ def initWaziDeployManifestGenerator(Properties props) {
 	wdManifest.metadata.annotations.creationTimestamp = props.startTime
 }
 
+def readWaziDeployManifestFile(File yamlFile, Properties props) {
+
+	def yamlSlurper = new YamlSlurper()
+	wdManifest = yamlSlurper.parse(yamlFile)
+	
+	// Metadata
+	wdManifest.metadata = new Metadata()
+
+	if (props.application) {
+		wdManifest.metadata.description = props.application
+		wdManifest.metadata.name = props.application
+	} else {
+		wdManifest.metadata.description = "UNDEFINED"
+		wdManifest.metadata.name = "UNDEFINED"
+	}
+
+	// Metadata information
+	wdManifest.metadata.version = (props.versionName) ? props.versionName : props.startTime
+	if (props.application) wdManifest.metadata.name = props.application
+
+	// Annotations
+	wdManifest.metadata.annotations = new Annotations()
+	wdManifest.metadata.annotations.creationTimestamp = props.startTime
+}
+
 /**
  * Append Artifact Record to Wazi Deploy Application Manifest 
  */
-def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, String path, Record record, PropertiesRecord propertiesRecord){
+def appendArtifactToManifest(DeployableArtifact deployableArtifact, String path, Record record, DependencySetRecord dependencySetRecord, PropertiesRecord propertiesRecord) {
 
 	Artifact artifact = new Artifact()
 	artifact.name = deployableArtifact.file
@@ -62,21 +88,87 @@ def appendArtifactToAppManifest(DeployableArtifact deployableArtifact, String pa
 		}
 	}
 	// add type
-	artifact.type =deployableArtifact.deployType
+	artifact.type = deployableArtifact.deployType
 
 	// add hash
 	def gitHashInfo = retrieveBuildResultProperty (propertiesRecord, "githash")
 	artifact.hash =  (gitHashInfo) ? gitHashInfo : "UNDEFINED"
 
 	// adding artifact into applicationManifest
-	if (!wdManifest.artifacts) wdManifest.artifacts = new ArrayList<Artifact>()
+	if (!wdManifest.artifacts) {
+		wdManifest.artifacts = new ArrayList<Artifact>()
+	} else {
+		// Search for existing artifact with the same name and deployType
+		// Build another ArrayList with artifacts to be removed
+		ArrayList<Artifact> artifactsToBeRemoved = new ArrayList<Artifact>()
+		 
+		wdManifest.artifacts.each { searchedArtifact ->
+			if (searchedArtifact.name.equals(artifact.name) && searchedArtifact.type.equals(artifact.type)) {
+				artifactsToBeRemoved.add(searchedArtifact)
+			} 
+		}
+		if (!artifactsToBeRemoved.isEmpty()) {
+			wdManifest.artifacts.removeAll(artifactsToBeRemoved)
+		}
+	}
+	
 	wdManifest.artifacts.add(artifact)
 }
 
 /**
+ * Update Artifact Record to Wazi Deploy Application Manifest 
+ */
+def updateArtifactPathToManifest(String artifactName, String artifactType, String newPath) {
+	def searchedArtifacts = wdManifest.artifacts.findAll() { artifact ->
+		artifact.name.equals(artifactName) && artifact.type.equals(artifactType)
+	}
+	
+	if (searchedArtifacts) {
+		if (searchedArtifacts.size() == 1) {
+			def pathProperty = searchedArtifacts.first().properties.find() { property ->
+				property.key.equals("path")
+			}
+			if (pathProperty) {
+				pathProperty.value = newPath
+			}
+			return 0
+		} else if (searchedArtifacts.size() > 1) {
+			println("*! [ERROR] Can't update path for '${artifactName}.${artifactType}'. Multiple entries in Wazi Deploy Manifest file.")
+			return 1
+		}
+	} else {
+		println("*! [ERROR] Can't update path for '${artifactName}.${artifactType}'. No matching entry in Wazi Deploy Manifest file.")
+		return 1
+	}
+}
+
+/**
+ * Remove Artifact Record to Wazi Deploy Application Manifest 
+ */
+def removeArtifactFromManifest(String artifactName, String artifactType) {
+	def searchedArtifacts = wdManifest.artifacts.findAll() { artifact ->
+		artifact.name.equals(artifactName) && artifact.type.equals(artifactType)
+	}
+	
+	if (searchedArtifacts) {
+		if (searchedArtifacts.size() == 1) {
+			wdManifest.artifacts.remove(searchedArtifacts[0])
+			return 0
+		} else if (searchedArtifacts.size() > 1) {
+			println("*! [ERROR] Can't remove artifact '${artifactName}.${artifactType}'. Multiple entries in Wazi Deploy Manifest file.")
+			return 1
+		}
+	} else {
+		println("*! [ERROR] Can't remove artifact '${artifactName}.${artifactType}'. No matching entry in Wazi Deploy Manifest file.")
+		return 1
+	}
+}
+
+
+/**
  * Append Artifact Deletion Record to Wazi Deploy Application Manifest 
  */
-def appendArtifactDeletionToAppManifest(DeployableArtifact deployableArtifact, String path, Record record, PropertiesRecord propertiesRecord){
+def appendArtifactDeletionToManifest(DeployableArtifact deployableArtifact, String path, Record record, PropertiesRecord propertiesRecord) {
 
 	Artifact deleted_artifact = new Artifact()
 	deleted_artifact.name = deployableArtifact.file
@@ -168,8 +260,7 @@ def writeApplicationManifest(File yamlFile, String fileEncoding, String verbose)
 }
 
 private def retrieveBuildResultProperty(PropertiesRecord buildResultPropertiesRecord, String propertyName) {
-
-	if (buildResultPropertiesRecord!=null) {
+	if (buildResultPropertiesRecord != null) {
 		def buildResultProperties = buildResultPropertiesRecord.getProperties()
 
 		def property = buildResultProperties.find {
@@ -178,8 +269,7 @@ private def retrieveBuildResultProperty(PropertiesRecord buildResultPropertiesRe
 
 		if (property) {
 			return property.getValue()
-		} else
-		{
+		} else {
 			return null
 		}
 	}
