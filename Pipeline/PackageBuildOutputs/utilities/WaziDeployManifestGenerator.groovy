@@ -2,6 +2,7 @@ import groovy.transform.*
 import groovy.yaml.YamlBuilder
 import groovy.yaml.YamlSlurper
 import com.ibm.dbb.build.report.records.*
+import com.ibm.dbb.dependency.*
 
 /*
  * This is a utility method to generate the Wazi Deploy Application Manifest file  
@@ -87,6 +88,17 @@ def appendArtifactToManifest(DeployableArtifact deployableArtifact, String path,
 			}
 		}
 	}
+
+	if (dependencySetRecord) {
+		// init the dependency set object
+		DependencySet dependencySet = new DependencySet()
+		dependencySetRecord.getAllDependencies().each { PhysicalDependency pDep ->
+			// add the dependencies to the arraylist
+			dependencySet.value.add(pDep)
+		}
+		artifact.properties.add(dependencySet)
+	}
+
 	// add type
 	artifact.type = deployableArtifact.deployType
 
@@ -207,11 +219,37 @@ def appendArtifactDeletionToManifest(DeployableArtifact deployableArtifact, Stri
 
 }
 
+/**
+ * Set scm info for application manifest
+ */
 
 def setScmInfo(HashMap<String, String> scmInfoMap) {
 	wdManifest.metadata.annotations.scmInfo = new ScmInfo()
 	scmInfoMap.each { k, v ->
 		wdManifest.metadata.annotations.scmInfo."$k" = v
+	}
+}
+
+/**
+ * Set package info for application manifest
+ */
+
+def setPackageInfo(HashMap<String, String> packageInfoMap) {
+	wdManifest.metadata.annotations.packageInfo = new PackageInfo()
+	packageInfoMap.each { k, v ->
+		wdManifest.metadata.annotations.packageInfo."$k" = v
+	}
+}
+
+/**
+ * Set external dependencies to metadata/annotations/external_dependencies 
+ */
+
+def setExternalDependencies(File externalDependenciesEvidenceFile) {
+	def yamlSlurper = new YamlSlurper()
+	if (externalDependenciesEvidenceFile.exists()) {
+		ArrayList<ExternalDependency> externalDependenciesEvidences = yamlSlurper.parse(externalDependenciesEvidenceFile)
+		wdManifest.metadata.annotations.external_dependencies = externalDependenciesEvidences
 	}
 }
 
@@ -298,6 +336,8 @@ class Annotations {
 	String creationTimestamp
 	ScmInfo scmInfo
 	PackageInfo packageInfo
+	ArrayList<ExternalDependency> external_dependencies
+	ArrayList buildInfo
 }
 
 class ScmInfo {
@@ -310,7 +350,7 @@ class ScmInfo {
 class PackageInfo {
 	String name
 	String description
-	Properties properties
+	//Properties properties
 	String uri
 	String type
 }
@@ -324,6 +364,25 @@ class Artifact {
 }
 
 class ElementProperty {
+	String key
+	String value
+}
+class DependencySet{
+	String key = "dependency_set"
+	ArrayList<PhysicalDependency> value = new ArrayList<>()
+}
+
+/**
+ * External Dependencies
+ */
+
+class ExternalDependency {
+	String name
+	String type
+	HashSet<Property> properties = new HashSet<>()
+}
+
+class Property {
 	String key
 	String value
 }
