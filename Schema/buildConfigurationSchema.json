@@ -1,0 +1,913 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DBB Build Configuration Variables",
+  "description": "DBB Build configuration variables used in the orchestration of DBB builds.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "The version of DBB build configuration schema being used for this configuration. This field does not validate anything when used inside of an IDE. It will only be validated at runtime."
+    },
+    "include": {
+      "type": ["array", "null"],
+      "description": "Included files to merge into configuration.",
+      "items": {
+        "if": { "type": "object", "required": ["application"] },
+        "then": {
+          "type": "object",
+          "description": "Application Include",
+          "additionalProperties": false,
+          "required": ["file", "application"],
+          "properties": {
+            "application": {
+              "type": "string",
+              "description": "The path of a file to be included."
+            },
+            "file": { "$ref": "#/$defs/file" }
+          }
+        },
+        "else": {
+          "type": "object",
+          "description": "File Include",
+          "additionalProperties": false,
+          "properties": { "file": { "$ref": "#/$defs/file" } }
+        }
+      }
+    },
+    "variables": {
+      "$ref": "#/$defs/variables",
+      "description": "Global variables."
+    },
+    "lifecycles": {
+      "type": ["array", "null"],
+      "description": "Lifecycle configurations",
+      "items": {
+        "type": "object",
+        "description": "Full build configuration",
+        "additionalProperties": false,
+        "required": ["lifecycle"],
+        "properties": {
+          "lifecycle": {
+            "type": "string",
+            "description": "Name of the build configuration"
+          },
+          "comment": { "$ref": "#/$defs/comment" },
+          "variables": { "$ref": "#/$defs/variables" },
+          "cli": {
+            "type": "object",
+            "description": "Create a new command for the DBB CLI",
+            "additionalProperties": false,
+            "properties": {
+              "usage": {
+                "type": "string",
+                "description": "DBB CLI Command string."
+              },
+              "options": {
+                "type": "array",
+                "description": "DBB CLI Options",
+                "items": {
+                  "type": "object",
+                  "description": "DBB CLI Option",
+                  "additionalProperties": false,
+                  "anyOf": [
+                    { "required": ["longOption"] },
+                    { "required": ["option"] }
+                  ],
+                  "properties": {
+                    "option": {
+                      "type": "string",
+                      "description": "Option shorthand keyword"
+                    },
+                    "longOption": {
+                      "type": "string",
+                      "description": "Option keyword"
+                    },
+                    "hasArg": {
+                      "type": "boolean",
+                      "description": "Accepts an argument with the option"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Description of the CLI option"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "tasks": {
+            "type": ["array", "null"],
+            "description": "Specify which tasks a build configuration will use",
+            "items": {
+              "if": { "type": "string" },
+              "then": { "$ref": "#/$defs/taskString" },
+              "else": {
+                "if": { "type": ["object"], "required": ["class"] },
+                "then": { "$ref": "#/$defs/classTask" },
+                "else": {
+                  "if": { "type": ["object"] },
+                  "then": { "$ref": "#/$defs/basicTask" },
+                  "else": { "type": ["object", "string"] }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tasks": {
+      "type": ["array", "null"],
+      "description": "Reusable task configurations",
+      "items": {
+        "if": { "type": "object", "required": ["stage"] },
+        "then": {
+          "type": "object",
+          "description": "List task configuration",
+          "additionalProperties": false,
+          "required": ["stage", "tasks"],
+          "properties": {
+            "stage": {
+              "type": "string",
+              "description": "Name of the task list."
+            },
+            "comment": { "$ref": "#/$defs/comment" },
+            "condition": { "$ref": "#/$defs/condition" },
+            "tasks": {
+              "type": ["array", "null"],
+              "items": {
+                "if": { "type": "string" },
+                "then": { "$ref": "#/$defs/task" },
+                "else": {
+                  "if": { "type": "object", "required": ["language"] },
+                  "then": { "$ref": "#/$defs/languageTask" },
+                  "else": {
+                    "if": { "type": "object", "required": ["class"] },
+                    "then": { "$ref": "#/$defs/classTask" },
+                    "else": { "$ref": "#/$defs/basicTask" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "else": {
+          "if": { "type": "object", "required": ["language"] },
+          "then": { "$ref": "#/$defs/languageTask" },
+          "else": {
+            "if": { "type": "object", "required": ["class"] },
+            "then": { "$ref": "#/$defs/classTask" },
+            "else": { "$ref": "#/$defs/basicTask" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "file": { "type": "string", "description": "The path of a file." },
+    "task": {
+      "type": "string",
+      "description": "Name of task that maps to a script"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of an object, like which type of task it is."
+    },
+    "comment": {
+      "type": "string",
+      "description": "Comment printed to standard output during build execution"
+    },
+    "condition": {
+      "type": ["object", "string"],
+      "properties": {
+        "eval": {
+          "type": ["string", "array"],
+          "description": "Conditional statement that will be evaluated by the JEXL Engine.",
+          "items": {
+            "type": "string",
+            "description": "Conditional statement that will be evaluated by the JEXL Engine. All statements must evaluate to true."
+          }
+        },
+        "exists": {
+          "type": ["string", "array"],
+          "description": "Condition is only true if the provided property exists. Evaluations are run after this step if it resolves to true.",
+          "items": {
+            "type": "string",
+            "description": "Condition is only true if the all provided properties exist. Evaluations are run after this step if it resolves to true."
+          }
+        },
+        "notExists": {
+          "type": ["string", "array"],
+          "description": "Condition is only true if the provided property does not exist. Evaluations are run after this step if it resolves to true.",
+          "items": {
+            "type": "string",
+            "description": "Condition is only true if the all provided properties do not exist. Evaluations are run after this step if it resolves to true."
+          }
+        }
+      }
+    },
+    "maxRC": {
+      "type": ["number", "string"],
+      "description": "Maximum tolerable RC before throwing an error"
+    },
+    "volser": {
+      "type": "string",
+      "description": "The volume serial of the source dataset."
+    },
+    "step": {
+      "type": "string",
+      "description": "Name of the step"
+    },
+    "filePattern": {
+      "type": "string",
+      "description": "A glob file pattern for conditional matching"
+    },
+    "forFiles": {
+      "if": { "type": ["string"] },
+      "then": { "$ref": "#/$defs/filePattern" },
+      "else": {
+        "type": "array",
+        "description": "Rule that applies to a list of patterns",
+        "items": { "$ref": "#/$defs/filePattern" }
+      }
+    },
+    "variableName": { "type": "string", "description": "Variable name" },
+    "variableValue": {
+      "description": "Variable value",
+      "type": ["string", "boolean", "number", "array", "object"]
+    },
+    "variables": {
+      "type": ["array", "null"],
+      "description": "",
+      "items": {
+        "type": "object",
+        "description": "Properties provided to the current context",
+        "required": ["name"],
+        "properties": {
+          "name": { "$ref": "#/$defs/variableName" },
+          "value": { "$ref": "#/$defs/variableValue" },
+          "forFiles": { "$ref": "#/$defs/forFiles" },
+          "delimiter": {
+            "description": "The delimiter used when constructing append conditionals or appending lists to this value.",
+            "type": "string"
+          },
+          "restricted": {
+            "type": "boolean",
+            "description": "If true, this variable cannot be overridden by included files like the application configuration. Default: false"
+          },
+          "select": {
+            "type": "array",
+            "description": "",
+            "items": {
+              "type": "object",
+              "description": "A condition and a value to associate with it.",
+              "required": ["condition", "value"],
+              "properties": {
+                "condition": { "$ref": "#/$defs/condition" },
+                "value": { "$ref": "#/$defs/variableValue" }
+              }
+            }
+          },
+          "append": {
+            "type": "array",
+            "description": "",
+            "items": {
+              "type": "object",
+              "description": "A condition and a value to associate with it.",
+              "required": ["condition", "value"],
+              "properties": {
+                "condition": { "$ref": "#/$defs/condition" },
+                "value": {
+                  "type": ["string", "boolean", "number", "array"],
+                  "description": "An appended variable value."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "taskString": {
+      "type": "string",
+      "description": "Name only string specifying a task script with the same name"
+    },
+    "basicTask": {
+      "type": "object",
+      "description": "Basic task configuration",
+      "additionalProperties": false,
+      "required": ["task"],
+      "properties": {
+        "task": { "$ref": "#/$defs/task" },
+        "comment": { "$ref": "#/$defs/comment" },
+        "condition": { "$ref": "#/$defs/condition" },
+        "script": {
+          "type": "string",
+          "description": "Location of the script relative to source directory"
+        },
+        "variables": { "$ref": "#/$defs/variables" }
+      }
+    },
+    "classTask": {
+      "type": "object",
+      "description": "Java task configuration",
+      "additionalProperties": false,
+      "required": ["task", "class"],
+      "properties": {
+        "task": { "$ref": "#/$defs/task" },
+        "comment": { "$ref": "#/$defs/comment" },
+        "condition": { "$ref": "#/$defs/condition" },
+        "class": { "type": "string", "description": "Java class package" },
+        "variables": { "$ref": "#/$defs/variables" }
+      }
+    },
+    "copyOptions": {
+      "type": "string",
+      "description": "For hfs, hfs and dataset, dataset 'cp' options"
+    },
+    "languageTask": {
+      "type": "object",
+      "description": "Language task configuration",
+      "additionalProperties": false,
+      "required": ["language"],
+      "properties": {
+        "language": {
+          "type": "string",
+          "description": "Name of the language task"
+        },
+        "comment": { "$ref": "#/$defs/comment" },
+        "condition": { "$ref": "#/$defs/condition" },
+        "sources": { "$ref": "#/$defs/forFiles" },
+        "datasets": {
+          "type": "array",
+          "description": "Datasets to be created during build process",
+          "items": {
+            "type": "object",
+            "description": "Dataset definition",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "options": {
+                "type": "string",
+                "description": "Space delimited BPXWDYN options"
+              }
+            }
+          }
+        },
+        "options": {
+          "type": "string",
+          "description": "BPXWDYN creation options"
+        },
+        "variables": { "$ref": "#/$defs/variables" },
+        "steps": {
+          "type": ["array", "null"],
+          "description": "List of steps for the task to execute",
+          "items": {
+            "if": {
+              "required": ["type"],
+              "properties": {
+                "type": { "type": "string", "pattern": "^[cC][oO][pP][yY]$" }
+              }
+            },
+            "then": {
+              "type": "object",
+              "description": "Copy step configuration",
+              "additionalProperties": false,
+              "required": ["step", "type", "source", "target"],
+              "properties": {
+                "step": { "$ref": "#/$defs/step" },
+                "type": {
+                  "$ref": "#/$defs/type",
+                  "description": "Type of the step execution e.g. copy, mvs, tso, etc."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Source file or dataset"
+                },
+                "target": {
+                  "type": "string",
+                  "description": "Target file or dataset"
+                },
+                "comment": { "$ref": "#/$defs/comment" },
+                "condition": { "$ref": "#/$defs/condition" },
+                "maxRC": { "$ref": "#/$defs/maxRC" },
+                "options": {
+                  "if": { "type": ["string"] },
+                  "then": { "$ref": "#/$defs/copyOptions" },
+                  "else": {
+                    "type": "array",
+                    "description": "",
+                    "items": { "$ref": "#/$defs/copyOptions" }
+                  }
+                },
+                "append": {
+                  "type": ["boolean", "string"],
+                  "description": "Appends output to the target instead of overwriting"
+                },
+                "volser": { "$ref": "#/$defs/volser" },
+                "sourceEncoding": {
+                  "type": "string",
+                  "description": "Expected encoding of the source"
+                },
+                "targetEncoding": {
+                  "type": "string",
+                  "description": "Desired encoding of the target"
+                },
+                "copyMode": {
+                  "type": "string",
+                  "description": "Data copy mode, e.g. TEXT, BINARY"
+                },
+                "deployType": {
+                  "type": "string",
+                  "description": "The CopyToPDS deploy type"
+                },
+                "dependencyCopy": {
+                  "type": "array",
+                  "description": "Configuration options for copying dependencies",
+                  "items": {
+                    "type": "object",
+                    "description": "",
+                    "additionalProperties": false,
+                    "properties": {
+                      "search": {
+                        "type": "string",
+                        "description": "Search path configuration string. Usage: `search:{SOURCEDIR}?path={GLOB_EXTENSIONS}`"
+                      },
+                      "mappings": {
+                        "type": "array",
+                        "description": "CopyToPDS mappings",
+                        "items": {
+                          "type": "object",
+                          "description": "",
+                          "additionalProperties": false,
+                          "properties": {
+                            "source": {
+                              "type": "string",
+                              "description": "Glob expression matching searched files"
+                            },
+                            "dataset": {
+                              "type": "string",
+                              "description": "Target dataset"
+                            },
+                            "copyMode": {
+                              "type": "string",
+                              "description": "The CopyToPDS CopyMode"
+                            },
+                            "volser": { "$ref": "#/$defs/volser" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "if": {
+                "required": ["type"],
+                "properties": {
+                  "type": { "type": "string", "pattern": "^[mM][vV][sS]$" }
+                }
+              },
+              "then": {
+                "type": "object",
+                "description": "mvs Exec step configuration",
+                "additionalProperties": false,
+                "required": ["step", "type", "pgm"],
+                "properties": {
+                  "step": { "$ref": "#/$defs/step" },
+                  "type": { "$ref": "#/$defs/type" },
+                  "comment": { "$ref": "#/$defs/comment" },
+                  "condition": { "$ref": "#/$defs/condition" },
+                  "maxRC": { "$ref": "#/$defs/maxRC" },
+                  "pgm": {
+                    "type": "string",
+                    "description": "Name of the MVS program to execute"
+                  },
+                  "parm": {
+                    "type": "string",
+                    "description": "Parameters for the MVS program"
+                  },
+                  "ddnameSubstitution": {
+                    "type": "string",
+                    "description": "DDName substitution list for IBM compilers"
+                  },
+                  "free": {
+                    "type": ["boolean", "string"],
+                    "description": "Free all program allocated temporary datasets. Default: false"
+                  },
+                  "dds": { "$ref": "#/$defs/dds" }
+                }
+              },
+              "else": {
+                "if": {
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "pattern": "^([tT][sS][oO]|[iI][sS][pP][fF])$"
+                    }
+                  }
+                },
+                "then": {
+                  "type": "object",
+                  "description": "TSO/ISPF step configuration",
+                  "additionalProperties": false,
+                  "required": ["step", "type", "command"],
+                  "properties": {
+                    "step": { "$ref": "#/$defs/step" },
+                    "type": { "$ref": "#/$defs/type" },
+                    "comment": { "$ref": "#/$defs/comment" },
+                    "condition": { "$ref": "#/$defs/condition" },
+                    "maxRC": { "$ref": "#/$defs/maxRC" },
+                    "command": {
+                      "type": "string",
+                      "description": "TSO/ISPF command"
+                    },
+                    "options": {
+                      "type": "string",
+                      "description": "Set the options to pass to the command"
+                    },
+                    "confDir": {
+                      "type": "string",
+                      "description": "The configuration directory where runIspf.sh could be found."
+                    },
+                    "log": {
+                      "type": "string",
+                      "description": "Set the path to the log file"
+                    },
+                    "logLevel": {
+                      "type": ["number", "string"],
+                      "description": "Set the log level for the interactive Gateway"
+                    },
+                    "logEncoding": {
+                      "type": "string",
+                      "description": "Set the encoding for the log file this command creates"
+                    },
+                    "keep": {
+                      "type": ["boolean", "string"],
+                      "description": "Set if the REXX command data set should be kept. By default this data set will be deleted after execution."
+                    },
+                    "gateway": {
+                      "type": "string",
+                      "description": "Set the gateway type, either interactive or legacy gateway"
+                    },
+                    "reuse": {
+                      "type": ["boolean", "string"],
+                      "description": "Set whether an existing TSO/ISPF session should be used"
+                    },
+                    "procedure": {
+                      "type": "string",
+                      "description": "Set the procedure name for the interactive Gateway"
+                    },
+                    "account": {
+                      "type": "string",
+                      "description": "Set the account number for the interactive Gateway"
+                    },
+                    "group": {
+                      "type": "string",
+                      "description": "Set the group ID for the interactive Gateway"
+                    },
+                    "region": {
+                      "type": ["string", "number"],
+                      "description": "Set the region size for the interactive Gateway"
+                    },
+                    "dds": { "$ref": "#/$defs/dds" }
+                  }
+                },
+                "else": {
+                  "if": {
+                    "required": ["type"],
+                    "properties": {
+                      "type": { "type": "string", "pattern": "^[jJ][oO][bB]$" }
+                    }
+                  },
+                  "then": {
+                    "type": "object",
+                    "description": "job step configuration",
+                    "additionalProperties": false,
+                    "required": ["step", "type"],
+                    "properties": {
+                      "step": { "$ref": "#/$defs/step" },
+                      "type": { "$ref": "#/$defs/type" },
+                      "comment": { "$ref": "#/$defs/comment" },
+                      "condition": { "$ref": "#/$defs/condition" },
+                      "maxRC": { "$ref": "#/$defs/maxRC" },
+                      "source": {
+                        "type": "string",
+                        "description": "Source file or dataset member that contains the JCL to submit"
+                      },
+                      "text": {
+                        "type": "string",
+                        "description": "JCL source contained in a string"
+                      },
+                      "timeout": {
+                        "type": ["number", "string"],
+                        "description": "Number of seconds to wait until the JobExec times out. Default 1 hour"
+                      },
+                      "volser": { "$ref": "#/$defs/volser" },
+                      "sourceEncoding": {
+                        "type": "string",
+                        "description": "The codepage of the source JCL"
+                      },
+                      "logs": {
+                        "type": "array",
+                        "description": "list of log definitions used to save JCL output to USS",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["log", "ddname"],
+                          "properties": {
+                            "log": {
+                              "type": "string",
+                              "description": "USS file to save the output to"
+                            },
+                            "ddname": {
+                              "type": "string",
+                              "description": "The name of the DD to save. Use '*' to save all DD output"
+                            },
+                            "sourceEncoding": {
+                              "type": "string",
+                              "description": "The codepage of the JES output DD"
+                            },
+                            "logEncoding": {
+                              "type": "string",
+                              "description": "The codepage for the copied log"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "if": {
+                      "required": ["type"],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "pattern": "^[uU][nN][iI][xX]$"
+                        }
+                      }
+                    },
+                    "then": {
+                      "type": "object",
+                      "description": "unix step configuration",
+                      "additionalProperties": false,
+                      "required": ["step", "type", "command"],
+                      "properties": {
+                        "step": { "$ref": "#/$defs/step" },
+                        "type": { "$ref": "#/$defs/type" },
+                        "comment": { "$ref": "#/$defs/comment" },
+                        "condition": { "$ref": "#/$defs/condition" },
+                        "maxRC": { "$ref": "#/$defs/maxRC" },
+                        "command": {
+                          "type": "string",
+                          "description": "Unix command to execute"
+                        },
+                        "options": {
+                          "type": "array",
+                          "description": "Unix options",
+                          "items": {
+                            "type": "string",
+                            "description": "Unix option"
+                          }
+                        },
+                        "log": {
+                          "type": "string",
+                          "description": "File name to write stdout to"
+                        },
+                        "logEncoding": {
+                          "type": "string",
+                          "description": "Log codepage"
+                        },
+                        "errorLog": {
+                          "type": "string",
+                          "description": "File name to write stderr to"
+                        },
+                        "errorEncoding": {
+                          "type": "string",
+                          "description": "Error log encoding"
+                        },
+                        "mergeErrors": {
+                          "type": ["boolean", "string"],
+                          "description": "Flag indicating to write stderr to output log file"
+                        },
+                        "workingDirectory": {
+                          "type": "string",
+                          "description": "The Unix command working directory"
+                        },
+                        "input": {
+                          "type": "string",
+                          "description": "Build report input file path"
+                        },
+                        "outputs": {
+                          "type": "array",
+                          "description": "Build report outputs",
+                          "items": {
+                            "type": "object",
+                            "description": "Build report output",
+                            "additionalProperties": false,
+                            "required": ["file"],
+                            "properties": {
+                              "file": {
+                                "type": "string",
+                                "description": "Build report output file path"
+                              },
+                              "root": {
+                                "type": "string",
+                                "description": "Root directory for the file (optional)"
+                              },
+                              "deployType": {
+                                "type": "string",
+                                "description": "Build report deployment type"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "else": {
+                      "if": {
+                        "required": ["type"],
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "pattern": "^[tT][aA][sS][kK]$"
+                          }
+                        }
+                      },
+                      "then": {
+                        "type": "object",
+                        "description": "task step configuration",
+                        "additionalProperties": false,
+                        "required": ["step", "type"],
+                        "properties": {
+                          "step": { "$ref": "#/$defs/step" },
+                          "type": { "$ref": "#/$defs/type" },
+                          "comment": { "$ref": "#/$defs/comment" },
+                          "condition": { "$ref": "#/$defs/condition" },
+                          "maxRC": { "$ref": "#/$defs/maxRC" },
+                          "name": {
+                            "type": "string",
+                            "description": "Name of pre-defined task to execute"
+                          },
+                          "script": {
+                            "type": "string",
+                            "description": "Absolute or relative path to Groovy implementation"
+                          },
+                          "class": {
+                            "type": "string",
+                            "description": "Fully qualified Java class name of implementation"
+                          },
+                          "variables": { "$ref": "#/$defs/variables" }
+                        }
+                      },
+                      "else": {
+                        "if": {
+                          "required": ["step", "type"]
+                        },
+                        "then": {
+                          "patternProperties": {
+                            "^(?!(type)$).*$": {}
+                          },
+                          "additionalProperties": false,
+                          "errorMessage": "Invalid type of step. Options are: copy, mvs, ispf, tso, job, unix, task.",
+                          "parserErrorMessage": {
+                            "additionalProperties": "{0}: Invalid type of step. Options are: copy, mvs, ispf, tso, job, unix, task."
+                          }
+                        },
+                        "else": {
+                          "type": "object",
+                          "required": ["step", "type"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "name": {
+      "type": "string",
+      "description": "DD name. Exclude to concatenate to previous named DD statement"
+    },
+    "options": {
+      "type": "string",
+      "description": "The BPXWDYN allocation options"
+    },
+    "instream": {
+      "type": "string",
+      "description": "MVSExec DD instream data"
+    },
+    "pass": {
+      "type": ["boolean", "string"],
+      "description": "Flag indicating to pass a temporary DD to later MVS steps"
+    },
+    "input": {
+      "type": ["boolean", "string"],
+      "description": "Flag to add DD to build report as an input"
+    },
+    "output": {
+      "type": ["boolean", "string"],
+      "description": "Flag to add DD to build repost as an output"
+    },
+    "deployType": {
+      "type": "string",
+      "description": "Build report deploy type for output DD statements"
+    },
+    "log": {
+      "type": "string",
+      "description": "Copies the DD statement content to the output directory on USS file"
+    },
+    "logAppend": {
+      "type": ["boolean", "string"],
+      "description": "Flag indicating if existing log file should be overwritten or appended."
+    },
+    "logEncoding": {
+      "type": "string",
+      "description": "The codepage for the copied log file"
+    },
+    "logMode": {
+      "type": "string",
+      "description": "The CopyMode for the copied log file"
+    },
+    "scan": {
+      "type": ["boolean", "string"],
+      "description": "Flag indicating that an output load module should be scanned"
+    },
+    "dds": {
+      "type": "array",
+      "description": "",
+      "items": {
+        "if": { "type": "object", "required": ["path", "dsn"] },
+        "then": {
+          "patternProperties": {
+            "^(?!(path)$).*$": {}
+          },
+          "additionalProperties": false,
+          "errorMessage": "Invalid DD: path and dsn are mutually exclusive variables.",
+          "parserErrorMessage": {
+            "additionalProperties": "{0}: Invalid DD: path and dsn are mutually exclusive variables."
+          }
+        },
+        "else": {
+          "if": { "type": "object", "required": ["path"] },
+          "then": {
+            "type": "object",
+            "description": "Path DD",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "$ref": "#/$defs/name" },
+              "condition": { "$ref": "#/$defs/condition" },
+              "options": { "$ref": "#/$defs/options" },
+              "instream": { "$ref": "#/$defs/instream" },
+              "pass": { "$ref": "#/$defs/pass" },
+              "input": { "$ref": "#/$defs/input" },
+              "output": { "$ref": "#/$defs/output" },
+              "deployType": { "$ref": "#/$defs/deployType" },
+              "log": { "$ref": "#/$defs/log" },
+              "logAppend": { "$ref": "#/$defs/logAppend" },
+              "logEncoding": { "$ref": "#/$defs/logEncoding" },
+              "logMode": { "$ref": "#/$defs/logMode" },
+              "scan": { "$ref": "#/$defs/scan" },
+              "path": {
+                "type": "string",
+                "description": "USS file path of DD statement. Mutually exclusive with dsn"
+              }
+            }
+          },
+          "else": {
+            "type": "object",
+            "description": "Dsn DD",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "$ref": "#/$defs/name" },
+              "condition": { "$ref": "#/$defs/condition" },
+              "options": { "$ref": "#/$defs/options" },
+              "instream": { "$ref": "#/$defs/instream" },
+              "pass": { "$ref": "#/$defs/pass" },
+              "input": { "$ref": "#/$defs/input" },
+              "output": { "$ref": "#/$defs/output" },
+              "deployType": { "$ref": "#/$defs/deployType" },
+              "log": { "$ref": "#/$defs/log" },
+              "logAppend": { "$ref": "#/$defs/logAppend" },
+              "logEncoding": { "$ref": "#/$defs/logEncoding" },
+              "logMode": { "$ref": "#/$defs/logMode" },
+              "scan": { "$ref": "#/$defs/scan" },
+              "dsn": {
+                "type": "string",
+                "description": "The dataset to be allocated. Exclude to create a temporary DD"
+              },
+              "append": {
+                "type": ["boolean", "string"],
+                "description": "Appends the output to the log file."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
