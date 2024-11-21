@@ -1,0 +1,2 @@
+# zBuilder Configuration Schema
+zBuilder uses JSON schema to validate yaml build and application configuration files that define what the build does. Those schema files are publicly hosted here so that developers can reference them as links in their IDEs to activate local validation for their configuration files. For more information, reference the [Schema validation with VSCode](https://www.ibm.com/docs/en/dbb/3.0?topic=tutorials-schema-validation-vscode) tutorial.

@@ -19,6 +19,9 @@ import org.cyclonedx.model.*
  *
  * Version 1 - 04/2024
  *  Initial implementation of SBOM Generation
+ * Version 2  - 10/2024
+ *  Changed to pass SerialNumber from the packaging script. Changed type "container"
+ *  to "library"
  ************************************************************************************/
 
 
@@ -30,10 +33,8 @@ import org.cyclonedx.model.*
 @Field ArrayList<Dependency> sbomDependencies
 @Field Bom sbom
 
-def initializeSBOM(String sbomAuthor) {
+def initializeSBOM(String sbomAuthor, String serialNumber) {
 	sbom = new Bom();
-	sbom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString());
-	sbom.setVersion(1);
 	LifecycleChoice sbomLifecycleChoice = new LifecycleChoice()
 	sbomLifecycleChoice.setPhase(LifecycleChoice.Phase.POST_BUILD)
 	Lifecycles sbomLifecycles = new Lifecycles()
@@ -49,11 +50,19 @@ def initializeSBOM(String sbomAuthor) {
 			author.setEmail(sbomAuthorFields[1].replaceAll(">", "").trim())
 			sbomMetadata.addAuthor(author)
 		} else {
-			println("*! Warning: SBOM Author not correctly formed, expecting 'Name <email>' format. Skipping.")
+			println("*! [WARNING] SBOM Author not correctly formed, expecting 'Name <email>' format. Skipping.")
 		}
 	} else {
-		println("*! Warning: empty SBOM Author. It is recommend to specify a valid Author.")	
+		println("*! [WARNING] empty SBOM Author. It is recommend to specify a valid Author.")	
 	}  
+	if (serialNumber) {
+		sbom.setSerialNumber(serialNumber)	 
+	} else {
+		println("*! [WARNING] Serial Number has been regenerated.")	
+		sbom.setSerialNumber("url:uuid:" + UUID.randomUUID().toString())
+	}
+	 
+	sbom.setVersion(1) 
 	sbom.setMetadata(sbomMetadata)
     sbom.setDependencies(new ArrayList<Dependency>())
 }
@@ -95,7 +104,7 @@ def addEntryToSBOM(DeployableArtifact deployableArtifact, HashMap<String, Object
 	// Set the properties of the Deployable Artifact
 	ArrayList<Property> deployableArtifactComponentProperties = new ArrayList<Property>()
 	Property deployableArtifactContainerComponentProperty = new Property()
-	deployableArtifactContainerComponentProperty.setName("container")
+	deployableArtifactContainerComponentProperty.setName("library")
 	deployableArtifactContainerComponentProperty.setValue(container)
 	deployableArtifactComponentProperties.add(deployableArtifactContainerComponentProperty)
 	Property deployableArtifactDeployTypeComponentProperty = new Property()
