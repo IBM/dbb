@@ -42,7 +42,7 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
    More details can be found [in this section](#software-bill-of-material-sbom-generation).
 
 4. **(Optionally) Generate Wazi Deploy application manifest**
-   Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) is generated and saved as wazideploy_manifest.yml.
+   Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/17.0?topic=files-application-manifest-file) is generated and saved as wazideploy_manifest.yml.
 
 5. **Create TAR file**
     1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
