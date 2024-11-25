@@ -14,7 +14,7 @@ This sample Groovy script can be used to package build outputs:
   - It processes the MVSExec, CopyToPDS and the USS_Record types
 - It optionally generates the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) file.
 - It copies outputs to a temporary directory on Unix System Services and creates a TAR file based on the temporary directory.
-- If the path to the application's Git repository is provided, the script will search for the Application Descriptor file, in order to also package all the public and shared Include Files. The script will also detect which programs are classified as `internal submodule` or `service submodule` and will copy the corresponding object decks to the `include`subfolder of the temporary directory.
+- If the path to the application's Git repository is provided, the script will search for the Application Descriptor file and process it. Include Files classified as `public` will be automatically added to the package into the subdirectory `include/src`. The script will also process programs that are classified as `internal submodule` or `service submodule` and will copy the corresponding object decks to either the `lib` directory or the `include/bin` subfolder for the tar file.
 - If a baseline package is provided through the corresponding CLI option, the baseline package is expanded in the temporary directory first:
   - All the subfolders are removed except the subfolder that contains interfaces definitions, by default located in the `include` subfolder.
   - More information can be found in the [Baseline Packages](#baseline-packages) section.
