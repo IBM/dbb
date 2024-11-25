@@ -378,7 +378,7 @@ props.buildReportOrder.each { buildReportFile ->
 				scmInfo.put("shortCommit", "multipleBuildReports")
 				scmInfo.put("uri", "multipleBuildReports")
 			}
-		}	
+		}
 	}
 }
 
@@ -1015,7 +1015,7 @@ def parseInput(String[] cliArgs){
 	// cli overrides defaults set in 'packageBuildOutputs.properties'
 	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : props.generateWaziDeployAppManifest
 	props.generateConcertBuildManifest = (opts.ic) ? 'true' : props.generateConcertBuildManifest
-	props.addExtension = (opts.ae) ? 'true' : ((props.addExtension) ? (props.addExtension) : 'true')
+	props.addExtension = (opts.ae) ? 'true' : props.addExtension
 	props.publish = (opts.p) ? 'true' : props.publish
 	props.generateSBOM = (opts.sbom) ? 'true' : props.generateSBOM
 

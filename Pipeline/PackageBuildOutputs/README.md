@@ -623,8 +623,12 @@ If an Application Descriptor file is found, the required information is leverage
 - the public or shared includes files present in the application's Git repository.
 
 These artifacts are placed in the `include` subfolder of the archive, within specific subfolders to segregate artifacts based on their nature:
-- the `include/bin` subfolder contains the object decks that other programs can statically link.
-- the `include/src` subfolder contains the public and shared include files, that other programs can reference.
+- the `lib` subfolder contains artifacts that are private to the application:
+     - the `lib/bin` subfolder contains object decks that the application is statically linking for its internal usage.
+     - the `lib/src` subfolder contains the include files that were classified as private to the application.
+- the `include/src` subfolder contains the public artifacts that other programs can reference:
+     - the `include/bin` subfolder contains the object decks that other programs can statically link.
+     - the `include/src` subfolder contains the public and shared include files, that other programs can reference.
 
 When used in conjunction with [baseline packages](#baseline-packages), it is possible to have an archive that contains all the interfaces of an application, combining previous versions of object decks (when they have not changed) with the newest material that was just built or changed in the application's Git repository.
 
