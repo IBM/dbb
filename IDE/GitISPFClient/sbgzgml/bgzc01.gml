@@ -35,7 +35,8 @@ The zOS UNIX directory must start with the / character
 <MSG SUFFIX=6 MSGTYPE=Warning ALARM=YES HELP=*                                  
      SMSG="Invalid select code     ">                                           
 Codes JU (Jump USS), ST (Status), AD (add), CO (Commit), PS (Push),             
-CP (Commit & Push), PL (Pull), BR (Branch), CM (Git Command) and                
+CP (Commit & Push), PL (Pull), BR (Branch), CM (Git Command),                   
+FE (Fetch prune), DF (Git Diff), LG (Log Graph) and                             
 RM (Remove Working Directory) allowed                                           
                                                                                 
 <MSG SUFFIX=7 MSGTYPE=WARNING ALARM=YES HELP=*>                                 

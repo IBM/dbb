@@ -28,6 +28,12 @@
 <:ENTITY choice_02_text "Push branch to origin">                                
 <:ENTITY choice_03_text "Delete local branch">                                  
 <:ENTITY choice_04_text "Jump to working directory">                            
+<:ENTITY choice_05_text "Fetch branch from origin">                             
+<:ENTITY choice_06_text "Merge branch into current">                            
+<:ENTITY choice_07_text "Git log graph of branch">                              
+<:ENTITY choice_08_text "Diff between branches">                                
+<:ENTITY choice_09_text "Git Status">                                           
+<:ENTITY choice_10_text "Git Command Prompt">                                   
                                                                                 
 <:-- panel instruction text line - maximum text length = 68 bytes   -->         
  <:ENTITY panel_instruct1                                                       

@@ -24,8 +24,8 @@ IF (&bgzEUTF = 'FALSE' | &bgzDEFE = 'U') &bgzDUTF = 'FALSE'
 <divider>                                                                       
 <region dir=vert>                                                               
  <selfld name=bgzSEL selwidth=* init=no autotab=no listtype=radio               
- choicecols=2 choicedepth=10 pmtloc=above entwidth=2                            
- pmtwidth=**>&selfld_01_text                          &selfld_04_text;          
+         choicecols=2 choicedepth=11 pmtloc=above entwidth=2                    
+         pmtwidth=**>&selfld_01_text                          &selfld_04_text;  
      <choice unavail=bgzdefe unavailmat=U>                                      
              <ps var=bgzSEL value=1>&choice_01_text;</ps>                       
      <choice unavail=bgzdefe unavailmat=U>                                      
@@ -57,6 +57,9 @@ IF (&bgzEUTF = 'FALSE' | &bgzDEFE = 'U') &bgzDUTF = 'FALSE'
              <ps var=bgzSEL value=18>&choice_18_text;</ps>                      
      <choice unavail=bgzdefe unavailmat=U>                                      
              <ps var=bgzSEL value=19>&choice_19_text;</ps>                      
+     <choice><ps var=bgzSEL value=20>&choice_20_text;</ps>                      
+     <choice><ps var=bgzSEL value=20>&choice_21_text;</ps>                      
+     <choice><ps var=bgzSEL value=21>&choice_22_text;</ps>                      
  </selfld>                                                                      
 </region>                                                                       
 <divider>                                                                       

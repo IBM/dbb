@@ -42,11 +42,19 @@ following list:
    <DT>CP                                                                       
    <DD>Request a Git Commit and Push for the selected repository                
    <DT>PL                                                                       
-   <DD>Request a Git Pull for the selected repository                           
+   <DD>Request a Git Pull for the selected repository.                          
+       <p><hp>git pull branch</hp> does a <hp>git fetch branch</hp>             
+       followed by <hp>git checkout branch</hp>                                 
    <DT>BR                                                                       
    <DD>Request a Git Branch for the selected repository                         
    <DT>CM                                                                       
    <DD>Enter any Git command for the selected repository                        
+   <DT>FE                                                                       
+   <DD>Request a Git Fetch for the selected repository                          
+   <DT>LG                                                                       
+   <DD>Request a Git Log Graph of all branches in the repository                
+   <DT>DF                                                                       
+   <DD>View all uncommitted changes in the repository                           
 </DL>                                                                           
 </info>                                                                         
 </area>                                                                         
