@@ -434,7 +434,7 @@
          input= filename
          input_upper = translate(input, uppercase, lowercase)
          filename = input_upper
-         BGZUSLOG = filename'.'ext'.log'
+         BGZUSLOG = filename'.log'
          BGZFLOG = BGZBLWRK'/'BGZUSLOG
 
          /* The DTL Groovy writes the log in UTF8 - Need to fix */
