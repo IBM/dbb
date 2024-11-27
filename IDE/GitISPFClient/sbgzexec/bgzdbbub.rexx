@@ -464,7 +464,7 @@
              input= filename
              input_upper = translate(input, uppercase, lowercase)
              filename = input_upper
-             BGZUSLOG = filename'.'ext'.log'
+             BGZUSLOG = filename'.log'
              BGZFLOG = BGZBLWRK'/'BGZUSLOG
              BGZEMIX = 'NO'
              'VGET (ZDBCS) SHARED'
