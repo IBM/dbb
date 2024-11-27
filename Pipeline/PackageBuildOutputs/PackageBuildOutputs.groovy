@@ -122,7 +122,7 @@ HashMap<String,String> scmInfo = new HashMap<String, String>()
 
 // Package the public Include Files and service submodules
 // if Path to Application Descriptor file is specified
-if (props.publishInterfaces) {
+if (props.publishInterfaces && props.publishInterfaces.toBoolean()) {
 	File applicationDescriptorFile = new File("${props.applicationFolderPath}/applicationDescriptor.yml")
 	if (applicationDescriptorFile.exists()) {
 		applicationDescriptorUtils = loadScript(new File("utilities/applicationDescriptorUtils.groovy"))
