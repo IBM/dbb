@@ -526,8 +526,18 @@ if (rc == 0) {
 			def privateInterfacesDeployTypes
 			def processedArtifacts = 0 // used as a checksum that all files got categorized
 
-			if (props.publicInterfacesDeployTypes) publicInterfacesDeployTypes = props.publicInterfacesDeployTypes.split(",") // split comma separated list into list
-			if (props.privateInterfacesDeployTypes) derivedInterfacesDeployTypes = props.privateInterfacesDeployTypes.split(",") // split comma separated list into list
+			if (props.publicInterfacesDeployTypes) {
+				publicInterfacesDeployTypes = props.publicInterfacesDeployTypes.split(",") // split comma separated list into list
+			} else {
+				println("*! [WARNING] Property 'publicInterfacesDeployTypes' not defined, using default types 'OBJ'.")
+				publicInterfacesDeployTypes = ["OBJ"]
+			}
+			if (props.privateInterfacesDeployTypes) {
+				privateInterfacesDeployTypes = props.privateInterfacesDeployTypes.split(",") // split comma separated list into list
+			} else {
+				println("*! [WARNING] Property 'privateInterfacesDeployTypes' not defined, using default types 'OBJ,BMSCOPY'.")
+				privateInterfacesDeployTypes = "OBJ,BMSCOPY".split(",")
+			}
 
 			def deployableOutputs = buildOutputsMap.findAll { deployableArtifact, info ->
 				!((publicInterfacesDeployTypes && publicInterfacesDeployTypes.contains(deployableArtifact.deployType)) || (privateInterfacesDeployTypes && privateInterfacesDeployTypes.contains(deployableArtifact.deployType)))
@@ -1013,11 +1023,12 @@ def parseInput(String[] cliArgs){
 	if (opts.b) props.branch = opts.b
 
 	// cli overrides defaults set in 'packageBuildOutputs.properties'
-	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : props.generateWaziDeployAppManifest
-	props.generateConcertBuildManifest = (opts.ic) ? 'true' : props.generateConcertBuildManifest
-	props.addExtension = (opts.ae) ? 'true' : props.addExtension
-	props.publish = (opts.p) ? 'true' : props.publish
-	props.generateSBOM = (opts.sbom) ? 'true' : props.generateSBOM
+	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : (props.generateWaziDeployAppManifest ? props.generateWaziDeployAppManifest : 'false')
+	props.generateConcertBuildManifest = (opts.ic) ? 'true' : (props.generateConcertBuildManifest ? props.generateConcertBuildManifest : 'false')
+	props.addExtension = (opts.ae) ? 'true' : (props.addExtension ? props.addExtension : 'true')
+	props.publish = (opts.p) ? 'true' : (props.publish ? props.publish : 'false')
+	props.generateSBOM = (opts.sbom) ? 'true' : (props.generateSBOM ? props.generateSBOM : 'false')
+	props.publishInterfaces = (props.publishInterfaces ? props.publishInterfaces : 'false')
 
 	if (opts.o) props.owner = opts.o
 
