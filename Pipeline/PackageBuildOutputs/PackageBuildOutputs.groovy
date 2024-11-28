@@ -522,7 +522,22 @@ if (rc == 0) {
 	
 			println("** Total number of build outputs to package: ${buildOutputsMap.size()}")
 
+			def publicInterfacesDeployTypes
+			def privateInterfacesDeployTypes
 			def processedArtifacts = 0 // used as a checksum that all files got categorized
+
+			if (props.publicInterfacesDeployTypes) {
+				publicInterfacesDeployTypes = props.publicInterfacesDeployTypes.split(",") // split comma separated list into list
+			} else {
+				println("*! [WARNING] Property 'publicInterfacesDeployTypes' not defined, using default types 'OBJ'.")
+				publicInterfacesDeployTypes = ["OBJ"]
+			}
+			if (props.privateInterfacesDeployTypes) {
+				privateInterfacesDeployTypes = props.privateInterfacesDeployTypes.split(",") // split comma separated list into list
+			} else {
+				println("*! [WARNING] Property 'privateInterfacesDeployTypes' not defined, using default types 'OBJ,BMSCOPY'.")
+				privateInterfacesDeployTypes = "OBJ,BMSCOPY".split(",")
+			}
 
 			def deployableOutputs = buildOutputsMap.findAll { deployableArtifact, info ->
 				!((publicInterfacesDeployTypes && publicInterfacesDeployTypes.contains(deployableArtifact.deployType)) || (privateInterfacesDeployTypes && privateInterfacesDeployTypes.contains(deployableArtifact.deployType)))
@@ -534,20 +549,6 @@ if (rc == 0) {
 			}
 
 			if (props.publishInterfaces && props.publishInterfaces.toBoolean()) {
-				def publicInterfacesDeployTypes
-				def privateInterfacesDeployTypes
-				if (props.publicInterfacesDeployTypes) {
-					publicInterfacesDeployTypes = props.publicInterfacesDeployTypes.split(",") // split comma separated list into list
-				} else {
-					println("*! [WARNING] Property 'publicInterfacesDeployTypes' not defined, using default types 'OBJ'.")
-					publicInterfacesDeployTypes = ["OBJ"]
-				}
-				if (props.privateInterfacesDeployTypes) {
-					privateInterfacesDeployTypes = props.privateInterfacesDeployTypes.split(",") // split comma separated list into list
-				} else {
-					println("*! [WARNING] Property 'privateInterfacesDeployTypes' not defined, using default types 'OBJ,BMSCOPY'.")
-					privateInterfacesDeployTypes = "OBJ,BMSCOPY".split(",")
-				}
 
 				def publicInterfaces
 				if (publicInterfacesDeployTypes) {
