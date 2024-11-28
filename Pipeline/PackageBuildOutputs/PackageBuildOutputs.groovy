@@ -746,6 +746,9 @@ def parseInput(String[] cliArgs){
 		if (propertiesFile.exists()) {
 			props.packagingPropertiesFile = opts.properties
 			propertiesFile.withInputStream { props.load(it) }
+		} else {
+			println "*! [ERROR] The file '${opts.properties}' doesn't exist."
+			rc = Math.max(rc, 1)
 		}
 	} else { // read default sample properties file shipped with the script
 		def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
