@@ -624,7 +624,7 @@ if (rc == 0) {
 			}
 
 			if (processedArtifacts != buildOutputsMap.size()) {
-				println("*! [WARNING] The number of copied artifacts ($processedArtifacts) doesn't match the number of identified build outputs (${buildOutputsMap.size()}). Some files may not have an incorrect usage in the Application Descriptor.")
+				println("*! [WARNING] The number of copied artifacts ($processedArtifacts) doesn't match the number of identified build outputs (${buildOutputsMap.size()}). Some files might have an incorrect 'usage' in the Application Descriptor.")
 			}
 		}
 		
