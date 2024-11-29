@@ -273,7 +273,7 @@ props.buildReportOrder.each { buildReportFile ->
 							fileUsage = applicationDescriptorUtils.getFileUsageByType(applicationDescriptor, "Program", member)
 						}
 						// If the artifact is not an Object Deck or has no usage or its usage is not main
-						if ((output.deployType.equals("OBJ") && fileUsage && (fileUsage.equals("internal submodule")) || fileUsage.equals("service submodule")) ) || !output.deployType.equals("OBJ")) { 
+						if (((output.deployType.equals("OBJ") && fileUsage && (fileUsage.equals("internal submodule")) || fileUsage.equals("service submodule"))) || !output.deployType.equals("OBJ")) { 
 							datasetMembersCount++
 							String file = buildRecord.getFile()
 							def dependencySetRecord = buildReport.getRecords().find {
