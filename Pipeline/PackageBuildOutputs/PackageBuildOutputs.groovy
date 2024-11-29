@@ -8,6 +8,7 @@ import com.ibm.dbb.build.report.BuildReport
 import com.ibm.dbb.build.report.records.*
 import groovy.transform.*
 import groovy.cli.commons.*
+import groovy.io.FileType
 import java.nio.file.*
 import static java.nio.file.StandardCopyOption.*
 import com.ibm.jzos.ZFile;
@@ -57,18 +58,29 @@ import com.ibm.jzos.ZFile;
  *       concertBuildManifestGenerator.groovy
  *    b) Refactoring to generate SBOM details like SerialNumber from this script  
  *       to be passed to sbomGenerator.groovy and concertBuildManifestGenerator.groovy
+ *
+ * Version 10 - 2024-11
+ *  - Enhanced the packaging with the Application Descriptor file
+ *    and baseline packages which allow full description of interfaces
+ *
  ************************************************************************************/
 
 // start create & publish package
 @Field Properties props = null
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
+@Field def applicationDescriptorUtils
+@Field def applicationDescriptor
 @Field def sbomUtilities
 @Field def concertManifestGeneratorUtilities
 @Field def rc = 0
 @Field def sbomSerialNumber
 @Field def sbomFileName
 @Field def concertBuild
+@Field String includeSubfolder = "include"
+@Field String libSubfolder = "lib"
+@Field String binSubfolder = "bin"
+@Field def tempLoadDir
 
 def startTime = new Date()
 
@@ -100,15 +112,30 @@ def copyModeMap = parseCopyModeMap(props.copyModeMap)
 Map<DeployableArtifact, Map> buildOutputsMap = new HashMap<DeployableArtifact, Map>()
 
 // Field to store default tarFileLabel (buildInfo.label) when cli argument tarFileName is not passed.
-def String tarFileLabel = "Default"
+@Field def String tarFileLabel = "Default"
+@Field def String tarFileName = ""
 // Field to store build number, set to default when its not decipherable from build report 
 def String buildNumber = "UNKNOWN"
 
 // Object to store scm information for Wazi Deploy Application Manifest file
 HashMap<String,String> scmInfo = new HashMap<String, String>()
 
+// Package the public Include Files and service submodules
+// if Path to Application Descriptor file is specified
+if (props.publishInterfaces && props.publishInterfaces.toBoolean()) {
+	File applicationDescriptorFile = new File("${props.applicationFolderPath}/applicationDescriptor.yml")
+	if (applicationDescriptorFile.exists()) {
+		applicationDescriptorUtils = loadScript(new File("utilities/applicationDescriptorUtils.groovy"))
+		applicationDescriptor = applicationDescriptorUtils.readApplicationDescriptor(applicationDescriptorFile)
+	} else {
+		println("*! [ERROR] No Application Descriptor file '${props.applicationFolderPath}/applicationDescriptor.yml' found. Exiting.")
+		System.exit(1)
+	}
+}
+
 // iterate over all build reports to obtain build output
 props.buildReportOrder.each { buildReportFile ->
+	Map<DeployableArtifact, Map> temporaryBuildOutputsMap = new HashMap<DeployableArtifact, Map>()
 	println("** Read build report data from '${buildReportFile}'.")
 	def jsonOutputFile = new File(buildReportFile)
 
@@ -157,15 +184,17 @@ props.buildReportOrder.each { buildReportFile ->
 		def deletionRecords = buildReport.getRecords().findAll {
         	try {
             // Obtain delete records, which got added by zAppBuild
-            it.getType()=="DELETE_RECORD"
-        	} catch (Exception e) {println e}
+	            it.getType() == "DELETE_RECORD"
+        	} catch (Exception e) {
+        		println e
+        	}
 		}
 	
-		if (props.deployTypeFilter){
+		if (props.deployTypeFilter) {
 			println("** Filter Output Records on following deployTypes: ${props.deployTypeFilter}...")
 			buildRecords.each {
 				// filtered executes
-				def filteredOutputs =  it.getOutputs().findAll{ o ->
+				def filteredOutputs =  it.getOutputs().findAll { o ->
 					o.deployType != null && (props.deployTypeFilter).split(',').contains(o.deployType)
 				}
 				// Manipulating the scope of build outputs
@@ -179,7 +208,7 @@ props.buildReportOrder.each { buildReportFile ->
 				}
 	
 				ArrayList<String> filteredOutputs = []
-				outputs.each{ output ->
+				outputs.each { output ->
 					rootDir = output[0].trim()
 					file = output[1].trim()
 					deployType = output[2].trim()
@@ -225,7 +254,8 @@ props.buildReportOrder.each { buildReportFile ->
 						def dependencySetRecord = buildReport.getRecords().find {
 							it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 						}
-						buildOutputsMap.put(new DeployableArtifact(file, deployType, "zFSFile"), [
+						
+						temporaryBuildOutputsMap.put(new DeployableArtifact(file, deployType, "zFSFile"), [
 							container: rootDir,
 							owningApplication: props.application,
 							record: buildRecord,
@@ -236,68 +266,77 @@ props.buildReportOrder.each { buildReportFile ->
 				}
 			} else {
 				if (buildRecord.getOutputs().size() != 0) {
-					buildRecord.getOutputs().each{ output ->
-						datasetMembersCount++
+					buildRecord.getOutputs().each { output ->
 						def (dataset, member) = getDatasetName(output.dataset)
-						String file = buildRecord.getFile()
-						def dependencySetRecord = buildReport.getRecords().find {
-							it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
+						def fileUsage
+						if (applicationDescriptor && output.deployType.equals("OBJ")) {
+							fileUsage = applicationDescriptorUtils.getFileUsageByType(applicationDescriptor, "Program", member)
 						}
-						buildOutputsMap.put(new DeployableArtifact(member, output.deployType, "DatasetMember"), [
-							container: dataset,
-							owningApplication: props.application,
-							record: buildRecord,
-							propertiesRecord: buildResultPropertiesRecord,
-							dependencySetRecord: dependencySetRecord
-						])
+						// If the artifact is not an Object Deck or has no usage or its usage is not main
+						if ((output.deployType.equals("OBJ") && fileUsage && (fileUsage.equals("internal submodule") || fileUsage.equals("service submodule"))) || !output.deployType.equals("OBJ")) { 
+							datasetMembersCount++
+							String file = buildRecord.getFile()
+							def dependencySetRecord = buildReport.getRecords().find {
+								it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
+							}
+							temporaryBuildOutputsMap.put(new DeployableArtifact(member, output.deployType, "DatasetMember"), [
+								container: dataset,
+								owningApplication: props.application,
+								record: buildRecord,
+								propertiesRecord: buildResultPropertiesRecord,
+								dependencySetRecord: dependencySetRecord
+							])
+						} else {
+							if (props.verbose) println("*! Build output ${output.dataset} with deployType '${output.deployType}' has been excluded from packaging.")
+						}
 					}
 				}
 			}
 		}
 
 		deletionRecords.each { deleteRecord ->
-				deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
-        		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
-            		
-					String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
-					def (dataset, member) = getDatasetName(cleansedDeletedFile)
-					
-					// search for an existing deployableArtifacts record
-					ArrayList<DeployableArtifact> filteredDeployableArtifacts = new ArrayList()
-					
-					buildOutputsMap.each { DeployableArtifact deployableArtifact, Map info ->
-						if (deployableArtifact.file == deleteRecord.getAttribute("file")) {
-							filteredDeployableArtifacts.add(deployableArtifact, info)
-						}
+			deletionCount += deleteRecord.getAttributeAsList("deletedBuildOutputs").size()
+    		deleteRecord.getAttributeAsList("deletedBuildOutputs").each{ deletedFile ->
+        		
+				String cleansedDeletedFile = ((String) deletedFile).replace('"', '');
+				def (dataset, member) = getDatasetName(cleansedDeletedFile)
+				
+				// search for an existing deployableArtifacts record
+				ArrayList<DeployableArtifact> filteredDeployableArtifacts = new ArrayList()
+				
+				temporaryBuildOutputsMap.each { DeployableArtifact deployableArtifact, Map info ->
+					if (deployableArtifact.file == deleteRecord.getAttribute("file")) {
+						filteredDeployableArtifacts.add(deployableArtifact, info)
 					}
-					
-					if (filteredDeployableArtifacts){
-						filteredDeployableArtifacts.each {deployableArtifact, info ->
-								String container = info.get("container")
-								if (container == dataset && member == deployableArtifact.file) {
-									deployType = deployableArtifact.deployType
-									// remove any existing change
-									buildOutputsMap.remove(deployableArtifact)
-									// add deletion
-									buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
-										container: dataset,
-										owningApplication: props.application,
-										record: buildRecord,
-										propertiesRecord: buildResultPropertiesRecord,
-										dependencySetRecord: dependencySetRecord
-										])
-								}
-							}
-						} else {
-						deployType = dataset.replaceAll(/.*\.([^.]*)/, "\$1") // DELETE_RECORD does not contain deployType attribute. Use LLQ
-							buildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
+				}
+				
+				if (filteredDeployableArtifacts){
+					filteredDeployableArtifacts.each {deployableArtifact, info ->
+						String container = info.get("container")
+						if (container == dataset && member == deployableArtifact.file) {
+							deployType = deployableArtifact.deployType
+							// remove any existing change
+							temporaryBuildOutputsMap.remove(deployableArtifact)
+							// add deletion
+							temporaryBuildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
 								container: dataset,
 								owningApplication: props.application,
-								record: deleteRecord,
-								propertiesRecord: buildResultPropertiesRecord
+								record: buildRecord,
+								propertiesRecord: buildResultPropertiesRecord,
+								dependencySetRecord: dependencySetRecord
 								])
 						}
-	        	}
+					}
+				} else {
+					deployType = dataset.replaceAll(/.*\.([^.]*)/, "\$1") // DELETE_RECORD does not contain deployType attribute. Use LLQ
+					temporaryBuildOutputsMap.put(new DeployableArtifact(member, deployType, "DatasetMemberDelete"), [
+						container: dataset,
+						owningApplication: props.application,
+						record: deleteRecord,
+						propertiesRecord: buildResultPropertiesRecord
+						])
+				}
+        	}
 		}
 
 	
@@ -305,26 +344,15 @@ props.buildReportOrder.each { buildReportFile ->
 		if ( datasetMembersCount + zFSFilesCount == 0 ) {
 			println("** No items to package in '$buildReportFile'.")
 		} else {
-			println("** Deployable artifacts detected in '$buildReportFile':")
-			buildRecords.each { record ->
-				if (record.getType()=="USS_RECORD") {
-					if (!record.getAttribute("outputs").isEmpty()) {
-						ArrayList<ArrayList> outputs = []
-						record.getAttribute("outputs").split(';').collectEntries { entry ->
-							outputs += entry.replaceAll('\\[|\\]', '').split(',')
-						}
-						outputs.each{ output ->
-							rootDir = output[0].trim()
-							file = output[1].trim()
-							deployType = output[2].trim()
-							println("   $rootDir/$file, $deployType")
-						}
-					}
-				} else {
-					record.getOutputs().each {println("   ${it.dataset}, ${it.deployType}")}
-				}
+			println("** ${temporaryBuildOutputsMap.size()} Build outputs detected in '$buildReportFile':")
+			temporaryBuildOutputsMap.each { deployableArtifact, info ->
+				String container = info.get("container")
+				String owningApplication = info.get("owningApplication")
+				Record record = info.get("record")
+				PropertiesRecord propertiesRecord = info.get("propertiesRecord")
+				DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
+				println("\t'${deployableArtifact.file}' from '${container}' with Deploy Type '${deployableArtifact.deployType}'")
 			}
-
 		}
 		
 		// Log detected deleted files
@@ -332,6 +360,8 @@ props.buildReportOrder.each { buildReportFile ->
 			println("**  Deleted files detected in '$buildReportFile':")
 			deletionRecords.each { it.getAttributeAsList("deletedBuildOutputs").each { println("   ${it}")}}
 		}
+		
+		buildOutputsMap.putAll(temporaryBuildOutputsMap)
 	
 		// generate scmInfo for Wazi Deploy Application Manifest file
 		if ((props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) ||    
@@ -358,19 +388,28 @@ if (rc == 0) {
 		println("** There are no build outputs found in all provided build reports. Exiting.")
 		rc = 0
 	} else {
-		// generate SBOM only if build outputs exist
+		// Initialize Wazi Deploy Manifest Generator
+		if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+			wdManifestGeneratorUtilities.initWaziDeployManifestGenerator(props)// Wazi Deploy Application Manifest
+			wdManifestGeneratorUtilities.setScmInfo(scmInfo)
+			if (props.externalDependenciesEvidences) {
+				File externalDependenciesEvidenceFile = new File("${props.externalDependenciesEvidences}")
+				if (externalDependenciesEvidenceFile.exists()){
+					wdManifestGeneratorUtilities.setExternalDependencies(externalDependenciesEvidenceFile)
+				} else {
+					println("** External build dependencies file not found (${props.externalDependenciesEvidences}). Exiting.")
+					rc=4
+				}	
+			}
+		}
+
+		// Initialize SBOM
 		if (props.generateSBOM && props.generateSBOM.toBoolean()) {
 			sbomUtilities = loadScript(new File("${scriptDir}/utilities/sbomGenerator.groovy"))
 			sbomSerialNumber = "url:uuid:" + UUID.randomUUID().toString()
 			sbomFileName = "${buildNumber}_sbom.json" 
 			sbomUtilities.initializeSBOM(props.sbomAuthor, sbomSerialNumber)
 
-		}
-		// Local variables
-		// Initialize Wazi Deploy Manifest Generator
-		if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-			wdManifestGeneratorUtilities.initWaziDeployManifestGenerator(props)// Wazi Deploy Application Manifest
-			wdManifestGeneratorUtilities.setScmInfo(scmInfo)
 		}
 
 		// Initialize Concert Build Manifest Generator
@@ -382,150 +421,289 @@ if (rc == 0) {
 			concertBuild = concertManifestGeneratorUtilities.addBuild(props.application, props.versionName, buildNumber)
 			concertManifestGeneratorUtilities.addRepositoryToBuild(concertBuild, scmInfo.uri, scmInfo.branch, scmInfo.shortCommit)
 		}
-		def String tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
+		
+		// Local variables
+		tarFileName = (props.tarFileName) ? props.tarFileName  : "${tarFileLabel}.tar"
 		def tarFile = "$props.workDir/${tarFileName}"
 	
 		//Create a temporary directory on zFS to copy the load modules from data sets to
-		def tempLoadDir = new File("$props.workDir/tempPackageDir")
+		tempLoadDir = new File("$props.workDir/tempPackageDir")
 		!tempLoadDir.exists() ?: tempLoadDir.deleteDir()
 		tempLoadDir.mkdirs()
-	
-		println("*** Number of build outputs to package: ${buildOutputsMap.size()}")
-	
-		println("** Copy build outputs to temporary package directory '$tempLoadDir'")
-	
-		buildOutputsMap.each { deployableArtifact, info ->
-			String container = info.get("container")
-			String owningApplication = info.get("owningApplication")
-			Record record = info.get("record")
-			PropertiesRecord propertiesRecord = info.get("propertiesRecord")
-			DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
-			
-			def filePath = ""
-			if (deployableArtifact.artifactType.equals("zFSFile")) {
-				filePath = "$tempLoadDir"
-			} else {
-				filePath = "$tempLoadDir/$container"
-			}
-	
-			// define file name in USS
-			def fileName = deployableArtifact.file
-	
-			// add deployType to file name
-			if (props.addExtension && props.addExtension.toBoolean()) {
-				fileName = fileName + '.' + deployableArtifact.deployType
-			}
-			def file = new File(filePath, fileName)
-	
-			def (directory, relativeFileName) = extractDirectoryAndFile(file.toPath().toString())
-			new File(directory).mkdirs()
-	
-	
-			if (deployableArtifact.artifactType.equals("zFSFile")) {
-				def originalFile = new File(container + "/" + deployableArtifact.file)
-				println "   Copy '${originalFile.toPath()}' to '${file.toPath()}'"
-				try {
-					Files.copy(originalFile.toPath(), file.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
-				} catch (IOException exception) {
-					println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
-					rc = Math.max(rc, 1) 
-				}
-			} else if  (deployableArtifact.artifactType.equals("DatasetMember")) {
-				// set copyMode based on last level qualifier
-				currentCopyMode = copyModeMap[container.replaceAll(/.*\.([^.]*)/, "\$1")]
-				if (currentCopyMode != null) {
-					if (ZFile.exists("//'$container(${deployableArtifact.file})'")) {
-						// Copy outputs to HFS
-						CopyToHFS copy = new CopyToHFS()
-						copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
-						copy.setDataset(container)
-	
-						println "   Copy '$container(${deployableArtifact.file})' to '$filePath/$fileName' with DBB Copymode '$currentCopyMode'"
-						copy.dataset(container).member(deployableArtifact.file).file(file).execute()
-	
-						// Tagging binary files
-						if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
-							StringBuffer stdout = new StringBuffer()
-							StringBuffer stderr = new StringBuffer()
-							Process process = "chtag -b $file".execute()
-							process.waitForProcessOutput(stdout, stderr)
-							if (stderr){
-								println ("*! stderr : $stderr")
-								println ("*! stdout : $stdout")
-							}
+		
+		// A baseline Package has been specified, we then extract it in the $tempLoadDir folder
+		if (props.baselinePackageFilePath) {
+			File baselinePackageFile = new File(props.baselinePackageFilePath)
+			if (baselinePackageFile.exists()) {
+				println("** Extract the baseline package from '${props.baselinePackageFilePath}'")
+				def processCmd = [
+					"sh",
+					"-c",
+					"tar -xUXf ${props.baselinePackageFilePath}"
+				]
+				
+				def processRC = runProcess(processCmd, tempLoadDir)
+				rc = Math.max(rc, processRC)
+				if (rc == 0) {
+					println("** Baseline Package '${props.baselinePackageFilePath}' successfully extracted.")
+
+					// Read the existing Wazi Deploy Manifest if any
+					File wdManifestFile = new File("$tempLoadDir/wazideploy_manifest.yml")
+					if (wdManifestFile.exists()) {
+						if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+							// Read the manifest file if it exists
+							wdManifestGeneratorUtilities.readWaziDeployManifestFile(wdManifestFile, props)
+							wdManifestGeneratorUtilities.setScmInfo(scmInfo)
+						} else {
+							wdManifestFile.delete()
 						}
-	
-						// Append record to Wazi Deploy Application Manifest
-						if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-							wdManifestGeneratorUtilities.appendArtifactToAppManifest(deployableArtifact, "$container/$fileName", record, propertiesRecord)
-						}
-	
 					} else {
-						println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' doesn't exist."
-						rc = Math.max(rc, 1) 
+						if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+							// Otherwise initialize an empty manifest
+							wdManifestGeneratorUtilities.initWaziDeployManifestGenerator(props)
+							wdManifestGeneratorUtilities.setScmInfo(scmInfo)
+						}
+					}
+	
+					// Search in all subfolders of the archive except the folders
+					// that contains includes "$includeSubfolder" and binaries "$binSubfolder"
+					// Copy the artifacts found to comply with the right structure
+					// All the artifact that don't comply will end up in the binSubfolder					
+					tempLoadDir.eachDir() { subfolder ->
+						if (!subfolder.getName().equals(includeSubfolder) && !subfolder.getName().equals(libSubfolder)) {
+							subfolder.eachFileRecurse(FileType.FILES) { file ->
+								String fileName = file.getName()
+								def fileNameParts = fileName.split("\\.")
+								if (fileNameParts.size() > 1) {
+									fileName = fileNameParts.first()
+									String fileDeployType = fileNameParts.last()
+									if (props.fullPackage && props.fullPackage.toBoolean()) {
+										String expectedFilePath = "$tempLoadDir/$binSubfolder/$fileDeployType/$fileName"
+										try {
+											Path destinationPath = Paths.get("$tempLoadDir/$binSubfolder/$fileDeployType/${fileName}.${fileDeployType}")						
+											Path destinationDirPath = destinationPath.getParent()
+											destinationDirPath.toFile().mkdirs()
+											Path sourcePath = file.toPath()
+											copyFiles(sourcePath.toString(), destinationPath.toString())
+											println("\tCopy file '${sourcePath}' to '${destinationPath}'")
+											if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+												// Update Path for the moved file in Wazi Deploy Manifest
+												rc = rc + wdManifestGeneratorUtilities.updateArtifactPathToManifest(fileName, fileDeployType, "$binSubfolder/$fileDeployType/${fileName}.${fileDeployType}")
+											}
+										} catch (IOException e) {
+											println("!* [ERROR] Error when moving file '${sourcePath}' to '${destinationPath}' during baseline package extraction.")
+											rc = 1	
+										}
+									} else {
+										file.delete()
+										if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+											wdManifestGeneratorUtilities.removeArtifactFromManifest(fileName, fileDeployType)
+										}										
+									}
+								}
+							}
+							subfolder.deleteDir()
+						}
+						if (subfolder.getName().equals("tmp")) {
+							subfolder.deleteDir()
+						}						
 					}
 				} else {
-					println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' could not be copied due to missing mapping."
-					rc = Math.max(rc, 1) 
-				}
-			} else if  (deployableArtifact.artifactType.equals("DatasetMemberDelete")) {
-					// generate delete instruction for Wazi Deploy
-					if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-						wdManifestGeneratorUtilities.appendArtifactDeletionToAppManifest(deployableArtifact, "$container/$fileName", record, propertiesRecord)
-					}
+					println("*! [ERROR] Error when extracting baseline package '${created}' with rc=$rc.")
+					rc = 1
+				}		
+			} else {
+				println("*! [ERROR] The Baseline Package '${props.baselinePackageFilePath}' was not found.")
+				rc = 1
+			}				
+		}
+		
+		if (rc == 0) {	
+	
+			println("** Total number of build outputs to package: ${buildOutputsMap.size()}")
+
+			def publicInterfacesDeployTypes
+			def privateInterfacesDeployTypes
+			def processedArtifacts = 0 // used as a checksum that all files got categorized
+
+			if (props.publicInterfacesDeployTypes) {
+				publicInterfacesDeployTypes = props.publicInterfacesDeployTypes.split(",") // split comma separated list into list
+			} else {
+				println("*! [WARNING] Property 'publicInterfacesDeployTypes' not defined, using default types 'OBJ'.")
+				publicInterfacesDeployTypes = ["OBJ"]
+			}
+			if (props.privateInterfacesDeployTypes) {
+				privateInterfacesDeployTypes = props.privateInterfacesDeployTypes.split(",") // split comma separated list into list
+			} else {
+				println("*! [WARNING] Property 'privateInterfacesDeployTypes' not defined, using default types 'OBJ,BMSCOPY'.")
+				privateInterfacesDeployTypes = "OBJ,BMSCOPY".split(",")
 			}
 
+			def deployableOutputs = buildOutputsMap.findAll { deployableArtifact, info ->
+				!((publicInterfacesDeployTypes && publicInterfacesDeployTypes.contains(deployableArtifact.deployType)) || (privateInterfacesDeployTypes && privateInterfacesDeployTypes.contains(deployableArtifact.deployType)))
+			}
+			if (deployableOutputs && !deployableOutputs.isEmpty()) {
+				println("** Copy ${deployableOutputs.size()} deployable artifacts to temporary package directory '$tempLoadDir/$binSubfolder'")
+				copyArtifactsToUSS(deployableOutputs, binSubfolder, copyModeMap)
+				processedArtifacts += deployableOutputs.size()
+			}
 
+			if (props.publishInterfaces && props.publishInterfaces.toBoolean()) {
 
-			if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
-				sbomUtilities.addEntryToSBOM(deployableArtifact, info)
+				def publicInterfaces
+				if (publicInterfacesDeployTypes) {
+					// build outputs that are mapped to a public deployType and are flagged as 'service submodule' in the application descriptor
+					publicInterfaces = buildOutputsMap.findAll { deployableArtifact, info ->
+						if (deployableArtifact.deployType.equals("OBJ")) {
+							fileUsage = applicationDescriptorUtils.getFileUsageByType(applicationDescriptor, "Program", deployableArtifact.file)
+							publicInterfacesDeployTypes.contains(deployableArtifact.deployType) && fileUsage && fileUsage.equals("service submodule")
+						} else {
+							publicInterfacesDeployTypes.contains(deployableArtifact.deployType)
+						}
+					}
+					if (publicInterfaces && !publicInterfaces.isEmpty()) {
+						println("** Copy ${publicInterfaces.size()} public interfaces to temporary package directory '$tempLoadDir/$includeSubfolder'")
+						copyArtifactsToUSS(publicInterfaces, includeSubfolder, copyModeMap)
+						processedArtifacts += publicInterfaces.size()
+					}
+				}
+				def privateInterfaces
+				if (privateInterfacesDeployTypes) {
+					// build outputs that are mapped to a public deployType and are flagged as 'service submodule' in the application descriptor
+					privateInterfaces = buildOutputsMap.findAll { deployableArtifact, info ->
+						if (deployableArtifact.deployType.equals("OBJ")) {
+							fileUsage = applicationDescriptorUtils.getFileUsageByType(applicationDescriptor, "Program", deployableArtifact.file)
+							privateInterfacesDeployTypes.contains(deployableArtifact.deployType) && fileUsage && fileUsage.equals("internal submodule")
+						} else {
+							privateInterfacesDeployTypes.contains(deployableArtifact.deployType)
+						}
+					}
+					println("** Copy ${privateInterfaces.size()} private interfaces to temporary package directory '$tempLoadDir/$libSubfolder'")
+					copyArtifactsToUSS(privateInterfaces, libSubfolder, copyModeMap)
+					processedArtifacts += privateInterfaces.size()
+				}
+				if ((publicInterfaces && !publicInterfaces.isEmpty()) ||
+					(privateInterfaces && !privateInterfaces.isEmpty())) {
+					// Checks if all binary interfaces (submodules) are in the archive or not
+					println("** Validate if all interfaces known in Application Descriptor are packaged.")
+					checkBinaryInterfaces(tempLoadDir, applicationDescriptor)
+				}
+
+				ArrayList<String> publicIncludeFiles = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Include File", "public")
+				ArrayList<String> sharedIncludeFiles = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Include File", "shared")
+				ArrayList<String> allIncludeFiles = new ArrayList<String>()
+
+				if (publicIncludeFiles && !publicIncludeFiles.isEmpty()) {
+					allIncludeFiles.addAll(publicIncludeFiles)
+				}
+				if (sharedIncludeFiles && !sharedIncludeFiles.isEmpty()) {
+					allIncludeFiles.addAll(sharedIncludeFiles)
+				}
+
+				if (!allIncludeFiles.isEmpty()) {
+					println("** Copy ${allIncludeFiles.size()} public/shared Include Files from Application Folder to temporary package directory '$tempLoadDir'")
+
+					allIncludeFiles.forEach() { includeFile ->
+						Path includeFilePath = Paths.get("${props.applicationFolderPath}/${includeFile}")
+						Path targetIncludeFilePath = Paths.get("${tempLoadDir.getPath()}/${includeSubfolder}/src/${includeFilePath.getFileName()}")
+						try {
+							//Create target parent folder if it doesn't exist
+							def targetIncludeFilesFolder = targetIncludeFilePath.getParent().toFile()
+							if (!targetIncludeFilesFolder.exists()) {
+								targetIncludeFilesFolder.mkdirs()
+							}
+							println("\tCopy '${includeFilePath}' file to '${targetIncludeFilePath}'")
+							copyFiles(includeFilePath.toString(), targetIncludeFilePath.toString())
+							
+						} catch (IOException exception) {
+							println "!* [ERROR] Copy failed: an error occurred when copying '${includeFilePath}' to '${targetIncludeFilePath}'"
+							rc = Math.max(rc, 1)
+						}
+					}
+				}
+			}
+
+			if (processedArtifacts != buildOutputsMap.size()) {
+				println("*! [WARNING] The number of copied artifacts ($processedArtifacts) doesn't match the number of identified build outputs (${buildOutputsMap.size()}). Some files might have an incorrect 'usage' in the Application Descriptor.")
 			}
 		}
 		
 		if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
 			sbomUtilities.writeSBOM("$tempLoadDir/$sbomFileName", props.fileEncoding)    
 		}
-		
-	
+
 		if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean() && rc == 0) {
+			if (props.publish && props.publish.toBoolean()) {
+				HashMap<String,String> packageInfo = new HashMap<String, String>()
+				packageInfo.put("type", "artifactRepository")
+				packageInfo.put("name", props.versionName)
+				packageUrl = computeAbsoluteRepositoryUrl()
+				if (packageUrl) packageInfo.put("uri", packageUrl)
+				wdManifestGeneratorUtilities.setPackageInfo(packageInfo)
+			}
 			// print application manifest
 			// wazideploy_manifest.yml is the default name of the manifest file
 			wdManifestGeneratorUtilities.writeApplicationManifest(new File("$tempLoadDir/wazideploy_manifest.yml"), props.fileEncoding, props.verbose)
 		}
-
 	
 		if (rc == 0) {
 	
 			// log buildReportOrder file and add build reports to tar file
 			File buildReportOrder = new File("$tempLoadDir/buildReportOrder.txt")
-	
+			ArrayList<String> buildReportOrderLines = new ArrayList<String>()
+
+			if (buildReportOrder.exists()) {
+				String line
+				buildReportOrder.withReader(props.fileEncoding) { reader ->
+					while ((line = reader.readLine()) != null && !line.equals("")) {
+						buildReportOrderLines.add(line)
+					}
+				}
+			}
+			
 			println("** Generate package build report order file to '$buildReportOrder'")
 	
-			buildReportOrder.write('')
-			String buildReportFileName
-			int counter = 0
+			props.buildReportOrder.each { buildReportFile ->
+				Path buildReportFilePath = Paths.get(buildReportFile)
+
+				// Always prefix the buildreport with sequence number
+				int nextIndex = buildReportOrderLines.size() + 1
+				Path copiedBuildReportFilePath = Paths.get(tempLoadDir.getPath() + "/" + "$nextIndex".padLeft(3, "0") + "_" + buildReportFilePath.getFileName().toString())
 	
+				copyFiles(buildReportFilePath.toString(), copiedBuildReportFilePath.toString())
+				buildReportOrderLines.add("${copiedBuildReportFilePath.getFileName().toString()}\n")
+			}
 			buildReportOrder.withWriter(props.fileEncoding) { writer ->
-				props.buildReportOrder.each{ buildReportFile ->
-					counter++
-	
-					Path buildReportFilePath = Paths.get(buildReportFile)
-					Path copiedBuildReportFilePath = Paths.get(tempLoadDir.getPath() + "/" + buildReportFilePath.getFileName().toString())
-	
-					// prefixing the buildreport with sequence number when having multiple
-					if (props.buildReportOrder.size() > 1)
-						copiedBuildReportFilePath = Paths.get(tempLoadDir.getPath() + "/" + "$counter".padLeft(3, "0") + "_" + buildReportFilePath.getFileName().toString())
-	
-					Files.copy(buildReportFilePath, copiedBuildReportFilePath, COPY_ATTRIBUTES)
-					writer.write("${copiedBuildReportFilePath.toString()}\n")
+				buildReportOrderLines.each { line ->
+					if (!line.isEmpty()) {
+						File buildReportFilePath = new File(line)
+						String buildReportFileName = buildReportFilePath.getName() 
+						writer.write("$buildReportFileName\n")
+					}
 				}
 			}
 		
 			Path packagingPropertiesFilePath = Paths.get(props.packagingPropertiesFile)
 			Path copiedPackagingPropertiesFilePath = Paths.get(tempLoadDir.getPath() + "/" + packagingPropertiesFilePath.getFileName().toString())
-			if(props.verbose) println("** Copy packaging properties config file to '$copiedPackagingPropertiesFilePath'")
-			Files.copy(packagingPropertiesFilePath, copiedPackagingPropertiesFilePath, COPY_ATTRIBUTES)
+			if (props.verbose) println("** Copy packaging properties config file to '$copiedPackagingPropertiesFilePath'")
+			copyFiles(packagingPropertiesFilePath.toString(), copiedPackagingPropertiesFilePath.toString())
+				
+			if (props.owner) {
+				def processCmd = [
+					"sh",
+					"-c",
+					"chown -R ${props.owner} $tempLoadDir/*"
+				]
+				def processRC = runProcess(processCmd, tempLoadDir)
+				rc = Math.max(rc, processRC)
+				if (rc == 0) {
+					println("** Ownership of files in '$tempLoadDir' successfully changed to '${props.owner}'.")
+				} else {
+					println("*! [ERROR] Error when changing ownership to '${props.owner}' with rc=$rc.")
+				}
+			}
 	
+			if (rc == 0) {
 			println("** Create tar file at ${tarFile}")
 			// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
 			// To save all attributes to be restored on z/OS and non-z/OS systems : tar -UX
@@ -541,11 +719,13 @@ if (rc == 0) {
 				println("** Package '${tarFile}' successfully created.")
 			} else {
 				println("*! [ERROR] Error when creating Package '${tarFile}' with rc=$rc.")
+				}
 			}
 		}
 	
 		//Package additional outputs to tar file.
-		if (props.includeLogs && rc == 0) (props.includeLogs).split(",").each { logPattern ->
+		if (props.includeLogs && rc == 0) {
+			(props.includeLogs).split(",").each { logPattern ->
 			println("** Add files with file pattern '$logPattern' from '${props.workDir}' to '${tarFile}'")
 			processCmd = [
 				"sh",
@@ -557,6 +737,7 @@ if (rc == 0) {
 			rc = Math.max(rc, processRC)
 			if (rc != 0) {
 				println("*! [ERROR] Error when appending '$logPattern' files to Package '${tarFile}' with rc=$rc.")
+				}
 			}
 		}
 	
@@ -579,8 +760,7 @@ if (rc == 0) {
 		//Set up the artifact repository information to publish the tar file
 		if (props.publish && props.publish.toBoolean() && rc == 0){
 			// Configuring artifact repositoryHelper parms
-			def String remotePath = (props.versionName) ? (props.versionName + "/" + tarFileName) : (tarFileLabel + "/" + tarFileName)
-			def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + props.'artifactRepository.directory' + "/" + remotePath ).normalize().toString() // Normalized URL
+			def url = computeAbsoluteRepositoryUrl()
 	
 			def apiKey = props.'artifactRepository.user'
 			def user = props.'artifactRepository.user'
@@ -636,6 +816,98 @@ if (rc > 0) {
 }
 System.exit(rc)
 
+def copyArtifactsToUSS(Map<DeployableArtifact, Map> buildOutputsMap, String tarSubfolder, HashMap<String, String> copyModeMap) {
+	buildOutputsMap.each { deployableArtifact, info ->
+		String container = info.get("container")
+		String owningApplication = info.get("owningApplication")
+		Record record = info.get("record")
+		PropertiesRecord propertiesRecord = info.get("propertiesRecord")
+		DependencySetRecord dependencySetRecord = info.get("dependencySetRecord")
+		
+		def relativeFilePath = ""
+		if (deployableArtifact.artifactType.equals("zFSFile")) {
+			relativeFilePath = "$binSubfolder/uss"
+		} else {
+			if (deployableArtifact.deployType.equals("OBJ")) {
+				relativeFilePath = "$tarSubfolder/bin"
+			} else {
+				relativeFilePath = "$tarSubfolder/${deployableArtifact.deployType.toLowerCase()}"
+			}
+		}
+
+		// define file name in USS
+		def fileName = deployableArtifact.file
+
+		// add deployType to file name
+		if (props.addExtension && props.addExtension.toBoolean()) {
+			fileName = fileName + '.' + deployableArtifact.deployType
+		}
+		def file = new File("$tempLoadDir/$relativeFilePath/$fileName")
+
+		def (directory, relativeFileName) = extractDirectoryAndFile(file.toPath().toString())
+		new File(directory).mkdirs()
+
+
+		if (deployableArtifact.artifactType.equals("zFSFile")) {
+			def originalFile = new File(container + "/" + deployableArtifact.file)
+			println "\tCopy '${originalFile.toPath()}' to '${file.toPath()}'"
+			try {
+				copyFiles(originalFile.getAbsoluteName(), file.getAbsoluteName())
+			} catch (IOException exception) {
+				println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
+				rc = Math.max(rc, 1)
+			}
+		} else if  (deployableArtifact.artifactType.equals("DatasetMember")) {
+			// set copyMode based on last level qualifier
+			currentCopyMode = copyModeMap[container.replaceAll(/.*\.([^.]*)/, "\$1")]
+			if (currentCopyMode != null) {
+				if (ZFile.exists("//'$container(${deployableArtifact.file})'")) {
+					// Copy outputs to HFS
+					CopyToHFS copy = new CopyToHFS()
+					copy.setCopyMode(DBBConstants.CopyMode.valueOf(currentCopyMode))
+					copy.setDataset(container)
+
+					println "\tCopy '$container(${deployableArtifact.file})' to '$tempLoadDir/$relativeFilePath/$fileName' with DBB Copymode '$currentCopyMode'"
+					copy.dataset(container).member(deployableArtifact.file).file(file).execute()
+
+					// Tagging binary files
+					if (currentCopyMode == CopyMode.BINARY || currentCopyMode == CopyMode.LOAD) {
+						StringBuffer stdout = new StringBuffer()
+						StringBuffer stderr = new StringBuffer()
+						Process process = "chtag -b $file".execute()
+						process.waitForProcessOutput(stdout, stderr)
+						if (stderr){
+							println ("*! stderr : $stderr")
+							println ("*! stdout : $stdout")
+						}
+					}
+
+					// Append record to Wazi Deploy Application Manifest
+					if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+						wdManifestGeneratorUtilities.appendArtifactToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, dependencySetRecord, propertiesRecord)
+					}
+
+				} else {
+					println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' doesn't exist."
+					rc = Math.max(rc, 1)
+				}
+			} else {
+				println "*! [ERROR] Copy failed: The file '$container(${deployableArtifact.file})' could not be copied due to missing mapping."
+				rc = Math.max(rc, 1)
+			}
+		} else if  (deployableArtifact.artifactType.equals("DatasetMemberDelete")) {
+				// generate delete instruction for Wazi Deploy
+				if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+					wdManifestGeneratorUtilities.appendArtifactDeletionToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, propertiesRecord)
+				}
+		}
+
+		if (props.generateSBOM && props.generateSBOM.toBoolean() && rc == 0) {
+			sbomUtilities.addEntryToSBOM(deployableArtifact, info)
+		}
+	}
+}
+
 /**
  * parse data set name and member name
  * @param fullname e.g. BLD.LOAD(PGM1)
@@ -661,28 +933,6 @@ def extractDirectoryAndFile(String fullname) {
 	return [directory, file];
 }
 
-
-/**
- * run process
- */
-def runProcess(ArrayList cmd, File dir){
-	if (props.verbose && props.verbose.toBoolean()) println "   Executing $cmd "
-	StringBuffer response = new StringBuffer()
-	StringBuffer error = new StringBuffer()
-
-	// execute cmd
-	def p = cmd.execute(null, dir)
-
-	p.waitForProcessOutput(response, error)
-	if(response) println(response.toString())
-
-	def rc = p.exitValue();
-	if (rc != 0){
-		println("*! [ERROR] Error executing $cmd \n" + error.toString())
-	}
-	return rc
-}
-
 /**
  * read cliArgs
  */
@@ -700,13 +950,19 @@ def parseInput(String[] cliArgs){
 
 	// Wazi Deploy Application Manifest generation
 	cli.wd(longOpt:'generateWaziDeployAppManifest', 'Flag indicating to generate and add the Wazi Deploy Application Manifest file.')
+	cli.ed(longOpt:'externalDependenciesEvidences', args:1, argName:'externalDependenciesEvidences', 'File documenting the external dependencies that were provided to the build phase.')
 
 	// Concert Build Manifest generation
 	cli.ic(longOpt:'generateConcertBuildManifest', 'Flag indicating to generate and add the IBM Concert Build Manifest file.')
 
 	cli.b(longOpt:'branch', args:1, argName:'branch', 'The git branch processed by the pipeline')
 	cli.a(longOpt:'application', args:1, argName:'application', 'The name of the application')
-	
+
+	cli.af(longOpt:'applicationFolderPath', args:1, argName:'applicationFolderPath', 'Path to the Application\'s Git repository folder')
+
+	// Baseline package
+	cli.bp(longOpt:'baselinePackage', args:1, argName:'baselinePackageFilePath', 'Path to a baseline Package. (Optional)')
+
 	// Artifact repository options ::
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifact Repository server. (Optional)')
 	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package on the Artifact repository server. (Optional)')	
@@ -730,6 +986,9 @@ def parseInput(String[] cliArgs){
 	// SBOM generation
 	cli.s(longOpt:'sbom', argName:'sbom', 'Flag to control the generation of SBOM')
 	cli.sa(longOpt:'sbomAuthor', args:1, argName:'sbomAuthor', 'Author of the SBOM, in form "Name <email>"')
+
+	// Owner of the artifacts
+	cli.o(longOpt:'owner', args:1, argName:'owner', 'Owner of the packaged artifacts')
 
 	cli.h(longOpt:'help', 'Prints this message')
 	def opts = cli.parse(cliArgs)
@@ -765,13 +1024,24 @@ def parseInput(String[] cliArgs){
 	if (opts.b) props.branch = opts.b
 
 	// cli overrides defaults set in 'packageBuildOutputs.properties'
-	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : props.generateWaziDeployAppManifest
-	props.generateConcertBuildManifest = (opts.ic) ? 'true' : props.generateConcertBuildManifest
-	props.addExtension = (opts.ae) ? 'true' : props.addExtension
-	props.publish = (opts.p) ? 'true' : props.publish
-	props.generateSBOM = (opts.sbom) ? 'true' : props.generateSBOM
+	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : (props.generateWaziDeployAppManifest ? props.generateWaziDeployAppManifest : 'false')
+	props.generateConcertBuildManifest = (opts.ic) ? 'true' : (props.generateConcertBuildManifest ? props.generateConcertBuildManifest : 'false')
+	props.addExtension = (opts.ae) ? 'true' : (props.addExtension ? props.addExtension : 'true')
+	props.publish = (opts.p) ? 'true' : (props.publish ? props.publish : 'false')
+	props.generateSBOM = (opts.sbom) ? 'true' : (props.generateSBOM ? props.generateSBOM : 'false')
+	props.publishInterfaces = (props.publishInterfaces ? props.publishInterfaces : 'false')
+
+	if (opts.o) props.owner = opts.o
 
 	props.verbose = (opts.verb) ? 'true' : 'false'
+	
+	if (opts.af) {
+		props.applicationFolderPath = opts.af
+		if (opts.bp) props.baselinePackageFilePath = opts.bp
+	}
+
+	// Track retrieved external dependencies
+	if (opts.ed) props.externalDependenciesEvidences = opts.ed
 
 	// default log encoding if not specified via config passed in via --properties
 	if (!props.fileEncoding) props.fileEncoding = "IBM-1047"
@@ -869,7 +1139,7 @@ def parseInput(String[] cliArgs){
 	// assess required options to generate Wazi Deploy application manifest
 	if (props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
 		if (!props.branch) {
-			println("*! [ERROR] Missing branch parameter ('--branch'). It is required for generating the Wazi Deploy Application Manifest file.")
+			println("*! [ERROR] Missing Branch parameter ('--branch'). It is required for generating the Wazi Deploy Application Manifest file.")
 			rc = 2
 		}
 		if (!props.addExtension || !props.addExtension.toBoolean()) {
@@ -881,15 +1151,22 @@ def parseInput(String[] cliArgs){
 		// assess required options to generate Concert Build manifest
 	if (props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean()) {
 		if (!props.branch) {
-			println("*! [ERROR] Missing branch parameter ('--branch'). It is required for generating the Concert Build Manifest file.")
+			println("*! [ERROR] Missing Branch parameter ('--branch'). It is required for generating the Concert Build Manifest file.")
 			rc = 2
 		}
 		if (!props.publish) {
-			println("*! [ERROR] Missing publish parameter ('--publish'). It is required for generating the Concert Build Manifest file.")
+			println("*! [ERROR] Missing Publish parameter ('--publish'). It is required for generating the Concert Build Manifest file.")
 			rc = 2
 		}
 		if (opts.bO || opts.boFile) {
-			println("*! [ERROR] conflicting parameter ('-bO or -boFile'). IBM Concert Build Manifest file is created with single builds only.")
+			println("*! [ERROR] Conflicting parameter ('-bO or -boFile'). IBM Concert Build Manifest file is created with single builds only.")
+			rc = 2
+		}
+	}
+	
+	if (props.publishInterfaces && props.publishInterfaces.toBoolean()) {
+		if (!props.applicationFolderPath) {
+			println("*! [ERROR] Missing Application Folder Path parameter ('--applicationFolderPath'). It is required for publishing intefaces in the archive.")
 			rc = 2
 		}
 	}
@@ -922,6 +1199,103 @@ def parseCopyModeMap(String copyModeMapString) {
 	}
 	return copyModeMap
 }
+
+/*
+ * build package url 
+ */
+def computeAbsoluteRepositoryUrl() {
+	def String remotePath = (props.versionName) ? (props.versionName + "/" + tarFileName) : (tarFileLabel + "/" + tarFileName)
+	def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + (props.get('artifactRepository.directory') ? "${props.get('artifactRepository.directory')}/" : "") + remotePath).normalize().toString() // Normalized URL
+	return url
+}
+
+/*
+ * checksBinaryInterfaces - Checks if all interfaces
+ * (public/shared Include Files and submodules)
+ * are present in the archive.
+ * If not, issue a warning message
+ */
+ 
+def checkBinaryInterfaces(File tempLoadDir, applicationDescriptor) {
+	ArrayList<String> binaryPublicInterfaces = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Program", "service submodule")
+	ArrayList<String> binaryPrivateInterfaces = applicationDescriptorUtils.getFilesByTypeAndUsage(applicationDescriptor, "Program", "internal submodule")
+	binaryPublicInterfaces.each { binaryInterface ->
+		String sourceFileName = Paths.get(binaryInterface).getFileName().toString()
+		String member = sourceFileName.split("\\.")[0].toUpperCase()
+		
+		String expectedInterfaceFileName = "$includeSubfolder/bin/" + member + ".OBJ"
+		File expectedInterfaceFile = new File("${tempLoadDir.getAbsolutePath()}/$expectedInterfaceFileName")
+		if (!expectedInterfaceFile.exists()) {
+			println("*! [WARNING] Public interface for $member not found at '$expectedInterfaceFileName'. Archive is not exposing all known interfaces.")
+		}
+	}
+	binaryPrivateInterfaces.each { binaryInterface ->
+		String sourceFileName = Paths.get(binaryInterface).getFileName().toString()
+		String member = sourceFileName.split("\\.")[0].toUpperCase()
+		
+		String expectedInterfaceFileName = "$libSubfolder/bin/" + member + ".OBJ"
+		File expectedInterfaceFile = new File("${tempLoadDir.getAbsolutePath()}/$expectedInterfaceFileName")
+		if (!expectedInterfaceFile.exists()) {
+			println("*! [WARNING] Private interface for $member not found at '$expectedInterfaceFileName'. Archive is not exposing all known interfaces.")
+		}
+	}
+}
+
+def retrieveBuildResultProperty(PropertiesRecord buildResultPropertiesRecord, String propertyName) {
+
+	if (buildResultPropertiesRecord!=null) {
+		buildResultProperties = buildResultPropertiesRecord.getProperties()
+
+		def property = buildResultProperties.find {
+			it.key.contains(propertyName)
+		}
+
+		if (property) {
+			return property.getValue()
+		} else {
+			return null
+		}
+	}
+}
+
+/**
+ * Copy files using the cp command, to preserve file tags
+ */
+def copyFiles(String sourceFile, String targetFile){
+	StringBuffer resp = new StringBuffer()
+	StringBuffer error = new StringBuffer()
+
+	String cmd = "cp -Rf $sourceFile $targetFile"
+	Process process = cmd.execute()
+	process.waitForProcessOutput(resp, error)
+	if (error) {
+		String warningMsg = "*! Failed to execute shell command $cmd"
+		println(warningMsg)
+		println(error)
+	}
+}
+
+/**
+ * Execute a process
+ */
+def runProcess(ArrayList cmd, File dir){
+	if (props.verbose && props.verbose.toBoolean()) println "   Executing $cmd "
+	StringBuffer response = new StringBuffer()
+	StringBuffer error = new StringBuffer()
+
+	// execute cmd
+	def p = cmd.execute(null, dir)
+
+	p.waitForProcessOutput(response, error)
+	if(response) println(response.toString())
+
+	def rc = p.exitValue();
+	if (rc != 0){
+		println("*! [ERROR] Error executing $cmd \n" + error.toString())
+	}
+	return rc
+}
+
 
 
 /*
@@ -963,22 +1337,5 @@ class DeployableArtifact {
 	@Override
 	public String toString() {
 		return file + "." + deployType;
-	}
-}
-
-def retrieveBuildResultProperty(PropertiesRecord buildResultPropertiesRecord, String propertyName) {
-
-	if (buildResultPropertiesRecord!=null) {
-		buildResultProperties = buildResultPropertiesRecord.getProperties()
-
-		def property = buildResultProperties.find {
-			it.key.contains(propertyName)
-		}
-
-		if (property) {
-			return property.getValue()
-		} else {
-			return null
-		}
 	}
 }

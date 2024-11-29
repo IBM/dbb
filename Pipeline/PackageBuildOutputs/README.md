@@ -5,14 +5,19 @@
 This sample shows how to create a TAR file with the build outputs based on the DBB Build Report after a successful build.
 
 The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and to pull them into the build process. The `ArtifactRepositoryHelpers.groovy` allow you to upload and download packages from Artifactory. 
-The `ArtifactRepositoryHelpers` script is a very simple implementation sufficient for a show case, **_we recommend_** to use the Artifactory publishers which are available with your CI pipeline coordinator.
+The `ArtifactRepositoryHelpers` script is a simple implementation to support download and upload from/to an Artifact Repository server.
+However, it is recommend to consider using APIs or CLI utilities provided by Artifact Repositories distributions, which are available with your CI/CD pipeline coordinator.
 
-This sample Groovy script to package build outputs:
+This sample Groovy script can be used to package build outputs:
 
-- Extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
+- It extracts information about the build outputs from the Dependency Based Build (DBB) `BuildReport.json`. The script is able to take a single DBB build report or multiple build reports to build a cumulative package across multiple incremental builds. 
   - It processes the MVSExec, CopyToPDS and the USS_Record types
-- (Optionally) generates the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) file.
-- Copies outputs to a temporary directory on Unix System Services and creates a TAR file based on the temporary directory.
+- It optionally generates the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) file.
+- It copies outputs to a temporary directory on Unix System Services and creates a TAR file based on the temporary directory.
+- If the path to the application's Git repository is provided, the script will search for the Application Descriptor file and process it. Include Files classified as `public` will be automatically added to the package into the subdirectory `include/src`. The script will also process programs that are classified as `internal submodule` or `service submodule` and will copy the corresponding object decks to either the `lib` directory or the `include/bin` subfolder for the tar file.
+- If a baseline package is provided through the corresponding CLI option, the baseline package is expanded in the temporary directory first:
+  - All the subfolders are removed except the subfolder that contains interfaces definitions, by default located in the `include` subfolder.
+  - More information can be found in the [Baseline Packages](#baseline-packages) section.
 
 The support for zFS files in the packaging process is performed through the use of an `USS_RECORD` type record in the DBB BuildReport. 
 
@@ -22,26 +27,27 @@ This section provides a more detailed explanation of how the PackageBuildOutputs
 
 1. **Initialization**
    1. Read [command line parameters](#command-line-options-summary---packagebuildoutputs).
-   1. Read the properties file that is passed via `--packagingPropertiesFile`.
+   2. Read the properties file that is passed via `--packagingPropertiesFile`.
 
 2. **Process the DBB build report(s)**
    1. If one or multiple DBB build reports are passed to the script via either `--buildReportOrder` or `--buildReportOrderFile`, the script loops through the provided DBB build reports. If no build report is specified, the script reads DBB's `BuildReport.json` file from the pipeline work directory specified by the `--workDir` parameter. For each build report, the following steps are performed:
-      1. Parse and extract build output information for records of type *ExecuteRecord* and *CopyToPDSRecord*.
+      1. Parse and extract build output information for records of type *ExecuteRecord*, *CopyToPDSRecord* and *USS_Record*.
       2. Remove output entries that have no `deployType` set and remove unwanted outputs such as outputs with the `deployType` equal to `ZUNIT-TESTCASE`.
    2. If processing multiple build reports, a cumulative hashmap of output records is created to be able to combine outputs from multiple pipeline builds into a single TAR file.
    	  1. The key of the map, used in the calculation of the artifacts to be deployed, is the combination of the member name and the deploy type.
    	  2. Artifacts having the same member name and the same deploy type will be present only once in the generated package, taking the last occurrence of the artifact, as found in the ordered list of Build Reports passed as parameters.
 
 3. **(Optionally) Generate Software-Bill-Of-Material (SBOM) file**
-   1. Based on the collected build outputs information, an SBOM file following the [CycloneDX](https://cyclonedx.org/) specification is created.  
+   Based on the collected build outputs information, an SBOM file following the [CycloneDX](https://cyclonedx.org/) specification is created.  
    More details can be found [in this section](#software-bill-of-material-sbom-generation).
 
 4. **(Optionally) Generate Wazi Deploy application manifest**
-   1. Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/16.0?topic=files-application-manifest-file) is generated and saved as wazideploy_manifest.yml.
+   Based on the collected build outputs information, the [Wazi Deploy application manifest](https://www.ibm.com/docs/en/developer-for-zos/17.0?topic=files-application-manifest-file) is generated and saved as wazideploy_manifest.yml.
 
 5. **Create TAR file**
     1. It then invokes CopyToHFS API to copy the outputs from the libraries to a temporary directory on zFS. It will set the file tags based on the ZLANG setting (Note: A workaround is implemented to tag files as binary); all files require to be tagged. Please check the COPYMODE list, which maps last level qualifiers to the copymode of CopyToHFS. When specifying the option `--addExtension`, the `deployType` will be appended as the file extension to the file.
     2. It packages these load files into a TAR file, and adds the BuildReport.json and optionally other build logs from the build workspace.
+    3. If the path to the application's Git repository is provided, it will perform additional publishing of object decks and Include Files classified as public and shared, into the `include` subfolder of the temporary directory.
 
 6. **(Optional) Publish to Artifact Repository such as JFrog Artifactory or Sonartype Nexus**
     1. Publishes the TAR file to the artifact repository based on the given configuration using the ArtifactRepositoryHelpers script. Consider a Nexus RAW, or a Artifactory Generic as the repository type. **Please note**: The ArtifactRepositoryHelpers script is updated for DBB 2.0 and requires to run on JAVA 11. The publishing can be configured to pass in the artifact repository information as well as the path within the repository `directory/[versionName|buildLabel]/tarFileName` via the cli.
@@ -56,8 +62,8 @@ Notes:
 
 ### Package
 ```
-groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \ 
-        --workDir /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949
+groovyz /var/pipeline/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator
+
 ```
 
 <details>
@@ -66,42 +72,37 @@ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
 PackageBuildOutputs console output
 
 ```
-** PackageBuildOutputs start at 20220901.025517.055
+** PackageBuildOutputs start at 20241028.145508.011
 ** Properties at startup:
-   verbose -> false
-   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD"]
-   packagingPropertiesFile -> /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties
-   startTime -> 20220901.025517.055
-   publish -> false
-   workDir -> /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949
-   buildReportOrder -> [/u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json]
    addExtension -> false
-** Read build report data from /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
-** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
-** Files detected in /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMORT), MAPLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIS), MAPLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRT), CICSLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMPMT), LOAD
-   GITLAB.ZAPP.CLEAN.MAIN.DBRM(EPSCMORT), DBRM
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCMORT), CICSLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRD), CICSLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIST), CICSLOAD
-*** Number of build outputs to package: 8
-** Copying BuildOutputs to temporary package dir.
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSCSMRT with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRD) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSCSMRD with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMORT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSMORT with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMPMT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSMPMT with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIST) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSMLIST with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIS) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSMLIS with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCMORT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSCMORT with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.DBRM(EPSCMORT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.DBRM/EPSCMORT with DBB Copymode BINARY
-** Copying /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json to temporary package dir.
-** Copying /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.
-** Creating tar file at /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/build.20220614.084654.046.tar.
-** Package successfully created at /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/build.20220614.084654.046.tar.
-
+   buildReportOrder -> [/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json]
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY", "OBJ" : "BINARY"]
+   fileEncoding -> UTF-8
+   generateSBOM -> false
+   generateWaziDeployAppManifest -> false
+   packagingPropertiesFile -> /u/mdalbin/dbb-MD/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
+   publish -> false
+   startTime -> 20241028.145508.011
+   verbose -> false
+   workDir -> /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator
+** Read build report data from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json'.
+** Remove output records without deployType or with deployType=ZUNIT-TESTCASE
+** Deployable artifacts detected in '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json':
+        'EBUD03' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD02' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD0RUN' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD01' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+*** Number of build outputs to package: 4
+** Copy build outputs to temporary package directory '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir'
+        Copy 'DBEHM.MIG.LOAD(EBUD03)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD03' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD02)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD02' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD0RUN)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD0RUN' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD01)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD01' with DBB Copymode 'LOAD'
+** Generate package build report order file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/buildReportOrder.txt'
+** Copy packaging properties config file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/packageBuildOutputs.properties'
+** Create tar file at /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/build.20241018.143823.127.tar
+** Package '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/build.20241018.143823.127.tar' successfully created.
+** Packaging completed successfully.
 ```
 </details>
 
@@ -110,9 +111,7 @@ PackageBuildOutputs console output
 Adding `--addExtension` is mandatory, when you plan to use Wazi Deploy as the deployment engine.
 
 ```
-+ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
-        --workDir /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949 \
-        --addExtension
+groovyz /var/pipeline/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator --addExtension
 ```
 
 <details>
@@ -121,44 +120,39 @@ Adding `--addExtension` is mandatory, when you plan to use Wazi Deploy as the de
 PackageBuildOutputs console output
 
 ```
-
-** PackageBuildOutputs start at 20220901.025846.058
+** PackageBuildOutputs start at 20241028.145001.451
 ** Properties at startup:
-   verbose -> false
-   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD"]
-   packagingPropertiesFile -> /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties
-   startTime -> 20220901.025846.058
-   publish -> false
-   workDir -> /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949
-   buildReportOrder -> [/u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json]
    addExtension -> true
-** Read build report data from /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
-** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
-** Files detected in /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMORT), MAPLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIS), MAPLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRT), CICSLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMPMT), LOAD
-   GITLAB.ZAPP.CLEAN.MAIN.DBRM(EPSCMORT), DBRM
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCMORT), CICSLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRD), CICSLOAD
-   GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIST), CICSLOAD
-*** Number of build outputs to package: 8
-** Copying BuildOutputs to temporary package dir.
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSCSMRT.CICSLOAD with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCSMRD) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSCSMRD.CICSLOAD with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMORT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSMORT.MAPLOAD with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMPMT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSMPMT.LOAD with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIST) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSMLIST.CICSLOAD with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSMLIS) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSMLIS.MAPLOAD with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.LOAD(EPSCMORT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.LOAD/EPSCMORT.CICSLOAD with DBB Copymode LOAD
-     Copying GITLAB.ZAPP.CLEAN.MAIN.DBRM(EPSCMORT) to /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/tempPackageDir/GITLAB.ZAPP.CLEAN.MAIN.DBRM/EPSCMORT.DBRM with DBB Copymode BINARY
-** Copying /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/BuildReport.json to temporary package dir.
-** Copying /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.
-** Creating tar file at /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/build.20220614.084654.046.tar.
-** Package successfully created at /u/gitlab/gitlab-runner/zos/builds/dbb-zappbuild/BUILD-5949/build.20220614.084654.046.tar.
-
+   buildReportOrder -> [/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json]
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY", "OBJ" : "BINARY"]
+   fileEncoding -> UTF-8
+   generateSBOM -> false
+   generateWaziDeployAppManifest -> false
+   packagingPropertiesFile -> /u/mdalbin/dbb-MD/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
+   publish -> false
+   startTime -> 20241028.145001.451
+   verbose -> false
+   workDir -> /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator
+** Read build report data from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json'.
+** Remove output records without deployType or with deployType=ZUNIT-TESTCASE
+** Deployable artifacts detected in '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json':
+        'EBUD03' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD02' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD0RUN' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD01' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+*** Number of build outputs to package: 4
+** Copy build outputs to temporary package directory '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir'
+        Copy 'DBEHM.MIG.LOAD(EBUD03)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD03.LOAD' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD02)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD02.LOAD' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD0RUN)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD0RUN.LOAD' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD01)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD01.LOAD' with DBB Copymode 'LOAD'
+** Generate package build report order file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/buildReportOrder.txt'
+** Copy packaging properties config file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/packageBuildOutputs.properties'
+** Create tar file at /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/build.20241018.143823.127.tar
+** Package '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/build.20241018.143823.127.tar' successfully created.
+** Packaging completed successfully.
 ```
+
 </details>
 
 ### Package to deploy with Wazi Deploy
@@ -169,10 +163,11 @@ When deploying with Wazi Deploy, and generating the Wazi Deploy Application Mani
 * `--addExtension`
 * `--branch`
 * `--versionName` (recommended)
+* `--application` (recommended)
 
 ```
-+ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
-      --workDir /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs  \
++ groovyz /var/pipeline/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
+      --workDir /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator  \
       --tarFileName retirementCalculator.tar  \
       --application retirementCalculator  \
       --addExtension \
@@ -189,30 +184,44 @@ When deploying with Wazi Deploy, and generating the Wazi Deploy Application Mani
 PackageBuildOutputs console output
 
 ```
-** PackageBuildOutputs start at 20240304.015055.050
+** PackageBuildOutputs start at 20241028.145841.890
 ** Properties at startup:
    addExtension -> true
    application -> retirementCalculator
    branch -> main
-   buildReportOrder -> [/u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/BuildReport.json]
-   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY"]
+   buildReportOrder -> [/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json]
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY", "OBJ" :
+"BINARY"]
+   fileEncoding -> UTF-8
+   generateSBOM -> false
    generateWaziDeployAppManifest -> true
    includeLogs -> *.log
-   packagingPropertiesFile -> /u/pipeline/git/dbb/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
+   packagingPropertiesFile -> /u/mdalbin/dbb-MD/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
    publish -> false
-   startTime -> 20240304.015055.050
+   startTime -> 20241028.145841.890
    tarFileName -> retirementCalculator.tar
    verbose -> true
    versionName -> rel-2.0.0
-   workDir -> /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs
-** Read build report data from /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/BuildReport.json.
-** Removing output records w/o deployType or with deployType=ZUNIT-TESTCASE
-** Deployable files detected in /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/BuildReport.json
-   ADO.RETIREME.MAIN.BLD.LOAD(EBUD01), LOAD
-*** Number of build outputs to package: 1
-** Copying build outputs to temporary package directory /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir
-   Copy ADO.RETIREME.MAIN.BLD.LOAD(EBUD01) to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/ADO.RETIREME.MAIN.BLD.LOAD/EBUD01.LOAD with DBB Copymode LOAD
-** Generate Wazi Deploy Application Manifest file to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/wazideploy_manifest.yml
+   workDir -> /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator
+** Read build report data from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json'.
+** Remove output records without deployType or with deployType=ZUNIT-TESTCASE
+** Deployable artifacts detected in '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json':
+        'EBUD03' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD02' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD0RUN' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD01' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+*** Number of build outputs to package: 4
+** Copy build outputs to temporary package directory '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir'
+        Copy 'DBEHM.MIG.LOAD(EBUD03)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD
+03.LOAD' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD02)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD
+02.LOAD' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD0RUN)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EB
+UD0RUN.LOAD' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD01)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD
+01.LOAD' with DBB Copymode 'LOAD'
+** Generate Wazi Deploy Application Manifest file to /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/wa
+zideploy_manifest.yml
 ---
 apiVersion: "wazideploy.ibm.com/v1"
 kind: "ManifestState"
@@ -221,55 +230,87 @@ metadata:
   description: "retirementCalculator"
   version: "rel-2.0.0"
   annotations:
-    creationTimestamp: "20240304.015055.050"
+    creationTimestamp: "20241028.145841.890"
     scmInfo:
       type: "git"
-      uri: "git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator"
+      uri: null
       branch: "main"
-      shortCommit: "cac60e95685575fab15a583d2a3966a087b58b38"
+      shortCommit: "581f315a70a69454fcd880b6c3a4bb59f991414d"
     packageInfo: null
 artifacts:
-- name: "EBUD01"
-  description: "retirementCalculator/cobol/EBUD01.cbl"
+- name: "EBUD03"
+  description: "RetirementCalculator/src/cobol/ebud03.cbl"
   properties:
+  - key: "path"
+    value: "bin/LOAD/EBUD03.LOAD"
   - key: "githash"
-    value: "cac60e95685575fab15a583d2a3966a087b58b38"
-  - key: "giturl"
-    value: "git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator"
+    value: "581f315a70a69454fcd880b6c3a4bb59f991414d"
   type: "LOAD"
-  hash: "cac60e95685575fab15a583d2a3966a087b58b38"
+  hash: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+- name: "EBUD02"
+  description: "RetirementCalculator/src/cobol/ebud02.cbl"
+  properties:
+  - key: "path"
+    value: "bin/LOAD/EBUD02.LOAD"
+  - key: "githash"
+    value: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+  type: "LOAD"
+  hash: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+- name: "EBUD0RUN"
+  description: "RetirementCalculator/src/cobol/ebud0run.cbl"
+  properties:
+  - key: "path"
+    value: "bin/LOAD/EBUD0RUN.LOAD"
+  - key: "githash"
+    value: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+  type: "LOAD"
+  hash: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+- name: "EBUD01"
+  description: "RetirementCalculator/src/cobol/ebud01.cbl"
+  properties:
+  - key: "path"
+    value: "bin/LOAD/EBUD01.LOAD"
+  - key: "githash"
+    value: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+  type: "LOAD"
+  hash: "581f315a70a69454fcd880b6c3a4bb59f991414d"
 
-** Generate package build report order file to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/buildReportOrder.txt
-** Copy packaging properties config file to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/tempPackageDir/packageBuildOutputs.properties
-** Creating tar file at /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar
-   Executing [sh, -c, tar cUXf /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar *]
-** Package successfully created at /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar
-** Adding files with file pattern *.log from /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs to /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar
-   Executing [sh, -c, tar rUXf /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar *.log]
+** Generate package build report order file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/buildRe
+portOrder.txt'
+** Copy packaging properties config file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/packageBui
+ldOutputs.properties'
+** Create tar file at /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar
+   Executing [sh, -c, tar cUXf /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar *]
+** Package '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar' successfully created.
+** Add files with file pattern '*.log' from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator' to '/u/mdalbin/Migration
+-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar'
+   Executing [sh, -c, tar rUXf /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar *.log]
 ** List package contents.
-   Executing [sh, -c, tar tvf /u/ado/workspace/retirementCalculator/main/build-20240215.5/logs/retirementCalculator.tar]
-drwxr-xr-x   1 BPXROOT  TIVUSR         0 Mar  4 13:50 ADO.RETIREME.MAIN.BLD.LOAD/
--rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Mar  4 13:50 ADO.RETIREME.MAIN.BLD.LOAD/EBUD01.LOAD
--rw-r--r--   1 ADO      TIVUSR      4239 Feb 15 10:19 BuildReport.json
--rw-r--r--   1 BPXROOT  TIVUSR        97 Mar  4 13:50 buildReportOrder.txt
--rw-r--r--   1 BPXROOT  TIVUSR      1515 Mar  1 17:54 packageBuildOutputs.properties
--rw-r--r--   1 BPXROOT  TIVUSR       790 Mar  4 13:50 wazideploy_manifest.yml
--rw-r--r--   1 ADO      TIVUSR    121483 Feb 15 10:19 EBUD01.cobol.log
--rw-r--r--   1 ADO      TIVUSR       115 Feb 15 10:19 externalImpacts_MortgageApplication-feature%2FconsumeRetirementCalculatorService.log
+   Executing [sh, -c, tar tvf /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar]
+-rw-rw-rw-   1 BPXROOT  TIVUSR      9169 Oct 28 11:29 001_BuildReport.json
+drwxr-xr-x   1 BPXROOT  TIVUSR         0 Oct 28 14:58 bin/
+drwxr-xr-x   1 BPXROOT  TIVUSR         0 Oct 28 14:58 bin/LOAD/
+-rwxr-xr-x   1 BPXROOT  TIVUSR     86016 Oct 28 14:58 bin/LOAD/EBUD03.LOAD
+-rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 14:58 bin/LOAD/EBUD02.LOAD
+-rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 14:58 bin/LOAD/EBUD0RUN.LOAD
+-rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 14:58 bin/LOAD/EBUD01.LOAD
+-rw-r--r--   1 BPXROOT  TIVUSR        22 Oct 28 14:58 buildReportOrder.txt
+-rw-r--r--   1 BPXROOT  ZSECURE     2502 Oct 28 14:54 packageBuildOutputs.properties
+-rw-r--r--   1 BPXROOT  TIVUSR      1509 Oct 28 14:58 wazideploy_manifest.yml
+-rw-r--r--   1 BPXROOT  TIVUSR      2296 Oct 18 16:38 build-preview-RetirementCalculator.log
+-rw-r--r--   1 BPXROOT  TIVUSR      4411 Oct 18 16:38 packaging-preview-RetirementCalculator.log
 
-** PackageBuildOutputs.groovy completed successfully
-** Build finished
+** Packaging completed successfully.
 ```
 </details>
 
 ### Package using multiple build reports
 
 ```
-+ groovyz /var/pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
-        --workDir /var/pipeline/work \
-        --buildReportOrder /var/pipeline/retirementCalculator/BuildReport_1.json,/var/pipeline/retirementCalculator/BuildReport_2.json \
-        --tarFileName rel-1.0.0.tar \
-        --packagingPropertiesFile /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties \
++ groovyz /var/pipeline/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
+        --workDir /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator \
+        --buildReportOrder /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/previous_BuildReport.json,/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/last_BuildReport.json \
+        --tarFileName rel-1.2.0.tar \
         --verbose
 ```
 
@@ -279,64 +320,61 @@ drwxr-xr-x   1 BPXROOT  TIVUSR         0 Mar  4 13:50 ADO.RETIREME.MAIN.BLD.LOAD
 PackageBuildOutputs console output
 
 ```
-
-** PackageBuildOutputs start at 20220901.030431.004
+** PackageBuildOutputs start at 20241028.150801.393
 ** Properties at startup:
-   workDir -> /var/pipeline/work
-   startTime -> 20220901.030431.004
-   publish -> false
-   verbose -> true
-   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "COBOL":"TEXT"]
-   packagingPropertiesFile -> /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties
-   buildReportOrder -> [/var/pipeline/retirementCalculator/BuildReport_1.json, /var/pipeline/retirementCalculator/BuildReport_2.json]
    addExtension -> false
-   tarFileName -> rel-1.0.0.tar
-** Read build report data from /var/pipeline/retirementCalculator/BuildReport_1.json
-** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
-**  Files detected in /var/pipeline/retirementCalculator/BuildReport_1.json
-   JENKINS.ZDAT.RETIRE.LOAD(EBUD01), LOAD
-   JENKINS.ZDAT.RETIRE.LOAD(EBUD03), LOAD
-   JENKINS.ZDAT.RETIRE.LOAD(EBUD0RUN), LOAD
-   JENKINS.ZDAT.RETIRE.LOAD(EBUD02), LOAD
-** Read build report data from /var/pipeline/retirementCalculator/BuildReport_2.json
-** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
-**  Files detected in /var/pipeline/retirementCalculator/BuildReport_2.json
-   JENKINS.ZDAT.RETIRE.COPY(LINPUT), COPY
-   JENKINS.ZDAT.RETIRE.LOAD(EBUD02), CICSLOAD
-   JENKINS.ZDAT.RETIRE.COBOL(EBUD02), COBOL
-*** Number of build outputs to package: 6
-** Copying BuildOutputs to temporary package dir.
-     Copying JENKINS.ZDAT.RETIRE.LOAD(EBUD0RUN) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.LOAD/EBUD0RUN with DBB Copymode LOAD
-     Copying JENKINS.ZDAT.RETIRE.LOAD(EBUD02) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.LOAD/EBUD02 with DBB Copymode LOAD
-     Copying JENKINS.ZDAT.RETIRE.LOAD(EBUD03) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.LOAD/EBUD03 with DBB Copymode LOAD
-     Copying JENKINS.ZDAT.RETIRE.LOAD(EBUD01) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.LOAD/EBUD01 with DBB Copymode LOAD
-     Copying JENKINS.ZDAT.RETIRE.COBOL(EBUD02) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.COBOL/EBUD02 with DBB Copymode TEXT
-     Copying JENKINS.ZDAT.RETIRE.COPY(LINPUT) to /var/pipeline/work/tempPackageDir/JENKINS.ZDAT.RETIRE.COPY/LINPUT with DBB Copymode TEXT
-** Copying /var/pipeline/retirementCalculator/BuildReport_1.json to temporary package dir as 001_BuildReport_1.json. Executing [sh, -c, cp /var/pipeline/retirementCalculator/BuildReport_1.json /var/pipeline/work/tempPackageDir/001_BuildReport_1.json]:
-** Copying /var/pipeline/retirementCalculator/BuildReport_2.json to temporary package dir as 002_BuildReport_2.json. Executing [sh, -c, cp /var/pipeline/retirementCalculator/BuildReport_2.json /var/pipeline/work/tempPackageDir/002_BuildReport_2.json]:
-** Copying /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.executing [sh, -c, cp /var/pipeline/PackageBuildOutputs/packageBuildOutputs.properties /var/pipeline/work/tempPackageDir]:
-** Creating tar file at /var/pipeline/work/rel-1.0.0.tar.
-executing [sh, -c, tar cUXf /var/pipeline/work/rel-1.0.0.tar *]:
+   buildReportOrder -> [/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/previous_BuildReport.json, /u/mdalbin/Migratio
+n-Modeler-MDLB-work/logs/RetirementCalculator/last_BuildReport.json]
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY", "OBJ" :
+"BINARY"]
+   fileEncoding -> UTF-8
+   generateSBOM -> false
+   generateWaziDeployAppManifest -> false
+   packagingPropertiesFile -> /u/mdalbin/dbb-MD/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
+   publish -> false
+   startTime -> 20241028.150801.393
+   tarFileName -> rel-1.2.0.tar
+   verbose -> true
+   workDir -> /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator
+** Read build report data from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/previous_BuildReport.json'.
+** Remove output records without deployType or with deployType=ZUNIT-TESTCASE
+** Deployable artifacts detected in '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/previous_BuildReport.json':
+        'EBUD03' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD02' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD0RUN' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD01' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+** Read build report data from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/last_BuildReport.json'.
+** Remove output records without deployType or with deployType=ZUNIT-TESTCASE
+** Deployable artifacts detected in '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/last_BuildReport.json':
+        'EBUD03' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD02' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD0RUN' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD01' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+*** Number of build outputs to package: 4
+** Copy build outputs to temporary package directory '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir'
+        Copy 'DBEHM.MIG.LOAD(EBUD03)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD03' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD02)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD02' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD0RUN)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD0RUN' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD01)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD01' with DBB Copymode 'LOAD'
+** Generate package build report order file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/buildReportOrder.txt'
+** Copy packaging properties config file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/packageBuildOutputs.properties'
+** Create tar file at /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/rel-1.2.0.tar
+   Executing [sh, -c, tar cUXf /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/rel-1.2.0.tar *]
+** Package '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/rel-1.2.0.tar' successfully created.
+** List package contents.
+   Executing [sh, -c, tar tvf /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/rel-1.2.0.tar]
+-rw-------   1 BPXROOT  TIVUSR      9888 Oct 18 16:38 001_previous_BuildReport.json
+-rw-rw-rw-   1 BPXROOT  TIVUSR      9169 Oct 28 11:29 002_last_BuildReport.json
+drwxr-xr-x   1 BPXROOT  TIVUSR         0 Oct 28 15:08 bin/
+drwxr-xr-x   1 BPXROOT  TIVUSR         0 Oct 28 15:08 bin/LOAD/
+-rwxr-xr-x   1 BPXROOT  TIVUSR     86016 Oct 28 15:08 bin/LOAD/EBUD03
+-rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 15:08 bin/LOAD/EBUD02
+-rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 15:08 bin/LOAD/EBUD0RUN
+-rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 15:08 bin/LOAD/EBUD01
+-rw-r--r--   1 BPXROOT  TIVUSR        58 Oct 28 15:08 buildReportOrder.txt
+-rw-r--r--   1 BPXROOT  ZSECURE     2502 Oct 28 14:54 packageBuildOutputs.properties
 
-** Package successfully created at /var/pipeline/work/rel-1.0.0.tar.
-**   List package contents.
-executing [sh, -c, tar tvf /var/pipeline/work/rel-1.0.0.tar]:
--rw-------   1 BPXROOT  TIVUSR     22489 Sep  1 16:04 001_BuildReport_1.json
--rw-------   1 BPXROOT  TIVUSR     18708 Sep  1 16:04 002_BuildReport_2.json
-drwxr-xr-x   1 BPXROOT  TIVUSR         0 Sep  1 16:04 JENKINS.ZDAT.RETIRE.COBOL/
--rw-r--r--   1 BPXROOT  TIVUSR      2107 Sep  1 16:04 JENKINS.ZDAT.RETIRE.COBOL/EBUD02
-drwxr-xr-x   1 BPXROOT  TIVUSR         0 Sep  1 16:04 JENKINS.ZDAT.RETIRE.COPY/
--rw-r--r--   1 BPXROOT  TIVUSR       333 Sep  1 16:04 JENKINS.ZDAT.RETIRE.COPY/LINPUT
-drwxr-xr-x   1 BPXROOT  TIVUSR         0 Sep  1 16:04 JENKINS.ZDAT.RETIRE.LOAD/
--rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Sep  1 16:04 JENKINS.ZDAT.RETIRE.LOAD/EBUD0RUN
--rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Sep  1 16:04 JENKINS.ZDAT.RETIRE.LOAD/EBUD02
--rwxr-xr-x   1 BPXROOT  TIVUSR     86016 Sep  1 16:04 JENKINS.ZDAT.RETIRE.LOAD/EBUD03
--rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Sep  1 16:04 JENKINS.ZDAT.RETIRE.LOAD/EBUD01
--rw-r--r--   1 BPXROOT  TIVUSR        38 Sep  1 16:04 buildReportOrder.txt
--rw-------   1 BPXROOT  TIVUSR      1015 Sep  1 16:04 packageBuildOutputs.properties
-
-** Build finished
-
+** Packaging completed successfully.
 ```
 </details>
 
@@ -353,14 +391,12 @@ Overview of the various ways to specify the structure within the repository:
 The password for the artifact repository can also represent the APIKey. It is recommended to store that inside the secret store of your pipeline orchestrator.
 
 ```
-groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy \
-        --workDir /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025 \
-        -p \
-        -aprop appArtifactRepository.properties \
-        -au http://10.3.20.231:8081/artifactory \
-        -ar example-repo-local \
-        -aU admin \
-        -aP xxxxxxxxxxx
+groovyz /var/pipeline/dbb/Pipeline/PackageBuildOutputs.groovy \
+        --workDir /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator \
+		-p --artifactRepositoryUrl http://10.3.20.231:8081/artifactory \
+		--artifactRepositoryUser admin \
+		--artifactRepositoryPassword xxxxxxxx \
+		--artifactRepositoryName RetirementCalculator
 ```
 
 <details>
@@ -369,43 +405,46 @@ groovyz /var/jenkins/pipeline/PackageBuildOutputs.groovy \
 PackageBuildOutputs console output
 
 ```
-
-PackageBuildOutputs.groovy --workDir /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025 -p -aprop appArtifactRepository.properties -au http://10.3.20.96:28081/repository -ar testMD -aU admin -aP nexusadmin
-** PackageBuildOutputs start at 20221207.050641.006
+** PackageBuildOutputs start at 20241028.151247.498
 ** Properties at startup:
    addExtension -> false
-   artifactRepository.directory ->
    artifactRepository.password -> xxxxxx
-   artifactRepository.repo -> testMD
-   artifactRepository.url -> http://10.3.20.96:28081/repository
+   artifactRepository.repo -> RetirementCalculator
+   artifactRepository.url -> http://10.3.20.231:8081/artifactory
    artifactRepository.user -> admin
-   buildReportOrder -> [/var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/BuildReport.json]
-   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT"]
-   packagingPropertiesFile -> /u/ibmuser/groovy/PublishingScript/packageBuildOutputs.properties
+   buildReportOrder -> [/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json]
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY", "OBJ" :
+"BINARY"]
+   fileEncoding -> UTF-8
+   generateSBOM -> false
+   generateWaziDeployAppManifest -> false
+   packagingPropertiesFile -> /u/mdalbin/dbb-MD/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
    publish -> true
-   startTime -> 20221207.050641.006
+   startTime -> 20241028.151247.498
    verbose -> false
-   workDir -> /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025
-** Read build report data from /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/BuildReport.json
-** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE
-** Files detected in /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/BuildReport.json
-   GITLAB.PROG.EPSM.LOAD(EPSMLIS), LOAD
-   GITLAB.PROG.EPSM.LOAD(EPSMPMT), LOAD
-   GITLAB.PROG.EPSM.LOAD(EPSMLIST), LOAD
-*** Number of build outputs to package: 3
-** Copying BuildOutputs to temporary package dir.
-     Copying GITLAB.PROG.EPSM.LOAD(EPSMLIS) to /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/tempPackageDir/GITLAB.PROG.EPSM.LOAD/EPSMLIS with DBB Copymode LOAD
-     Copying GITLAB.PROG.EPSM.LOAD(EPSMPMT) to /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/tempPackageDir/GITLAB.PROG.EPSM.LOAD/EPSMPMT with DBB Copymode LOAD
-     Copying GITLAB.PROG.EPSM.LOAD(EPSMLIST) to /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/tempPackageDir/GITLAB.PROG.EPSM.LOAD/EPSMLIST with DBB Copymode LOAD
-** Copying /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/BuildReport.json to temporary package dir as BuildReport.json.
-** Copying /u/ibmuser/groovy/PublishingScript/packageBuildOutputs.properties to temporary package dir.
-** Creating tar file at /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/build.20221206.032531.025.tar.
-** Package successfully created at /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/build.20221206.032531.025.tar.
-** Uploading package to Artifact Repository http://10.3.20.96:28081/repository/testMD/build.20221206.032531.025/build.20221206.032531.025.tar.
-** ArtifactRepositoryHelper started for upload of /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/build.20221206.032531.025.tar to http://10.3.20.96:28081/repository/testMD/build.20221206.032531.025/build.20221206.032531.025.tar
-** Uploading /var/jenkins/workspace/App-EPSM/outputs/build.20221206.032531.025/build.20221206.032531.025.tar to http://10.3.20.96:28081/repository/testMD/build.20221206.032531.025/build.20221206.032531.025.tar
-** Upload completed
-** Build finished
+   workDir -> /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator
+** Read build report data from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json'.
+** Remove output records without deployType or with deployType=ZUNIT-TESTCASE
+** Deployable artifacts detected in '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json':
+        'EBUD03' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD02' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD0RUN' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+        'EBUD01' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
+*** Number of build outputs to package: 4
+** Copy build outputs to temporary package directory '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir'
+        Copy 'DBEHM.MIG.LOAD(EBUD03)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD03' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD02)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD02' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD0RUN)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD0RUN' with DBB Copymode 'LOAD'
+        Copy 'DBEHM.MIG.LOAD(EBUD01)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD01' with DBB Copymode 'LOAD'
+** Generate package build report order file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/buildReportOrder.txt'
+** Copy packaging properties config file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/packageBuildOutputs.properties'
+** Create tar file at /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/build.20241018.143823.127.tar
+** Package '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/build.20241018.143823.127.tar' successfully created.
+** Upload package to Artifact Repository 'http://10.3.20.231:8081/artifactory/RetirementCalculator/build.20241018.143823.127/build.20241018.143823.127.tar'.
+** ArtifactRepositoryHelper started for upload of /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/build.20241018.143823.127.tar to http://10.3.20.231:8081/artifactory/RetirementCalculator/build.20241018.143823.127/build.20241018.143823.127.tar
+** Uploading /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/build.20241018.143823.127.tar to http://10.3.20.231:8081/artifactory/RetirementCalculator/build.20241018.143823.127/build.20241018.143823.127.tar...
+** Upload completed.
+** Packaging completed successfully.
 ```
 </details>
 
@@ -423,9 +462,11 @@ Parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 `copyModeMap` | configures the mapping of last level qualifier and the necessary copymode from PDS to USS.
 `deployTypesFilter` | to limit the scope of DBB deployTypes that are added to the package
+`includeLogs` | List of file patterns from the workDir, that should be addded to the package, such as build logs
 `addExtension` | Boolean flag to append the DBB deployType as the file extension to provide information about the deployment 
 `generateWaziDeployAppManifest` |  Boolean flag to indicate if the Wazi Deploy Application Manifest file should be created
-`includeLogs` | List of file patterns from the workDir, that should be addded to the package, such as build logs
+`generateSBOM` |  Boolean flag to indicate if a CycloneDX SBOM file should be created
+`publish` |  Boolean flag to indicate if the created TAR file should be uploaded to an Artifact Repository
 `fileEncoding` | File encoding for files generated as part of the process 
 
 Additionally, the ArtifactRepositoryHelpers accept a properties like [appArtifactRepository.properties](appArtifactRepository.properties) file to define:
@@ -444,77 +485,62 @@ Parameter | Description
 
 ```
   usage: PackageBuildOutputs.groovy [options]
- 
-  -w,--workDir <dir>                             Absolute path to the DBB build
-                                                 output directory
- 
-  -properties,--packagingPropertiesFile <file>   Absolute path of a property file
-                                                 containing application specific
-                                                 packaging details. 
-                                                                                                                                          
-  Optional:
-
-  -boFile,--buildReportOrderFile <file>          Name of the buildReportOrder file, used to specify
-                                                 buildReport.json files to be processed.
-
-  -bO,--buildReportOrder <buildReports>          Additional build reports to be processed. If -boFile and -bO 
-                                                 are used together, the build reports from -bO are 
-                                                 appended to the build reports from -boFile.
-
-  -t,--tarFileName <filename>                    Name of the package tar file.
-                                                 (Optional unless using --buildReportOrder or --buildReportOrderFile)
-
-  -d,--deployTypes <deployTypes>                 Comma-seperated list of deployTypes
-                                                 to filter on the scope of the tar
-                                                 file. (Optional)
-
-  -verb,--verbose                                Flag to provide more log output. (Optional)
-
-  -il,--includeLogs                              Comma-separated list of files/patterns
-                                                 from the USS build workspace
-
-  -ae,--addExtension                             Flag to add the deploy type extension to the member
-                                                 in the package tar file. (Optional)                                                                                              
-
-  -wd,--generateWaziDeployAppManifest            Flag indicating to generate and add the Wazi Deploy Application Manifest file
-  
-  -s,--sbom                                      Flag to control the generation of SBOM
-  
-  -sa,--sbomAuthor <sbomAuthor>                  Author of the SBOM, in form "Name <email>"
-
-  -h,--help                                      Prints this message
-
-  Optional Artifact Repsository upload opts:
- 
-  -p,--publish
-                     Flag to indicate package upload to
-                     the provided Artifactory server.
-                     (Optional)
- 
-  -v,--versionName <versionName>                 
-                     Name of the Artifactory version. (Optional)
-
-  -ad,--artifactRepositoryDirectory <repoDirectory>
-                     Directory path in the repository to store the build . (Optional)
- 
-  -aprop,--artifactRepositoryPropertyFile <propertyFile>
-                     Path of a property file containing application specific artifact
-                     repository details. (Optional)
-
-  -ar,--artifactRepositoryName <repoName>
-                     Artifact repository name to store the build. (Optional)
- 
-  -au,--artifactRepositoryUrl <url>
-                     URL to the Artifact repository server. (Optional)
-
-  -aU,--artifactRepositoryUser <user>
-                     User to connect to the Artifact repository server. (Optional)
-  
-  -aP,--artifactRepositoryPassword <password>
-                     Password to connect to the Artifact repository server. (Optional)
-  
-  -ah,--artifactRepositoryHttpClientProtocolVersion <protocolVersion>
-                     HttpClient.Version setting to override the HTTP protocol version. (Optional)
+ usage: PackageBuildOutputs.groovy [options]
+ -a,--application <application>
+      The name of the application
+ -ad,--artifactRepositoryDirectory <repoDirectory>
+      Directory path in the repository to store the build . (Optional)
+ -ae,--addExtension
+      Flag to add the deploy type extension to the member in the package tar file. (Optional)
+ -af,--applicationFolderPath <applicationFolderPath>
+      Path to the Application's Git repository folder
+ -ah,--artifactRepositoryHttpClientProtocolVersion
+ <httpClientProtocolVersion>
+      HttpClient.Version setting to override the HTTP protocol version. (Optional)
+ -aP,--artifactRepositoryPassword <password>
+      Password to connect to the Artifact repository server. (Optional)
+ -aprop,--artifactRepositoryPropertyFile <propertyFile>
+      Path of a property file containing application specific artifact  repository details. (Optional) ** (Deprecated)
+ -ar,--artifactRepositoryName <repoName>
+      Artifact repository name to store the build. (Optional)
+ -au,--artifactRepositoryUrl <url>
+      URL to the Artifact repository server. (Optional)
+ -aU,--artifactRepositoryUser <user>
+      User to connect to the Artifact repository server. (Optional)
+ -b,--branch <branch>
+      The git branch processed by the pipeline
+ -bO,--buildReportOrder <buildReportOrder>
+      List of build reports in order of processing
+ -boFile,--buildReportOrderFile <buildReportOrderFile>
+      A file that lists build reports in order of processing
+ -bp,--baselinePackage <baselinePackageFilePath>
+      Path to a baseline Package. (Optional)
+ -d,--deployTypes <deployTypes>
+      Comma-seperated list of deployTypes to filter on the scope of the tar file. (Optional)
+ -h,--help
+      Prints this message
+ -il,--includeLogs <includeLogs>
+      Comma-separated list of files/patterns from the USS build workspace.  (Optional)
+ -o,--owner <owner>
+      Owner of the packaged artifacts
+ -p,--publish
+      Flag to indicate package upload to the provided Artifact Repository server. (Optional)
+ -properties,--packagingPropertiesFile <packagingPropertiesFile>
+      Path of a property file containing application specific packaging details.
+ -s,--sbom
+      Flag to control the generation of SBOM
+ -sa,--sbomAuthor <sbomAuthor>
+      Author of the SBOM, in form "Name <email>"
+ -t,--tarFileName <filename>
+      Name of the package tar file. (Optional unless using --buildReportOrder or --buildReportOrderFile)
+ -v,--versionName <versionName>
+      Name of the version/package on the Artifact repository server. (Optional)
+ -verb,--verbose
+      Flag to provide more log output. (Optional)
+ -w,--workDir <dir>
+      Absolute path to the DBB build output directory
+ -wd,--generateWaziDeployAppManifest
+      Flag indicating to generate and add the Wazi Deploy Application Manifest file.
 ```
 
 ## Command Line Options Summary - ArtifactRepositoryHelpers
@@ -586,6 +612,31 @@ As an example, you can invoke the generation of an IBM Concert Build manifest wi
 
 By default, the IBM Concert Build manifest file is generated in the `tempPackageDir` and named `concert_build_manifest.yaml`. 
 
+## Publishing interfaces
+
+The CLI option `applicationFolderPath` is used to point to the application's Git repository on z/OS Unix System Services. When specified, this parameter enables the PackageBuildOutputs with additional capabilities, like the packaging of object decks and Include Files based on their usage.
+
+When this CLI option is provided, the script will search for an [Application Descriptor file](https://github.com/IBM/dbb-git-migration-modeler/?tab=readme-ov-file#output-files), named `applicationDescriptor.yml` and located at the root level of the application's Git repository. This file contains information on the usage of each artifact of the application: programs can be "internal submodules" or "service submodule" if statically linked by other programs, include files can be public or shared, if referenced by programs from other applications.
+
+If an Application Descriptor file is found, the required information is leveraged, to include in the created archive:
+- the object decks that were created during the previous build process, when they are issued from a program that is identified as an "internal submodule" or a "service submodule".
+- the public or shared includes files present in the application's Git repository.
+
+These artifacts are placed in the `include` subfolder of the archive, within specific subfolders to segregate artifacts based on their nature:
+- the `lib` subfolder contains artifacts that are private to the application:
+     - the `lib/bin` subfolder contains object decks that the application is statically linking for its internal usage.
+     - the `lib/src` subfolder contains the include files that were classified as private to the application.
+- the `include/src` subfolder contains the public artifacts that other programs can reference:
+     - the `include/bin` subfolder contains the object decks that other programs can statically link.
+     - the `include/src` subfolder contains the public and shared include files, that other programs can reference.
+
+When used in conjunction with [baseline packages](#baseline-packages), it is possible to have an archive that contains all the interfaces of an application, combining previous versions of object decks (when they have not changed) with the newest material that was just built or changed in the application's Git repository.
+
+## Baseline Packages
+
+The CLI option `baselinePackage` can be used to specify a path to an existing package on z/OS Unix System Services. This package will then be used as a baseline, on which new artifacts documented in the provided build report(s) will be copied, potentially replacing the content of the baseline package.
+
+During the packaging process, the baseline package is expanded. The `include` subfolder remains intact and contains artifacts that represent interfaces of the application, that other applications can consume or reference (typically, public/shared Include Files like COBOL copybooks, and object decks that are statically linked by "consuming" loadmodules). All other subfolders are removed.
 
 ## Useful reference material
 
