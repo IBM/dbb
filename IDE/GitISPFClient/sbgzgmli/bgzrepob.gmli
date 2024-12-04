@@ -1,41 +1,45 @@
-<copyr>             COPYRIGHT IBM CORP 2019                                     
-<panel name=BGZREPOS depth=24 keylist=bgzsabx applid=bgz                        
-             help=bgzA0004>&pan_title                                           
-<ab>                                                                            
-  &bgzmenu                                                                      
-  &bgzhelp                                                                      
-</ab>                                                                           
-<info>                                                                          
- <p compact>&panel_instruct_1;                                                  
-</info>                                                                         
-<divider>                                                                       
-</divider>                                                                      
-<area>                                                                          
-  <grphdr div=none                                                              
-  indent=5>&gitag &repository_prompt                            &workdir_prompt 
-  </grphdr>                                                                     
-  <region dir=horiz indent=9>                                                   
-   <dtafld datavar=bgznrepo usage=in entwidth=44 vardcl=no>                     
-     <scrfld displen=1024>                                                      
-   <dtafld datavar=bgzndir usage=in entwidth=19 vardcl=no>                      
-     <scrfld displen=1024>                                                      
-  </region>                                                                     
-  <lstfld vardcl=no scrollvar=zamt>                                             
-    <lstcol datavar=bgzrpcmd usage=in caps=on colwidth=2>                       
-    <lstcol datavar=bgzstatu usage=out colwidth=2>                              
-    <lstcol datavar=bgzrepos usage=out colwidth=44>                             
-      <scrfld displen=1024>                                                     
-    <lstcol datavar=bgzusdir usage=out colwidth=19>                             
-      <scrfld displen=1024>                                                     
-  </lstfld>                                                                     
-</area>                                                                         
-<cmdarea name=bgzcmd caps=off>                                                  
-<source type=init>                                                              
-</source>                                                                       
-<source type=reinit>                                                            
-</source>                                                                       
-<source type=proc>                                                              
-VER (&bgzRPCMD,LIST,JU,ST,AD,CO,PS,CP,PL,BR,CM,RM,FE,DF,LG,/,MSG=bgzC016)       
-</source>                                                                       
-</panel>                                                                        
-<:--              COPYRIGHT IBM CORP 2019       -->                             
+<copyr>             COPYRIGHT IBM CORP 2019
+<panel name=BGZREPOS depth=24 keylist=bgzsabx applid=bgz
+             help=bgzA0004>&pan_title
+<ab>
+  &bgzmenu
+  &bgzhelp
+</ab>
+<info>
+ <p compact>&panel_instruct_1;
+</info>
+<divider>
+</divider>
+<area>
+  <grphdr div=none
+  indent=5>&gitag &repository_prompt                            &workdir_prompt
+  </grphdr>
+  <region dir=horiz indent=9>
+   <dtafld datavar=bgznrepo usage=in entwidth=44 vardcl=no>
+     <scrfld displen=1024>
+   <dtafld datavar=bgzndir usage=in entwidth=19 vardcl=no>
+     <scrfld displen=1024>
+  </region>
+  <lstfld vardcl=no scrollvar=zamt>
+    <lstcol datavar=bgzrpcmd usage=in caps=on colwidth=2>
+    <lstcol datavar=bgzstatu usage=out colwidth=2>
+    <lstcol datavar=bgzrepos usage=out colwidth=44>
+      <scrfld displen=1024>
+    <lstcol datavar=bgzusdir usage=out colwidth=19>
+      <scrfld displen=1024>
+  </lstfld>
+</area>
+<cmdarea name=bgzcmd caps=off>
+<source type=init>
+IF (&BGZREPOS = &Z)
+  .CURSOR = BGZNREPO
+ELSE
+  .CURSOR = BGZRPCMD
+</source>
+<source type=reinit>
+</source>
+<source type=proc>
+VER (&bgzRPCMD,LIST,JU,ST,AD,CO,PS,CP,PL,BR,CM,RM,FE,DF,LG,/,MSG=bgzC016)
+</source>
+</panel>
+<:--              COPYRIGHT IBM CORP 2019       -->
