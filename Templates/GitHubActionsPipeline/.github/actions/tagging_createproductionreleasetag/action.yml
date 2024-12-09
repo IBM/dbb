@@ -1,0 +1,53 @@
+name: tagging_createProductionReleaseTag
+inputs:
+  environmentName:
+    required: false
+    type: string
+  releaseType:
+    required: false
+    type: string
+  githubAccessToken:
+    required: true
+runs:
+  using: composite
+  steps:
+
+  - name: Download version tag artifact
+    uses: actions/download-artifact@v4
+    with:
+      name: artifactVersion
+
+  - name: Create Release Tag
+    if: inputs.environmentName == 'Production'
+    env:
+      GH_TOKEN: ${{ inputs.githubAccessToken }}
+    run: |-
+      # local Variables
+      rc=0
+      PGM="tagging/createProductionReleaseTag.yml"
+
+      versionTag=`cat releaseTag.txt `
+
+      # If release type is defined
+      if [ ! -z "${{ inputs.releaseType }}" ]; then
+
+      # Create new tag
+      echo "[INFO] Creating Tag ${versionTag} as latest production state."
+      
+      gh release create ${versionTag}
+      
+      # catch RC rest command return code
+      rc=$?
+
+      if [ $rc -eq 0 ]; then
+        echo "${PGM}: [INFO] - GH command has completed successfully."
+      else
+        echo "${PGM}: [WARNING] - GH command has ended with a return code other than 0. rc="$rc
+        exit rc
+      fi
+
+      else
+        echo "${PGM}: [WARNING] - No release type has been specified"
+        exit 1
+      fi
+    shell: bash

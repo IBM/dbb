@@ -134,7 +134,7 @@ Artifact Name |  Description | Script details
 ---------- | -----| -----------------------------------------------------
 [gitClone.sh](gitClone.sh) | Pipeline Shell Script to perform Git Clone to z/OS UNIX System Services | [script details](README.md#41---gitclonesh)
 [dbbBuild.sh](dbbBuild.sh) | Pipeline Shell Script to invoke the Dependency Based Build framework [zAppBuild](https://github.com/IBM/dbb-zappbuild) | [script details](README.md#42---dbbbuildsh)
-[utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) | Utility Shell Script to implement the computation of build configuration, such as HLQ, build type or property overrides. | [script details](README.md#43---script-capabilities--dbbbuildutilssh)
+[utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) | Utility Shell Script to implement the computation of build configuration, such as HLQ, build type or property overrides. | [script details](README.md#43---script-utility---dbbbuildutilssh)
 [packageBuildOutputs.sh](packageBuildOutputs.sh) | Pipeline Shell Script to create a Package using the [PackageBuildOutputs groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/PackageBuildOutputs) | [script details](README.md#44---packagebuildoutputssh)
 [ucdPackage.sh](ucdPackaging.sh) | Pipeline Shell Script to publish to UCD Code Station binary repository using the [CreateUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/CreateUCDComponentVersion) | [script details](README.md#45---ucdpackagingsh)
 [ucdDeploy.sh](ucdDeploy.sh) | Pipeline Shell Script to trigger a UCD Deployment via its REST interface using the [DeployUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/DeployUCDComponentVersion) | [script details](README.md#46---ucddeploysh)
@@ -142,7 +142,8 @@ Artifact Name |  Description | Script details
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](README.md#48---wazideploy-deploysh)
 [wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](README.md#49---wazideploy-evidencesh)
 [prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](README.md#410---preparelogssh)
-[deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](README.md#411---deleteworkspacesh)
+[generateCleanupCommands.sh](generateCleanupCommands.sh) | Pipeline Shell Script to generate necessary DBB Metadatastore cleanup tasks including the deletion of the build datasets. | [script details](README.md#411---generatecleanupcommandssh)
+[deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](README.md#412---deleteworkspacesh)
 
 
 ### 4.1 - gitClone.sh
@@ -179,37 +180,30 @@ The section below contains the output that is produced by the `gitClone.sh` scri
   <summary>Script Output</summary>
 
 ```
-gitClone.sh -w MortApp/release/rel-1.0.0/build-1 -r git@github.ibm.com:zDevOps-Acceleration/MortgageApplication.git -b release/rel-1.0.0
-
-gitClone.sh: [INFO] Clone Repository. Version=1.00
+gitClone.sh: [INFO] Git Clone Wrapper. Version=1.2.0
 gitClone.sh: [INFO] **************************************************************
-gitClone.sh: [INFO] ** Start Git Clone on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-gitClone.sh: [INFO] **          Repo: git@github.ibm.com:zDevOps-Acceleration/MortgageApplication.git
-gitClone.sh: [INFO] **       WorkDir: /var/dbb/pipelineBackend/workspace/MortApp/release/rel-1.0.0/build-1
-gitClone.sh: [INFO] **        GitDir: MortgageApplication
-gitClone.sh: [INFO] **        Branch: release/rel-1.0.0 -> release/rel-1.0.0
+gitClone.sh: [INFO] ** Start Git Clone on HOST/USER: z/OS ZT01 05.00 02 8561/***
+gitClone.sh: [INFO] **          Repo: git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator
+gitClone.sh: [INFO] **       WorkDir: /u/ado/workspace/retirementCalculator/main/build-20240301.1
+gitClone.sh: [INFO] **        GitDir: retirementCalculator
+gitClone.sh: [INFO] **           Ref: main -> main
 gitClone.sh: [INFO] **************************************************************
-
-gitClone.sh: [INFO] Preforming Git Clone of Repo git@github.ibm.com:zDevOps-Acceleration/MortgageApplication.git, Branch release/rel-1.0.0 to /var/dbb/pipelineBackend/workspace/MortApp/release/rel-1.0.0/build-1
-Cloning into 'MortgageApplication'...
-...
-Resolving deltas: 100% (344/344), done.
-gitClone.sh: [INFO] Git Status for MortgageApplication
-On branch release/rel-1.0.0
-Your branch is up to date with 'origin/release/rel-1.0.0'.
-
+gitClone.sh: [INFO] Preforming Git Clone of Repo git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator, Ref main to /u/ado/workspace/retirementCalculator/main/build-20240301.1
+gitClone.sh: [INFO] git clone -b main git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator
+Cloning into 'retirementCalculator'...
+gitClone.sh: [INFO] Git Status for retirementCalculator
+On branch main
+Your branch is up to date with 'origin/main'.
 nothing to commit, working tree clean
-gitClone.sh: [INFO] Git Show-Ref for MortgageApplication
-5d2b737fbc62cf2f14630ac4d4473e2d027212c0 refs/heads/release/rel-1.0.0
-e720027dd4f1afac469484fc1b5c8f8675d62e27 refs/remotes/origin/Development
-9f1ce97a11f4bebe07b30a59992052ddf39e71de refs/remotes/origin/HEAD
-597012c81d1bc0714d4c0595619833f30581c314 refs/remotes/origin/feature/setmainbuildbranch
-5d2b737fbc62cf2f14630ac4d4473e2d027212c0 refs/remotes/origin/hotfix/rel-1.0.0/myfix
-9f1ce97a11f4bebe07b30a59992052ddf39e71de refs/remotes/origin/main
-5d2b737fbc62cf2f14630ac4d4473e2d027212c0 refs/remotes/origin/release/rel-1.0.0
-0cc39e464cdd6fa7a4a7e9bb1381e25daf757d08 refs/tags/rel-1.0.0
-c08c90fb9b76d466b5717595b5de0dee9031f9ca refs/tags/rel100
-
+gitClone.sh: [INFO] Git Show-Ref for retirementCalculator
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/heads/main
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/remotes/origin/HEAD
+ca11720bdffc280fc9ddefdae41943bc5b2008fc refs/remotes/origin/feature/implementUnitTests
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/remotes/origin/main
+8ee95ad28813cca2378463a2ef16958c60abcbd9 refs/tags/rel-1.0.0
+f12465b6a9623033b6d4fcc393acbcfd71f8e8d8 refs/tags/rel-1.0.1
+c7e7dcf9c65bebca8e3d0427c9ce82cb4127f7da refs/tags/rel-1.0.1_rc00
+gitClone.sh: [INFO] Clone Repository Complete. rc=0
 ```  
 
 </details>
@@ -217,7 +211,11 @@ c08c90fb9b76d466b5717595b5de0dee9031f9ca refs/tags/rel100
 
 ### 4.2 - dbbBuild.sh
 
-This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. As designed, it makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild. The [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script is used to compute the build configuration depending on the workflow to define zAppBuild CLI parameters. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf`` directory in order to compute the baseline reference and its changes.
+This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. 
+
+By design, the script implements the recommended working practice. It makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild to set the baseline Git hash. This is used to identify all the committed changes for the upcoming deliverable (that can be a planned release, a emergency fix, or a significant development initiative)
+
+The computation of the build configuration is performed by the [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf` directory in order to compute the baseline reference.
 
 #### Git branches naming convention requirements
 
@@ -335,12 +333,16 @@ dbbBuild.sh: [INFO] DBB Build Complete. rc=0
 
 ### 4.3 - Script utility - dbbBuildUtils.sh
 
-The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a utility script providing the `computeBuildConfiguration()` method to compute the zAppBuild's options and parameters:
+The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a core utility script providing the `computeBuildConfiguration()` method to compute the zAppBuild's options and parameters according to the branch naming conventions. For instance
 
-* `build type`, such as `--impactBuild`
-* the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file.
+* `build type`, such as the `--impactBuild` zAppBuild build option,
+  * the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file for integration branches, 
+* the configured topic branch build behavior (see parameter `featureBranchBuildBehaviour` in pipelineBackend.config), that can either be configured as
+  * `merge-base` (default) for cumulative builds that include all the changes added to the feature branch that flow to the integration branch. This setting automatically computes the merge-base commit, which defines the commit when the feature branch was forked.
+  * `incremental` for standard zAppBuild `--impactBuild` behavior.
+  * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`. 
 * flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules).
-* the `mainBuildBranch` to configure feature branches to clone the correct dependency metadata collections and to identify the correct offset of changes.
+* the `mainBuildBranch` to configure feature branch pipelines to clone the corresponding DBB dependency metadata collections.
 
 #### Baseline references requirements
 
@@ -379,6 +381,7 @@ CLI parameter | Description
 -b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. See function `computeArtifactRepositoryDirectory()` in the pipelineBackend.config file.
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
 -v `<artifactVersion>` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
+-s `"<sbomAuthor>"` | (Optional) Name and email of the SBOM author enclosed with double quotes. Ex: "Build Engineer \<engineer@example.com\>" 
 
 #### Script conventions
 
@@ -391,6 +394,10 @@ If it is the `main` branch, the pipeline type (-p) is evaluated to
 * **Branch**/**pipelineType <build/release>**/**artifactVersion**
  
 while **artifactVersion** is appended by the `PackageBuildOutputs.groovy` script.
+
+**SBOM Generation**
+
+The generation of an SBOM is controlled by the `generateSBOM` property defined in the [pipelineBackend.config](pipelineBackend.config) file. The default SBOM Author is also specified in the [pipelineBackend.config](pipelineBackend.config) file in the `sbomAuthor` property, but this property can be overridden with the `-s` parameter of this script. When the SBOM Author is provided as a parameter, it automatically enables the SBOM generation, even if set to `false` in the [pipelineBackend.config](pipelineBackend.config) file.
 
 #### Output 
 
@@ -894,7 +901,112 @@ It _greps_ the information and invokes a download action.
     fi
 ```
 
-### 4.11 - deleteWorkspace.sh
+### 4.11 - generateCleanupCommands.sh
+
+Script to generate and run the necessary cleanup steps of DBB Metadatastore collections and build groups (build results), and the deletion of the build datasets using the [DeletePDS.groovy](../../Utilities/DeletePDS/README.md) utility.
+
+The script lists all the existing DBB collections obtained by applying a filter based on the zAppBuild naming conventions. It checks if Git branches corresponding to the provided application name exist in the Git repository. If one or more branches are found, it generates the necessary command files that contain the removal statements. The generated scripts can be can automatically executed, if the `-p` flag is passed to the script.
+
+#### Invocation
+
+The `generateCleanupCommands.sh` script can be invoked as follows:
+
+```
+generateCleanupCommands.sh -w MortApp/main/build-1 -a MortApp -p
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-w `<workspace>` | **Workspace directory** - an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
+-a `<application>` | **Application name** to be analyzed for stale DBB Metadatastore objects and build datasets.
+-p | Flag to control if the generated commands files should be executed by the pipeline. If the commands are not executed by the script, it is recommended to publish the generated files to the pipeline orchestrator, where an administrator can review and eventually execute them manually.
+
+#### Additional notes
+
+This script can be embedded into a pipeline execution, but can also be used in a standalone setup. For a pipeline implementation, this task can be included in the release process to facilitate the cleanup of stale DBB collections and DBB build groups, and to delete the build datasets as well.
+
+For the standalone implementation, use the following process:
+1. Have the Common Backend Scripts installed to z/OS Unix System Services and have them configured. 
+2. Clone the application repository including all remote references.
+3. Execute the `generateCleanupCommands.sh` script like in the above sample. The user executing the script needs proper permissions on the DBB Metadatastore.
+
+Please note that the script leverages the [utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) to compute the build high-level qualifier (HLQ).
+
+#### Script output
+
+The section below contains the output that is produced by the `generateCleanupCommands.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+
+```
+". ./.profile && generateCleanupCommands.sh -w /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104 -a MortgageApplication -p"
+generateCleanupCommands.sh: [INFO] Generate Cleanup Command File. Version=1.0.0
+generateCleanupCommands.sh: [INFO] Creating output directory. /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds
+generateCleanupCommands.sh: [INFO] **************************************************************
+generateCleanupCommands.sh: [INFO] ** Start Gen Cleanup Cmds on HOST/USER: z/OS ZT01 05.00 02 8561/GITHUB
+generateCleanupCommands.sh: [INFO] **                   Workspace: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104
+generateCleanupCommands.sh: [INFO] **                 Application: MortgageApplication
+generateCleanupCommands.sh: [INFO] **                      AppDir: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/MortgageApplication
+generateCleanupCommands.sh: [INFO] **    Cmd obsolete collections: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd
+generateCleanupCommands.sh: [INFO] **   Cmd obsolete build groups: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd
+generateCleanupCommands.sh: [INFO] ** Cmd obsolete build datasets: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd
+generateCleanupCommands.sh: [INFO] **      DBB Metadastore Config: --type file --location /u/github/
+generateCleanupCommands.sh: [INFO] **     Process Cleanup Scripts: true
+generateCleanupCommands.sh: [INFO] **************************************************************
+
+generateCleanupCommands.sh: [STAGE] Retrieve all collections with application qualifier MortgageApplication
+generateCleanupCommands.sh: [STAGE] Verifying Git references
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-main has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-main a corresponding branch (main) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-main-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-main-outputs a corresponding branch (main) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/johnpipelinetesting has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/johnpipelinetesting a corresponding branch (feature/johnpipelinetesting) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/johnpipelinetesting-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/johnpipelinetesting-outputs a corresponding branch (feature/johnpipelinetesting) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/20-some-more-testing has a corresponding active Git branch
+generateCleanupCommands.sh:        DBB Collection MortgageApplication-feature/20-some-more-testing does not have a corresponding branch (feature/20-some-more-testing). It can be deleted.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/20-some-more-testing-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        DBB Collection MortgageApplication-feature/20-some-more-testing-outputs does not have a corresponding branch (feature/20-some-more-testing). It can be deleted.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/pipeline-trigger-testing has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/pipeline-trigger-testing a corresponding branch (feature/pipeline-trigger-testing) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/pipeline-trigger-testing-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/pipeline-trigger-testing-outputs a corresponding branch (feature/pipeline-trigger-testing) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/18-add-generate-cleanup-instructions has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/18-add-generate-cleanup-instructions a corresponding branch (feature/18-add-generate-cleanup-instructions) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/18-add-generate-cleanup-instructions-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/18-add-generate-cleanup-instructions-outputs a corresponding branch (feature/18-add-generate-cleanup-instructions) was detected.
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale collections for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd created. 
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale build groups for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd created. 
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale build datasets for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd created. 
+generateCleanupCommands.sh: [STAGE] Executing Cleanup of DBB Metadatastore Objects
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd
+BGZTK0195I Successfully deleted collection "MortgageApplication-feature/20-some-more-testing"
+BGZTK0195I Successfully deleted collection "MortgageApplication-feature/20-some-more-testing-outputs"
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd
+BGZTK0195I Successfully deleted group "MortgageApplication-feature/20-some-more-testing"
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd
+** Deleting all datasets filtered with HLQ 'GITHUB.MORTGAGE.F20'
+*** Deleting 'GITHUB.MORTGAGE.F20.COBOL'
+*** Deleting 'GITHUB.MORTGAGE.F20.COPY'
+*** Deleting 'GITHUB.MORTGAGE.F20.DBRM'
+*** Deleting 'GITHUB.MORTGAGE.F20.LOAD'
+*** Deleting 'GITHUB.MORTGAGE.F20.OBJ'
+** Deleted 5 entries.
+** Build finished
+generateCleanupCommands.sh: [INFO] Generate Cleanup Cmds Complete. rc=0
+
+```  
+
+</details>
+
+
+
+### 4.12 - deleteWorkspace.sh
 
 Script delete the workspace and all empty directories in the working tree. 
 
@@ -1007,7 +1119,6 @@ deleteWorkspace.sh: [INFO] Workspace directory successfully deleted.
 ```  
 
 </details>
-
 
 ## Disclaimer
 

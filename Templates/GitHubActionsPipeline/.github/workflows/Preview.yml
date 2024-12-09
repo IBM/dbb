@@ -1,0 +1,61 @@
+name: Preview
+on:
+    workflow_call:
+        secrets:
+            githubAccessToken:
+                required: true
+        inputs:
+            pipelineType:
+                description: Pipeline Type
+                default: build
+                type: string
+                required: false
+
+env:
+    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_f${{github.run_number }} # adding a p to before the number,
+    # to avoid an error caused by repeated build numbers 
+    pipelineType: ${{ inputs.pipelineType }}
+    branch : ${{ github.ref_name }} 
+    application: ${{ github.event.repository.name }}
+    packageName: ${{github.run_id}}
+    zosHostname: lpar.dev.ibm.com
+    zosSFTPUser: GITHUB@lpar.dev.ibm.com
+    azureArtifactName: "${{ github.repository }}.tar"
+
+jobs:
+    Setup:
+        runs-on: self-hosted
+        steps:    
+          - name: CI-CD pipeline parameter printout
+            run: |
+                echo " "
+                echo "Following are the CI-CD pipeline parameters"
+                echo "*******************************************"
+                echo "uniqueWorkspaceId                  = ${{ env.uniqueWorkspaceId}}"
+                echo "pipelineType                       = ${{ env.pipelineType}}"
+                echo "branch                             = ${{ env.branch}}"
+                echo "application                        = ${{ env.application}}"
+                echo "packageName                        = ${{ env.packageName}}"
+                echo "zosHostname                        = ${{ env.zosHostname}}"
+                echo "zosSFTPUser                        = ${{ env.zosSFTPUser}}"
+                echo "azureArtifactName                  = ${{ env.azureArtifactName}}"
+          - name: Clone Repo to z/OS Unix System Services
+            run: ssh ${{env.zosSFTPUser}} ". ./.profile && gitClone.sh -w ${{ env.uniqueWorkspaceId }} -r https://${{ secrets.githubAccessToken }}@github.com/${{ github.repository }}.git -b ${{ env.branch }}" 
+
+    Build:
+        needs:
+         - Setup
+        runs-on: self-hosted
+        steps: 
+        - name: Build git repo
+          run: ssh ${{env.zosSFTPUser}} ". ./.profile && dbbBuild.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -b ${{ env.branch }} -p ${{env.pipelineType}}"
+
+    Cleanup:
+        needs:
+            - Build
+        runs-on: self-hosted
+        if: always()
+        steps:
+            - name: Cleanup Build Environment
+              run: ssh ${{ env.zosSFTPUser}} ". ./.profile && deleteWorkspace.sh -w ${{ env.uniqueWorkspaceId }}"
+                

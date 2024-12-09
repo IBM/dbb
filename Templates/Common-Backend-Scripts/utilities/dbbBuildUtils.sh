@@ -3,14 +3,22 @@ mainBranchSegment=""
 secondBranchSegment=""
 baselineReferenceFile=""
 segmentName=""
+mergeBaseCommit=""
+baseBranch=""
 
 computeBuildConfiguration() {
 
+    # unset variables
+    HLQ=""
+    propOverrides=""
+
+    ### computes the following environment variables for the dbbBuild.sh script
+    # Type - the build type, e.q. --impactBuild --baselineRef release/rel-1.1.4
+    # HLQ - the high level qualifier to use
+    # propOverrides - zAppBuild property overrides, e.q. "mainBuildBranch=release/rel-1.1.4"
+
     ##DEBUG ## echo -e "App name \t: ${App}"
     ##DEBUG ## echo -e "Branch name \t: ${Branch}"
-
-    # reset variables
-    propOverrides=""
 
     # Compute HLQ preix and application name
     HLQ=$(echo ${HLQPrefix}.${App:0:8} | tr '[:lower:]' '[:upper:]' | tr -d '-')
@@ -47,7 +55,7 @@ computeBuildConfiguration() {
         # evaluate main segment
         case $mainBranchSegmentTrimmed in
         REL* | EPIC* | PROJ*)
-            # Release maintenance, epic and project branches are intergration branches,
+            # Release maintenance, epic and project branches are integration branches,
             # that derive dependency information from mainBuildBranch configuration.
 
             # evaluate third segment
@@ -61,9 +69,10 @@ computeBuildConfiguration() {
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:1}${segmentName:0:7}"
             fi
 
-            getBaselineReference
-            if [ -z "${Type}" ]; then
+                        if [ -z "${Type}" ]; then
                 Type="--impactBuild"
+# obtain the baselineRef from file
+                getBaselineReference
                 Type="${Type} --baselineRef ${baselineRef}"
                 # Release maintenance / epic / project branch clones the dependency information from the main build branch
                 # propOverrides="mainBuildBranch=${mainBranchSegment}"
@@ -96,6 +105,31 @@ computeBuildConfiguration() {
                 Type="--impactBuild"
                 # appending the --debug flag to compile with TEST options
                 Type="${Type} --debug"
+
+                ## evaluate the feature branch build behaviour
+                # compute the base branchName
+                    if [ ! -z "${thirdBranchSegment}" ]; then
+                        # epic branch workflow
+                    baseBranch="origin/epic/${secondBranchSegment}"
+                    else 
+                        # default dev workflow
+                    baseBranch="origin/main"
+                fi
+
+                # assess the featureBranchBuildBehaviour setting
+                case $featureBranchBuildBehaviour in
+                cumulative)
+                    Type="${Type} --baselineRef $baseBranch"
+                    ;;
+                merge-base)
+                    getMergeBaseCommit
+                    Type="${Type} --baselineRef $mergeBaseCommit"
+                    ;;
+                *)
+                    ## nothing to do
+                    ;;
+                esac
+
             fi
             ;;
         HOTFIX*)
@@ -118,6 +152,30 @@ computeBuildConfiguration() {
             if [ -z "${Type}" ]; then
                 Type="--impactBuild"
                 propOverrides="mainBuildBranch=release/${secondBranchSegment}"
+
+                # evaluate the feature branch build behaviour
+                    if [ ! -z "${thirdBranchSegment}" ]; then
+                        # define baseline reference
+                    baseBranch="origin/release/${secondBranchSegment}"
+                else
+                    echo $PGM": [WARNING] [Utilities/dbbBuildUtils.sh/computeBuildConfiguration] The hotfix branch name (${Branch}) does not match any case of the recommended naming conventions for branches. Performing an impact build."
+                    echo $PGM":            Read about our recommended naming conventions at https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#naming-conventions ."
+                fi
+
+                # assess the featureBranchBuildBehaviour setting
+                case $featureBranchBuildBehaviour in
+                cumulative)
+                    Type="${Type} --baselineRef $baseBranch"
+                    ;;
+                merge-base)
+                    getMergeBaseCommit
+                    Type="${Type} --baselineRef $mergeBaseCommit"
+                    ;;
+                *)
+                    ## nothing to do
+                    ;;
+                esac
+
             fi
             ;;
         "PROD" | "MASTER" | "MAIN")
@@ -130,33 +188,23 @@ computeBuildConfiguration() {
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}.REL"
             else
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}.BLD"
-                if [ -z "${Type}" ]; then
-                    # appending the --debug flag to compile with TEST options
-                    Type="${Type} --debug"
-                fi
+                # appending the --debug flag to compile with TEST options
+                Type="${Type} --debug"
             fi
 
             ;;
         *)
-            # Treat other branches as feature branch.
-            # Assuming <initiative>/<feature> as naming convention
-            # Comment: We might want to verify that the epic branch exists.
-
+            # User did not follow the recommended naming conventions for branches. The branch name does not match any case of the recommended naming conventions.
+            # See https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#naming-conventions 
             HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:8}"
             if [ -z "${Type}" ]; then
                 Type="--impactBuild"
                 # appending the --debug flag to compile with TEST options
                 Type="${Type} --debug"
             fi
-            # override the mainBuildBranch to clone the dependency collection for the initative.
-            propOverrides="mainBuildBranch=epic/${mainBranchSegment}"
-
+            echo $PGM": [WARNING] [Utilities/dbbBuildUtils.sh/computeBuildConfiguration] The branch name (${Branch}) does not match any case of the recommended naming conventions for branches. Performing an impact build."
+            echo $PGM":            Read about our recommended naming conventions at https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#naming-conventions ."
             ;;
-
-            # rc=8
-            # ERRMSG=$PGM": [ERROR] [Utilities/dbbBuildUtils.sh(computeBuildConfiguration())] No build conventions/rules for branch name (${Branch}) have been defined. rc="$rc
-            # echo $ERRMSG
-            # ;;
         esac
 
         # append pipeline preview if specified
@@ -170,7 +218,7 @@ computeBuildConfiguration() {
         ##DEBUG ## echo -e "Computed hlq \t: ${HLQ}"
         ##DEBUG ## echo -e "Build option \t: ${Type}"
 
-        # unset variables
+        # unset internal variables
         baselineRef=""
         mainBranchSegment=""
         mainBranchSegmentTrimmed=""
@@ -180,16 +228,32 @@ computeBuildConfiguration() {
         thirdBranchSegmentTrimmed=""
         branchConvention=""
         segmentName=""
+        mergeBaseCommit=""
+        baseBranch=""
 
     fi
-
 }
 
 # Private method to retrieve the baseline reference from the configuration file
 
 getBaselineReference() {
 
-    baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')
+    baselineRef=""
+    
+    case $(echo $mainBranchSegment | tr '[:lower:]' '[:upper:]') in
+        "RELEASE" | "EPIC")
+            baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
+         ;;
+        "MAIN")
+            baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }') 
+         ;;
+        *)
+            rc=8
+            ERRMSG=$PGM": [ERROR] Branch name ${Branch} does not follow the recommended naming conventions to compute the baseline reference. Received '${mainBranchSegment}' which does not fall into the conventions of release, epic or main. rc="$rc
+            echo $ERRMSG
+         ;;
+    esac
+    
 
     if [ -z "${baselineRef}" ]; then
         rc=8
@@ -200,26 +264,57 @@ getBaselineReference() {
     ##DEBUG ## echo -e "baselineRef \t: ${baselineRef}"    ## DEBUG
 }
 
+# Private method to retrive the merge-base as the baseline reference
+# Requires the baseBranch to be computed
+
+getMergeBaseCommit() {
+
+    # Execute Git cmd to obtain merge-base
+    if [ -z "${baseBranch}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] To compute the merge base commit, it requires to define the baseBranch variable. rc="$rc
+        echo $ERRMSG
+    fi
+
+    # Execute Git cmd to obtain merge-base
+    CMD="git -C ${AppDir} merge-base ${Branch} ${baseBranch}"
+    mergeBaseCommit=$($CMD)
+    rc=$?
+
+    if [ $rc -ne 0 ]; then
+        ERRMSG=$PGM": [ERROR] Command ($CMD) failed. Git command to obtain the merge base commit failed for feature branch ${Branch}. See above error log. rc="$rc
+        echo $ERRMSG
+    fi
+
+    if [ $rc -eq 0 ]; then
+
+        if [ -z "${mergeBaseCommit}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Computation of Merge base commit failed for feature branch ${Branch}. rc="$rc
+            echo $ERRMSG
+        fi
+    fi
+
+}
 
 #
 # computation of branch segments
 # captured cases
 #
-# containing numbers, assuming to be an work-item-id
-# containing strings and words separated by dashes, return first characters of each string
-# none of the above - return segement name in upper case w/o underscores
+# - containing numbers, assuming to be an work-item-id
+# - containing strings and words separated by dashes, return first characters of each string
+# - none of the above - return segment name in upper case w/o underscores
 #
 
 computeSegmentName() {
 
     segmentName=$1
-    echo $segmentName
     if [ ! -z $(echo "$segmentName" | tr -dc '0-9') ]; then
         # "contains numbers"
         retval=$(echo "$segmentName" | tr -dc '0-9')
     elif [[ $segmentName == *"-"* ]]; then
         # contains dashes
-        segmentNameTrimmed=$(echo "$segmentName" | awk -F "-" '{ for(i=1; i <= NF;i++) print($i) }' | cut -c-1-1)
+        segmentNameTrimmed=$(echo "$segmentName" | awk -F "-" '{ for(i=1; i <= NF;i++) print($i) }' | cut -c 1-1)
         segment1=$(echo "$segmentNameTrimmed" | tr -d '\n')
         retval=$(echo "$segment1" | tr '[:lower:]' '[:upper:]')
     else 

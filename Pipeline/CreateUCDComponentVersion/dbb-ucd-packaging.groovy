@@ -243,7 +243,7 @@ tempBuildOutputsMap.each { deployableArtifact, info ->
 
 if (buildOutputsMap.size() == 0) {
     println("** No items to package in the provided build reports. Exiting.")
-    System.exit(0)
+    System.exit(4)
 }
 
 // generate ship list file. specification of UCD ship list can be found at
@@ -673,7 +673,7 @@ def getContainerAttributes(String ds, Properties properties) {
 }
 
 def parseInput(String[] cliArgs) {
-    def cli = new CliBuilder(usage: "deploy.groovy [options]")
+    def cli = new CliBuilder(usage: "dbb-ucd-packaging.groovy [options]")
     cli.b(longOpt:'buztool', args:1, argName:'file', 'Absolute path to UrbanCode Deploy buztool.sh script')
     cli.w(longOpt:'workDir', args:1, argName:'dir', 'Absolute path to the DBB build output directory')
     cli.c(longOpt:'component', args:1, argName:'name', 'Name of the UCD component to create version in')

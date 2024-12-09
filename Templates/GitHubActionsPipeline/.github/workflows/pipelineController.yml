@@ -1,0 +1,92 @@
+name: Pipeline_Controller
+on: 
+    workflow_dispatch:
+        inputs:
+            pipelineType:
+                description: Pipeline Type
+                default: build
+                type: choice
+                options:
+                    - build
+                    - preview
+                    - release
+                required: false
+            releaseType:
+                description: Release Type 
+                default: n/a
+                type: choice
+                options:
+                    - patch
+                    - minor
+                    - major
+                    - n/a
+                required: false
+    push:
+        branches:
+            - feature/*
+            - release/*
+            - hotfix/*
+            - epic/*
+            - main
+jobs:
+
+    controller:
+        runs-on: self-hosted
+        steps:
+            - name: Pipeline type
+              run: echo "This is the pipeline controller"  
+            - if: ${{inputs.pipelineType != ''}}
+              run: echo "The current pipeline type is ${{inputs.pipelineType}}"
+            - if: ${{inputs.pipelineType == ''}}
+              run: echo "The current pipeline type is build"
+            - name: Release Branch Check
+              if: ${{inputs.pipelineType == 'release' && (startsWith(github.ref_name, 'main') == false)  }}
+              run: |
+                  ERRMSG="The release pipeline should only be run from the main branch"
+                  echo $ERRMSG
+    feature: 
+        needs: 
+            - controller
+        # this should automatically run on push to feature branches
+        if: ${{startsWith(github.ref_name, 'feature/')}}
+        uses: ./.github/workflows/Feature.yml 
+        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
+        with:
+            pipelineType: build
+        secrets:
+            githubAccessToken: ${{ secrets.SAMPLE_PAT }} 
+
+    build: 
+        needs: 
+            - controller
+        # this should run on manual trigger with pipelineType = build and automatic trigger
+        if: ${{(inputs.pipelineType == 'build' || inputs.pipelineType == '') && (startsWith(github.ref_name, 'main')||startsWith(github.ref_name, 'release/')||startsWith(github.ref_name, 'epic/'))}}
+        uses: ./.github/workflows/Build.yml
+        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
+        with:
+            pipelineType: build
+        secrets:
+            githubAccessToken: ${{ secrets.SAMPLE_PAT }} 
+        
+    release: 
+        needs: 
+            - controller
+        if: ${{ inputs.pipelineType == 'release' && startsWith(github.ref_name, 'main')}}
+        uses: ./.github/workflows/Release.yml
+        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
+        with:
+            pipelineType: release
+            releaseType: ${{inputs.releaseType}}
+        secrets:
+            githubAccessToken: ${{ secrets.SAMPLE_PAT}} 
+
+    preview:
+        needs:
+            - controller
+        if: ${{ inputs.pipelineType == 'preview' }}
+        uses: ./.github/workflows/Preview.yml
+        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
+        with:
+            pipelineType: preview
+        secrets:
+            githubAccessToken: ${{ secrets.SAMPLE_PAT}} 

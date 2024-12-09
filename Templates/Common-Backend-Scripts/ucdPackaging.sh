@@ -398,7 +398,7 @@ fi
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the DBB UCD Packaging script."
 
-    CMD="groovyz ${log4j2} ${ucdPackagingScript} --buztool ${BuzTool} --workDir ${logDir} --component ${UcdComp} --versionName ${UcdVers}"
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${ucdPackagingScript} --buztool ${BuzTool} --workDir ${logDir} --component ${UcdComp} --versionName ${UcdVers}"
 
     # external repository file
     if [ ! -z "${ExtRepoProp}" ]; then

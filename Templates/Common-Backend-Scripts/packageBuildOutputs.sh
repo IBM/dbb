@@ -95,6 +95,13 @@ Help() {
     echo "                                                              "
     echo "                Ex: Pipeline Build ID (Build.buildid.tar)     "
     echo "                                                              "
+    echo "       -s "<sbomAuthor>"    - Name and email of               "
+    echo "                              the SBOM author                 "
+    echo "                              enclosed with double quotes     "
+    echo "                              (Optional)                      "
+    echo "                                                              "
+    echo "                 Ex: \"Build Engineer <engineer@example.com>\"  "
+    echo "                                                              "
     echo "       -h                  - Display this Help.               "
     echo "                                                              "
     exit 0
@@ -130,6 +137,9 @@ PipelineType=""
 Branch=""
 
 addExtension=""
+
+generateSBOM=""
+sbomAuthor=""
 
 publish=""
 artifactVersionName=""            # required for publishing to artifact repo
@@ -173,7 +183,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts ":h:w:a:t:b:v:p:u" opt; do
+    while getopts ":h:w:a:t:b:v:p:us:" opt; do
         case $opt in
         h)
             Help
@@ -224,6 +234,18 @@ if [ $rc -eq 0 ]; then
             ;;
         u)
             publish="true"
+            ;;
+        s)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] SBOM Author is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            generateSBOM="true"
+            sbomAuthor="$argument"
             ;;
         p)
             argument="$OPTARG"
@@ -301,7 +323,7 @@ validateOptions() {
 # function to validate publishing options
 validatePublishingOptions() {
 
-     if [ -z "${App}" ]; then
+    if [ -z "${App}" ]; then
         rc=8
         ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
         echo $ERRMSG
@@ -429,14 +451,17 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${PkgPropFile}" ]; then
         echo $PGM": [INFO] **     Packaging properties:" ${PkgPropFile}
     fi
+
+    if [ ! -z "${artifactVersionName}" ]; then
+        echo $PGM": [INFO] **            Artifact name:" ${artifactVersionName}
+    fi
+
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
     if [ "$publish" == "true" ]; then
         if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
             echo $PGM": [INFO] **  ArtifactRepo properties:" ${artifactRepositoryPropertyFile}
         fi
-        if [ ! -z "${artifactVersionName}" ]; then
-            echo $PGM": [INFO] **            Artifact name:" ${artifactVersionName}
-        fi
+
         if [ ! -z "${artifactRepositoryUrl}" ]; then
             echo $PGM": [INFO] **         ArtifactRepo Url:" ${artifactRepositoryUrl}
         fi
@@ -453,6 +478,10 @@ if [ $rc -eq 0 ]; then
             echo $PGM": [INFO] **    ArtifactRepo Repo Dir:" ${artifactRepositoryDirectory}
         fi
     fi
+    echo $PGM": [INFO] **            Generate SBOM:" ${generateSBOM}
+    if [ ! -z "${sbomAuthor}" ]; then
+        echo $PGM": [INFO] **              SBOM Author:" ${sbomAuthor}
+    fi
     echo $PGM": [INFO] **                 DBB_HOME:" ${DBB_HOME}
     echo $PGM": [INFO] **************************************************************"
     echo ""
@@ -462,12 +491,26 @@ fi
 # Invoke the Package Build Outputs script
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the Package Build Outputs script."
+    
+    if [ ! -z "${cycloneDXlibraries}" ]; then
+    	cycloneDXlibraries="-cp ${cycloneDXlibraries}"
+    fi
 
-    CMD="groovyz ${log4j2} ${PackagingScript} --workDir ${logDir}"
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${cycloneDXlibraries} ${PackagingScript} --workDir ${logDir}"
 
     # add tarfile name
     if [ ! -z "${tarFileName}" ]; then
         CMD="${CMD} --tarFileName ${tarFileName}"
+    fi
+
+    # application name
+    if [ ! -z "${App}" ]; then
+        CMD="${CMD} --application ${App}"
+    fi
+
+    # branch name
+    if [ ! -z "${Branch}" ]; then
+        CMD="${CMD} --branch ${Branch}"
     fi
 
     # packaging properties file
@@ -480,6 +523,11 @@ if [ $rc -eq 0 ]; then
         CMD="${CMD} --addExtension"
     fi
 
+    # artifactVersionName
+    if [ ! -z "${artifactVersionName}" ]; then
+        CMD="${CMD} --versionName ${artifactVersionName}"
+    fi
+
     # publishing options
     if [ "$publish" == "true" ]; then
         CMD="${CMD} --publish"
@@ -489,9 +537,6 @@ if [ $rc -eq 0 ]; then
         fi
         if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
             CMD="${CMD} --artifactRepositoryPropertyFile ${artifactRepositoryPropertyFile}"
-        fi
-        if [ ! -z "${artifactVersionName}" ]; then
-            CMD="${CMD} --versionName ${artifactVersionName}"
         fi
 
         if [ ! -z "${artifactRepositoryUser}" ]; then
@@ -508,8 +553,17 @@ if [ $rc -eq 0 ]; then
         fi
     fi
 
+    # SBOM options
+    if [ "$generateSBOM" == "true" ]; then
+        CMD="${CMD} --sbom"
+	    if [ ! -z "${sbomAuthor}" ]; then
+	        CMD="${CMD} --sbomAuthor \"${sbomAuthor}\""
+	    fi
+    fi
+
+
     echo $PGM": [INFO] ${CMD}"
-    ${CMD}
+    /bin/env bash -c "${CMD}"
     rc=$?
 
     if [ $rc -eq 0 ]; then

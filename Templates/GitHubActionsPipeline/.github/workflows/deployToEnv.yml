@@ -1,0 +1,93 @@
+name: deployToEnvironment
+on:
+    workflow_call:
+        secrets:
+            githubAccessToken:
+                required: true
+        inputs:
+            environmentName:
+                required: false
+                default: "."
+                type: string
+            pipelineType:
+                description: Pipeline Type
+                default: build
+                type: string
+                required: false
+            uniqueWorkspaceId: 
+                required: false
+                default: "."
+                type: string
+            releaseType:
+                description: Release Type
+                default: patch
+                type: string
+                required: false
+
+env:
+    branch : ${{ github.ref_name }} 
+    application: ${{ github.event.repository.name }}
+    azureArtifactName: "${{ github.repository }}.tar"    
+    zosHostname: lpar.dev.ibm.com
+    zosSFTPUser: GITHUB@lpar.dev.ibm.com
+    environment: ${{inputs.environmentName}}
+        
+jobs:
+    Retrieve-package:
+        runs-on: self-hosted
+        steps:
+        - run: | 
+            echo "the environment name is ${{inputs.environmentName}}"
+            echo "the pipeline type is ${{inputs.pipelineType}}"
+
+    Deploy:
+        name: Deploy to ${{inputs.environmentName}}
+        needs: 
+        - Retrieve-package
+        runs-on: self-hosted
+        environment:
+            name: "${{inputs.environmentName}}"
+        steps:
+
+          - name: checkout
+            uses: actions/checkout@v4.1.0
+
+          - name: Generate deployment plan with Wazi Deploy
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && mkdir -p ${{ inputs.uniqueWorkspaceId }}/deployPkgDir/deploy-logs-${{ inputs.environmentName }} && wazideploy-generate.sh -w ${{ inputs.uniqueWorkspaceId }} -i ${{ env.application }}.tar -r deploy-logs-${{ inputs.environmentName }}/deployment-plan-report.html"
+
+          - name: Deploy package with Wazi Deploy
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && wazideploy-deploy.sh -w ${{ inputs.uniqueWorkspaceId }} -e EOLEB7-${{ env.application }}-${{ inputs.environmentName }}.yaml -i ${{ env.application }}.tar -l deploy-logs-${{ inputs.environmentName }}/evidences/evidence.yaml"
+
+          - name: Generate deployment report with Wazi Deploy
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && wazideploy-evidence.sh -w ${{ inputs.uniqueWorkspaceId }} -l deploy-logs-${{ inputs.environmentName }}/evidence.yaml -o deploy-logs-${{ inputs.environmentName }}/deployment-report.html"
+            
+          - name: Retrieve deployment reports
+            if: inputs.pipelineType == 'release'
+            run: |
+              rm -rf "${{ runner.temp }}/deploy-logs-${{ inputs.environmentName }}"
+              mkdir "${{ runner.temp }}/deploy-logs-${{ inputs.environmentName }}"
+              sftp -r ${{ env.zosSFTPUser}}:${{ inputs.uniqueWorkspaceId }}/deployPkgDir/deploy-logs-${{ inputs.environmentName }}/* "\"${{ runner.temp }}/deploy-logs-${{ inputs.environmentName }}\""
+
+          - name: Publish deployment logs
+            if: inputs.pipelineType == 'release'
+            uses: actions/upload-artifact@v4.0.0
+            with:
+              path: "${{ runner.temp }}/deploy-logs-${{ inputs.environmentName }}/"
+              name: "artifact-${{ inputs.environmentName }}" 
+                    
+          - name: Create Wazi Deploy Index        
+            if: inputs.pipelineType != 'Integration'
+            uses: "./.github/actions/createwazideployindex"
+            with:
+              evidenceFolder: deploy-logs-${{ inputs.environmentName }}
+              environmentName: "${{ inputs.environmentName }}"
+              buildNumber: ${{github.run_number }} 
+              zosSFTPUser: ${{ env.zosSFTPUser}}
+                
+          - name: Create production release tag        
+            if: inputs.pipelineType == 'release'
+            uses: "./.github/actions/tagging_createproductionreleasetag"
+            with:
+              environmentName: "${{ inputs.environmentName }}"
+              releaseType: "${{ inputs.releaseType }}"
+              githubAccessToken: ${{ secrets.githubAccessToken }} 

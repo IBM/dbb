@@ -1,0 +1,105 @@
+name: Build
+on:
+    workflow_call:
+        secrets:
+            githubAccessToken:
+                required: true
+        inputs:
+            pipelineType:
+                description: Pipeline Type
+                default: build
+                type: string
+                required: false
+
+env:
+    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_b${{github.run_number }} # adding a b to before the number,
+    # to avoid an error caused by repeated build numbers 
+    branch : ${{ github.ref_name }} 
+    application: ${{ github.event.repository.name }}
+    pipelineType: ${{ inputs.pipelineType }}
+    packageName: ${{github.run_id}}
+    zosHostname: lpar.dev.ibm.com
+    zosSFTPUser: GITHUB@lpar.dev.ibm.com
+
+jobs:
+    Setup:
+        runs-on: self-hosted
+        steps:
+         - name: CI-CD pipeline parameter printout
+           run: |
+            echo " "
+            echo "Following are the CI-CD pipeline parameters"
+            echo "*******************************************"
+            echo "uniqueWorkspaceId                  = ${{ env.uniqueWorkspaceId}}"
+            echo "branch                             = ${{ env.branch}}"
+            echo "application                        = ${{ env.application}}"
+            echo "pipelineType                       = ${{ env.pipelineType}}"
+            echo "packageName                        = ${{ env.packageName}}"
+            echo "zosHostname                        = ${{ env.zosHostname}}"
+            echo "zosSFTPUser                        = ${{ env.zosSFTPUser}}"
+         - name: Clone Repo to z/OS Unix System Services
+           run: ssh ${{ env.zosSFTPUser}} ". ./.profile && gitClone.sh -w ${{ env.uniqueWorkspaceId }} -r https://${{ secrets.githubAccessToken }}@github.com/${{ github.repository }}.git -b ${{ env.branch }}" 
+
+    Build:
+        needs: Setup
+        runs-on: self-hosted
+        steps:
+          - name: Build git repo
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && dbbBuild.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -b ${{ env.branch }} -p ${{env.pipelineType}} "
+          - name: Prepare logs
+            if: ${{ always() }}
+            run: | 
+                ssh ${{ env.zosSFTPUser}} ". ./.profile && prepareLogs.sh -w ${{ env.uniqueWorkspaceId }}" 
+                rm -rf "${{ runner.temp }}/build-logs" 
+                mkdir "${{ runner.temp }}/build-logs" 
+                sftp ${{ env.zosSFTPUser}}:${{ env.uniqueWorkspaceId }}/*.tar "\"${{ runner.temp }}/build-logs\""
+                tar -xvf "${{ runner.temp }}/build-logs/logs.tar" -C "${{ runner.temp }}/build-logs"
+
+          - name: Upload build logs
+            uses: actions/upload-artifact@v4
+            with:
+                name: build_logs_${{github.run_number }}                        # Name used for artifact when it is uploaded
+                path: ${{ runner.temp }}/build-logs                             # Path to build logs artifacts
+                retention-days: 1
+    
+    Package:
+        needs: Build
+        runs-on: self-hosted
+        steps:
+          - name: Package build outputs
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && packageBuildOutputs.sh -w ${{ env.uniqueWorkspaceId }} -t ${{ env.application }}.tar -a ${{ env.application }} -b ${{ env.branch }} -p ${{env.pipelineType}} -v ${{ env.packageName }} "
+
+    Deploy-integration:
+        needs: Package
+        runs-on: self-hosted
+        steps:
+
+          - name: Generate deployment plan 
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && mkdir -p ${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs && wazideploy-generate.sh -w ${{ env.uniqueWorkspaceId }} -i ${{ env.application }}.tar -r deploy-logs/deployment-plan-report.html"
+            
+          - name: Deploy to integration
+            run: ssh ${{ env.zosSFTPUser}}  ". ./.profile && wazideploy-deploy.sh -w ${{ env.uniqueWorkspaceId }} -e EOLEB7-${{ env.application }}-Integration.yaml -i ${{ env.application }}.tar -l deploy-logs/evidences/evidence.yaml"
+          
+          - name: Generate and publish deployment report for integration
+            run: | 
+                ssh ${{ env.zosSFTPUser}} ". ./.profile && wazideploy-evidence.sh -w ${{ env.uniqueWorkspaceId }} -l deploy-logs/evidence.yaml -o deploy-logs/deployment-report.html"
+                rm -rf "${{ runner.temp }}/deploy-logs"
+                mkdir "${{ runner.temp }}/deploy-logs"
+                sftp -r ${{ env.zosSFTPUser}}:${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs/* "\"${{ runner.temp }}/deploy-logs\""
+          
+          - name: Upload deploy logs
+            uses: actions/upload-artifact@v4
+            with:
+              name: deploy_logs_${{github.run_number }}                        # Name used for artifact when it is uploaded
+              path: ${{ runner.temp }}/deploy-logs                        # Path to build logs artifacts
+              retention-days: 1
+
+    Cleanup:
+        needs:
+            - Deploy-integration
+        runs-on: self-hosted
+        if: always()
+        steps:
+            - name: Cleanup Build Environment
+              run: ssh ${{ env.zosSFTPUser}} ". ./.profile && deleteWorkspace.sh -w ${{ env.uniqueWorkspaceId }}"
+            
