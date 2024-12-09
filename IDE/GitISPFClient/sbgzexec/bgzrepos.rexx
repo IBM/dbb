@@ -117,9 +117,13 @@
    ReturnCode = 0
    ROWID = 1
    Do Until (ReturnCode <> 0)
+     If QROWS /= 0 Then
+       cursor = "CSRROW(1)"
+     Else
+       cursor = "CURSOR(BGZNREPO)"
      'TBTOP BGZCLONE'
      'TBSKIP BGZCLONE ROW('ROWID')'
-     'TBDISPL BGZCLONE PANEL(BGZREPOS) ROWID(ROWID)'
+     'TBDISPL BGZCLONE PANEL(BGZREPOS) 'cursor' ROWID(ROWID)'
      TB_RC = RC
      'VGET (ZVERB)'
      If TB_RC = 8 | Zverb = 'CANCEL' Then
