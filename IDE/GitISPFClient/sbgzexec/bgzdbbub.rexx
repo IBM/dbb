@@ -548,7 +548,8 @@ getDeps: PROCEDURE expose BGZJAVAH BGZBLWRK dbb UPPERCASE lowercase bldFile. ,
     Do i = 1 to dbbline.0
       line = dbbline.i
       Parse var line lname file
-      If lname = depFile then
+/*    If lname = depFile then*/
+      If Pos(repo,file) /= 0 Then
       Do
         j = j + 1
         bldFile.j = strip(file)
@@ -560,7 +561,7 @@ getDeps: PROCEDURE expose BGZJAVAH BGZBLWRK dbb UPPERCASE lowercase bldFile. ,
     logfile  = BGZFLOG
     Address syscall "readfile (logfile) dbbline."
     Do i = 1 to dbbline.0
-      line = Substr(dbbline.i,2)
+      line = dbbline.i
       If Pos('does not exist',line) /= 0 Then
       Do
         /* New Branch, no metadata, try main instead */
@@ -572,9 +573,10 @@ getDeps: PROCEDURE expose BGZJAVAH BGZBLWRK dbb UPPERCASE lowercase bldFile. ,
           logfile  = BGZFLOG
           Address syscall "readfile (logfile) dbbline."
           Do i = 1 to dbbline.0
-            line = substr(dbbline.i,2)
+            line = dbbline.i
             Parse var line lname file
-            If lname = depFile then
+       /*   If lname = depFile then */
+            If Pos(repo,file) /= 0 Then
             Do
               j = j + 1
               bldFile.j = strip(file)
