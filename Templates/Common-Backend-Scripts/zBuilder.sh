@@ -86,21 +86,21 @@ Help() {
     echo "                 Ex: main                                     "
     echo "                                                              "
     echo "                                                              "
-    echo "       -p <PipelineType>  - Type of the pipeline to "
+    echo "       -p <PipelineType>  - Type of the pipeline to           "
     echo "                            control if this builds with       "
     echo "                            optimize or test options          "
-    echo "                            also impacting HLQ                "
+    echo "                            also impacts computed HLQ         "
     echo "                            Default=build, Required.          "
     echo "                            Accepted values:                  "
-    echo "                            build -                           "
+    echo "                            *build* -                         "
     echo "                             perform build with TEST options  "
-    echo "                            release -                         "
+    echo "                            *release* -                       "
     echo "                             perform build with options for   "
     echo "                             performance optimized            "
     echo "                             executables                      "
-    echo "                            preview -                         "
-    echo "                             perform build zAppBuild option   "
-    echo "                             --preview                        "
+    echo "                            *preview* -                       "
+    echo "                             perform build build in           "
+    echo "                             preview mode                     "
     echo "                                                              "
     echo "                 Ex: build                                    "
     echo "                                                              "
@@ -111,13 +111,12 @@ Help() {
     echo "                             pipelineBackend.config           "
     echo "                 Ex: USER.APP                                 "
     echo "                                                              "
-    echo "       -bc                - (Optional) zAppBuild build        "
-    echo "                             options to override              "
-    echo "                             the computed build configuration "
-    echo "                 Ex: --fullBuild                              "
+    echo "       -t                 - (Optional) zBuilder build         "
+    echo "                             lifecycle  override              "
+    echo "                                                              "
+    echo "                 Ex: -t 'full'                                "
     echo "                                                              "
     echo "       -v                 - (Optional) Verbose tracing        "
-    echo "                             flag for zAppBuild               "
     echo "                                                              "
     echo "                                                              "
     exit 0
@@ -130,7 +129,7 @@ Help() {
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 buildUtilities="${SCRIPT_HOME}/utilities/dbbzBuilderUtils.sh"
-# Customization - End
+
 
 #
 # Internal Variables
@@ -153,17 +152,18 @@ PipelineType=""
 HELP=$1
 
 # Local Variables
-AppDir=""                           # Derived Application Directory
-HLQ=""                              # Derived High Level Qualifier
-HLQPrefix=""                        # Prefix of HLQ, either specified via the cli option -q or via configuration file
-outDir=""                           # Computed output directory to store build protocols
-nestedApplicationFolder=""          # Flag to understand a nested repository
-Lifecycle=""                        # Derived zBuilder lifecycle type
-baselineRef=""                      # baselineReference that is computed by utilities/dbbzBuilderUtils.sh
-zBuilderConfigOverrides=""          # Override of default build config for zBuilder
-zBuilderLogDir=""                   # Path where zBuilder will store the logs
-buildListFile=""                    # Location of the generate zBuilder buildList
-buildlistsize=0                     # Used to assess if files got built
+AppDir=""                  # Derived Application Directory
+HLQ=""                     # Derived High Level Qualifier
+HLQPrefix=""               # Prefix of HLQ, either specified via the cli option -q or via configuration file
+outDir=""                  # Computed output directory to store build protocols
+nestedApplicationFolder="" # Flag to understand a nested repository
+Lifecycle=""               # Derived zBuilder lifecycle type
+userDefinedLifecycle=""    # Flag if the user has provided the lifecycle as argument 
+baselineRef=""             # baselineReference that is computed by utilities/dbbzBuilderUtils.sh
+zBuilderConfigOverrides="" # Override of default build config for zBuilder
+zBuilderLogDir=""          # Path where zBuilder will store the logs
+buildListFile=""           # Location of the generate zBuilder buildList
+buildlistsize=0            # Used to assess if files got built
 
 DBBLogger=""
 zAppBuildVerbose=""
@@ -257,6 +257,7 @@ if [ $rc -eq 0 ]; then
                     break
                 fi
                 Lifecycle="$argument"
+                userDefinedLifecycle=1 # set flag
                 ;;
             p)
                 argument="$OPTARG"
@@ -398,7 +399,7 @@ validateOptions() {
         ERRMSG=$PGM": [ERROR] DBB_BUILD environment variable pointing to (${DBB_BUILD}), but cannot be found. rc="$rc
         echo $ERRMSG
     fi
-    
+
     #
     # Init override file
     #
@@ -407,10 +408,6 @@ validateOptions() {
     #
     # Check to see if debug options were requested and set up switches
     # to enable.
-
-    if [ ${Verbose} -eq 1 ]; then
-        zAppBuildVerbose="--verbose"
-    fi
 
     if [ ${LoggerConfig} -eq 1 ]; then
         DBBLogger="-classpath ${AppDir}/application-conf"
@@ -441,16 +438,17 @@ if [ $rc -eq 0 ]; then
     fi
 fi
 
-# Ready to go  TLD: Suggest in the section to echo as much as possible
+# Ready to go: Suggest in the section to echo as much as possible
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **************************************************************"
     echo $PGM": [INFO] ** Started - DBB Build on HOST/USER: ${SYS}/${USER}"
     echo $PGM": [INFO] **          Workspace:" $(getWorkDirectory)
     echo $PGM": [INFO] **        Application:" ${App}
     echo $PGM": [INFO] **             Branch:" ${Branch}
+    echo $PGM": [INFO] **      Pipeline Type:" ${PipelineType}
     echo $PGM": [INFO] **    Build Lifecycle:" ${Lifecycle}
     if [ -f "${zBuilderConfigOverrides}" ]; then
-       echo $PGM": [INFO] **   Config Override :" ${zBuilderConfigOverrides}
+        echo $PGM": [INFO] **   Config Override :" ${zBuilderConfigOverrides}
     fi
     echo $PGM": [INFO] **                HLQ:" ${HLQ}
     echo $PGM": [INFO] **             AppDir:" ${AppDir}

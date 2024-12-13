@@ -205,7 +205,7 @@ computeBuildConfiguration() {
 
         # append pipeline preview if specified
         if [ "${PipelineType}" == "preview" ]; then
-            if [ -z "${Lifecycle}" ]; then
+            if [ -z "${userDefinedLifecycle}" ]; then
                 Lifecycle="${Lifecycle} --preview"
             fi
         fi
