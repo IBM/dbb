@@ -49,7 +49,7 @@
 Help() {
     echo $PGM" - Invoke DBB zBuilder ("$PGMVERS")                       "
     echo "                                                              "
-    echo "Description: The purpose of this script is to perform         "
+    echo "Description: The purpose of this script is to                 "
     echo "invoke the central build framework.                           "
     echo "                                                              "
     echo "Syntax:                                                       "

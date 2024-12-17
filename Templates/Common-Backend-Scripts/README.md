@@ -358,7 +358,7 @@ The `zBuilder.sh` script can be invoked as follows:
 zBuilder.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
 ```
 
-On purpose it accepts the same input arguments like dbbBuild.sh.
+On purpose, it accepts the same input arguments as dbbBuild.sh.
 
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
