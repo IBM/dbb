@@ -4,6 +4,7 @@
   "description": "DBB Build configuration variables used in the orchestration of DBB builds.",
   "type": "object",
   "additionalProperties": false,
+  "required": ["version"],
   "properties": {
     "version": {
       "type": "string",
@@ -841,22 +842,26 @@
       "type": "array",
       "description": "",
       "items": {
-        "if": { "type": "object", "required": ["path", "dsn"] },
+        "if": { "type": "object", "anyOf": [
+          {"required": ["path", "dsn"]},
+          {"required": ["dsn", "ref"]},
+          {"required": ["path", "ref"]}
+        ] },
         "then": {
           "patternProperties": {
-            "^(?!(path)$).*$": {}
+            "^(?!(path|ref|dsn)$).*$": {}
           },
           "additionalProperties": false,
-          "errorMessage": "Invalid DD: path and dsn are mutually exclusive variables.",
+          "errorMessage": "Invalid DD: path, dsn, and ref are mutually exclusive variables.",
           "parserErrorMessage": {
-            "additionalProperties": "{0}: Invalid DD: path and dsn are mutually exclusive variables."
+            "additionalProperties": "{0}: Invalid DD: path, dsn, and ref are mutually exclusive variables."
           }
         },
         "else": {
           "if": { "type": "object", "required": ["path"] },
           "then": {
             "type": "object",
-            "description": "Path DD",
+            "description": "Path DD Statement",
             "additionalProperties": false,
             "properties": {
               "name": { "$ref": "#/$defs/name" },
@@ -879,30 +884,57 @@
             }
           },
           "else": {
-            "type": "object",
-            "description": "Dsn DD",
-            "additionalProperties": false,
-            "properties": {
-              "name": { "$ref": "#/$defs/name" },
-              "condition": { "$ref": "#/$defs/condition" },
-              "options": { "$ref": "#/$defs/options" },
-              "instream": { "$ref": "#/$defs/instream" },
-              "pass": { "$ref": "#/$defs/pass" },
-              "input": { "$ref": "#/$defs/input" },
-              "output": { "$ref": "#/$defs/output" },
-              "deployType": { "$ref": "#/$defs/deployType" },
-              "log": { "$ref": "#/$defs/log" },
-              "logAppend": { "$ref": "#/$defs/logAppend" },
-              "logEncoding": { "$ref": "#/$defs/logEncoding" },
-              "logMode": { "$ref": "#/$defs/logMode" },
-              "scan": { "$ref": "#/$defs/scan" },
-              "dsn": {
-                "type": "string",
-                "description": "The dataset to be allocated. Exclude to create a temporary DD"
-              },
-              "append": {
-                "type": ["boolean", "string"],
-                "description": "Appends the output to the log file."
+            "if": { "required": ["ref"] },
+            "then": {
+              "type": "object",
+              "description": "Ref DD Statement",
+              "additionalProperties": false,
+              "properties": {
+                "name": { "$ref": "#/$defs/name" },
+                "condition": { "$ref": "#/$defs/condition" },
+                "options": { "$ref": "#/$defs/options" },
+                "instream": { "$ref": "#/$defs/instream" },
+                "pass": { "$ref": "#/$defs/pass" },
+                "input": { "$ref": "#/$defs/input" },
+                "output": { "$ref": "#/$defs/output" },
+                "deployType": { "$ref": "#/$defs/deployType" },
+                "log": { "$ref": "#/$defs/log" },
+                "logAppend": { "$ref": "#/$defs/logAppend" },
+                "logEncoding": { "$ref": "#/$defs/logEncoding" },
+                "logMode": { "$ref": "#/$defs/logMode" },
+                "scan": { "$ref": "#/$defs/scan" },
+                "ref": {
+                  "type": "string",
+                  "description": "Reference to the DDName of a previously allocated DDStatement to use as input. Typically used for concatenation purposes."
+                }
+              }
+            },
+            "else": {
+              "type": "object",
+              "description": "Dsn DD Statement",
+              "additionalProperties": false,
+              "properties": {
+                "name": { "$ref": "#/$defs/name" },
+                "condition": { "$ref": "#/$defs/condition" },
+                "options": { "$ref": "#/$defs/options" },
+                "instream": { "$ref": "#/$defs/instream" },
+                "pass": { "$ref": "#/$defs/pass" },
+                "input": { "$ref": "#/$defs/input" },
+                "output": { "$ref": "#/$defs/output" },
+                "deployType": { "$ref": "#/$defs/deployType" },
+                "log": { "$ref": "#/$defs/log" },
+                "logAppend": { "$ref": "#/$defs/logAppend" },
+                "logEncoding": { "$ref": "#/$defs/logEncoding" },
+                "logMode": { "$ref": "#/$defs/logMode" },
+                "scan": { "$ref": "#/$defs/scan" },
+                "dsn": {
+                  "type": "string",
+                  "description": "The dataset to be allocated. Exclude to create a temporary DD"
+                },
+                "append": {
+                  "type": ["boolean", "string"],
+                  "description": "Appends the output to the log file."
+                }
               }
             }
           }

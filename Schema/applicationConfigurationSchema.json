@@ -8,9 +8,7 @@
   "properties": {
     "version": {
       "type": "string",
-      "description": "",
-      "pattern": "^1\\.0\\.0$",
-      "errorMessage": "Your IDE configured version of application configuration schema only supports configurations of version 1.0.0."
+      "description": "The version of DBB application configuration schema being used for this configuration. This field does not validate anything when used inside of an IDE. It will only be validated at runtime."
     },
     "application": {
       "type": "object",
