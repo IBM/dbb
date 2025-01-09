@@ -1,2 +1,6 @@
 # zBuilder Configuration Schema
 zBuilder uses JSON schema to validate yaml build and application configuration files that define what the build does. Those schema files are publicly hosted here so that developers can reference them as links in their IDEs to activate local validation for their configuration files. For more information, reference the [Schema validation with VSCode](https://www.ibm.com/docs/en/dbb/3.0?topic=tutorials-schema-validation-vscode) tutorial.
+
+The application and build configuration schemas in the root directories of the schema folder will update automatically to the latest version of DBB schema upon release. This will not introduce changes that break your configuration files as older versions will be subsets of newer versions, but if your version of DBB is not updated, your schema may support changes your runtime environment cannot use yet. 
+
+Previous schema versions without additions will be kept in the `LegacyVersions` directory if you prefer referring to them. If a schema does not have a legacy version for an older release, that is because the latest version did not changed since its last release. For example, there is no legacy application configuration schema for v1.0.0 because it was not updated in v1.0.1.
