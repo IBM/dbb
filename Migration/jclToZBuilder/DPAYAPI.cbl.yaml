@@ -1,0 +1,138 @@
+## test 02
+steps:
+    - program: IGYCRCTL
+      parms: NODYNAM,LIB,RENT,APOST,LIB,CICS('SP'),SIZE(4000)
+      maxRC: 4
+      DDs:
+          - name: SYSIN
+            DSNs:
+                - dsn: MDALBIN.PROG.MORTV2.COBOL(DPAYAPI)
+                  options: SHR
+          - name: SYSLIB
+            DSNs:
+                - dsn: MDALBIN.PROG.MORTV2.COPY
+                  options: SHR
+                - dsn: CEE.SCEESAMP
+                  options: SHR
+          - name: TASKLIB
+            DSNs:
+                - dsn: COBOL.V6R1.SIGYCOMP
+                  options: SHR
+                - dsn: CICSTS.V5R4.CICS.SDFHLOAD
+                  options: SHR
+                - dsn: DBC0CFG.DB2.V12.SDSNLOAD
+                  options: SHR
+          - name: DBRMLIB
+            DSNs:
+                - dsn: MDALBIN.PROG.MORTV2.DBRM(DPAYAPI)
+                  options: SHR
+                  output: DBRM
+          - name: SYSLIN
+            DSNs:
+                - dsn: MDALBIN.PROG.MORTV2.OBJ(DPAYAPI)
+                  options: SHR
+          - name: SYSMDECK
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT1
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT2
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT3
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT4
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT5
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT6
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT7
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT8
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT9
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT10
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT11
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT12
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT13
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT14
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSUT15
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new
+          - name: SYSPRINT
+            copy: true
+            encoding: UTF-8
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) blksize(133) lrecl(133) recfm(f,b) new
+    - program: IEWBLINK
+      parms: RENT,REUS=RENT,LIST,XREF,AMODE=31,RMODE=ANY
+      maxRC: 4
+      DDs:
+          - name: SYSLIN
+            DSNs:
+                - dsn: MDALBIN.PROG.MORTV2.OBJ(DPAYAPI)
+                  options: SHR
+          - name: SYSLMOD
+            DSNs:
+                - dsn: MDALBIN.PROG.MORTV2.LOAD(DPAYAPI)
+                  options: SHR
+                  output: CICSLOAD
+          - name: SYSLIB
+            DSNs:
+                - dsn: MDALBIN.PROG.MORTV2.OBJ(DPAYAPI)
+                  options: SHR
+                - dsn: CEE.SCEELKED
+                  options: SHR
+                - dsn: CICSTS.V5R4.CICS.SDFHLOAD
+                  options: SHR
+                - dsn: DBC0CFG.DB2.V12.SDSNLOAD
+                  options: SHR
+          - name: SYSPRINT
+            copy: true
+            encoding: UTF-8
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) blksize(133) lrecl(133) recfm(f,b) new
+          - name: SYSUT1
+            DSNs:
+                - dsn: 
+                  options: cyl space(5,5) blksize(133) lrecl(133) recfm(f,b) new
+
+
