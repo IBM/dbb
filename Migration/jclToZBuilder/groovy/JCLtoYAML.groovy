@@ -161,9 +161,6 @@ stdout << sout
 stderr << serr
 proc.waitForOrKill(1000)
 
-println("Testing")
-System.exit(0)
-
 //******************************************************************************
 //* Parses the JCL parser output file
 //******************************************************************************
