@@ -33,15 +33,49 @@ class DD {
 }
 
 class Step {
+	String name
+	String type = "mvs" // Only supported step type
 	String program
-	String maxRC
+	Integer maxRC
 	String parms
 	ArrayList<DD> DDs
 }
 
 class Configuration {
-	String type
-	ArrayList<Step> steps	
+	private String tempLangName = "<LANG_NAME>"
+	private String tempSources = "<SOURCES>"
+	Map<String, Object> yaml = new LinkedHashMap<>()
+
+	void Configuration() {
+		// Insert default structure into the yaml
+		List<Map<String, Object>> tasks = new ArrayList<>()
+		Map<String, Object> lang = new LinkedHashMap<>()
+		lang.put("language", tempLangName)
+		
+		List<String> sources = new ArrayList<>()
+		sources.add(tempSources)
+		lang.put("sources", sources)
+		
+		yaml.put("version", "1.0.0")
+		yaml.put("tasks", tasks)
+	}
+
+	void addStep(Step step) {
+		if (getLanguage().containsKey("steps") == false) {
+			getLanguage().put("steps", new ArrayList<Map<String, Object>>())
+		}
+
+		Map<String, Object> step = new LinkedHashMap<>()
+	}
+
+	Map<String, Object> getLanguage() {
+		// Return the singular language task we're constructing
+		for (Map<String, Object> task : yaml.get("tasks")) {
+			if (tempLangName.equals(task.get("language"))) {
+				return task;
+			}
+		}
+	}	
 }
 
 
@@ -186,7 +220,10 @@ if ( rc != 0 )
 /*
  * Find all steps
  */
+int count = 1
 def steps = project."**".findAll { node ->
+	println("node $count:\n$node")
+	count++
 	node.name() == "step"
 }
 
@@ -262,8 +299,7 @@ YAMLoutput.writeTo(new FileWriter("test.yaml")) */
 def YAMLoutput = new YamlBuilder()
 
 Configuration configuration = new Configuration()
-configuration.steps = new ArrayList<Step>()
-configuration.type = "test"
+
 steps.each { step ->
 	println "Processing step ${step.name}"
 	Step configstep = new Step()
@@ -523,59 +559,6 @@ println "Successfully generated $dbbXmlFile"
 		 
 		 outputFiles << file
 	 }
- }
- 
- 
- //********************************************************************************
- //* Generate build shell script to invoke the main build file
- //********************************************************************************
- def buildScriptName = convertToJavaIdentifier(buildXml.@name)
- def buildShellScriptFile = new File(outputDir, "${buildScriptName}.sh")
- !buildShellScriptFile.exists()?:buildShellScriptFile.delete()
- buildShellScriptFile << "#!/bin/sh" << '\n\n'
- buildShellScriptFile << "# Check that DBB_HOME is set" << '\n'
- buildShellScriptFile << "if [[ -z \"\${DBB_HOME}\" ]]; then" << '\n'
- buildShellScriptFile << "  echo \"Need to specified the required environment variable 'DBB_HOME'\"" << '\n'
- buildShellScriptFile << "  exit 8" << '\n'
- buildShellScriptFile << "fi" << '\n\n'
- buildShellScriptFile << '# $DBB_HOME/bin/groovyz automatically sets the env variables and classpath required for DBB' << '\n'
- buildXml.scripts.script.each { script ->
-	 def scriptName = convertToJavaIdentifier(script.@name)
-	 buildShellScriptFile << 'CMD=\"$DBB_HOME/bin/groovyz ' << "${scriptName}.groovy\"" << '\n\n'
-	 buildShellScriptFile << '$CMD' << '\n'
- }
- Files.setPosixFilePermissions(Paths.get("$buildShellScriptFile"), PosixFilePermissions.fromString("rwxrwxr-x"));
- 
- outputFiles << buildShellScriptFile
- 
- //********************************************************************************
- //* Convert <scripts>
- //********************************************************************************
- def SCRIPT_CONVERTER_NAMES = ['DBBScriptTemplateConverter']
- def scriptConverters = [:]
- 
- def scriptTemplateFile = scriptLocation.resolve('../templates/SCRIPT.template').toFile()
- 
- buildXml.scripts.script.each { script ->
-	 def scriptName = convertToJavaIdentifier(script.@name)
-	 def scriptFile = new File(outputDir, "${scriptName}.groovy")
-	 !scriptFile.exists()?:scriptFile.delete()
-	 
-	 sharedData.setVariable('scriptXml', script)
-			 
-	 scriptTemplateFile.eachLine { line ->
-		 line = convertLine(line, SCRIPT_CONVERTER_NAMES, scriptConverters, scriptLocation)
-		 scriptFile << line << '\n'
-	 }
-	 
-	 scriptConverters.clear()
-	 
-	 outputFiles << scriptFile
- }
- 
- println "There are ${outputFiles.size()} files generated in directory $outputDir:"
- outputFiles.toSorted().collect { it.name }.each {
-	 println "   $it"
  }
  
  //********************************************************************************
