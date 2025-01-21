@@ -222,7 +222,7 @@ if ( rc != 0 )
  */
 int count = 1
 def steps = project."**".findAll { node ->
-	println("node $count:\n$node")
+	println("node $count - ${node.getClass()}:\n$node")
 	count++
 	node.name() == "step"
 }
