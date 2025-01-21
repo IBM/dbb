@@ -65,7 +65,7 @@ class Configuration {
 			getLanguage().put("steps", new ArrayList<Map<String, Object>>())
 		}
 
-		Map<String, Object> step = new LinkedHashMap<>()
+		Map<String, Object> stepMap = new LinkedHashMap<>()
 	}
 
 	Map<String, Object> getLanguage() {
