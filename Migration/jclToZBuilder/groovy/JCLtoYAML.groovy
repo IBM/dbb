@@ -100,8 +100,8 @@ class Step {
 		}
 		stepMap.put("pgm", program)
 
-		if (parm != null) {
-			stepMap.put("parm", parm);
+		if (parms != null) {
+			stepMap.put("parm", parms);
 		}
 
 		if (maxRC != null) {
