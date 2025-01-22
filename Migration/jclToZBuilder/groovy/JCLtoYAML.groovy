@@ -310,10 +310,7 @@ if ( rc != 0 )
 /*
  * Find all steps
  */
-int count = 1
 def steps = project."**".findAll { node ->
-	println("node $count - ${node.getClass()}:\n$node")
-	count++
 	node.name() == "step"
 }
 
