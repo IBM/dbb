@@ -133,6 +133,7 @@ class Configuration {
 		List<Map<String, Object>> tasks = new ArrayList<>()
 		Map<String, Object> lang = new LinkedHashMap<>()
 		lang.put("language", tempLangName)
+		tasks.add(lang)
 		
 		List<String> sources = new ArrayList<>()
 		sources.add(tempSources)
