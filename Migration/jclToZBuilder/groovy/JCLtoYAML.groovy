@@ -17,6 +17,7 @@ import java.nio.file.*
 import java.nio.file.attribute.*
 import com.ibm.dbb.*
 import groovy.yaml.YamlBuilder
+import java.nio.charset.StandardCharsets
 
 class DSN {
 	String DSN
