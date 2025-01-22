@@ -39,9 +39,18 @@ class DSN {
 			ddMap.put("logEncoding", "\${LOG_ENCODING}")
 		}
 
-		ddMap.put("dsn", DSN)
-		ddMap.put("options", options)
+		if (DSN != null) {
+			ddMap.put("dsn", DSN)
+		}
+
+		if (options != null) {
+			ddMap.put("options", options)
+		}
 		//ddMap.put("input", false) find value in scanner output
+		if ("SYSIN".equals(name)) {
+			ddMap.put("input", true)
+		}
+		
 		if (output != null && output) {
 			ddMap.put("output", output)
 		}
