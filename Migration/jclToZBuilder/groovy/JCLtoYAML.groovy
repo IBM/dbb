@@ -160,7 +160,6 @@ class Configuration {
 	Map<String, Object> getLanguage() {
 		// Return the singular language task we're constructing
 		for (Map<String, Object> task : yaml.get("tasks")) {
-			println(task)
 			if (tempLangName.equals(task.get("language"))) {
 				return task;
 			}
@@ -429,8 +428,9 @@ steps.each { step ->
 YAMLoutput(configuration.toYaml())
 println YAMLoutput.toString()
 
-try (FileWriter stream = new FileWriter(new File(outputDir, "test.yaml"))) {
-	YAMLoutput.writeTo(stream)
+try (FileOutputStream stream = new FileOutputStream(new File(outputDir, "test.yaml"));
+		OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
+	YAMLoutput.writeTo(writer)
 }
 
 
