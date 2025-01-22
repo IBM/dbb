@@ -419,7 +419,10 @@ steps.each { step ->
 
 YAMLoutput(configuration.toYaml())
 println YAMLoutput.toString()
-YAMLoutput.writeTo(new FileWriter("test.yaml"))
+
+try (FileWriter stream = new FileWriter(new File(outputDir, "test.yaml"))) {
+	YAMLoutput.writeTo(stream)
+}
 
 
 def generateDSN(def concat) {
@@ -511,147 +514,6 @@ def generateDSN(def concat) {
 		newDSN.options = tempCreateOptions
 	return newDSN
 }
-
-
-
-
-
-
-//******************************************************************************
-//* Write dbb.xml
-//******************************************************************************
-def xmlBuilder = new StreamingMarkupBuilder()
-xmlBuilder.encoding = 'UTF-8'
-
-def xml = {
-	mkp.xmlDeclaration()
-	mkp.yieldUnescaped(" <!-- This file is generated from $parserOutputFile -->")
-
-	build(name: "${project.file.name}".toLowerCase(), source : "${project.name}(${project.file.name})") {
-		scripts() {
-			script (name : "${project.file.name}".toLowerCase()) {
-				steps.each { step ->
-					println "Processing step ${step.name}"
-					def isRestricted = ( restrictedPgms.find{e-> e == "${step.exec.name}"} != null )
-					if ( isRestricted )
-					{
-						println "WARNING: Program ${step.exec.name} may require special authority. The generated exec command may need to be modified. Search on TODO: in the generated groovy script."
-						def job = project.file.jcl.job
-						// Define the JCL used in the JCLExec
-						def jcl = []
-						jcl << breakup("//${job.@name.text().padRight(8)} JOB ${job.jobcard.@data}")
-						jcl << breakup("//${step.name.text().padRight(8)} EXEC PGM=${step.exec.name}${(step.parm.text().isEmpty())?"":",PARM=${step.parm}"}")
-						step.dd.each { ddx ->
-							def firstAllocation = ddx.concat.find{it.@sequence == "1"}
-							jcl << "//${ddx.name.text().padRight(8)} DD ${firstAllocation.parm}"
-							def ddm = convertAllocationToDD(firstAllocation)
-							if (ddm.'instreamData')
-							{
-								def dlm = (ddm.'dlm')?ddm.'dlm':"/*"
-								jcl << "${ddm.'instreamData'}$dlm"
-							}
-							ddx.concat.each { concat ->
-								if (concat.@sequence != "1")
-								{
-									jcl << "//${"".padRight(8)} DD ${concat.parm}"
-									ddm = convertAllocationToDD(firstAllocation)
-									if (ddm.'instreamData')
-									{
-										def dlm = (ddm.'dlm')?ddm.'dlm':"/*"
-										jcl << "${ddm.'instreamData'}$dlm"
-									}
-								}
-							}
-						}
-						def name = "${step.name}_${(step.proc.text().isEmpty())?step.exec.name:step.proc}"
-						execute(type: 'jcl', name : name, maxRC: 8,	text: jcl.join('\n'), confDir: dbbConf )
-					}
-					else
-					{
-						execute(type: 'mvs', name : "${step.name}_${(step.proc.text().isEmpty())?step.exec.name:step.proc}", maxRC: 8,
-								parm: "${step.parm.text().replaceAll(/^'/,"").replaceAll(/'$/,"")}", pgm: "${step.exec.name}" )
-						{
-							step.dd.each { ddx ->
-								def firstAllocation = ddx.concat.find{it.@sequence == "1"}
-								dd(([name: datasetNameConversion["${ddx.name}"]?:"${ddx.name}"] + convertAllocationToDD(firstAllocation)))
-								{
-									ddx.concat.each { concat ->
-										if (concat.@sequence != "1")
-										{
-											dd(convertAllocationToDD(concat))
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-XmlUtil.serialize( xmlBuilder.bind(xml), dbbXmlFile.newWriter())
-
-println "Successfully generated $dbbXmlFile"
-
- //******************************************************************************
- //* Parses the JCL migration config file
- //******************************************************************************
- def saveJCLOutputs = (parameters.s && parameters.s.toBoolean())?true:false
- def genExecVars    = (parameters.g && parameters.g.toBoolean())?true:false
- 
- println "Process XML file: $dbbXmlFile"
- 
- def outputFiles = []
- 
- //********************************************************************************
- //* Parse the input XML file
- //********************************************************************************
- def buildXml = new XmlParser().parse(dbbXmlFile.newReader())
- 
- //********************************************************************************
- //* Create a shared Binding to pass to children scripts
- //********************************************************************************
- @Field def sharedData = new Binding()
- sharedData.setVariable('buildXml', buildXml)
- sharedData.setVariable('dbbXmlFile', dbbXmlFile)
- sharedData.setVariable('outputDir', outputDir)
- sharedData.setVariable('saveJCLOutputs', saveJCLOutputs)
- sharedData.setVariable('genExecVars', genExecVars)
- 
- //********************************************************************************
- //* Convert <properties>
- //********************************************************************************
- buildXml.propertyFiles.propertyFile.each { propertyFile ->
-			 
-	 if (propertyFile.@name)
-	 {
-		 def fileName = propertyFile.@name
-		 def fileDesc = propertyFile.@description
-		 def file = new File(outputDir, "${fileName}.properties")
-		 !file.exists()?:file.delete()
- 
-		 if (fileDesc)
-			 file << "#$fileDesc" << '\n'
- 
-		 propertyFile.property.each { property ->
-			 def name = property.@name
-			 def value = property.@value
-			 def pattern = property.@pattern
-			 def description = property.@description
- 
-			 if (description)
-				 file << "# $description" << '\n'
-			 file << "$name = $value"
-			 if (pattern)
-				 file << " :: $pattern"
-			 file << '\n\n'
-		 }
-		 
-		 outputFiles << file
-	 }
- }
  
  //********************************************************************************
  //* Load a script and pass in the shared Binding data
