@@ -113,6 +113,7 @@ class Step {
 			for (DD dd : DDs) {
 				ddsList.addAll(dd.toYaml())
 			}
+			stepMap.put("dds", ddsList)
 		}
 
 		return stepMap;
