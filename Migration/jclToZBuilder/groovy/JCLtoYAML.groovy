@@ -392,7 +392,9 @@ steps.each { step ->
 	Step configstep = new Step()
 	configstep.program = step.exec.name
 	configstep.parms = step.parm.text().replaceAll(/^'/,"").replaceAll(/'$/,"")
-	configstep.maxRC = step.maxRC
+	if (step.maxRC.isEmpty() == false) {
+		configstep.maxRC = Integer.parseInt(step.maxRC)
+	}
 	configstep.DDs = new ArrayList<DD>()
 	step.dd.each { ddx ->
 		DD newDD = new DD()
