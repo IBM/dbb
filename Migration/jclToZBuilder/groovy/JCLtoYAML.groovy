@@ -149,7 +149,7 @@ class Configuration {
 
 	Map<String, Object> getLanguage() {
 		// Return the singular language task we're constructing
-		for (Map<String, Object> task : yaml.get("tasks")) {
+		for (Map<String, Object> task : (List<Map<String, Object>>) yaml.get("tasks")) {
 			println(task)
 			if (tempLangName.equals(task.get("language"))) {
 				return task;
