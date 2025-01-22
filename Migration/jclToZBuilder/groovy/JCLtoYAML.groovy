@@ -128,7 +128,7 @@ class Configuration {
 	private String tempSources = "<SOURCES>"
 	Map<String, Object> yaml = new LinkedHashMap<>()
 
-	void Configuration() {
+	Configuration() {
 		// Insert default structure into the yaml
 		List<Map<String, Object>> tasks = new ArrayList<>()
 		Map<String, Object> lang = new LinkedHashMap<>()
@@ -149,7 +149,7 @@ class Configuration {
 
 	Map<String, Object> getLanguage() {
 		// Return the singular language task we're constructing
-		for (Map<String, Object> task : (List<Map<String, Object>>) yaml.get("tasks")) {
+		for (Map<String, Object> task : yaml.get("tasks")) {
 			println(task)
 			if (tempLangName.equals(task.get("language"))) {
 				return task;
