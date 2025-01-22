@@ -21,24 +21,106 @@ import groovy.yaml.YamlBuilder
 class DSN {
 	String DSN
 	String options
-	String output
-	String pass
+	Boolean output
+	Boolean pass
 	String instreamData
-	String DLM 
+	String DLM // What is this?
+
+	public String toString() {
+		return String.format("DD '%s': options='%s', output='%s', pass='%b', instreamData='%s', dlm='%s'", DSN, options, output, pass, instreamData, DLM)
+	}
+
+	public Map<String, Object> toYaml(String name) {
+		Map<String, Object> ddMap = new LinkedHashMap<>()
+		if (name != null) ddMap.put("name", name)
+
+		if ("SYSPRINT".equals(name)) {
+			ddMap.put("log", "\${LOGS}/\${STEP}-\${FILE_NAME}.log")
+			ddMap.put("logEncoding", "\${LOG_ENCODING}")
+		}
+
+		ddMap.put("dsn", DSN)
+		ddMap.put("options", options)
+		//ddMap.put("input", false) find value in scanner output
+		if (output != null && output) {
+			ddMap.put("output", output)
+		}
+
+		if (pass != null && pass) {
+			ddMap.put("pass", pass)
+		}
+
+		if (instreamData != null) {
+			ddMap.put("instream", instreamData)
+		}
+
+		return ddMap
+	}
 }
 
 class DD {
 	String name
 	ArrayList<DSN> DSNs	
+
+	public List<Map<String, Object>> toYaml() {
+		List<Map<String, Object>> ddList = new ArrayList<>()
+		if (DSNs == null || DSNs.isEmpty()) {
+			return ddList
+		}
+
+		if (name == null) {
+			throw IllegalStateException("No name was set for this DD concatenation: " + DSNs.toString())
+		}
+
+		ddList.add(DSNs.get(0).toYaml(name))
+		for (int i=1; i<DSNs.size(); i++) {
+			ddList.add(DSNs.get(i).toYaml(null))
+		}
+		
+		return ddList;
+	}
 }
 
 class Step {
-	String name
+	String name // Find value in scanner output
 	String type = "mvs" // Only supported step type
 	String program
 	Integer maxRC
 	String parms
 	ArrayList<DD> DDs
+
+	public Map<String, Object> toYaml() {
+		Map<String, Object> stepMap = new LinkedHashMap<>();
+		String name = this.name == null ? "<STEP_NAME>" : this.name
+		stepMap.put("step", name)
+		stepMap.put("type", type)
+
+		if (program == null) {
+			throw new IllegalStateException("No program was specified for the step: " + toString())
+		}
+		stepMap.put("pgm", program)
+
+		if (parm != null) {
+			stepMap.put("parm", parm);
+		}
+
+		if (maxRC != null) {
+			stepMap.put("maxRC", maxRC)
+		}
+		
+		if (DDs != null) {
+			List<Map<String, Object>> ddsList = new ArrayList<>()
+			for (DD dd : DDs) {
+				ddsList.addAll(dd.toYaml())
+			}
+		}
+
+		return stepMap;
+	}
+
+	public String toString() {
+		return String.format("Step '%s': type='%s', program='%s', maxRC='%d', parms='%s', dds='%s'", name, type, program, maxRC, parms, DDs)
+	}
 }
 
 class Configuration {
@@ -61,11 +143,7 @@ class Configuration {
 	}
 
 	void addStep(Step step) {
-		if (getLanguage().containsKey("steps") == false) {
-			getLanguage().put("steps", new ArrayList<Map<String, Object>>())
-		}
-
-		Map<String, Object> stepMap = new LinkedHashMap<>()
+		getSteps().add(step.toYaml())
 	}
 
 	Map<String, Object> getLanguage() {
@@ -75,7 +153,19 @@ class Configuration {
 				return task;
 			}
 		}
-	}	
+
+		throw new IllegalStateException("No default language has been added, Configuration object not initialized properly")
+	}
+
+	List<Map<String, Object>> getSteps() {
+		if (getLanguage().containsKey("steps") == false) {
+			getLanguage().put("steps", new ArrayList<Map<String, Object>>())
+		}
+
+		return getLanguage().get("steps");
+	}
+
+	public Map<String, Object> toYaml() { return yaml; }
 }
 
 
@@ -322,10 +412,10 @@ steps.each { step ->
 		}
 		configstep.DDs.add(newDD)
 	}
-	configuration.steps.add(configstep)
+	configuration.addStep(configstep)
 }
 
-YAMLoutput(configuration)
+YAMLoutput(configuration.toYaml())
 println YAMLoutput.toString()
 YAMLoutput.writeTo(new FileWriter("test.yaml"))
 
