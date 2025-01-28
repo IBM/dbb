@@ -25,10 +25,10 @@ class DSN {
 	Boolean output
 	Boolean pass
 	String instreamData
-	String DLM // What is this?
+	//String DLM // https://www.ibm.com/docs/en/zos/2.4.0?topic=statement-data-parameter a parameter specifying a delimiter that indicates when to stop reading instream data
 
 	public String toString() {
-		return String.format("DD '%s': options='%s', output='%s', pass='%b', instreamData='%s', dlm='%s'", DSN, options, output, pass, instreamData, DLM)
+		return String.format("DD '%s': options='%s', output='%s', pass='%b', instreamData='%s'", DSN, options, output, pass, instreamData)
 	}
 
 	public Map<String, Object> toYaml(String name) {
@@ -442,6 +442,7 @@ def generateDSN(def concat) {
 	if (!concat.dsn.text().isEmpty()) {
 		def dsn = "${concat.dsn}"
 		if (dsn.startsWith("&") && !dsn.startsWith("&&")) {
+			// TODO: We have a parameter that was not resolved here, exception?
 			println "WARNING: Temporary dataset, $dsn, is not supported by DBB. The name has been migrated to &$dsn."
 			dsn = "&$dsn"
 		}
@@ -474,7 +475,7 @@ def generateDSN(def concat) {
 			else if (parm.startsWith("DISP")) {} // ignore, already handled with stat and dispnor above
 			else if (parm.startsWith("DLM")) {
 				def value = parm.substring( "DLM=".length() )
-				newDSN.DLM = value
+				//newDSN.DLM = value
 			}
 			else if (parm == "*" || parm == "DATA")  { // in stream data
 				data = ""
@@ -511,7 +512,7 @@ def generateDSN(def concat) {
 			}
 			else if (parm == "DUMMY" || parm.startsWith("SYSOUT=")) {
 				isTemp = true
-				newDSN.output = 'true'
+				newDSN.output = true
 			}
 			else {
 				options << processAllocOption(parm)
@@ -524,182 +525,8 @@ def generateDSN(def concat) {
 		newDSN.options = tempCreateOptions
 	return newDSN
 }
- 
- //********************************************************************************
- //* Load a script and pass in the shared Binding data
- //********************************************************************************
- def loadConverter(String converterName, Path scriptLocation)
- {
-	 def shell = new GroovyShell(sharedData)
-	 shell.parse(scriptLocation.resolve("${converterName}.groovy").toFile())
- }
- 
- def convertLine(def line, def converterNames, def converters, scriptLocation)
- {
-	 //* Find a matched converter in the line from a list of supported converters
-	 def matchedConverterName = converterNames.find { name ->
-		 line.indexOf('${' + name + '.') > -1
-	 }
-	 
-	 //* If the line contains a matched converter then process
-	 //* the line by calling the converter's method
-	 if (matchedConverterName)
-	 {
-		 int matchedIndex = line.indexOf('${' + matchedConverterName + '.')
-		 if (matchedIndex > -1)
-		 {
-			 //* We assume the format is something like ${Converter.method()}
-			 int endMatchedIndex = line.indexOf('}', matchedIndex)
-			 def temp = line.substring(matchedIndex, endMatchedIndex+1)
-			 def segments = temp.split('[\\$\\{\\.\\(\\)\\}]')
-			 def matchedSegments = segments.findAll {
-				 it.trim().length() > 0
-			 }
- 
-			 if (matchedSegments.size() == 2)
-			 {
-				 def converterName = matchedSegments[0]
-				 def methodName = matchedSegments[1]
-				 
-				 def converter = converters.get(converterName)
-				 if (converter == null)
-				 {
-					 converter = loadConverter(converterName, scriptLocation)
-					 if (converter.getMetaClass().respondsTo(converter, 'init'))
-						 converter.init()
-					 converters."$converterName" = converter
-				 }
- 
-				 def replacement = converter."$methodName"()
-				 line = replacement ? line.replace('${' + converterName + '.' + methodName + "()}", replacement) : ""
-			 }
-		 }
-	 }
-	 
-	 line
- }
 
 return
-
-def breakup(line)
-{
-	def lines = []
-	if (line.length() > 71)
-	{
-		ndx = line.substring(0,71).lastIndexOf(',')
-		lines << line.substring(0,ndx+1)
-		lines << breakup("//         ${line.substring(ndx+1)}")
-	}
-	else
-		lines << line
-	lines.join('\n')
-}
-
-def convertAllocationToDD(def concat)
-{
-	dd = [:]
-	def options = []
-	isTemp = false
-	if (!concat.dsn.text().isEmpty())
-	{
-		def dsn = "${concat.dsn}"
-		if ( dsn.startsWith("&") && !dsn.startsWith("&&") )
-		{
-			println "WARNING: Temporary dataset, $dsn, is not supported by DBB. The name has been migrated to &$dsn."
-			dsn = "&$dsn"
-		}
-		dd.'dsn' = dsn
-	}
-	if (!concat.stat.text().isEmpty())
-	{
-		options << "${concat.stat}".toLowerCase()
-	}
-	if (!concat.dispnor.text().isEmpty())
-	{
-		if (concat.dispnor.text() == "PASS")
-			dd.'pass' = true
-		else
-		{
-			def dispnorValue = "${concat.dispnor}".toLowerCase()
-            //* Map the disposition catlg/uncatlg to catalog/uncatalog to align to BPXWDYN utility options
-			if (dispnorValue == "catlg") {
-				options << "catalog"
-			}
-			else if (dispnorValue == "uncatlg") {
-				options << "uncatalog"
-			} else {
-				options << dispnorValue
-			}			
-		}
-	}
-	if (!concat.parm.text().isEmpty())
-	{
-		def parms = concat.parm.text()
-		def parmlist = splitit(parms, ",")
-		parmlist.each { parm ->
-			if ( parm.startsWith("DSN") ) {} // ignore, already handled above
-			else if ( parm.startsWith("DISP") ) {} // ignore, already handled with stat and dispnor above
-			else if ( parm.startsWith("DLM") ) 
-			{
-				def value = parm.substring( "DLM=".length() )
-				dd.'dlm' = value
-			}
-			else if (  parm == "*" || parm == "DATA" ) // in stream data
-			{
-				data = ""
-				concat.data.each { line ->
-					data += (line.text().length()<=72)?line.text():line.text().substring(0,72)
-					data += "\n"
-				}
-				dd.'instreamData'= data
-			}
-			else if (parm.startsWith("DDNAME="))
-			{
-				def m = parms =~ /(.*)=(.*)/;
-				def ddName = m[0][2]
-				dd.'ddref' = ddName
-			}
-			else if ( parm.startsWith("DCB=") )
-			{
-				def value = parm.substring( "DCB=".length() )
-				value = value.trim().replaceFirst("\\(", "").replaceAll("\\)\$", "")
-				def dcblist = splitit(value, ",")
-				dcblist.each { dcbparm ->
-					options << processAllocOption(dcbparm)
-				}
-			}
-			else if ( parm.startsWith("VOL") )
-			{
-				def value = parm.substring( parm.indexOf("=")+1 )
-				options << processVolumeOption( value )
-			}
-			else if ( parm.startsWith("UNIT") )
-			{
-				def value = parm.substring( parm.indexOf("=")+1 )
-				options << processUnitOption( value )
-			}
-			else if ( parm.startsWith("LABEL") )
-			{
-				def value = parm.substring( parm.indexOf("=")+1 )
-				options << processLabelOption( value )
-			}
-			else if ( parm == "DUMMY" || parm.startsWith("SYSOUT=") )
-			{
-				isTemp = true
-				dd.'output' = true
-			}
-			else
-			{
-				options << processAllocOption(parm)
-			}
-		}
-	}
-	if (!options.isEmpty())
-		dd.'options' = options.join(' ')
-	else if (isTemp)
-		dd.'options' = tempCreateOptions
-	dd
-}
 
 def processAllocOption( parm )
 {
@@ -849,20 +676,6 @@ def processUnitOption( value )
 		}
 	}
 	options.join(' ')
-}
-
-/*
- * Utility method to convert an executor name into
- * a valid Java/Groovy method name.
- */
-def convertToJavaIdentifier(text)
-{
-	def newText = ''
-	text.getChars().eachWithIndex { ch, index ->
-		boolean isValid = (index == 0 ? Character.isJavaIdentifierStart(ch) : Character.isJavaIdentifierPart(ch))
-		newText += (isValid ? ch : '_')
-	}
-	newText
 }
 
 
