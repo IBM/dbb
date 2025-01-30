@@ -131,6 +131,7 @@ Help() {
 SCRIPT_HOME="`dirname "$0"`"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 buildUtilities="${SCRIPT_HOME}/utilities/dbbBuildUtils.sh"
+fetchBuildDependenciesUtilities="${SCRIPT_HOME}/utilities/fetchBuildDependenciesUtils.sh"
 # Customization - End
 
 #
@@ -428,7 +429,37 @@ if [ $rc -eq 0 ]; then
   fi
 fi
 
-# Ready to go  TLD: Suggest in the section to echo as much as possible
+#
+# Validate to fetch external dependencies is based on the ApplicationDescriptor
+retrieveBuildDependencies() {
+
+    # extracting external dependencies is based on the application descriptor
+    applicationDescriptor="${AppDir}/applicationDescriptor.yml"
+    
+    # this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
+    externalDependenciesLog="$(getLogDir)/externalDependenciesLog.yaml"
+    mkdir -p "$(getLogDir)"
+
+    # Set up to perform the clone of the Repo
+    if [ ! -f "${applicationDescriptor}" ]; then
+        rc=8
+        ERRMSG=$PGM": [INFO] Application Descriptor file (${applicationDescriptor}) was not found. rc="$rc
+        echo $ERRMSG
+    else 
+        fetchBuildDependencies
+    fi
+
+
+}
+
+# Setup build environment and pull external dependencies if an ApplicationDescriptor is found
+if [ $rc -eq 0 ] && [ "$fetchBuildDependencies" = true ]; then
+    retrieveBuildDependencies
+fi
+
+
+#
+# Echo build configuration
 if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] **************************************************************"
   echo $PGM": [INFO] ** Started - DBB Build on HOST/USER: ${SYS}/${USER}"
