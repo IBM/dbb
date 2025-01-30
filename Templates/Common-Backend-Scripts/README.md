@@ -238,15 +238,15 @@ Note that the location of the baselineReferences.config file can be customized i
 
 #### Fetching build dependencies
 
-Both implementations for the build stage are enabled to pull external dependencies into the build workspace based on the dependency definitions specified in the *Application Descriptor*.
+Both implementations for the build stage are enabled to optionally pull external dependencies into the build workspace based on the dependency definitions specified in the *Application Descriptor*.
 
 The Application Descriptor contains metadata about the application itself, but can contain references to other application packages managed in an artifact repository that are necessary inputs to the build. Please read more about the Application Descriptor at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which generates it and provides insights about cross application dependencies.
 
-Each application package can export shared components such as shared copybooks and even build outputs such as object decks or NCAL load modules. The package needs to be created with the [PackageBuildOutputs](../../Pipeline/PackageBuildOutputs/) script.
+Each application package can export shared components such as shared copybooks and even build outputs such as object decks or NCAL load modules. The package needs to be created with the [PackageBuildOutputs](../../Pipeline/PackageBuildOutputs/README.md) script and be uploaded to the Artifact repository through the Common Backend scripts. Fetching the dependencies is powered on the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy)
 
+Packages will be stored at a cache location to improve performance.
 
-
-##### sad
+Fetched packages will be expanded to the pipeline working directory.
 
 ### dbbBuild.sh for zAppBuild framework
 
