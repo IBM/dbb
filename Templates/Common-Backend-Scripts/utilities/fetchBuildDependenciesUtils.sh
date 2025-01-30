@@ -29,7 +29,8 @@
 # 2024/02/23 DB  1.0.0 Initial Release
 #===================================================================================
 
-fetchBuildDependencies() {
+# Internal script to fetch
+runFetchLogic() {
 
     # Read to go to fetch build dependencies configured in application descriptor
     if [ $rc -eq 0 ]; then
@@ -87,4 +88,27 @@ fetchBuildDependencies() {
         echo $ERRMSG
     fi
 
+}
+
+#
+# Validate to fetch external dependencies is based on the ApplicationDescriptor
+fetchBuildDependencies() {
+
+    # extracting external dependencies is based on the application descriptor
+    applicationDescriptor="${AppDir}/applicationDescriptor.yml"
+    echo "######" $applicationDescriptor
+    
+    
+    # this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
+    externalDependenciesLog="$(getLogDir)/externalDependenciesLog.yaml"
+    mkdir -p "$(getLogDir)"
+
+    # Set up to perform the clone of the Repo
+    if [ ! -f "${applicationDescriptor}" ]; then
+        rc=8
+        ERRMSG=$PGM": [INFO] Application Descriptor file (${applicationDescriptor}) was not found. rc="$rc
+        echo $ERRMSG
+    else 
+        runFetchLogic
+    fi
 }

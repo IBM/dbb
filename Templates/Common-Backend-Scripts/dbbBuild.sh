@@ -125,14 +125,13 @@ Help() {
 }
 
 #
-# Build Type Customization
 # Configuration file leveraged by the backend scripts
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="`dirname "$0"`"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+# Utility scripts
 buildUtilities="${SCRIPT_HOME}/utilities/dbbBuildUtils.sh"
 fetchBuildDependenciesUtilities="${SCRIPT_HOME}/utilities/fetchBuildDependenciesUtils.sh"
-# Customization - End
 
 #
 # Internal Variables
@@ -140,7 +139,7 @@ fetchBuildDependenciesUtilities="${SCRIPT_HOME}/utilities/fetchBuildDependencies
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.10"
+PGMVERS="1.20"
 USER=$USER
 SYS=$(uname -Ia)
 
@@ -155,7 +154,6 @@ PipelineType=""
 HELP=$1
 
 # Local Variables
-# TLD: Always a good idea to initialize any local varables
 AppDir=""        # Derived Application Directory
 HLQ=""           # Derived High Level Qualifier
 HLQPrefix=""     # Prefix of HLQ, either specified via the cli option -q or via configuration file
@@ -438,36 +436,11 @@ if [ $rc -eq 0 ]; then
   fi
 fi
 
-#
-# Validate to fetch external dependencies is based on the ApplicationDescriptor
-retrieveBuildDependencies() {
-
-    # extracting external dependencies is based on the application descriptor
-    applicationDescriptor="${AppDir}/applicationDescriptor.yml"
-    echo "######" $applicationDescriptor
-    
-    
-    # this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
-    externalDependenciesLog="$(getLogDir)/externalDependenciesLog.yaml"
-    mkdir -p "$(getLogDir)"
-
-    # Set up to perform the clone of the Repo
-    if [ ! -f "${applicationDescriptor}" ]; then
-        rc=8
-        ERRMSG=$PGM": [INFO] Application Descriptor file (${applicationDescriptor}) was not found. rc="$rc
-        echo $ERRMSG
-    else 
-        fetchBuildDependencies
-    fi
-
-
-}
 
 # Setup build environment and pull external dependencies if an ApplicationDescriptor is found
 if [ $rc -eq 0 ] && [ "$fetchBuildDependencies" = true ]; then
-    retrieveBuildDependencies
+    fetchBuildDependencies
 fi
-
 
 #
 # Echo build configuration
