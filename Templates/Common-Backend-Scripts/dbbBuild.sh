@@ -211,6 +211,15 @@ if [ $rc -eq 0 ]; then
     source $buildUtilities
   fi
 
+  # Read and import utilities
+  if [ ! -f "${fetchBuildDependenciesUtilities}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERROR] DBB-Build internal utilities (${fetchBuildDependenciesUtilities}) was not found. rc="$rc
+    echo $ERRMSG
+  else
+    source $fetchBuildDependenciesUtilities
+  fi
+
   #
   # Get Options
   if [ $rc -eq 0 ]; then
@@ -337,7 +346,7 @@ validateOptions() {
 
     # Check if application directory contains
     if [ -d "${AppDir}/${App}" ]; then
-      echo $PGM": [INFO] Detected the application respository (${App}) within the git repository layout structure."
+      echo $PGM": [INFO] Detected the application repository (${App}) within the git repository layout structure."
       echo $PGM": [INFO]  Assuming this as the new application location."
       AppDir="${AppDir}/${App}"
       nestedApplicationFolder="true"
@@ -435,6 +444,8 @@ retrieveBuildDependencies() {
 
     # extracting external dependencies is based on the application descriptor
     applicationDescriptor="${AppDir}/applicationDescriptor.yml"
+    echo "######" $applicationDescriptor
+    
     
     # this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
     externalDependenciesLog="$(getLogDir)/externalDependenciesLog.yaml"
