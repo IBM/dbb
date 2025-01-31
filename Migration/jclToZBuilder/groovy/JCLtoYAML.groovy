@@ -33,7 +33,12 @@ class DSN {
 
 	public Map<String, Object> toYaml(String name) {
 		Map<String, Object> ddMap = new LinkedHashMap<>()
-		if (name != null) ddMap.put("name", name)
+		if (name != null) {
+			if ("STEPLIB".equals(name.toUpperCase())) {
+				name = "TASKLIB"
+			}
+			ddMap.put("name", name)
+		}
 
 		if ("SYSPRINT".equals(name)) {
 			ddMap.put("log", "\${LOGS}/\${STEP}-\${FILE_NAME}.log")
@@ -402,6 +407,7 @@ Configuration configuration = new Configuration()
 steps.each { step ->
 	println "Processing step ${step.name}"
 	Step configstep = new Step()
+	configstep.name = step.name
 	configstep.program = step.exec.name
 	configstep.parms = step.parm.text().replaceAll(/^'/,"").replaceAll(/'$/,"")
 	if (step.maxRC.isEmpty() == false) {
