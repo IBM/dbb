@@ -26,7 +26,7 @@
 #
 # Date       Who Vers  Description
 # ---------- --- ----- --------------------------------------------------------------
-# 2024/02/23 DB  1.0.0 Initial Release
+# 2025/01/30 DB  1.0.0 Initial Release
 #===================================================================================
 
 # Internal script to fetch
@@ -86,6 +86,7 @@ runFetchLogic() {
     if [ $rc -eq 0 ]; then
         ERRMSG=$PGM": [INFO] Fetch Build Dependencies Completed. rc="$rc
         echo $ERRMSG
+        echo ""
     fi
 
 }
@@ -96,9 +97,7 @@ fetchBuildDependencies() {
 
     # extracting external dependencies is based on the application descriptor
     applicationDescriptor="${AppDir}/applicationDescriptor.yml"
-    echo "######" $applicationDescriptor
-    
-    
+      
     # this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
     externalDependenciesLog="$(getLogDir)/externalDependenciesLog.yaml"
     mkdir -p "$(getLogDir)"
