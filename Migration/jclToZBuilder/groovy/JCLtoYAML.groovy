@@ -425,13 +425,7 @@ steps.each { step ->
 		newDD.DSNs = new ArrayList<DSN>() 
 		newDD.name = ddx.name
 		ddx.concat.each { concat ->
-/*			DSN dsn = new DSN()
-			dsn.DSN = concat.dsn				
-			dsn.options = concat.parm
-			dsn.pass = concat.pass
-			dsn.output = concat.output */
-//			println("${dsn.DSN} ${dsn.options}")
-			newDD.DSNs.add(generateDSN(concat))
+			newDD.DSNs.add(generateDSN(concat, configuration))
 		}
 		configstep.DDs.add(newDD)
 	}
