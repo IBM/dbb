@@ -252,7 +252,7 @@ Path scriptLocation = Paths.get(sourceUri).parent
 def configFolder = parameters.c
 String configFileName = '../conf/jclmig.config'
 String datasetMapName = '../conf/datasetMappings.properties'
-if (configFolder != null) {
+if (configFolder) {
 	if (configFolder.endsWith("/") == true) {
 		configFolder = configFolder.substring(0, configFolder.length()-1)
 	}
