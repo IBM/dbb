@@ -170,12 +170,10 @@ class Configuration {
 		Map<String, String> dataset2 = new LinkedHashMap<>()
 		dataset2.put("name", tempDatasetName2)
 		dataset2.put("options", tempDatasetOptions2)
-
 		lang.put("datasets", datasets)
-		if (variables.isEmpty() == false) {
-			lang.put("variables", variables)
-		}
 		
+		lang.put("variables", variables)
+
 		yaml.put("version", "1.0.0")
 		yaml.put("tasks", tasks)
 	}
@@ -216,7 +214,9 @@ class Configuration {
 		variables.add(variable)
 	}
 
-	public Map<String, Object> toYaml() { return yaml; }
+	public Map<String, Object> toYaml() {
+		return yaml;
+	}
 }
 
 
