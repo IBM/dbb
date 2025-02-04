@@ -463,7 +463,7 @@ void makeDynamic(Map<String, Object> yaml) {
 	
 }
 
-def generateDSN(def concat) {
+def generateDSN(def concat, Configuration configuration) {
 	DSN newDSN = new DSN()
 	def options = []
 	isTemp = false
@@ -471,8 +471,10 @@ def generateDSN(def concat) {
 		def dsn = "${concat.dsn}"
 		if (dsn.startsWith("&") && !dsn.startsWith("&&")) {
 			// TODO: We have a parameter that was not resolved here, exception?
-			println "WARNING: Temporary dataset, $dsn, is not supported by DBB. The name has been migrated to &$dsn."
-			dsn = "&$dsn"
+			println "WARNING: Parameter, $dsn, could not be resolved. A variable has been put in its place, please update its value or hardcode the DSN."
+			dsn = dsn.substring(1, dsn.length())
+			configuration.addVariable(dsn, "<PLACEHOLDER_VALUE>")
+			dsn = "\${${dsn}}"
 		}
 		newDSN.DSN = dsn
 	}
