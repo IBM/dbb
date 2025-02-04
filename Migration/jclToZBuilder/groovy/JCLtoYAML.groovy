@@ -416,6 +416,7 @@ if (datasetMapFile.exists()) {
 
 steps.each { step ->
 	println "Processing step ${step.name}"
+	println "Step: $step"
 	Step configstep = new Step()
 	configstep.name = step.name
 	configstep.program = step.exec.name
