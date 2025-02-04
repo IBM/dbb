@@ -141,8 +141,15 @@ class Step {
 
 class Configuration {
 	private String tempLangName = "<LANG_NAME>"
-	private String tempSources = "<SOURCES>"
+	private String tempSources1 = "<File_Patterns_Matching_USS_Source_Files>"
+	private String tempSources2 = "**/cobol/*.cbl"
+	private String tempDatasetName1 = "STATIC.DSN.NAME"
+	private String tempDatasetName2 = "\${HLQ}.DYNAMIC.NAME"
+	private String tempDatasetOptions1 = "<DATASET_OPTIONS>"
+	private String tempDatasetOptions2 = "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)"
+	List<Map<String, Object>> variables = new ArrayList<>()
 	Map<String, Object> yaml = new LinkedHashMap<>()
+	Properties datasetMappings = new Properties();
 
 	Configuration() {
 		// Insert default structure into the yaml
@@ -152,8 +159,22 @@ class Configuration {
 		tasks.add(lang)
 		
 		List<String> sources = new ArrayList<>()
-		sources.add(tempSources)
+		sources.add(tempSources1)
+		sources.add(tempSources2)
 		lang.put("sources", sources)
+		
+		List<Map<String, String>> datasets = new ArrayList<>()
+		Map<String, String> dataset1 = new LinkedHashMap<>()
+		dataset1.put("name", tempDatasetName1)
+		dataset1.put("options", tempDatasetOptions1)
+		Map<String, String> dataset2 = new LinkedHashMap<>()
+		dataset2.put("name", tempDatasetName2)
+		dataset2.put("options", tempDatasetOptions2)
+
+		lang.put("datasets", datasets)
+		if (variables.isEmpty() == false) {
+			lang.put("variables", variables)
+		}
 		
 		yaml.put("version", "1.0.0")
 		yaml.put("tasks", tasks)
@@ -180,6 +201,19 @@ class Configuration {
 		}
 
 		return getLanguage().get("steps");
+	}
+
+	void addVariable(String key, Object value) {
+		for (Map<String, Object> variable : variables) {
+			if (((String)variable.get("name")).equals(key)) {
+				println("A variable for key '$key' already exists. Not duplicating its definition with value: '$value'")
+				return
+			}
+		}
+		Map<String, Object> variable = new LinkedHashMap<>()
+		variable.put("name", key)
+		variable.put("value", value)
+		variables.add(variable)
 	}
 
 	public Map<String, Object> toYaml() { return yaml; }
@@ -215,13 +249,19 @@ Path scriptLocation = Paths.get(sourceUri).parent
 //if (!parameters.c.startsWith('/'))
 //	parameters.c = '../'parameters.c
 	
-def configFileName = parameters.c
-
-if (!configFileName) {
-	configFileName = '../conf/jclmig.config'	
+def configFolder = parameters.c
+String configFileName = '../conf/jclmig.config'
+String datasetMapName = '../conf/datasetMappings.properties'
+if (configFolder != null) {
+	if (configFolder.endsWith("/") == true) {
+		configFolder = configFolder.substring(0, configFolder.length()-1)
+	}
+	configFileName = "$configFolder/jclmig.config"
+	datasetMapName = "$configFolder/datasetMappings.properties"
 }
 
 def configFile     = scriptLocation.resolve(configFileName).toFile()
+def datasetMapFile = scriptLocation.resolve(datasetMapName).toFile()
 if (!configFile.exists())
 {
 	println "File $configFile does not exist. Need to specify a valid JCL migration config file"
@@ -232,7 +272,9 @@ if (!configFile.exists())
 //* Parses the JCL migration config file
 //******************************************************************************
 def config = new Properties()
-config.load(configFile.newDataInputStream())
+try (DataInputStream stream = configFile.newDataInputStream()) {
+	config.load(configFile.newDataInputStream())
+}
 
 //******************************************************************************
 //* Parses and validates the input arguments
@@ -358,51 +400,15 @@ println "Restricted programs: ${restrictedPgms}"
 //* YAML
 //*********
 
-
-/*def YAMLMap = [:]
-def YAMLsteps = []
-
-steps.each { step ->
-	println "Processing step ${step.name}"
-	def YAMLstep = [:]
-	YAMLstep.program = step.exec.name
-	YAMLstep.parms = step.parm.text().replaceAll(/^'/,"").replaceAll(/'$/,"")
-	YAMLstep.maxRC = step.maxRC
-		def YAMLstep.DDs = [:]
-		step.dd.each { ddx ->
-			def firstAllocation = ddx.concat.find{it.@sequence == "1"}
-			def DD = [:]
-			def DSNs = [:]
-			if (firstAllocation) { 
-				DD.name = datasetNameConversion["${ddx.name}"]?:"${ddx.name}"]
-			}
-			def DSN = [:]
-			DSN.dsn = ddx.dsn
-			DSN.options = ddx.options
-			DSN.pass = ddx.pass
-			DSN.output = ddx.output
-			DSNs.putAll(DSN)
-		}
-		DD.putAll(DSNs)
-		YAMLstep.DDs(DD)
-	} 
-	println(YAMLstep)
-	YAMLsteps.add(YAMLstep)  
-}
-YAMLMap.steps =  YAMLsteps 
-
-println YAMLMap */
-
-/*def YAMLoutput = new YamlBuilder()
-YAMLoutput(YAMLMap)
-
-
-YAMLoutput.writeTo(new FileWriter("test.yaml")) */
-
-
 def YAMLoutput = new YamlBuilder()
 
 Configuration configuration = new Configuration()
+
+if (datasetMapFile.exists()) {
+	try (DataInputStream stream = datasetMapFile.newDataInputStream()) {
+		configuration.datasetMappings.load(stream)
+	}
+}
 
 steps.each { step ->
 	println "Processing step ${step.name}"
@@ -432,14 +438,30 @@ steps.each { step ->
 	configuration.addStep(configstep)
 }
 
-YAMLoutput(configuration.toYaml())
-println YAMLoutput.toString()
+Map<String, Object> yaml = configuration.toYaml()
 
-try (FileOutputStream stream = new FileOutputStream(new File(outputDir, "test.yaml"));
+YAMLoutput(yaml)
+//println YAMLoutput.toString()
+
+try (FileOutputStream stream = new FileOutputStream(new File(outputDir, "${member}.yaml"));
 		OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
 	YAMLoutput.writeTo(writer)
 }
 
+return
+
+/******************
+* Utility Methods *
+*******************/
+
+void makeDynamic(Map<String, Object> yaml) {
+	if (yaml == null) return;
+	if (((List<Map<String, Object>>)yaml.get("tasks")).size() < 1) return;
+	
+	Map<String, Object> task = ((List<Map<String, Object>>)yaml.get("tasks")).get(0)
+
+	
+}
 
 def generateDSN(def concat) {
 	DSN newDSN = new DSN()
@@ -531,8 +553,6 @@ def generateDSN(def concat) {
 		newDSN.options = tempCreateOptions
 	return newDSN
 }
-
-return
 
 def processAllocOption( parm )
 {
@@ -692,7 +712,7 @@ def parseArgs(String[] args) {
 	String usage = 'JCLtoDBB.groovy [options]'
 	
 	def cli = new CliBuilder(usage:usage)
-		  cli.c(longOpt: 'configFile',    args:1, argName: 'configFile',                    optionalArg:true,  'Path to the JCL migration configuration file.  If specified, path is considered absolute if it begins with a slash else it is relative path from the migration tool bin directory.  Default is ../conf/jclmig.config.')
+		  cli.c(longOpt: 'configFolder',    args:1, argName: 'configFolder',                optionalArg:true,  'Path to the config folder containing the JCL migration configuration file and the dataset mappings configuration file.  If specified, path is considered absolute if it begins with a slash else it is relative path from the migration tool bin directory.  Default is ../conf/.')
 		  cli.d(longOpt: 'dataset',       args:1, argName: 'MVS dataset',                   optionalArg:false, 'Dataset containing JCL to be migrated (Required)')
 		  cli.g(longOpt: 'genExecVars',   args:1, argName: 'Generate executable variables', optionalArg:true,  'Specify true to generate executable variables')
 		  cli.h(longOpt: 'help',                                                                               'Show usage information')
