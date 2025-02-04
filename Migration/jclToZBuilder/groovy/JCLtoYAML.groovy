@@ -218,7 +218,6 @@ class Configuration {
 	void addVariable(String key, Object value) {
 		for (Map<String, Object> variable : variables) {
 			if (((String)variable.get("name")).equals(key)) {
-				println("variable valuesdofhjsdofs")
 				if (value.equals(variable.get("value")) == false) {
 					println("A variable for key '$key' already exists. The value '$value' differs from the existing value: '${variable.get('value')}'. If the different value is needed, update it in the yaml by hardcoding it or adding another variable.")
 				}
