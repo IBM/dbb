@@ -712,7 +712,7 @@ def parseArgs(String[] args) {
 	String usage = 'JCLtoDBB.groovy [options]'
 	
 	def cli = new CliBuilder(usage:usage)
-		  cli.c(longOpt: 'configFolder',    args:1, argName: 'configFolder',                optionalArg:true,  'Path to the config folder containing the JCL migration configuration file and the dataset mappings configuration file.  If specified, path is considered absolute if it begins with a slash else it is relative path from the migration tool bin directory.  Default is ../conf/.')
+		  cli.c(longOpt: 'configFolder',    args:1, argName: 'configFolder',                optionalArg:false,  'Path to the config folder containing the JCL migration configuration file and the dataset mappings configuration file.  If specified, path is considered absolute if it begins with a slash else it is relative path from the migration tool bin directory.  Default is ../conf/.')
 		  cli.d(longOpt: 'dataset',       args:1, argName: 'MVS dataset',                   optionalArg:false, 'Dataset containing JCL to be migrated (Required)')
 		  cli.g(longOpt: 'genExecVars',   args:1, argName: 'Generate executable variables', optionalArg:true,  'Specify true to generate executable variables')
 		  cli.h(longOpt: 'help',                                                                               'Show usage information')
