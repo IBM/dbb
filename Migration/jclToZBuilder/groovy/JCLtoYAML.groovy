@@ -163,6 +163,7 @@ class Configuration {
 		sources.add(tempSources2)
 		lang.put("sources", sources)
 		
+		// Hardcoded
 		List<Map<String, String>> datasets = new ArrayList<>()
 		Map<String, String> dataset1 = new LinkedHashMap<>()
 		dataset1.put("name", tempDatasetName1)
@@ -170,6 +171,9 @@ class Configuration {
 		Map<String, String> dataset2 = new LinkedHashMap<>()
 		dataset2.put("name", tempDatasetName2)
 		dataset2.put("options", tempDatasetOptions2)
+		
+		datasets.add(dataset1)
+		datasets.add(dataset2)
 		lang.put("datasets", datasets)
 		
 		lang.put("variables", variables)
