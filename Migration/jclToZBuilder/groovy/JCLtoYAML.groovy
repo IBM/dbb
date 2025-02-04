@@ -25,7 +25,6 @@ class DSN {
 	Boolean output
 	Boolean pass
 	String instreamData
-	static Properties datasetMappings = new Properties();
 	//String DLM // https://www.ibm.com/docs/en/zos/2.4.0?topic=statement-data-parameter a parameter specifying a delimiter that indicates when to stop reading instream data
 
 	public String toString() {
@@ -160,6 +159,7 @@ class Configuration {
 	private String tempDatasetOptions2 = "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)"
 	List<Map<String, Object>> variables = new ArrayList<>()
 	Map<String, Object> yaml = new LinkedHashMap<>()
+	Properties datasetMappings = new Properties();
 
 	Configuration() {
 		// Insert default structure into the yaml
@@ -420,7 +420,7 @@ Configuration configuration = new Configuration()
 
 if (datasetMapFile.exists()) {
 	try (DataInputStream stream = datasetMapFile.newDataInputStream()) {
-		DSN.datasetMappings.load(stream)
+		configuration.datasetMappings.load(stream)
 	}
 }
 
