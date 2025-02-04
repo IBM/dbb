@@ -152,7 +152,7 @@ class Step {
 class Configuration {
 	private String tempLangName = "<LANG_NAME>"
 	private String tempSources1 = "<File_Patterns_Matching_USS_Source_Files>"
-	private String tempSources2 = "**/cobol/*.cbl"
+	private String tempSources2 = "cobol/*.cbl"
 	private String tempDatasetName1 = "STATIC.DSN.NAME"
 	private String tempDatasetName2 = "\${HLQ}.DYNAMIC.NAME"
 	private String tempDatasetOptions1 = "<DATASET_OPTIONS>"
