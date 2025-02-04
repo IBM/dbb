@@ -373,6 +373,7 @@ if ( rc != 0 )
 /*
  * Find all steps
  */
+println("Project: $project")
 def steps = project."**".findAll { node ->
 	node.name() == "step"
 }
@@ -416,7 +417,6 @@ if (datasetMapFile.exists()) {
 
 steps.each { step ->
 	println "Processing step ${step.name}"
-	println "Step: $step"
 	Step configstep = new Step()
 	configstep.name = step.name
 	configstep.program = step.exec.name
