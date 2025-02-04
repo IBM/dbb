@@ -216,6 +216,10 @@ class Configuration {
 	}
 
 	void addVariable(String key, Object value) {
+		addVariable(key, value, false)
+	}
+
+	void addVariable(String key, Object value, boolean first) {
 		for (Map<String, Object> variable : variables) {
 			if (((String)variable.get("name")).equals(key)) {
 				if (value.equals(variable.get("value")) == false) {
@@ -227,7 +231,11 @@ class Configuration {
 		Map<String, Object> variable = new LinkedHashMap<>()
 		variable.put("name", key)
 		variable.put("value", value)
-		variables.add(variable)
+		if (first) {
+			variables.add(0, variable)
+		} else {
+			variables.add(variable)
+		}
 	}
 
 	public Map<String, Object> toYaml() {
@@ -474,7 +482,7 @@ def generateDSN(def concat, Configuration configuration) {
 		if (dsn.startsWith("&") && !dsn.startsWith("&&")) {
 			println "WARNING: Parameter, $dsn, could not be resolved. A variable has been put in its place, please update its value or hardcode the DSN."
 			dsn = dsn.substring(1, dsn.length())
-			configuration.addVariable(dsn, "<PLACEHOLDER_VALUE>")
+			configuration.addVariable(dsn, "<PLACEHOLDER_VALUE>", true)
 			dsn = "\${${dsn}}"
 		}
 		newDSN.DSN = dsn
