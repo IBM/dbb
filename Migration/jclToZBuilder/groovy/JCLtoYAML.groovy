@@ -218,7 +218,9 @@ class Configuration {
 	void addVariable(String key, Object value) {
 		for (Map<String, Object> variable : variables) {
 			if (((String)variable.get("name")).equals(key)) {
-				println("A variable for key '$key' already exists. Not duplicating its definition with value: '$value'")
+				if (value.equals(variable.get("value")) == false) {
+					println("A variable for key '$key' already exists. The value '$value' differs from the existing value: '${variable.get('value')}'")
+				}
 				return
 			}
 		}
