@@ -50,7 +50,7 @@ class DSN {
 				if (DSN.endsWith(key)) {
 					String newValue = config.datasetMappings.getProperty(key)
 					// Remove variable syntax ${}
-					String variableKey = newValue.substring(2, DSN.length()-1)
+					String variableKey = newValue.substring(2, newValue.length()-1)
 					config.addVariable(variableKey, DSN)
 					DSN = newValue;
 					break
