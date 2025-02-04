@@ -25,13 +25,14 @@ class DSN {
 	Boolean output
 	Boolean pass
 	String instreamData
+	static Properties datasetMappings = new Properties();
 	//String DLM // https://www.ibm.com/docs/en/zos/2.4.0?topic=statement-data-parameter a parameter specifying a delimiter that indicates when to stop reading instream data
 
 	public String toString() {
 		return String.format("DD '%s': options='%s', output='%s', pass='%b', instreamData='%s'", DSN, options, output, pass, instreamData)
 	}
 
-	public Map<String, Object> toYaml(String name) {
+	public Map<String, Object> toYaml(Configuration config, String name) {
 		Map<String, Object> ddMap = new LinkedHashMap<>()
 		if (name != null) {
 			if ("STEPLIB".equals(name.toUpperCase())) {
@@ -46,6 +47,16 @@ class DSN {
 		}
 
 		if (DSN != null) {
+			for (String key : config.datasetMappings.keySet()) {
+				if (DSN.endsWith(key)) {
+					String newValue = config.datasetMappings.getProperty(key)
+					// Remove variable syntax ${}
+					String variableKey = newValue.substring(2, DSN.length()-1)
+					config.addVariable(variableKey, DSN)
+					DSN = newValue;
+					break
+				}
+			}
 			ddMap.put("dsn", DSN)
 		}
 
@@ -77,7 +88,7 @@ class DD {
 	String name
 	ArrayList<DSN> DSNs	
 
-	public List<Map<String, Object>> toYaml() {
+	public List<Map<String, Object>> toYaml(Configuration config) {
 		List<Map<String, Object>> ddList = new ArrayList<>()
 		if (DSNs == null || DSNs.isEmpty()) {
 			return ddList
@@ -87,9 +98,9 @@ class DD {
 			throw IllegalStateException("No name was set for this DD concatenation: " + DSNs.toString())
 		}
 
-		ddList.add(DSNs.get(0).toYaml(name))
+		ddList.add(DSNs.get(0).toYaml(config, name))
 		for (int i=1; i<DSNs.size(); i++) {
-			ddList.add(DSNs.get(i).toYaml(null))
+			ddList.add(DSNs.get(i).toYaml(config, null))
 		}
 		
 		return ddList;
@@ -104,7 +115,7 @@ class Step {
 	String parms
 	ArrayList<DD> DDs
 
-	public Map<String, Object> toYaml() {
+	public Map<String, Object> toYaml(Configuration config) {
 		Map<String, Object> stepMap = new LinkedHashMap<>();
 		String name = this.name == null ? "<STEP_NAME>" : this.name
 		stepMap.put("step", name)
@@ -126,7 +137,7 @@ class Step {
 		if (DDs != null) {
 			List<Map<String, Object>> ddsList = new ArrayList<>()
 			for (DD dd : DDs) {
-				ddsList.addAll(dd.toYaml())
+				ddsList.addAll(dd.toYaml(config))
 			}
 			stepMap.put("dds", ddsList)
 		}
@@ -149,7 +160,6 @@ class Configuration {
 	private String tempDatasetOptions2 = "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)"
 	List<Map<String, Object>> variables = new ArrayList<>()
 	Map<String, Object> yaml = new LinkedHashMap<>()
-	Properties datasetMappings = new Properties();
 
 	Configuration() {
 		// Insert default structure into the yaml
@@ -183,7 +193,7 @@ class Configuration {
 	}
 
 	void addStep(Step step) {
-		getSteps().add(step.toYaml())
+		getSteps().add(step.toYaml(this))
 	}
 
 	Map<String, Object> getLanguage() {
@@ -373,7 +383,6 @@ if ( rc != 0 )
 /*
  * Find all steps
  */
-println("Project: $project")
 def steps = project."**".findAll { node ->
 	node.name() == "step"
 }
@@ -411,11 +420,12 @@ Configuration configuration = new Configuration()
 
 if (datasetMapFile.exists()) {
 	try (DataInputStream stream = datasetMapFile.newDataInputStream()) {
-		configuration.datasetMappings.load(stream)
+		DSN.datasetMappings.load(stream)
 	}
 }
 
 steps.each { step ->
+	// The scanner contains a bug, preventing this name from being accurate. It doesn't seem to update past the first name grabbed
 	println "Processing step ${step.name}"
 	Step configstep = new Step()
 	configstep.name = step.name
@@ -453,15 +463,6 @@ return
 * Utility Methods *
 *******************/
 
-void makeDynamic(Map<String, Object> yaml) {
-	if (yaml == null) return;
-	if (((List<Map<String, Object>>)yaml.get("tasks")).size() < 1) return;
-	
-	Map<String, Object> task = ((List<Map<String, Object>>)yaml.get("tasks")).get(0)
-
-	
-}
-
 def generateDSN(def concat, Configuration configuration) {
 	DSN newDSN = new DSN()
 	def options = []
@@ -469,7 +470,6 @@ def generateDSN(def concat, Configuration configuration) {
 	if (!concat.dsn.text().isEmpty()) {
 		def dsn = "${concat.dsn}"
 		if (dsn.startsWith("&") && !dsn.startsWith("&&")) {
-			// TODO: We have a parameter that was not resolved here, exception?
 			println "WARNING: Parameter, $dsn, could not be resolved. A variable has been put in its place, please update its value or hardcode the DSN."
 			dsn = dsn.substring(1, dsn.length())
 			configuration.addVariable(dsn, "<PLACEHOLDER_VALUE>")
