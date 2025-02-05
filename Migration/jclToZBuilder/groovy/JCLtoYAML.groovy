@@ -107,38 +107,61 @@ class DD {
 }
 
 class Step {
+	// General fields
 	String name // Find value in scanner output
-	String type = "mvs" // Only supported step type
-	String program
+	String type // Only supported typed are 'mvs' and 'job'
 	Integer maxRC
+
+	// MVS fields
+	String program
 	String parms
 	ArrayList<DD> DDs
+
+	// Job fields
+	String jcl
 
 	public Map<String, Object> toYaml(Configuration config) {
 		Map<String, Object> stepMap = new LinkedHashMap<>();
 		String name = this.name == null ? "<STEP_NAME>" : this.name
+
+		if ("mvs".equals(type) == false && "job".equals(type) == false) {
+			throw IllegalStateException("Unknown step type '$type' found. Step: $name Program: $program")
+		}
+
+		// General fields
 		stepMap.put("step", name)
 		stepMap.put("type", type)
-
-		if (program == null) {
-			throw new IllegalStateException("No program was specified for the step: " + toString())
-		}
-		stepMap.put("pgm", program)
-
-		if (parms != null) {
-			stepMap.put("parm", parms);
-		}
-
 		if (maxRC != null) {
 			stepMap.put("maxRC", maxRC)
 		}
-		
-		if (DDs != null) {
-			List<Map<String, Object>> ddsList = new ArrayList<>()
-			for (DD dd : DDs) {
-				ddsList.addAll(dd.toYaml(config))
+
+		if ("mvs".equals(type)) {
+			if (program == null) {
+				throw new IllegalStateException("No program was specified for the step: " + toString())
 			}
-			stepMap.put("dds", ddsList)
+			stepMap.put("pgm", program)
+
+			if (parms != null) {
+				stepMap.put("parm", parms);
+			}
+			
+			if (DDs != null) {
+				List<Map<String, Object>> ddsList = new ArrayList<>()
+				for (DD dd : DDs) {
+					ddsList.addAll(dd.toYaml(config))
+				}
+				stepMap.put("dds", ddsList)
+			}
+		} else { // 'job' type
+			List<Map<String, String>> logs = new ArrayList<>()
+			Map<String, String> log = new LinkedHashMap<>()
+			logs.add(log)
+			log.add("log", "\${LOGS}/\${STEP}-\${FILE_NAME}.log")
+			log.add("ddname", "*")
+			log.add("logEncoding", "\${LOG_ENCODING}")
+			
+			stepMap.put("logs", logs)
+			stepMap.put("text", jcl)
 		}
 
 		return stepMap;
@@ -433,26 +456,75 @@ if (datasetMapFile.exists()) {
 		configuration.datasetMappings.load(stream)
 	}
 }
-
+int stepCount = 0
 steps.each { step ->
+	stepCount++
 	// The scanner contains a bug, preventing this name from being accurate. It doesn't seem to update past the first name grabbed
-	println "Processing step ${step.name}"
+	println "Processing step $stepCount: ${step.name}"
 	Step configstep = new Step()
+	
+	// General step config options
 	configstep.name = step.name
-	configstep.program = step.exec.name
-	configstep.parms = step.parm.text().replaceAll(/^'/,"").replaceAll(/'$/,"")
 	if (step.maxRC.isEmpty() == false) {
 		configstep.maxRC = Integer.parseInt(step.maxRC)
+	} else {
+		configstep.maxRC = 8
 	}
-	configstep.DDs = new ArrayList<DD>()
-	step.dd.each { ddx ->
-		DD newDD = new DD()
-		newDD.DSNs = new ArrayList<DSN>() 
-		newDD.name = ddx.name
-		ddx.concat.each { concat ->
-			newDD.DSNs.add(generateDSN(concat, configuration))
+
+	String program = step.exec.name
+	boolean isRestricted = restrictedPgms.contains(program)
+
+	if (isRestricted) {
+		println "WARNING: Program ${step.exec.name} may require special authority. The generated exec command may need to be modified."
+		configstep.type = "job"
+		def job = project.file.jcl.job
+		// Define the JCL used in the JobExec step
+		StringBuilder jcl = new StringBuilder()
+		jcl.append(breakup("//${job.@name.text().padRight(8)} JOB ${job.jobcard.@data}"))
+		jcl.append("\n")
+		String pgm = "${step.exec.name}" + (step.parm.text().isEmpty() ? "" : ",PARM=${step.parm}")
+		jcl.append(breakup("//${step.name.text().padRight(8)} EXEC PGM=${pgm}"))
+		jcl.append("\n")
+		step.dd.each { ddx ->
+			def firstAllocation = ddx.concat.find{it.@sequence == "1"}
+			jcl.append("//${ddx.name.text().padRight(8)} DD ${firstAllocation.parm}")
+			jcl.append("\n")
+			def ddm = convertAllocationToDD(firstAllocation)
+			if (ddm.'instreamData') {
+				def dlm = (ddm.'dlm') ? ddm.'dlm' : "/*"
+				jcl.append("${ddm.'instreamData'}$dlm")
+				jcp.append("\n")
+			}
+
+			ddx.concat.each { concat ->
+				if (concet.@sequence != "1") {
+					jcl.append("//${"".padRight(8)} DD ${concat.parm}")
+					jcl.append("\n")
+					ddm = convertAllocationToDD(firstAllocation)
+					if (ddm.'instreamData') {
+						def dlm = (dlm.'dlm') ? dmm.'dlm' : "/*"
+						jcl.append("${ddm.'instreamData'}$dlm")
+						jcl.append("\n")
+					}
+				}
+			}
 		}
-		configstep.DDs.add(newDD)
+		configstep.name = "${step.name.toLowerCase()}${(step.prop.text().isEmpty() ? step.exec.name : step.proc).toUpperCase()}"
+		configstep.jcl = jcl.toString()
+	} else {
+		configstep.type = "mvs"
+		configstep.program = program
+		configstep.parms = step.parm.text().replaceAll(/^'/,"").replaceAll(/'$/,"")
+		configstep.DDs = new ArrayList<DD>()
+		step.dd.each { ddx ->
+			DD newDD = new DD()
+			newDD.DSNs = new ArrayList<DSN>() 
+			newDD.name = ddx.name
+			ddx.concat.each { concat ->
+				newDD.DSNs.add(generateDSN(concat, configuration))
+			}
+			configstep.DDs.add(newDD)
+		}
 	}
 	configuration.addStep(configstep)
 }
@@ -472,6 +544,129 @@ return
 /******************
 * Utility Methods *
 *******************/
+
+def convertAllocationToDD(def concat, Configuration configuration)
+{
+	dd = [:]
+	def options = []
+	isTemp = false
+	if (!concat.dsn.text().isEmpty())
+	{
+		def dsn = "${concat.dsn}"
+		if ( dsn.startsWith("&") && !dsn.startsWith("&&") )
+		{
+			println "WARNING: Parameter, $dsn, could not be resolved. A variable has been put in its place, please update its value or hardcode the DSN."
+			dsn = dsn.substring(1, dsn.length())
+			configuration.addVariable(dsn, "<PLACEHOLDER_VALUE>", true)
+			dsn = "\${${dsn}}"
+		}
+		dd.'dsn' = dsn
+	}
+	if (!concat.stat.text().isEmpty())
+	{
+		options << "${concat.stat}".toLowerCase()
+	}
+	if (!concat.dispnor.text().isEmpty())
+	{
+		if (concat.dispnor.text() == "PASS")
+			dd.'pass' = true
+		else
+		{
+			def dispnorValue = "${concat.dispnor}".toLowerCase()
+            //* Map the disposition catlg/uncatlg to catalog/uncatalog to align to BPXWDYN utility options
+			if (dispnorValue == "catlg") {
+				options << "catalog"
+			}
+			else if (dispnorValue == "uncatlg") {
+				options << "uncatalog"
+			} else {
+				options << dispnorValue
+			}			
+		}
+	}
+	if (!concat.parm.text().isEmpty())
+	{
+		def parms = concat.parm.text()
+		def parmlist = splitit(parms, ",")
+		parmlist.each { parm ->
+			if ( parm.startsWith("DSN") ) {} // ignore, already handled above
+			else if ( parm.startsWith("DISP") ) {} // ignore, already handled with stat and dispnor above
+			else if ( parm.startsWith("DLM") ) 
+			{
+				def value = parm.substring( "DLM=".length() )
+				dd.'dlm' = value
+			}
+			else if (  parm == "*" || parm == "DATA" ) // in stream data
+			{
+				data = ""
+				concat.data.each { line ->
+					data += (line.text().length()<=72)?line.text():line.text().substring(0,72)
+					data += "\n"
+				}
+				dd.'instreamData'= data
+			}
+			else if (parm.startsWith("DDNAME="))
+			{
+				def m = parms =~ /(.*)=(.*)/;
+				def ddName = m[0][2]
+				dd.'ddref' = ddName
+			}
+			else if ( parm.startsWith("DCB=") )
+			{
+				def value = parm.substring( "DCB=".length() )
+				value = value.trim().replaceFirst("\\(", "").replaceAll("\\)\$", "")
+				def dcblist = splitit(value, ",")
+				dcblist.each { dcbparm ->
+					options << processAllocOption(dcbparm)
+				}
+			}
+			else if ( parm.startsWith("VOL") )
+			{
+				def value = parm.substring( parm.indexOf("=")+1 )
+				options << processVolumeOption( value )
+			}
+			else if ( parm.startsWith("UNIT") )
+			{
+				def value = parm.substring( parm.indexOf("=")+1 )
+				options << processUnitOption( value )
+			}
+			else if ( parm.startsWith("LABEL") )
+			{
+				def value = parm.substring( parm.indexOf("=")+1 )
+				options << processLabelOption( value )
+			}
+			else if ( parm == "DUMMY" || parm.startsWith("SYSOUT=") )
+			{
+				isTemp = true
+				dd.'output' = true
+			}
+			else
+			{
+				options << processAllocOption(parm)
+			}
+		}
+	}
+	if (!options.isEmpty())
+		dd.'options' = options.join(' ')
+	else if (isTemp)
+		dd.'options' = tempCreateOptions
+	dd
+}
+
+String breakup(String line)
+{
+	List<String> lines = []
+	if (line.length() > 71)
+	{
+		ndx = line.substring(0,71).lastIndexOf(',')
+		lines << line.substring(0,ndx+1)
+		lines << breakup("//         ${line.substring(ndx+1)}")
+	}
+	else
+		lines << line
+	
+	return lines.join('\n')
+}
 
 def generateDSN(def concat, Configuration configuration) {
 	DSN newDSN = new DSN()
