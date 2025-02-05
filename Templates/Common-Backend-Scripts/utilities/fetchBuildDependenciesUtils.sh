@@ -40,9 +40,9 @@ runFetchLogic() {
         echo $PGM": [INFO] **                 Application:" ${application}
         echo $PGM": [INFO] **                      Branch:" ${branch}
         echo $PGM": [INFO] **     Application Descriptor :" ${applicationDescriptor}
-        if [ ! -z "${externalDependenciesLog}" ]; then
-            echo $PGM": [INFO] **    External Dependency Log :" ${externalDependenciesLog}
-        fi
+        echo $PGM": [INFO] **          Use Package Cache :" ${enablePackageCache}
+        echo $PGM": [INFO] **     Package Cache Location :" ${packageCacheLocation}
+        echo $PGM": [INFO] **    External Dependency Log :" ${externalDependenciesLog}
         echo $PGM": [INFO] **************************************************************"
         echo ""
     fi
@@ -60,21 +60,6 @@ runFetchLogic() {
         echo $PGM": [INFO] ** Fetch Application Dependencies from Artifact Repository"
         cmd="groovyz ${PIPELINE_SCRIPTS}/utilities/fetchBuildDependencies.groovy -w $(getWorkDirectory) -a ${applicationDescriptor} -p ${pipelineConfiguration} -b ${Branch}"
         #
-        if [ ! -z "${artifactRepositoryUrl}" ]; then
-            CMD="${CMD} --artifactRepositoryUrl \"${artifactRepositoryUrl}\""
-        fi
-        if [ ! -z "${artifactRepositoryUser}" ]; then
-            CMD="${CMD} --artifactRepositoryUser ${artifactRepositoryUser}"
-        fi
-        if [ ! -z "${artifactRepositoryPassword}" ]; then
-            CMD="${CMD} --artifactRepositoryPassword ${artifactRepositoryPassword}"
-        fi
-        if [ ! -z "${artifactRepositoryNamePattern}" ]; then
-            CMD="${CMD} --artifactRepositoryNamePattern ${artifactRepositoryNamePattern}"
-        fi
-        if [ ! -z "${artifactRepositoryDirectory}" ]; then
-            CMD="${CMD} --artifactRepositoryDirectory ${artifactRepositoryDirectory}"
-        fi
         if [ ! -z "${externalDependenciesLog}" ]; then
             cmd="${cmd} -d ${externalDependenciesLog}"
         fi

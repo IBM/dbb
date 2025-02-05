@@ -46,8 +46,8 @@ if (importFolder.exists()) importFolder.deleteDir()
 importFolder.mkdirs()
 
 // setup package cache
-cacheFolder = new File("/tmp/.pkg")
-if (!cacheFolder.exists()) cacheFolder.mkdirs()
+tmpPackageDir = (props.enablePackageCache && props.enablePackageCache.toBoolean() && props.packageCacheLocation) ? new File(props.packageCacheLocation) : new File("$props.workspace/imports_download/")
+if (!tmpPackageDir.exists()) tmpPackageDir.mkdirs()
 
 def yamlSlurper = new groovy.yaml.YamlSlurper()
 // Parse the application descriptor and application configurations
@@ -112,18 +112,18 @@ if (applicationDescriptor.dependencies) {
 				externalDependencies.add(externalDependency)
 			}
 
-			String tarFile = "${cacheFolder}/${artifactReference}"
+			String tarFile = "${tmpPackageDir}/${artifactReference}"
 			String includeFolder = "${importFolder}/${dependency.name}"
 
 			if (new File(tarFile).exists()) {
-				println("** Package was already found in package cache at '${cacheFolder}/${artifactRelPath}'")
+				println("** Package was already found in package cache at '${tmpPackageDir}/${artifactRelPath}'")
 			} else {
 				String user = props.artifactRepositoryUser
 				String password = props.artifactRepositoryPassword
 
-				if (!(new File("${cacheFolder}/${artifactRelPath}").exists())) (new File("${cacheFolder}/${artifactRelPath}")).mkdirs()
+				if (!(new File("${tmpPackageDir}/${artifactRelPath}").exists())) (new File("${tmpPackageDir}/${artifactRelPath}")).mkdirs()
 
-				println("** Downloading application package '$artifactUrl' from Artifact Repository into ${cacheFolder}/${artifactRelPath}.")
+				println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tmpPackageDir}/${artifactRelPath}.")
 				def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile as String, user, password, true)
 				println "download complete $rc" // TODO: Error handling in helper
 			}
@@ -148,6 +148,10 @@ if (applicationDescriptor.dependencies) {
 				println("** [ERROR] Failed to untar '$tarFile' to '$includeFolder' with rc=$rc")
 				System.exit(1)
 			}
+
+			// Delete temporary download location if cache is not used
+			if (!(props.enablePackageCache && props.enablePackageCache.toBoolean())) {tmpPackageDir.deleteDir()}
+
 		} else {
 			println("* Dependency Types other than 'artifactrepository' are not yet implemented. Exiting.")
 			System.exit(1)
@@ -187,18 +191,18 @@ if (applicationDescriptor.dependencies) {
 //			}
 //			println("*** Fetching baseline package '${baselineName}:${baseline.version}' ")
 //
-//			String tarFile = "${cacheFolder}/${artifactReference}"
+//			String tarFile = "${tmpPackageDir}/${artifactReference}"
 //			String includeFolder = "${importFolder}/${baselineName}"
 //
 //			if (new File(tarFile).exists()) {
-//				println("** Package was already found in package cache at '${cacheFolder}/${artifactRelPath}'")
+//				println("** Package was already found in package cache at '${tmpPackageDir}/${artifactRelPath}'")
 //			} else {
 //				String user = props.artifactRepositoryUser
 //				String password = props.artifactRepositoryPassword
 //
-//				if (!(new File("${cacheFolder}/${artifactRelPath}").exists())) (new File("${cacheFolder}/${artifactRelPath}")).mkdirs()
+//				if (!(new File("${tmpPackageDir}/${artifactRelPath}").exists())) (new File("${tmpPackageDir}/${artifactRelPath}")).mkdirs()
 //
-//				println("** Downloading application package '$artifactUrl' from Artifact Repository into ${cacheFolder}/${artifactRelPath}.")
+//				println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tmpPackageDir}/${artifactRelPath}.")
 //				def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile as String, user, password, true)
 //				println "download complete $rc" // TODO: Error handling in helper
 //			}
@@ -254,7 +258,6 @@ def parseArgs(String[] args) {
 	cli.p(longOpt:'pipelineBackendConfigFilePath', args:1, 'Absolute path to the pipelineBackend.config file')
 	cli.b(longOpt:'branch', args:1, 'Current branch of the application')
 
-
 	def opts = cli.parse(args)
 	if (!opts) {
 		System.exit(1)
@@ -300,6 +303,8 @@ def parseArgs(String[] args) {
 			if(temporaryProperties.get("artifactRepositoryUser")) props.put("artifactRepositoryUser", temporaryProperties.get("artifactRepositoryUser"))
 			if(temporaryProperties.get("artifactRepositoryPassword")) props.put("artifactRepositoryPassword", temporaryProperties.get("artifactRepositoryPassword"))
 			if(temporaryProperties.get("artifactRepositoryNamePattern")) props.put("artifactRepositoryNamePattern", temporaryProperties.get("artifactRepositoryNamePattern"))
+			if(temporaryProperties.get("packageCacheLocation")) props.put("packageCacheLocation", temporaryProperties.get("packageCacheLocation"))
+			if(temporaryProperties.get("enablePackageCache")) props.put("enablePackageCache", temporaryProperties.get("enablePackageCache"))
 		} else {
 			println("*! [ERROR] Configuration file ${opts.p} not found. Exiting.")
 			System.exit(1)
