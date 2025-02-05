@@ -41,10 +41,6 @@
 //SYSPRINT DD SYSOUT=* 
 //SYSOUT   DD SYSOUT=* 
 //SYSCPRT  DD SYSOUT=* 
-//*SYSLIN   DD DSN=&&SYSLIN,DISP=(NEW,PASS),SPACE=(TRK,(10,100)), 
-//*         UNIT=SYSDA,BLKSIZE=3200,LRECL=80,RECFM=FB,DSORG=PS 
-//SYSLIN   DD DISP=SHR,DSN=&ADSN(&MEM) 
-//SYSIN    DD DISP=SHR,DSN=&IDSN(&MEM)
 //MYDD     DD  *
 TYP=CPY/A.P1.CM.ZZ.BRCH.ST.CPYLIB
 TYP=CP1/A.P1.CM.ZZ.BRCH.ST.CPYLIB
@@ -59,6 +55,10 @@ CMP=OF2730ZZ.SRC
 LNG=EZTP
 PKG=BRCH005217
 /*
+//*SYSLIN   DD DSN=&&SYSLIN,DISP=(NEW,PASS),SPACE=(TRK,(10,100)), 
+//*         UNIT=SYSDA,BLKSIZE=3200,LRECL=80,RECFM=FB,DSORG=PS 
+//SYSLIN   DD DISP=SHR,DSN=&ADSN(&MEM) 
+//SYSIN    DD DISP=SHR,DSN=&IDSN(&MEM)
 //******************************************************************* 
 //* Assemble the code 
 //******************************************************************* 
