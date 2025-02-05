@@ -294,9 +294,9 @@ def parseArgs(String[] args) {
 	}
 
 	if(opts.c){
-		props.packageCacheLocation=opts.c
+		props.packageCacheLocation = opts.c
 	} 
-	
+
 	if (opts.p) {
 		def pipelineBackendConfigFile = new File(opts.p)
 		if (pipelineBackendConfigFile.exists()) {
@@ -309,7 +309,6 @@ def parseArgs(String[] args) {
 			if(temporaryProperties.get("artifactRepositoryUser")) props.put("artifactRepositoryUser", temporaryProperties.get("artifactRepositoryUser"))
 			if(temporaryProperties.get("artifactRepositoryPassword")) props.put("artifactRepositoryPassword", temporaryProperties.get("artifactRepositoryPassword"))
 			if(temporaryProperties.get("artifactRepositoryNamePattern")) props.put("artifactRepositoryNamePattern", temporaryProperties.get("artifactRepositoryNamePattern"))
-			if(temporaryProperties.get("packageCacheLocation")) props.put("packageCacheLocation", temporaryProperties.get("packageCacheLocation"))
 			if(temporaryProperties.get("enablePackageCache")) props.put("enablePackageCache", temporaryProperties.get("enablePackageCache"))
 		} else {
 			println("*! [ERROR] Configuration file ${opts.p} not found. Exiting.")
