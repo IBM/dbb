@@ -257,6 +257,8 @@ def parseArgs(String[] args) {
 	cli.d(longOpt:'externalDependenciesFilePath', args:1, 'Absolute path to the external dependencies file')
 	cli.p(longOpt:'pipelineBackendConfigFilePath', args:1, 'Absolute path to the pipelineBackend.config file')
 	cli.b(longOpt:'branch', args:1, 'Current branch of the application')
+	cli.c(longOpt:'packageCacheLocation', args:1, 'Location of the Package cache')
+
 
 	def opts = cli.parse(args)
 	if (!opts) {
@@ -291,6 +293,10 @@ def parseArgs(String[] args) {
 		System.exit(1)
 	}
 
+	if(opts.c){
+		props.packageCacheLocation=opts.c
+	} 
+	
 	if (opts.p) {
 		def pipelineBackendConfigFile = new File(opts.p)
 		if (pipelineBackendConfigFile.exists()) {

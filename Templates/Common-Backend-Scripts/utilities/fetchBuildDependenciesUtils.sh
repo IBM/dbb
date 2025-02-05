@@ -63,6 +63,10 @@ runFetchLogic() {
         if [ ! -z "${externalDependenciesLog}" ]; then
             cmd="${cmd} -d ${externalDependenciesLog}"
         fi
+
+        if [ ! -z "${packageCacheLocation}" ]; then
+            cmd="${cmd} -c ${packageCacheLocation}"
+        fi
         echo $PGM": [INFO] ** CMD : ${cmd}"
         ${cmd}
         rc=$?
