@@ -37,8 +37,8 @@ runFetchLogic() {
         echo $PGM": [INFO] **************************************************************"
         echo $PGM": [INFO] ** Start Fetch Build Dependencies on HOST/USER: ${SYS}/${USER}"
         echo $PGM": [INFO] **                     WorkDir:" $(getWorkDirectory)
-        echo $PGM": [INFO] **                 Application:" ${application}
-        echo $PGM": [INFO] **                      Branch:" ${branch}
+        echo $PGM": [INFO] **                 Application:" ${App}
+        echo $PGM": [INFO] **                      Branch:" ${Branch}
         echo $PGM": [INFO] **     Application Descriptor :" ${applicationDescriptor}
         echo $PGM": [INFO] **          Use Package Cache :" ${enablePackageCache}
         echo $PGM": [INFO] **     Package Cache Location :" ${packageCacheLocation}
