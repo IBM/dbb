@@ -497,7 +497,7 @@ steps.each { step ->
 			}
 
 			ddx.concat.each { concat ->
-				if (concet.@sequence != "1") {
+				if (concat.@sequence != "1") {
 					jcl.append("//${"".padRight(8)} DD ${concat.parm}")
 					jcl.append("\n")
 					ddm = convertAllocationToDD(firstAllocation, configuration)
