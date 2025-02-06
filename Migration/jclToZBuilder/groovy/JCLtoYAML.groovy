@@ -493,7 +493,7 @@ steps.each { step ->
 			if (ddm.'instreamData') {
 				def dlm = (ddm.'dlm') ? ddm.'dlm' : "/*"
 				jcl.append("${ddm.'instreamData'}$dlm")
-				jcp.append("\n")
+				jcl.append("\n")
 			}
 
 			ddx.concat.each { concat ->
