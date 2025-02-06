@@ -234,8 +234,6 @@ class Configuration {
 		if (getLanguage().containsKey("steps") == false) {
 			getLanguage().put("steps", new ArrayList<Map<String, Object>>())
 		}
-		println("STEPS:")
-		println(getLanguage().get("steps"))
 
 		return getLanguage().get("steps");
 	}
@@ -511,7 +509,6 @@ steps.each { step ->
 				}
 			}
 		}
-		configstep.name = "${step.name.text().toLowerCase()}${(step.prop.text().isEmpty() ? step.exec.name : step.proc).text().toUpperCase()}"
 		configstep.jcl = jcl.toString()
 	} else {
 		configstep.type = "mvs"
