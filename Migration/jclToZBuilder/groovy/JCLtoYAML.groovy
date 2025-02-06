@@ -156,9 +156,9 @@ class Step {
 			List<Map<String, String>> logs = new ArrayList<>()
 			Map<String, String> log = new LinkedHashMap<>()
 			logs.add(log)
-			log.add("log", "\${LOGS}/\${STEP}-\${FILE_NAME}.log")
-			log.add("ddname", "*")
-			log.add("logEncoding", "\${LOG_ENCODING}")
+			log.put("log", "\${LOGS}/\${STEP}-\${FILE_NAME}.log")
+			log.put("ddname", "*")
+			log.put("logEncoding", "\${LOG_ENCODING}")
 			
 			stepMap.put("logs", logs)
 			stepMap.put("text", jcl)
