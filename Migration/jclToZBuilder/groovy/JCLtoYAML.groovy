@@ -509,7 +509,7 @@ steps.each { step ->
 				}
 			}
 		}
-		configstep.name = "${step.name.toLowerCase()}${(step.prop.text().isEmpty() ? step.exec.name : step.proc).toUpperCase()}"
+		configstep.name = "${step.name.text().toLowerCase()}${(step.prop.text().isEmpty() ? step.exec.name : step.proc).text().toUpperCase()}"
 		configstep.jcl = jcl.toString()
 	} else {
 		configstep.type = "mvs"
