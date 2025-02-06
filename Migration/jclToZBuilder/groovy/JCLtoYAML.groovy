@@ -234,6 +234,8 @@ class Configuration {
 		if (getLanguage().containsKey("steps") == false) {
 			getLanguage().put("steps", new ArrayList<Map<String, Object>>())
 		}
+		println("STEPS:")
+		println(getLanguage().get("steps"))
 
 		return getLanguage().get("steps");
 	}
