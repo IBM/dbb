@@ -489,7 +489,7 @@ steps.each { step ->
 			def firstAllocation = ddx.concat.find{it.@sequence == "1"}
 			jcl.append("//${ddx.name.text().padRight(8)} DD ${firstAllocation.parm}")
 			jcl.append("\n")
-			def ddm = convertAllocationToDD(firstAllocation)
+			def ddm = convertAllocationToDD(firstAllocation, configuration)
 			if (ddm.'instreamData') {
 				def dlm = (ddm.'dlm') ? ddm.'dlm' : "/*"
 				jcl.append("${ddm.'instreamData'}$dlm")
@@ -500,7 +500,7 @@ steps.each { step ->
 				if (concet.@sequence != "1") {
 					jcl.append("//${"".padRight(8)} DD ${concat.parm}")
 					jcl.append("\n")
-					ddm = convertAllocationToDD(firstAllocation)
+					ddm = convertAllocationToDD(firstAllocation, configuration)
 					if (ddm.'instreamData') {
 						def dlm = (dlm.'dlm') ? dmm.'dlm' : "/*"
 						jcl.append("${ddm.'instreamData'}$dlm")
