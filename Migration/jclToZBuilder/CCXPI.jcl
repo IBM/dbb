@@ -6,7 +6,6 @@
 //******************************************************************* 
 //* Compile the code 
 //******************************************************************* 
-//CCAM     PROC IDSN=,ADSN=,ODSN=,MEM= 
 //CC       EXEC PGM=CCNDRVR,REGION=0M, 
 // PARM=('OPTFILE(DD:OPTIONS)') 
 //STEPLIB  DD DISP=SHR,DSN=MTLCICS.METALC.SCCNCMP 
@@ -71,9 +70,3 @@ PKG=BRCH005217
 //SYSPRINT DD  SYSOUT=* 
 //SYSLIN   DD  DISP=SHR,DSN=&ODSN(&MEM) 
 //SYSIN    DD  DISP=SHR,DSN=&ADSN(&MEM) 
-// PEND 
-//* 
-//COMP     EXEC CCAM,IDSN='MTLCICS.METALC.SAMPCODE', 
-//         ADSN='MTLUSR.METAL.GENASM', 
-//         ODSN='MTLUSR.METAL.OBJ',MEM=MTL2XPI 
-//*
