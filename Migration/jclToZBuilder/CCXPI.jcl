@@ -6,7 +6,7 @@
 //******************************************************************* 
 //* Compile the code 
 //******************************************************************* 
-//CC       EXEC PGM=CCNDRVR,REGION=0M, 
+//CC       EXEC PGM=IKJEFT01,REGION=0M, 
 // PARM=('OPTFILE(DD:OPTIONS)') 
 //STEPLIB  DD DISP=SHR,DSN=MTLCICS.METALC.SCCNCMP 
 //         DD DSN=CICSTS41.CICS.SDFHLOAD,DISP=SHR 
