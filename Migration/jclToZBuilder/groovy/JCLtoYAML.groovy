@@ -456,6 +456,7 @@ if (datasetMapFile.exists()) {
 		configuration.datasetMappings.load(stream)
 	}
 }
+boolean printOnce = true
 int stepCount = 0
 steps.each { step ->
 	stepCount++
@@ -495,7 +496,7 @@ steps.each { step ->
 				jcl.append("${ddm.'instreamData'}$dlm")
 				jcl.append("\n")
 			}
-
+			
 			ddx.concat.each { concat ->
 				println("CONCAT")
 				if (concat.@sequence != "1") {
@@ -503,6 +504,12 @@ steps.each { step ->
 					jcl.append("//${"".padRight(8)} DD ${concat.parm}")
 					jcl.append("\n")
 					ddm = convertAllocationToDD(firstAllocation, configuration)
+					if (printOnce) {
+						printOnce = false
+						println()
+						println(ddm)
+						println()
+					}
 					if (ddm.'instreamData') {
 						println("TRIGGERED2")
 						def dlm = (dlm.'dlm') ? dmm.'dlm' : "/*"
