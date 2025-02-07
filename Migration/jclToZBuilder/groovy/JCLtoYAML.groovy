@@ -503,7 +503,7 @@ steps.each { step ->
 					println("TRIGGERED")
 					jcl.append("//${"".padRight(8)} DD ${concat.parm}")
 					jcl.append("\n")
-					ddm = convertAllocationToDD(concat, configuration)
+					ddm = convertAllocationToDD(firstAllocation, configuration)
 					if (printOnce) {
 						printOnce = false
 						println()
