@@ -316,7 +316,10 @@ def parseArgs(String[] args) {
 			Properties temporaryProperties = new Properties()
 			pipelineBackendConfigFile.withInputStream { temporaryProperties.load(it) }
 			if(temporaryProperties.get("dbbCommunityRepoRootDir")) props.put("dbbCommunityRepoRootDir", temporaryProperties.get("dbbCommunityRepoRootDir"))
+
 			if(temporaryProperties.get("artifactRepositoryHelpersScript")) props.put("artifactRepositoryHelpersScript", temporaryProperties.get("artifactRepositoryHelpersScript"))
+			if(temporaryProperties.get("applicationDescriptorHelperUtils")) props.put("applicationDescriptorHelperUtils", temporaryProperties.get("applicationDescriptorHelperUtils"))
+
 			if(temporaryProperties.get("artifactRepositoryUrl")) props.put("artifactRepositoryUrl", temporaryProperties.get("artifactRepositoryUrl"))
 			if(temporaryProperties.get("artifactRepositoryUser")) props.put("artifactRepositoryUser", temporaryProperties.get("artifactRepositoryUser"))
 			if(temporaryProperties.get("artifactRepositoryPassword")) props.put("artifactRepositoryPassword", temporaryProperties.get("artifactRepositoryPassword"))
