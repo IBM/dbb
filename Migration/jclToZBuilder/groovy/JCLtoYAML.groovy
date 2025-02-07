@@ -512,7 +512,7 @@ steps.each { step ->
 					}
 					if (ddm.'instreamData') {
 						println("TRIGGERED2")
-						def dlm = (dlm.'dlm') ? dmm.'dlm' : "/*"
+						def dlm = (ddm.'dlm') ? ddm.'dlm' : "/*"
 						jcl.append("${ddm.'instreamData'}$dlm")
 						jcl.append("\n")
 					}
