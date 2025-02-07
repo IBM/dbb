@@ -454,7 +454,7 @@ println "Restricted programs: ${restrictedPgms}"
 def YAMLoutput = new YamlBuilder() {
 	@Override
 	public String toString() {
-		return writeBlockStringYaml(new StringReader(jsonBuilder.toString()))
+		return writeBlockStringYaml(new StringReader(this.@jsonBuilder.toString()))
 	}
 }
 
