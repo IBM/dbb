@@ -15,7 +15,8 @@ import java.nio.file.*
 
 // script properties
 @Field Properties props = new Properties()
-@Field def artifactRepositoryHelpers
+@Field def artifactRepositoryHelpers // Helpers to download
+@Field def applicationDescriptorUtils // Helper to parse Application Descriptor
 
 // Parse arguments from command-line
 parseArgs(args)
@@ -26,11 +27,21 @@ props.each { k,v->
 	println "   $k -> $v"
 }
 
+// Load and verify helpers
 File artifactRepositoryHelpersScriptFile = new File("${props.dbbCommunityRepoRootDir}" + "/" + "${props.artifactRepositoryHelpersScript}")
 if (artifactRepositoryHelpersScriptFile.exists()) {
 	artifactRepositoryHelpers = loadScript(artifactRepositoryHelpersScriptFile)
 } else {
 	println("*! [ERROR] The Artifact Repository Helper script '${props.artifactRepositoryHelpersScript}' doesn't exist. Exiting.")
+	System.exit(1)
+}
+
+File applicationDescriptorUtilsFile = new File("${props.dbbCommunityRepoRootDir}" + "/" + "${props.applicationDescriptorHelperUtils}")
+
+if (applicationDescriptorUtilsFile.exists()) {
+	applicationDescriptorUtils = loadScript(applicationDescriptorUtilsFile)
+} else {
+	println("*! [ERROR] The Application Descriptor Helper script '${props.applicationDescriptorHelperUtils}' was not found. Exiting.")
 	System.exit(1)
 }
 
@@ -50,8 +61,9 @@ tmpPackageDir = (props.enablePackageCache && props.enablePackageCache.toBoolean(
 if (!tmpPackageDir.exists()) tmpPackageDir.mkdirs()
 
 def yamlSlurper = new groovy.yaml.YamlSlurper()
-// Parse the application descriptor and application configurations
-applicationDescriptor = yamlSlurper.parse(applicationDescriptorFile)
+
+// Parse the application descriptor and application configurations based on the defined schema
+applicationDescriptor = applicationDescriptorUtils.readApplicationDescriptor(applicationDescriptorFile)
 
 
 ArrayList<ExternalDependency> externalDependencies = new ArrayList<>()
