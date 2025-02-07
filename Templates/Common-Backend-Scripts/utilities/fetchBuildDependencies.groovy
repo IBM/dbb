@@ -26,7 +26,7 @@ props.each { k,v->
 	println "   $k -> $v"
 }
 
-File artifactRepositoryHelpersScriptFile = new File(props.artifactRepositoryHelpersScript)
+File artifactRepositoryHelpersScriptFile = new File("${props.dbbCommunityRepoRootDir}" + "/" + "${props.artifactRepositoryHelpersScript}")
 if (artifactRepositoryHelpersScriptFile.exists()) {
 	artifactRepositoryHelpers = loadScript(artifactRepositoryHelpersScriptFile)
 } else {
@@ -303,7 +303,7 @@ def parseArgs(String[] args) {
 			props.pipelineBackendConfigFile = opts.p
 			Properties temporaryProperties = new Properties()
 			pipelineBackendConfigFile.withInputStream { temporaryProperties.load(it) }
-			if(temporaryProperties.get("applicationDependencyConfiguration")) props.put("applicationDependencyConfiguration", temporaryProperties.get("applicationDependencyConfiguration"))
+			if(temporaryProperties.get("dbbCommunityRepoRootDir")) props.put("dbbCommunityRepoRootDir", temporaryProperties.get("dbbCommunityRepoRootDir"))
 			if(temporaryProperties.get("artifactRepositoryHelpersScript")) props.put("artifactRepositoryHelpersScript", temporaryProperties.get("artifactRepositoryHelpersScript"))
 			if(temporaryProperties.get("artifactRepositoryUrl")) props.put("artifactRepositoryUrl", temporaryProperties.get("artifactRepositoryUrl"))
 			if(temporaryProperties.get("artifactRepositoryUser")) props.put("artifactRepositoryUser", temporaryProperties.get("artifactRepositoryUser"))
