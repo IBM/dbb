@@ -209,7 +209,7 @@ gitClone.sh: [INFO] Clone Repository Complete. rc=0
 
 ## Build stage
 
-### Conventions
+### Conventions and capabilities
 
 #### Git branch naming conventions
 
@@ -236,6 +236,17 @@ Note that the location of the baselineReferences.config file can be customized i
 
 [baselineReference.config](samples/baselineReference.config) is a sample, that indicates the baseline for the `main` and `release maintenance` branches.
 
+#### Fetching build dependencies
+
+Both implementations for the build stage are enabled to optionally pull external dependencies into the build workspace based on the dependency definitions specified in the *Application Descriptor*.
+
+The Application Descriptor contains metadata about the application itself, but can contain references to other application packages managed in an artifact repository, which are necessary inputs to the build. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
+
+Each application package can export shared components such as public or shared include files and even build outputs, such as object decks or NCAL load modules. The package needs to be created with the [PackageBuildOutputs](../../Pipeline/PackageBuildOutputs/README.md) script and be uploaded to the artifact repository through the Common Backend scripts. Fetching the dependencies is powered by the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script.
+
+Packages will be stored at a cache location to improve performance.
+
+Fetched packages will be expanded to the pipeline working directory.
 
 ### dbbBuild.sh for zAppBuild framework
 

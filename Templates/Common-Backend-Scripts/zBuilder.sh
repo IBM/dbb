@@ -128,8 +128,9 @@ Help() {
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+# Utility scripts
 buildUtilities="${SCRIPT_HOME}/utilities/dbbzBuilderUtils.sh"
-
+fetchBuildDependenciesUtilities="${SCRIPT_HOME}/utilities/fetchBuildDependenciesUtils.sh"
 
 #
 # Internal Variables
@@ -137,7 +138,7 @@ buildUtilities="${SCRIPT_HOME}/utilities/dbbzBuilderUtils.sh"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$USER
 SYS=$(uname -Ia)
 
@@ -204,6 +205,15 @@ if [ $rc -eq 0 ]; then
     else
         source $buildUtilities
     fi
+
+  # Read and import utilities
+  if [ ! -f "${fetchBuildDependenciesUtilities}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERROR] DBB-Build internal utilities (${fetchBuildDependenciesUtilities}) was not found. rc="$rc
+    echo $ERRMSG
+  else
+    source $fetchBuildDependenciesUtilities
+  fi
 
     #
     # Get Options
@@ -438,7 +448,14 @@ if [ $rc -eq 0 ]; then
     fi
 fi
 
-# Ready to go: Suggest in the section to echo as much as possible
+
+# Setup build environment and pull external dependencies if an ApplicationDescriptor is found
+if [ $rc -eq 0 ] && [ "$fetchBuildDependencies" = true ]; then
+    fetchBuildDependencies
+fi
+
+#
+# Echo build configuration
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **************************************************************"
     echo $PGM": [INFO] ** Started - DBB Build on HOST/USER: ${SYS}/${USER}"
