@@ -447,7 +447,12 @@ println "Restricted programs: ${restrictedPgms}"
 //* YAML
 //*********
 
-def YAMLoutput = new YamlBuilder()
+def YAMLoutput = new YamlBuilder() {
+	@Override
+	public String toString() {
+		return writeBlockStringYaml(new StringReader(jsonBuilder.toString()))
+	}
+}
 
 Configuration configuration = new Configuration()
 
@@ -498,20 +503,12 @@ steps.each { step ->
 			}
 			
 			ddx.concat.each { concat ->
-				println("CONCAT")
 				if (concat.@sequence != "1") {
-					println("TRIGGERED")
 					jcl.append("//${"".padRight(8)} DD ${concat.parm}")
 					jcl.append("\n")
 					ddm = convertAllocationToDD(concat, configuration)
-					if (printOnce) {
-						printOnce = false
-						println()
-						println(ddm)
-						println()
-					}
+
 					if (ddm.'instreamData') {
-						println("TRIGGERED2")
 						def dlm = (ddm.'dlm') ? ddm.'dlm' : "/*"
 						jcl.append("${ddm.'instreamData'}$dlm")
 						jcl.append("\n")
@@ -917,6 +914,18 @@ def processUnitOption( value )
 		}
 	}
 	options.join(' ')
+}
+
+String writeBlockStringYaml(Reader jsonReader) {
+	try (Reader reader = jsonReader) {
+		JsonNode json = new ObjectMapper().readTree(reader)
+
+		YAMLMapper mapper = new YAMLMapper()
+		mapper.configure(YAMLGenerator.Feature.LITERAL_BLOCK_STYLE, true)
+		return mapper.writeValueAsString(json)
+	} catch (IOException e) {
+		throw new YamlRuntimeException(e)
+	}
 }
 
 
