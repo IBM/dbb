@@ -511,7 +511,7 @@ if [ $rc -eq 0 ]; then
     fi
 
     echo $PGM": [INFO] ${CMD}"
-    ${CMD} # run build
+    ${CMD} | awk '{print "dbb [zBuilder] " $0}' # run build
     rc=$?
 
     if [ $rc -eq 0 ]; then

@@ -508,7 +508,7 @@ if [ $rc -eq 0 ]; then
 
   CMD="${CMD} ${Type}" # Append zAppBuild Build Type
   echo $PGM": [INFO] ${CMD}"
-  ${CMD} #TLD: I commented this out for testing purposed
+  ${CMD} | awk '{print "dbb (groovyz) [zAppBuild] " $0}' #DEBUG: I commented this out for testing purposed
   rc=$?
   #exit 0
 
