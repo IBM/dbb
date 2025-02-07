@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonBuilder
 import groovy.json.JsonOutput
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 class DSN {
 	String DSN
