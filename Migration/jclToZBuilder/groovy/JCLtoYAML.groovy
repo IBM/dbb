@@ -497,11 +497,14 @@ steps.each { step ->
 			}
 
 			ddx.concat.each { concat ->
+				println("CONCAT")
 				if (concat.@sequence != "1") {
+					println("TRIGGERED")
 					jcl.append("//${"".padRight(8)} DD ${concat.parm}")
 					jcl.append("\n")
 					ddm = convertAllocationToDD(firstAllocation, configuration)
 					if (ddm.'instreamData') {
+						println("TRIGGERED2")
 						def dlm = (dlm.'dlm') ? dmm.'dlm' : "/*"
 						jcl.append("${ddm.'instreamData'}$dlm")
 						jcl.append("\n")
