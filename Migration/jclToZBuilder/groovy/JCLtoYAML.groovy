@@ -18,6 +18,10 @@ import java.nio.file.attribute.*
 import com.ibm.dbb.*
 import groovy.yaml.YamlBuilder
 import java.nio.charset.StandardCharsets
+import groovy.yaml.YamlRuntimeException;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 class DSN {
 	String DSN
