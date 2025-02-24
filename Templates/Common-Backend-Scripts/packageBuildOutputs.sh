@@ -177,7 +177,7 @@ if [ $rc -eq 0 ]; then
     fi
 fi
 
-# Source helper
+# Source packaging helper
 if [ $rc -eq 0 ]; then
     if [ ! -f "${packageUtilities}" ]; then
         rc=8
