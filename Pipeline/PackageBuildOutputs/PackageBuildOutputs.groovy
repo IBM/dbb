@@ -965,7 +965,7 @@ def parseInput(String[] cliArgs){
 
 	// Artifact repository options ::
 	cli.p(longOpt:'publish', 'Flag to indicate package upload to the provided Artifact Repository server. (Optional)')
-	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package on the Artifact repository server. (Optional)')	
+	cli.v(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package folder on the Artifact repository server. (Optional)')	
 
 	// Artifact repository info
 	cli.au(longOpt:'artifactRepositoryUrl', args:1, argName:'url', 'URL to the Artifact repository server. (Optional)')

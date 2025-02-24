@@ -57,11 +57,6 @@ Help() {
     echo "                                                              "
     echo "  Optional parameters                                         "
     echo "                                                              "
-    echo "       -t <tarFileName>     - Name of the package tar file    "
-    echo "                              (Optional)                      "
-    echo "                                                              "
-    echo "                Ex: package.tar                               "
-    echo "                                                              "
     echo "       -u                   - flag to enable uploading        "
     echo "                             outputs to configured            "
     echo "                             artifact repository              "
@@ -111,6 +106,8 @@ Help() {
 # Central configuration file leveraged by the backend scripts
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+packageUtilities="${SCRIPT_HOME}/utilities/packageUtils.sh"
+
 # Path and File Name to the advanced debug options.
 #log4j2="-Dlog4j.configurationFile=file:/../log4j2.properties"
 
@@ -180,6 +177,17 @@ if [ $rc -eq 0 ]; then
     fi
 fi
 
+# Source helper
+if [ $rc -eq 0 ]; then
+    if [ ! -f "${packageUtilities}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Packaging Utils (${packageUtilities}) was not found. rc="$rc
+        echo $ERRMSG
+    else
+        source $packageUtilities
+    fi
+fi
+
 #
 # Get Options
 if [ $rc -eq 0 ]; then
@@ -209,17 +217,6 @@ if [ $rc -eq 0 ]; then
                 break
             fi
             App="$argument"
-            ;;
-        t)
-            argument="$OPTARG"
-            nextchar="$(expr substr $argument 1 1)"
-            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
-                echo $ERRMSG
-                break
-            fi
-            tarFileName="$argument"
             ;;
         b)
             argument="$OPTARG"
@@ -411,16 +408,10 @@ if [ $rc -eq 0 ]; then
     validateOptions
 fi
 
-# compute parameters
+# compute packaging parameters
 if [ $rc -eq 0 ]; then
-    # Compute artifactRepositoryName based on function in packageBuildOutputs.config
-    artifactRepositoryName=$(computeArtifactRepositoryName)
-    artifactRepositoryDirectory=$(computeArtifactRepositoryDirectory)
-
-    # set default PipelineType for pipelines on main
-    if [ "${Branch}" == "main" ] && [ -z "${PipelineType}" ]; then
-        PipelineType="build"
-    fi
+    # invoke function in packageUtils
+    computePackageInformation
 fi
 
 # Call validate publishing options
@@ -453,7 +444,7 @@ if [ $rc -eq 0 ]; then
     fi
 
     if [ ! -z "${artifactVersionName}" ]; then
-        echo $PGM": [INFO] **            Artifact name:" ${artifactVersionName}
+        echo $PGM": [INFO] **            Artifact Version:" ${artifactVersionName}
     fi
 
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
