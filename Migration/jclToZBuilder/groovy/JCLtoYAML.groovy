@@ -735,7 +735,7 @@ def generateDSN(def concat, Configuration configuration) {
 			else if (parm.startsWith("DDNAME=")) {
 				def m = parms =~ /(.*)=(.*)/;
 				def ddName = m[0][2]
-				newDSN.ddref = ddName
+				newDSN.DSN = ddName
 			}
 			else if (parm.startsWith("DCB=")) {
 				def value = parm.substring( "DCB=".length() )
@@ -951,7 +951,6 @@ def parseArgs(String[] args) {
 		  cli.o(longOpt: 'outputDir',     args:1, argName: 'output directory',              optionalArg:true,  'Directory in the HFS where all files will be written. If specified, path is considered absolute if it begins with a slash else it is relative path from the users home directory.  Default is jclMigration.')
 		  cli.p(longOpt: 'project',       args:1, argName: 'JCL project',                   optionalArg:false, 'JCL project to be migrated (Required)')
 		  cli.s(longOpt: 'saveOutputs',   args:1, argName: 'save JCLExec outputs',          optionalArg:true,  'Specify true to generated code to save outputs from a JCLExec')
-
     cli.width = 150  
 	
 	def opts = cli.parse(args)
