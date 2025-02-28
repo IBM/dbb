@@ -13,7 +13,7 @@ computePackageInformation() {
     artifactRepositoryDirectory=""      # root directory folder in repo
     artifactVersionName=""              # subfolder in repo path identifying version / origin branch
     tarFileName=""                      # computed tarFileName how it is stored in the artifact repository
-    artifactRepositoryUrl=""            # absolute URL
+    artifactRepositoryAbsoluteUrl=""    # absolute URL
     #############################################
     
     # configuration variable defining the Artifactory repository name pattern 
@@ -84,7 +84,7 @@ computePackageInformation() {
         #############################################
         ### Construct the absolute repository URL
         #############################################
-        artifactRepositoryUrl="${artifactRepositoryUrl}/${artifactRepositoryName}/${artifactRepositoryDirectory}/${artifactVersionName}/${tarFileName}"
+        artifactRepositoryAbsoluteUrl="${artifactRepositoryUrl}/${artifactRepositoryName}/${artifactRepositoryDirectory}/${artifactVersionName}/${tarFileName}"
 
         # unset internal variables
         mainBranchSegment=""
