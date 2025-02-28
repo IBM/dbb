@@ -117,7 +117,7 @@ packageUtilities="${SCRIPT_HOME}/utilities/packageUtils.sh"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -139,6 +139,8 @@ generateSBOM=""
 sbomAuthor=""
 
 publish=""
+buildIdentifier=""
+releaseIdentifier=""
 artifactVersionName=""            # required for publishing to artifact repo
 artifactRepositoryUrl=""          # required if artifactRepositoryPropertyFile not specified
 artifactRepositoryUser=""         # required if artifactRepositoryPropertyFile not specified
@@ -188,10 +190,11 @@ if [ $rc -eq 0 ]; then
     fi
 fi
 
+
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts ":h:w:a:t:b:v:p:us:" opt; do
+    while getopts ":h:w:a:b:i:r:v:p:us:" opt; do
         case $opt in
         h)
             Help
@@ -217,6 +220,17 @@ if [ $rc -eq 0 ]; then
                 break
             fi
             App="$argument"
+            ;;
+        i)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            buildIdentifier="$argument"
             ;;
         b)
             argument="$OPTARG"
@@ -255,16 +269,22 @@ if [ $rc -eq 0 ]; then
             fi
             PipelineType="$argument"
             ;;
-        v)
+        r)
             argument="$OPTARG"
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the artifact version in Artifact repository is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
-            artifactVersionName="$argument"
+            releaseIdentifier="$argument"
+            ;;
+        v)  
+            argument="$OPTARG"
+            rc=4
+            ERRMSG=$PGM": [WARNING] The argument (-v) for naming the version is no longer supported. Please switch to supply the build identifier argument (-i) and for release pipelines the release identifier argument (-r). rc="$rc
+            echo $ERRMSG
             ;;
         \?)
             Help
@@ -281,7 +301,7 @@ if [ $rc -eq 0 ]; then
     done
 fi
 #
-# Validate options
+
 validateOptions() {
     if [ -z "${Workspace}" ]; then
         rc=8
@@ -297,6 +317,12 @@ validateOptions() {
             ERRMSG=$PGM": [ERROR] Build Log Directory ($logDir) was not found. rc="$rc
             echo $ERRMSG
         fi
+    fi
+
+    if [ -z "${buildIdentifier}" ]; then
+        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) has been supplied. A unique name based on version and build id is recommended. Using timestamp"
+        echo $ERRMSG
+        buildIdentifier=$(date +%Y%m%d_%H%M%S)
     fi
 
     # Validate Packaging script
@@ -339,12 +365,6 @@ validatePublishingOptions() {
             echo $ERRMSG
         fi
     else
-
-        if [ -z "${artifactVersionName}" ]; then
-            rc=8
-            ERRMSG=$PGM": [ERROR] Name of the artifact version (artifactVersionName) is required. rc="$rc
-            echo $ERRMSG
-        fi
 
         if [ -z "${artifactRepositoryUrl}" ]; then
             rc=8
@@ -444,7 +464,7 @@ if [ $rc -eq 0 ]; then
     fi
 
     if [ ! -z "${artifactVersionName}" ]; then
-        echo $PGM": [INFO] **            Artifact Version:" ${artifactVersionName}
+        echo $PGM": [INFO] **          Artifact Version:" ${artifactVersionName}
     fi
 
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
@@ -554,7 +574,7 @@ if [ $rc -eq 0 ]; then
 
 
     echo $PGM": [INFO] ${CMD}"
-    /bin/env bash -c "${CMD}"
+    ${CMD}
     rc=$?
 
     if [ $rc -eq 0 ]; then
