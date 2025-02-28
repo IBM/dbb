@@ -14,6 +14,7 @@ computePackageInformation() {
     artifactVersionName=""              # subfolder in repo path identifying version / origin branch
     tarFileName=""                      # computed tarFileName how it is stored in the artifact repository
     artifactRepositoryAbsoluteUrl=""    # absolute URL
+    packageBuildIdentifier=""           # Identifier for Wazi Deploy Application Manifest file
     #############################################
     
     # configuration variable defining the Artifactory repository name pattern 
@@ -59,6 +60,7 @@ computePackageInformation() {
                 
                 # building up the tarFileName
                 tarFileName="${App}-${releaseIdentifier}-${buildIdentifier}.tar"
+                packageBuildIdentifier="${releaseIdentifier}-${buildIdentifier}"
             else
                 #############################################
                 # Conventions for snapshot builds:
@@ -69,6 +71,7 @@ computePackageInformation() {
                 artifactRepositoryDirectory="build"
                 artifactVersionName=${Branch}
                 tarFileName="${App}-${buildIdentifier}.tar"
+                packageBuildIdentifier="${buildIdentifier}"
             fi
             ;;
         *)
@@ -78,6 +81,7 @@ computePackageInformation() {
             artifactRepositoryDirectory="build"
             artifactVersionName=${Branch}
             tarFileName="${App}-${buildIdentifier}.tar"
+            packageBuildIdentifier="${buildIdentifier}"
             ;;
         esac
 

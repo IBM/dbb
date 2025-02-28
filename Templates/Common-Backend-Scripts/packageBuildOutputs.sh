@@ -463,8 +463,8 @@ if [ $rc -eq 0 ]; then
         echo $PGM": [INFO] **     Packaging properties:" ${PkgPropFile}
     fi
 
-    if [ ! -z "${artifactVersionName}" ]; then
-        echo $PGM": [INFO] **          Artifact Version:" ${artifactVersionName}
+    if [ ! -z "${packageBuildIdentifier}" ]; then
+        echo $PGM": [INFO] ** Package Build Identifier:" ${packageBuildIdentifier}
     fi
 
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
@@ -538,6 +538,11 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${artifactVersionName}" ]; then
         CMD="${CMD} --versionName ${artifactVersionName}"
     fi
+    
+    # Wazi Deploy build identifier
+    if [ ! -z "${packageBuildIdentifier}" ]; then
+        CMD="${CMD} --packageBuildIdentifier ${packageBuildIdentifier}"
+    fi
 
     # publishing options
     if [ "$publish" == "true" ]; then
@@ -562,6 +567,7 @@ if [ $rc -eq 0 ]; then
         if [ ! -z "${artifactRepositoryDirectory}" ]; then
             CMD="${CMD} --artifactRepositoryDirectory ${artifactRepositoryDirectory}"
         fi
+
     fi
 
     # SBOM options
