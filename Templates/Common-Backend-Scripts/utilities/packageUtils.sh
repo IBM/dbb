@@ -1,17 +1,24 @@
-#!/usr/bin/env bash
-
 # internal variables
 mainBranchSegment=""
 secondBranchSegment=""
 rc=0
 
-# outputs
-artifactRepositoryAbsoluteUrl=""
-artifactRepositoryName=""
-artifactRepositoryDirectory=""
+
 
 computePackageInformation() {
-
+    #############################################
+    # output environment variables
+    #############################################
+    artifactRepositoryName=""           # identifier of the artifact repo
+    artifactRepositoryDirectory=""      # root directory folder in repo
+    artifactVersionName=""              # subfolder in repo path identifying version / origin branch
+    tarFileName=""                      # computed tarFileName how it is stored in the artifact repository
+    artifactRepositoryUrl=""            # absolute URL
+    #############################################
+    
+    # configuration variable defining the Artifactory repository name pattern 
+    artifactRepositoryRepoPattern="${App}-repo-local"
+    
     branchConvention=(${Branch//// })
 
     if [ $rc -eq 0 ]; then
@@ -38,21 +45,46 @@ computePackageInformation() {
         case $mainBranchSegmentTrimmed in
         "MASTER" | "MAIN" | REL*)
             if [ "${PipelineType}" == "release" ]; then
-                artifactRepositoryDirectory=$(echo ${artifactRepositoryRepoDirectoryPatternReleaseBuilds})
-
+                #############################################
+                # Conventions for release builds:
+                # <artifactRepositoryName>/<artifactRepositoryDirectory>/<releaseIdentifier>/<application>-<releaseIdentifier>-<buildIdentifier>.tar
+                # MortgageApplication-repo-local/release/1.2.3/MortgageApplication-1.2.3-1234567890.tar
+                #############################################
+            
+                # Release builds are captured in the release directory of the artifact repo
+                artifactRepositoryDirectory="release"
+                
+                # artifactVersionName is second identifier in the folder structure and represents the
+                artifactVersionName=${releaseIdentifier}
+                
+                # building up the tarFileName
+                tarFileName="${App}-${releaseIdentifier}-${buildIdentifier}.tar"
             else
-               artifactRepositoryDirectory=$(echo ${artifactRepositoryRepoDirectoryPatternSnapshotBuilds})
+                #############################################
+                # Conventions for snapshot builds:
+                # <artifactRepositoryName>/<artifactRepositoryDirectory>/<branch>/<application>-<buildIdentifier>.tar
+                # Mortgage-repo-local/build/feature/123-enhance-something/Mortgage-123456.tar
+                #############################################
+  
+                artifactRepositoryDirectory="build"
+                artifactVersionName=${Branch}
+                tarFileName="${App}-${buildIdentifier}.tar"
             fi
             ;;
         *)
-            artifactRepositoryDirectory=$(echo ${artifactRepositoryRepoDirectoryPatternSnapshotBuilds})
+            #############################################
+            ### similar to snapshot builds
+            #############################################
+            artifactRepositoryDirectory="build"
+            artifactVersionName=${Branch}
+            tarFileName="${App}-${buildIdentifier}.tar"
             ;;
         esac
 
-        # Fixed convention
-        tarFileName="${App}-${artifactVersionName}.tar"
-
-        artifactRepositoryAbsoluteUrl="${artifactRepositoryUrl}/${artifactRepositoryName}/${artifactRepositoryDirectory}/${artifactVersionName}/${tarFileName}"
+        #############################################
+        ### Construct the absolute repository URL
+        #############################################
+        artifactRepositoryUrl="${artifactRepositoryUrl}/${artifactRepositoryName}/${artifactRepositoryDirectory}/${artifactVersionName}/${tarFileName}"
 
         # unset internal variables
         mainBranchSegment=""
@@ -62,70 +94,3 @@ computePackageInformation() {
     fi
 }
 
-
-
-if [ $rc -eq 0 ]; then
-    while getopts ":a:b:p:v:" opt; do
-        case $opt in
-        a)
-            argument="$OPTARG"
-            nextchar="$(expr substr $argument 1 1)"
-            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                ERRMSG=$PGM": [WARNING] Application Folder Name is required. rc="$rc
-                echo $ERRMSG
-                break
-            fi
-            App="$argument"
-        ;;
-        b)
-            argument="$OPTARG"
-            nextchar="$(expr substr $argument 1 1)"
-            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                ERRMSG=$PGM": [WARNING] Name of the git branch is required. rc="$rc
-                echo $ERRMSG
-                break
-            fi
-            Branch="$argument"
-        ;;
-        p)
-            argument="$OPTARG"
-            nextchar="$(expr substr $argument 1 1)"
-            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
-                echo $INFO
-                break
-            fi
-            PipelineType="$argument"
-        ;;
-        v)
-            argument="$OPTARG"
-            nextchar="$(expr substr $argument 1 1)"
-            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                ERRMSG=$PGM": [WARNING] The name of the artifact version in Artifact repository is required. rc="$rc
-                echo $ERRMSG
-                break
-            fi
-            artifactVersionName="$argument"
-        ;;
-        :)
-            rc=4
-            ERRMSG=$PGM": [WARNING] Option -$OPTARG requires an argument. rc="$rc
-            echo $ERRMSG
-            break
-        ;;
-        esac
-    done
-
-    # Invoke package configuration
-    if [ ! -z "${artifactRepositoryUrl}" ] && [ ! -z "${App}" ] && [ ! -z "${artifactVersionName}" ] && [ ! -z "${PipelineType}" ] && [ ! -z "${Branch}" ]; then
-        computePackageInformation
-        echo $artifactRepositoryAbsoluteUrl
-        #echo $artifactRepositoryName
-        #echo $artifactRepositoryDirectory
-    fi
-
-fi
