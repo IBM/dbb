@@ -174,13 +174,18 @@ def evaluateHttpResponse (HttpResponse response, String action, boolean verbose)
 def run(String[] cliArgs) {
     def cli = new CliBuilder(usage: "ArtifactRepositoryHelpers.groovy [options]", header: '', stopAtNonOption: false)
     cli.h(longOpt:'help', 'Prints this message')
-    cli.u(longOpt:'url', args:1, required:true, 'Artifactory file uri location')
+    cli.u(longOpt:'url', args:1,'Absolute artifact repository url location to store package')
     cli.fU(longOpt:'fileToUpload', args:1, 'The full path of the file to upload')
     cli.fD(longOpt:'fileToDownload', args:1, 'The full path of the file to download')
-    cli.U(longOpt:'user', args:1, required:true, 'Artifactory user id')
-    cli.P(longOpt:'password', args:1, required:true, 'Artifactory password')
+    cli.U(longOpt:'user', args:1,'Artifact repository user id or token')
+    cli.P(longOpt:'password', args:1, 'Artifact repository password')
 	cli.ht(longOpt:'httpClientVersion', args:1, 'HTTP Client protocol version')
     cli.v(longOpt:'verbose', 'Flag to turn on script trace')
+	
+	// recompute options
+    cli.c(longOpt:'computeArtifactUrl', 'Action Flag to identify to recompute the uri of a given package')
+	cli.aRU(longOpt:'artifactRepository.url', args:1, 'Artifact repository Url')
+	cli.aRN(longOpt:'artifactRepositoryName', args:1, '')
     def opts = cli.parse(cliArgs)
 
     // if opt parsing fails, exit
@@ -194,8 +199,19 @@ def run(String[] cliArgs) {
     }
     
     if ( opts.fU) {
+		// assert required CLI options for upload
+		assert opts.u : "Missing option: Absolute artifact repository url location to store package"
+		assert opts.U : "Missing option: Artifact repository user id or token"
+		assert opts.P : "Missing option: Artifactory password"
         upload(opts.u, opts.fU, opts.U, opts.P, opts.v)
-    } else {
+    } else if (opts.fD) {
+		// assert required CLI options for download
+		assert opts.u : "Missing option: Absolute artifact repository url location to store package"
+		assert opts.U : "Missing option: Artifact repository user id or token"
+		assert opts.P : "Missing option: Artifactory password"
         download(opts.u, opts.fD, opts.U, opts.P, opts.v)
-    }
+    } else {
+		println("** No action has been specified for the ArtifactoryHelpers (available action triggers 'fileToUpload' or 'fileToDownload') ");
+	}
 }
+
