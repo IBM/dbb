@@ -639,7 +639,7 @@ def packageOutputs(){
 					HashMap<String,String> packageInfo = new HashMap<String, String>()
 					packageInfo.put("type", "artifactRepository")
 					packageInfo.put("name", props.packageBuildIdentifier)
-					packageUrl = computeAbsoluteRepositoryUrl()
+					packageUrl = computeAbsoluteRepositoryUrl(props)
 					if (packageUrl) packageInfo.put("uri", packageUrl)
 					wdManifestGeneratorUtilities.setPackageInfo(packageInfo)
 				}
@@ -762,7 +762,7 @@ def packageOutputs(){
 			//Set up the artifact repository information to publish the tar file
 			if (props.publish && props.publish.toBoolean() && rc == 0){
 				// Configuring artifact repositoryHelper parms
-				def url = computeAbsoluteRepositoryUrl()
+				def url = computeAbsoluteRepositoryUrl(props)
 
 				def apiKey = props.'artifactRepository.user'
 				def user = props.'artifactRepository.user'
@@ -1186,7 +1186,7 @@ def parseInput(String[] cliArgs){
 //		  version: "1.2.3"
 //		  buildid: "875487"
 				
-		packageUrl = computeAbsoluteRepositoryUrl()
+		packageUrl = computeAbsoluteRepositoryUrl(props)
 		println packageUrl
 		
 	} else {
@@ -1226,7 +1226,7 @@ def parseCopyModeMap(String copyModeMapString) {
 /*
  * build package url
  */
-def computeAbsoluteRepositoryUrl() {
+def computeAbsoluteRepositoryUrl(Properties props) {
 	def String remotePath = (props.versionName) ? (props.versionName + "/" + props.tarFileName) : (props.tarFileLabel + "/" + props.tarFileName)
 	def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + (props.get('artifactRepository.directory') ? "${props.get('artifactRepository.directory')}/" : "") + remotePath).normalize().toString() // Normalized URL
 	return url
