@@ -17,6 +17,7 @@ import java.nio.file.*
 @Field Properties props = new Properties()
 @Field def artifactRepositoryHelpers // Helpers to download
 @Field def applicationDescriptorUtils // Helper to parse Application Descriptor
+@Field def packageBuildOutputs // Helpers to download
 
 // Parse arguments from command-line
 parseArgs(args)
@@ -33,6 +34,15 @@ if (artifactRepositoryHelpersScriptFile.exists()) {
 	artifactRepositoryHelpers = loadScript(artifactRepositoryHelpersScriptFile)
 } else {
 	println("*! [ERROR] The Artifact Repository Helper script '${props.artifactRepositoryHelpersScript}' doesn't exist. Exiting.")
+	System.exit(1)
+}
+
+// Load and verify helpers
+File packageBuildOutputsFile = new File("${props.PackagingScript}")
+if (packageBuildOutputsFile.exists()) {
+	packageBuildOutputs = loadScript(packageBuildOutputsFile)
+} else {
+	println("*! [ERROR] The Package Build Outputs script '${props.PackagingScript}' doesn't exist. Exiting.")
 	System.exit(1)
 }
 
@@ -68,105 +78,123 @@ applicationDescriptor = applicationDescriptorUtils.readApplicationDescriptor(app
 
 ArrayList<ExternalDependency> externalDependencies = new ArrayList<>()
 
-// If there are dependencies
 if (applicationDescriptor.dependencies) {
 
 	// Loop through all dependencies found in AD
 	applicationDescriptor.dependencies.each { dependency ->
 
-		version = dependency.version
+/*		- name: "retirementCalculator"
+		reference: "release"
+		version: "1.2.3"
+		buildid: "875487"
+	  - name: "GenApp"
+		reference: "build"
+		version: "feature/789-enhance-something"
+		buildid: "123456"*/
 
-		if (dependency.type.equals("artifactrepository")) {
-			// download from artifactory
-
-			// TODO: How do we deal with the latest available?
-			//			if (version.equals("latest")) {
-			//				println("* Retrieving production version of application '${applicationDependency.application}'")
-			//				version = applicationDependency.productionVersion
-			//			}
-
-			// Construct the path within the Artifact repo
-			repositoryName="${props.artifactRepositoryNamePattern}".replaceAll("§application§", dependency.name)
-
-			def String artifactUrl
-			def String artifactReference
-			def String artifactRelPath
-			if (dependency.version.startsWith("rel-")){
-				artifactRelPath="${repositoryName}/main/release/${dependency.version}"
-				artifactReference="${artifactRelPath}/${dependency.name}.tar"
-				artifactUrl="${props.artifactRepositoryUrl}/${artifactReference}"
-			} else {
-				artifactRelPath="${repositoryName}"
-				artifactReference="${artifactRelPath}/${dependency.name}.tar"
-				artifactUrl="${props.artifactRepositoryUrl}/${artifactReference}"
-			}
-			println("*** Fetching package '${dependency.name}:${dependency.version}' ")
-
-			// Generating information for documentation in yaml file of retrieved dependencies
-			if (dependency.name != applicationDescriptor.application) {
-				
-				ExternalDependency externalDependency = new ExternalDependency()
-				// Map information to External Dependency Record
-				externalDependency.name = dependency.name // dependency name
-				externalDependency.type = dependency.type // dependency type
-				externalDependency.properties = new HashSet()
-				
-				Property p_uri = new Property()
-				p_uri.key = "uri"
-				p_uri.value = artifactReference
-				externalDependency.properties.add(p_uri)
-				Property p_version = new Property()
-				p_version.key = "version"
-				p_version.value = dependency.version
-				externalDependency.properties.add(p_version)
-				
-				// Store external dependency information
-				externalDependencies.add(externalDependency)
-			}
-
-			String tarFile = "${tmpPackageDir}/${artifactReference}"
-			String includeFolder = "${importFolder}/${dependency.name}"
-
-			if (new File(tarFile).exists()) {
-				println("** Package was already found in package cache at '${tmpPackageDir}/${artifactRelPath}'")
-			} else {
-				String user = props.artifactRepositoryUser
-				String password = props.artifactRepositoryPassword
-
-				if (!(new File("${tmpPackageDir}/${artifactRelPath}").exists())) (new File("${tmpPackageDir}/${artifactRelPath}")).mkdirs()
-
-				println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tmpPackageDir}/${artifactRelPath}.")
-				def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile as String, user, password, true)
-				println "download complete $rc" // TODO: Error handling in helper
-			}
-
-
-			File includeFolderFile = new File(includeFolder)
-			if (!includeFolderFile.exists()) {
-				includeFolderFile.mkdirs()
-			}
-
-
-			println("** Expanding tar file '$tarFile' to '$includeFolder' ")
-
-			def processCmd = [
-				"/bin/sh",
-				"-c",
-				"tar -C $includeFolder -xvf $tarFile"
-			]
-
-			def rc = runProcess(processCmd)
-			if (rc != 0) {
-				println("** [ERROR] Failed to untar '$tarFile' to '$includeFolder' with rc=$rc")
-				System.exit(1)
-			}
-
-			// Delete temporary download location if cache is not used
-			if (!(props.enablePackageCache && props.enablePackageCache.toBoolean())) {tmpPackageDir.deleteDir()}
-
+		// compute tar file name based on build type
+		if (dependency.reference.equalsIgnoreCase("release")) {
+			assert dependency.version : "Missing dependency version in dependency record"
+			assert dependency.buildid : "Missing buildid in dependency record"
+			props.put("tarFileName","${dependency.name}-${dependency.version}-${dependency.buildid}.tar")
 		} else {
-			println("* Dependency Types other than 'artifactrepository' are not yet implemented. Exiting.")
+			props.put("tarFileName","${dependency.name}-${dependency.buildid}.tar")	
+		}
+		props.put("versionName","${dependency.version}") // compute the version name being part of the path
+		props.put("artifactRepository.directory", "${dependency.reference}") // compute the main directory to classify builds
+		props.put("artifactRepository.repo", "${dependency.name}-repo-local") // Artifact repository name (hard-coded again)
+		
+		// The absolute url the package in artifact repo
+		artifactUrl = packageBuildOutputs.computeAbsoluteRepositoryUrl(props)
+		
+		println artifactUrl
+		// TODO: How do we deal with the latest available?
+
+		// Construct the path within the Artifact repo
+		repositoryName="${props.artifactRepositoryNamePattern}".replaceAll("§application§", dependency.name)
+		// retrieve path without artifact url
+		artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
+		
+		println("*** Fetching package '${dependency.name}:${artifactUrl}' ")
+
+		// Generating information for documentation in yaml file of retrieved dependencies
+		if (dependency.name != applicationDescriptor.application) {
+
+			ExternalDependency externalDependency = new ExternalDependency()
+			// Map information to External Dependency Record
+			externalDependency.name = dependency.name // dependency name
+			externalDependency.properties = new HashSet()
+
+			// Add url
+			Property p_uri = new Property()
+			p_uri.key = "uri"
+			p_uri.value = artifactUrl
+			externalDependency.properties.add(p_uri)
+			
+			// type
+			Property p_version = new Property()
+			p_version.key = "version"
+			p_version.value = dependency.version
+			externalDependency.properties.add(p_version)
+			
+			// reference
+			Property p_reference = new Property()
+			p_reference.key = "reference"
+			p_reference.value = dependency.reference
+			externalDependency.properties.add(p_reference)
+		
+			// buildid
+			Property p_buildid = new Property()
+			p_buildid.key = "buildid"
+			p_buildid.value = dependency.buildid
+			externalDependency.properties.add(p_buildid)
+
+			// Store external dependency information
+			externalDependencies.add(externalDependency)
+		}
+
+		// download from artifact repo
+		
+		// foldername in workspace directory
+		String includeFolder = "${importFolder}/${dependency.name}"
+
+		if (new File(props.tarFileName).exists()) {
+			println("** Package was already found in package cache at '${tmpPackageDir}/${artifactRelPath}'")
+		} else {
+			String user = props.artifactRepositoryUser
+			String password = props.artifactRepositoryPassword
+
+			if (!(new File("${tmpPackageDir}/${artifactRelPath}").exists())) (new File("${tmpPackageDir}/${artifactRelPath}")).mkdirs()
+
+			println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tmpPackageDir}/${artifactRelPath}.")
+			def rc = artifactRepositoryHelpers.download(artifactUrl, props.tarFileName, user, password, true)
+			println "download complete $rc" // TODO: Error handling in helper
+		}
+
+
+		File includeFolderFile = new File(includeFolder)
+		if (!includeFolderFile.exists()) {
+			includeFolderFile.mkdirs()
+		}
+
+
+		println("** Expanding tar file '${props.tarFileName}' to '$includeFolder' ")
+
+		def processCmd = [
+			"/bin/sh",
+			"-c",
+			"tar -C $includeFolder -xvf ${props.tarFileName}"
+		]
+
+		def rc = runProcess(processCmd)
+		if (rc != 0) {
+			println("** [ERROR] Failed to untar '$tarFile' to '$includeFolder' with rc=$rc")
 			System.exit(1)
+		}
+
+		// Delete temporary download location if cache is not used
+		if (!(props.enablePackageCache && props.enablePackageCache.toBoolean())) {
+			tmpPackageDir.deleteDir()
 		}
 	}
 }
@@ -307,7 +335,7 @@ def parseArgs(String[] args) {
 
 	if(opts.c){
 		props.packageCacheLocation = opts.c
-	} 
+	}
 
 	if (opts.p) {
 		def pipelineBackendConfigFile = new File(opts.p)
@@ -316,11 +344,14 @@ def parseArgs(String[] args) {
 			Properties temporaryProperties = new Properties()
 			pipelineBackendConfigFile.withInputStream { temporaryProperties.load(it) }
 			if(temporaryProperties.get("dbbCommunityRepoRootDir")) props.put("dbbCommunityRepoRootDir", temporaryProperties.get("dbbCommunityRepoRootDir"))
+			// helper scripts
 			if(temporaryProperties.get("artifactRepositoryHelpersScript")) props.put("artifactRepositoryHelpersScript", temporaryProperties.get("artifactRepositoryHelpersScript"))
 			if(temporaryProperties.get("applicationDescriptorHelperUtils")) props.put("applicationDescriptorHelperUtils", temporaryProperties.get("applicationDescriptorHelperUtils"))
-			if(temporaryProperties.get("artifactRepositoryUrl")) props.put("artifactRepositoryUrl", temporaryProperties.get("artifactRepositoryUrl"))
-			if(temporaryProperties.get("artifactRepositoryUser")) props.put("artifactRepositoryUser", temporaryProperties.get("artifactRepositoryUser"))
-			if(temporaryProperties.get("artifactRepositoryPassword")) props.put("artifactRepositoryPassword", temporaryProperties.get("artifactRepositoryPassword"))
+			if(temporaryProperties.get("PackagingScript")) props.put("PackagingScript", temporaryProperties.get("PackagingScript"))
+			// artifact repo configuration properties / Map CBS pipelineBackend.config to script properties
+			if(temporaryProperties.get("artifactRepositoryUrl")) props.put("artifactRepository.url", temporaryProperties.get("artifactRepositoryUrl"))
+			if(temporaryProperties.get("artifactRepositoryUser")) props.put("artifactRepository.user", temporaryProperties.get("artifactRepositoryUser"))
+			if(temporaryProperties.get("artifactRepositoryPassword")) props.put("artifactRepository.password", temporaryProperties.get("artifactRepositoryPassword"))
 			if(temporaryProperties.get("artifactRepositoryNamePattern")) props.put("artifactRepositoryNamePattern", temporaryProperties.get("artifactRepositoryNamePattern"))
 			if(temporaryProperties.get("enablePackageCache")) props.put("enablePackageCache", temporaryProperties.get("enablePackageCache"))
 		} else {
@@ -352,7 +383,6 @@ def runProcess(ArrayList cmd){
 
 class ExternalDependency {
 	String name
-	String type
 	HashSet<Property> properties = new HashSet<>()
 }
 
