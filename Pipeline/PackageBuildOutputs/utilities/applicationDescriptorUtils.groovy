@@ -46,10 +46,23 @@ class Baseline {
     String baseline
 }
 
+/*
+- name: "retirementCalculator"
+  reference: "release"
+  version: "1.2.3"
+  buildid: "875487"
+- name: "GenApp"
+  reference: "build"
+  version: "feature/789-enhance-something"
+  buildid: "123456"
+*/
+
+
 class DependencyDescriptor {
     String name
+	String reference
     String version
-    String type
+	String buildid
 }
 
 /**
@@ -193,18 +206,20 @@ def removeFileDefinition(ApplicationDescriptor applicationDescriptor, String sou
  * Method to add an application dependency 
  */
 
-def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String applicationDependency, String version, String type) {
+def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String applicationDependency, String reference, String version, String buildid) {
     if (!applicationDescriptor.dependencies) {
         applicationDescriptor.dependencies = new ArrayList<DependencyDescriptor>()
     }
+	// skip readding same/similar entries
     def existingDependencies = applicationDescriptor.dependencies.findAll() {
-        it.name.equals(applicationDependency) & it.type.equals(type)
+        it.name.equals(applicationDependency)
     }
     if (!existingDependencies) {
         def dependency = new DependencyDescriptor()
         dependency.name = applicationDependency
+		dependency.reference = reference
         dependency.version = version
-        dependency.type = type
+        dependency.buildid = buildid
         applicationDescriptor.dependencies.add(dependency)
         applicationDescriptor.dependencies.sort {
             it.name
