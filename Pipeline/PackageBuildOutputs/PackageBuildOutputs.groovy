@@ -1187,7 +1187,7 @@ def parseInput(String[] cliArgs){
 //		  buildid: "875487"
 				
 		packageUrl = computeAbsoluteRepositoryUrl(props)
-		println packageUrl
+		println "packageUrl=$packageUrl"
 		
 	} else {
 		// continue with standard packaging
