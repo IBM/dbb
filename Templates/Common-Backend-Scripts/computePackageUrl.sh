@@ -1,0 +1,473 @@
+#!/bin/env bash
+#===================================================================================
+# NAME: computePackageUrl.sh
+#
+# DESCRIPTION: The purpose of this script is to recompute the URL,
+# where a package got published/stored.
+#
+# SYNTAX: See Help() section below for usage
+#
+# RETURNS:
+#
+#    rc         - Return Code
+#
+# RETURN CODES:
+#
+#    0          - Successful
+#    4          - Warning message(s) issued.  See Console messages
+#    8          - Error encountered.  See Console messages
+#
+# NOTE(S):
+#
+#   1. Review the common naming conventions where tar files get stored.
+#
+#===================================================================================
+Help() {
+    echo $PGM" - Invoke Compute Package URL ("$PGMVERS")                "
+    echo "                                                              "
+    echo "DESCRIPTION: The purpose of this script is to compute         "
+    echo "the URL where a package got published/stored                  "
+    echo "                                                              "
+    echo "Syntax:                                                       "
+    echo "                                                              "
+    echo "       "$PGM" [Options]                                       "
+    echo "                                                              "
+    echo "Options:                                                      "
+    echo "                                                              "
+    echo "  Mandatory parameters                                        "
+    echo "                                                              "
+    echo "                                                              "
+    echo "       -w <workspace>      - Directory Path to a unique       "
+    echo "                             working directory                "
+    echo "                             Either an absolute path          "
+    echo "                             or relative path.                "
+    echo "                             If a relative path is provided,  "
+    echo "                             buildRootDir and the workspace   "
+    echo "                             path are combined                "
+    echo "                             Default=None, Required.          "
+    echo "                                                              "
+    echo "                 Ex: MortgageApplication/main/build-1         "
+    echo "                                                              "
+    echo "       -a <Application>    - Application name                 "
+    echo "                             Used to compute                  "
+    echo "                             Artifact repository name.        "
+    echo "                                                              "
+    echo "                 Ex: MortgageApplication                      "
+    echo "                                                              "
+    echo "       -p <pipelineType>  - Type of the pipeline to           "
+    echo "                            control in which directory builds "
+    echo "                            are stored in the artifact repo   "
+    echo "                            Accepted values:                  "
+    echo "                            build -                           "
+    echo "                             development builds               "
+    echo "                            release -                         "
+    echo "                             builds with options for          "
+    echo "                             performance optimized            "
+    echo "                             executables for production env   "
+    echo "                                                              "
+    echo "       -b <gitBranch>      - Name of the git branch.          "
+    echo "                                                              "
+    echo "                 Ex: main                                     "
+    echo "                                                              "
+    echo "                                                              "
+    echo "       -i <buildIdentifier>  - A unique build identifier      "
+    echo "                               typically the buildID of the   "
+    echo "                               pipeline                       "
+    echo "                                                              "
+    echo "       -r <releaseIdentifier> - The release identifier for    "
+    echo "                               release pipeline builds        "
+    echo "                               (optional)                     "
+    echo "                                                              "
+    echo "                                                              "
+    echo "       -h                  - Display this Help.               "
+
+    exit 0
+}
+
+# Customization
+# Central configuration file leveraged by the backend scripts
+SCRIPT_HOME="$(dirname "$0")"
+pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+packageUtilities="${SCRIPT_HOME}/utilities/packageUtils.sh"
+
+# Path and File Name to the advanced debug options.
+#log4j2="-Dlog4j.configurationFile=file:/../log4j2.properties"
+
+#
+# Internal Variables
+#set -x                  # Uncomment to enable shell script debug
+#export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
+
+PGM=$(basename "$0")
+PGMVERS="1.00"
+USER=$(whoami)
+SYS=$(uname -Ia)
+
+#
+# Set initialization
+#
+rc=0
+ERRMSG=""
+App=""
+tarFileName=""
+PipelineType=""
+Branch=""
+
+buildIdentifier=""
+releaseIdentifier=""
+
+artifactVersionName=""            # required for publishing to artifact repo
+artifactRepositoryUrl=""          # required if artifactRepositoryPropertyFile not specified
+artifactRepositoryName=""         # required if artifactRepositoryPropertyFile not specified
+artifactRepositoryDirectory=""    # required if artifactRepositoryPropertyFile not specified
+artifactRepositoryPropertyFile="" # alternative to above cli parms
+
+outputFile=""
+
+HELP=$1
+
+if [ "$HELP" = "?" ]; then
+    Help
+fi
+
+# Validate Shell environment
+currentShell=$(ps -p $$ | grep bash)
+if [ -z "${currentShell}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERROR] The scripts are designed to run in bash. You are running a different shell. rc=${rc}. \n. $(ps -p $$)."
+    echo $ERRMSG
+fi
+#
+
+# Script label
+if [ $rc -eq 0 ]; then
+    echo $PGM": [INFO] Compute Package Url. Version="$PGMVERS
+fi
+
+# Read and import pipeline configuration
+if [ $rc -eq 0 ]; then
+    if [ ! -f "${pipelineConfiguration}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Pipeline Configuration File (${pipelineConfiguration}) was not found. rc="$rc
+        echo $ERRMSG
+    else
+        source $pipelineConfiguration
+    fi
+fi
+
+# Source packaging helper
+if [ $rc -eq 0 ]; then
+    if [ ! -f "${packageUtilities}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Packaging Utils (${packageUtilities}) was not found. rc="$rc
+        echo $ERRMSG
+    else
+        source $packageUtilities
+    fi
+fi
+
+#
+# Get Options
+if [ $rc -eq 0 ]; then
+    while getopts ":h:w:a:b:i:r:p:" opt; do
+        case $opt in
+        h)
+            Help
+            ;;
+        w)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] Build Workspace Folder Name is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            Workspace="$argument"
+            ;;
+        a)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] Application Folder Name is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            App="$argument"
+            ;;
+        i)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            buildIdentifier="$argument"
+            ;;
+        b)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] Name of the git branch is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            Branch="$argument"
+            ;;
+        p)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
+                echo $INFO
+                break
+            fi
+            PipelineType="$argument"
+            ;;
+        r)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            releaseIdentifier="$argument"
+            ;;
+        \?)
+            Help
+            rc=1
+            break
+            ;;
+        :)
+            rc=4
+            ERRMSG=$PGM": [WARNING] Option -$OPTARG requires an argument. rc="$rc
+            echo $ERRMSG
+            break
+            ;;
+        esac
+    done
+fi
+#
+
+validateOptions() {
+
+    if [ -z "${Workspace}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Unique Workspace parameter (-w) is required. rc="$rc
+        echo $ERRMSG
+    else
+
+        # Compute the logDir parameter
+        logDir=$(getLogDir)
+
+        if [ ! -d "$logDir" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Build Log Directory ($logDir) was not found. rc="$rc
+            echo $ERRMSG
+        fi
+        
+        outputFile=$(getLogDir)/${tempVersionFile}
+    fi
+
+    if [ -z "${buildIdentifier}" ]; then
+        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) has been supplied. A unique name based on version and build id is recommended. Using timestamp"
+        echo $ERRMSG
+        buildIdentifier=$(date +%Y%m%d_%H%M%S)
+    fi
+
+    # Validate Packaging script
+    if [ ! -f "${PackagingScript}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERR] Unable to locate ${PackagingScript}. rc="$rc
+        echo $ERRMSG
+    fi
+
+}
+
+# function to validate publishing input options
+validatePackagingOptions() {
+
+    if [ -z "${App}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
+        echo $ERRMSG
+    fi
+
+    if [ -z "${Branch}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Branch Name parameter (-b) is required. rc="$rc
+        echo $ERRMSG
+    fi
+
+    if [ -z "${artifactRepositoryUrl}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] URL to artifact repository (artifactRepositoryUrl) is required. rc="$rc
+        echo $ERRMSG
+    fi
+
+    if [ -z "${artifactRepositoryName}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] artifact repository name to store the build (artifactRepositoryName) is required. rc="$rc
+        echo $ERRMSG
+    fi
+
+    if [ -z "${artifactRepositoryDirectory}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Directory path in the repository to store the build (artifactRepositoryDirectory) is required. rc="$rc
+        echo $ERRMSG
+    fi
+
+    # If pipeline type is specified, evaluate the value
+    if [ ! -z "${PipelineType}" ]; then
+        tmp1=$(echo $PipelineType | tr '[:upper:]' '[:lower:]')
+
+        case $tmp1 in
+        "build")
+            PipelineType=$tmp1
+            ;;
+        "release")
+            PipelineType=$tmp1
+            ;;
+        "preview")
+            rc=4
+            ERRMSG=$PGM": [WARN] Default Pipeline Type : ${PipelineType} not supported for packaging."
+            echo $ERRMSG
+            ;;
+        *)
+            rc=4
+            ERRMSG=$PGM": [WARN] Inavlid Pipeline Type : ${PipelineType} specified."
+            echo $ERRMSG
+            ;;
+        esac
+
+    fi
+}
+
+# Call validate input options
+if [ $rc -eq 0 ]; then
+    validateOptions
+fi
+
+# compute packaging parameters
+if [ $rc -eq 0 ]; then
+    # invoke function in packageUtils
+    computePackageInformation
+fi
+
+# Call validate packaging options
+if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
+    validatePackagingOptions
+fi
+
+#
+# Ready to go
+if [ $rc -eq 0 ]; then
+    echo $PGM": [INFO] **************************************************************"
+    echo $PGM": [INFO] ** Started - Package Build Outputs on HOST/USER: ${SYS}/${USER}"
+    if [ ! -z "${App}" ]; then
+        echo $PGM": [INFO] **              Application:" ${App}
+    fi
+    if [ ! -z "${Branch}" ]; then
+        echo $PGM": [INFO] **                   Branch:" ${Branch}
+    fi
+    if [ ! -z "${PipelineType}" ]; then
+        echo $PGM": [INFO] **         Type of pipeline:" ${PipelineType}
+    fi
+    if [ ! -z "${tarFileName}" ]; then
+        echo $PGM": [INFO] **            Tar file Name:" ${tarFileName}
+    fi
+    echo $PGM": [INFO] **     PackagingScript Path:" ${PackagingScript}
+
+    if [ ! -z "${packageBuildIdentifier}" ]; then
+        echo $PGM": [INFO] ** Package Build Identifier:" ${packageBuildIdentifier}
+    fi
+
+    if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
+        echo $PGM": [INFO] **  ArtifactRepo properties:" ${artifactRepositoryPropertyFile}
+    fi
+
+    if [ ! -z "${artifactRepositoryUrl}" ]; then
+        echo $PGM": [INFO] **         ArtifactRepo Url:" ${artifactRepositoryUrl}
+    fi
+
+    if [ ! -z "${artifactRepositoryName}" ]; then
+        echo $PGM": [INFO] **   ArtifactRepo Repo name:" ${artifactRepositoryName}
+    fi
+    if [ ! -z "${artifactRepositoryDirectory}" ]; then
+        echo $PGM": [INFO] **    ArtifactRepo Repo Dir:" ${artifactRepositoryDirectory}
+    fi
+    
+        echo $PGM": [INFO] **           Output file:" ${outputFile}
+    
+    echo $PGM": [INFO] **                 DBB_HOME:" ${DBB_HOME}
+    echo $PGM": [INFO] **************************************************************"
+    echo ""
+fi
+
+#
+# Invoke the Package Build Outputs script
+if [ $rc -eq 0 ]; then
+    echo $PGM": [INFO] Invoking the Package Build Outputs script to compute Package Url."
+
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${PackagingScript} --computePackageUrl --workDir /tmp"
+
+    # add tarfile name
+    if [ ! -z "${tarFileName}" ]; then
+        CMD="${CMD} --tarFileName ${tarFileName}"
+    fi
+
+    # application name
+    if [ ! -z "${App}" ]; then
+        CMD="${CMD} --application ${App}"
+    fi
+
+    # branch name
+    if [ ! -z "${Branch}" ]; then
+        CMD="${CMD} --branch ${Branch}"
+    fi
+
+    # artifactVersionName
+    if [ ! -z "${artifactVersionName}" ]; then
+        CMD="${CMD} --versionName ${artifactVersionName}"
+    fi
+
+    # Wazi Deploy build identifier
+    if [ ! -z "${packageBuildIdentifier}" ]; then
+        CMD="${CMD} --packageBuildIdentifier ${packageBuildIdentifier}"
+    fi
+
+    # Artifact repo options
+    if [ ! -z "${artifactRepositoryUrl}" ]; then
+        CMD="${CMD} --artifactRepositoryUrl \"${artifactRepositoryUrl}\""
+    fi
+
+    if [ ! -z "${artifactRepositoryName}" ]; then
+        CMD="${CMD} --artifactRepositoryName ${artifactRepositoryName}"
+    fi
+    if [ ! -z "${artifactRepositoryDirectory}" ]; then
+        CMD="${CMD} --artifactRepositoryDirectory ${artifactRepositoryDirectory}"
+    fi
+
+    echo $PGM": [INFO] ${CMD}"
+    ${CMD} | grep "packageUrl=" > $outputFile
+    rc=$?
+
+    if [ $rc -eq 0 ]; then
+        ERRMSG=$PGM": [INFO] Compute Package Url Complete. Results stored in $outputFile. Printing file contents. rc="$rc
+        echo $ERRMSG
+        cat $outputFile
+    else
+        ERRMSG=$PGM": [ERR] Compute Package Url Failed. Check Console for details. rc="$rc
+        echo $ERRMSG
+        rc=12
+    fi
+fi
+
+exit $rc
