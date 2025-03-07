@@ -132,6 +132,8 @@ Workspace=""
 Debug=""
 HELP=$1
 
+tarFileName="" # variable to store the package tar
+
 if [ "$HELP" = "?" ]; then
   Help
 fi
@@ -332,6 +334,15 @@ validateOptions() {
     DeploymentPlanReport="$(wdDeployPackageDir)/${DeploymentPlanReport}"
   fi
 
+
+  if [ -z "${packageUrl}" ]; then
+        echo $PGM": [INFO] Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
+        PackageInputFile="${packageUrl}"
+        ## Take the last segment of the URL ... 
+        tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
+        PackageOutputFile="$(getLogDir)/${tarFileName}"
+  fi
+
   # validate package input file
   if [ -z "${PackageInputFile}" ]; then
     rc=8
@@ -344,12 +355,7 @@ validateOptions() {
         PackageInputFile="$(getLogDir)/${PackageInputFile}"
     fi
   fi
-  if [ ! -f "${PackageInputFile}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Package Input File (${PackageInputFile}) was not found. rc="$rc
-    echo $ERRMSG
-  fi
-
+  
   # validate config file
   if [ -z "${ConfigFile}" ]; then
     ConfigFile="${wdDeployArtifactoryConfig}"
@@ -358,14 +364,13 @@ validateOptions() {
   if [ ! -z "${ConfigFile}" ]; then
     if [ ! -f "${ConfigFile}" ]; then
       rc=8
-      ERRMSG=$PGM": [ERROR] Specified Wazi Deploy Artifactory Configuration file (${ConfigFile}) was not found. rc="$rc
+      ERRMSG=$PGM": [ERROR] Specified Wazi Deploy Artifact repository configuration file (${ConfigFile}) was not found. rc="$rc
       echo $ERRMSG
     fi
   fi
 
   # compute the output file
   if [ -z "${PackageOutputFile}" ] && [ ! -z "${ConfigFile}" ]; then
-    # c
     checkWorkspace
     PackageOutputFile="$(wdDeployPackageDir)"
   fi
@@ -374,6 +379,14 @@ validateOptions() {
     PackageOutputFile="$(wdDeployPackageDir)/${PackageOutputFile}"
   fi
 }
+
+# When publishing is enabled, try reading the tempVersionFile
+# that needs to be computed before this step.
+if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
+    if [ -f "$$(getLogDir)/${tempVersionFile}" ]; then 
+        source $(getLogDir)/${tempVersionFile}
+    fi 
+fi
 
 # Call validate Options
 if [ $rc -eq 0 ]; then
@@ -435,7 +448,7 @@ if [ $rc -eq 0 ]; then
     CommandLine+=${Debug}
   fi
   echo ${CommandLine} 2>&1
-  ${CommandLine} 2>&1
+  #${CommandLine} 2>&1
   rc=$?
 
   if [ $rc -ne 0 ]; then
