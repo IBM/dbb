@@ -334,9 +334,11 @@ validateOptions() {
     DeploymentPlanReport="$(wdDeployPackageDir)/${DeploymentPlanReport}"
   fi
 
-
-  if [ -z "${packageUrl}" ]; then
+  echo "${packageUrl}"
+  
+  if [ ! -z "${packageUrl}" ]; then
         echo $PGM": [INFO] Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
+        
         PackageInputFile="${packageUrl}"
         ## Take the last segment of the URL ... 
         tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
@@ -383,8 +385,11 @@ validateOptions() {
 # When publishing is enabled, try reading the tempVersionFile
 # that needs to be computed before this step.
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
-    if [ -f "$$(getLogDir)/${tempVersionFile}" ]; then 
-        source $(getLogDir)/${tempVersionFile}
+    if [ -f "$(getLogDir)/${tempVersionFile}" ]; then
+        echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${tempVersionFile}"
+        source "$(getLogDir)/${tempVersionFile}"
+    else 
+        echo $PGM": [INFO] ** $(getLogDir)/${tempVersionFile} not found"
     fi 
 fi
 
