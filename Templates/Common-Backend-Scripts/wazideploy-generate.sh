@@ -424,15 +424,15 @@ validateOptions() {
     DeploymentPlanReport="$(wdDeployPackageDir)/${DeploymentPlanReport}"
   fi
 
-  echo "${packageUrl}"
 
+  # When a the packageUrl environment variable found in the file
   if [ ! -z "${packageUrl}" ]; then
-    echo $PGM": [INFO] Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
-
-    PackageInputFile="${packageUrl}"
-    ## Take the last segment of the URL ...
-    tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
-    PackageOutputFile="$(getLogDir)/${tarFileName}"
+        echo $PGM": [INFO] Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
+        
+        PackageInputFile="${packageUrl}"
+        ## Take the last segment of the URL to define the tarFileName
+        tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
+        PackageOutputFile="$(getLogDir)/${tarFileName}"
   fi
 
   # validate package input file
@@ -442,9 +442,9 @@ validateOptions() {
     echo $ERRMSG
   else
     # check for relative path
-    if [[ ! ${PackageInputFile:0:1} == "/" ]]; then
-      checkWorkspace
-      PackageInputFile="$(getLogDir)/${PackageInputFile}"
+    if [ ! ${PackageInputFile:0:1} == "/" ] && [ -z "${packageUrl}" ] ; then 
+        checkWorkspace
+        PackageInputFile="$(getLogDir)/${PackageInputFile}"
     fi
   fi
 
@@ -567,7 +567,7 @@ if [ $rc -eq 0 ]; then
     CommandLine+=${Debug}
   fi
   echo ${CommandLine} 2>&1
-  #${CommandLine} 2>&1
+  ${CommandLine} 2>&1
   rc=$?
 
   if [ $rc -ne 0 ]; then
