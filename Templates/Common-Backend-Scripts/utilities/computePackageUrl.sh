@@ -87,8 +87,8 @@ Help() {
 # Customization
 # Central configuration file leveraged by the backend scripts
 SCRIPT_HOME="$(dirname "$0")"
-pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
-packageUtilities="${SCRIPT_HOME}/utilities/packageUtils.sh"
+pipelineConfiguration="${SCRIPT_HOME}/../pipelineBackend.config"
+packageUtilities="${SCRIPT_HOME}/packageUtils.sh"
 
 # Path and File Name to the advanced debug options.
 #log4j2="-Dlog4j.configurationFile=file:/../log4j2.properties"
@@ -196,17 +196,6 @@ if [ $rc -eq 0 ]; then
             fi
             App="$argument"
             ;;
-        i)
-            argument="$OPTARG"
-            nextchar="$(expr substr $argument 1 1)"
-            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
-                echo $ERRMSG
-                break
-            fi
-            buildIdentifier="$argument"
-            ;;
         b)
             argument="$OPTARG"
             nextchar="$(expr substr $argument 1 1)"
@@ -228,6 +217,17 @@ if [ $rc -eq 0 ]; then
                 break
             fi
             PipelineType="$argument"
+            ;;
+        i)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            buildIdentifier="$argument"
             ;;
         r)
             argument="$OPTARG"

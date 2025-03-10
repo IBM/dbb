@@ -61,8 +61,8 @@ Help() {
   echo "                                           If a relative path is provided,"
   echo "                                           the log directory is suffixed  "
   echo "                                           where PackageBuildOutputs      "
-  echo "                                           stores outputs                 "  
-  echo "                                           Default=None, Required.        "  
+  echo "                                           stores outputs                 "
+  echo "                                           Default=None, Required.        "
   echo "                                                                          "
   echo "                 Ex: MortgageApplication.tar                              "
   echo "                                                                          "
@@ -97,6 +97,33 @@ Help() {
   echo "                                            See wdDeployArtifactoryConfig "
   echo "                                            in pipelineBackend.config     "
   echo "                                                                          "
+  echo "       -P <pipelineType>              - Type of the pipeline to           "           
+  echo "                                        control in which directory builds "
+  echo "                                        are stored in the artifact repo   "
+  echo "                                        Accepted values:                  "
+  echo "                                        build -                           "
+  echo "                                         development builds               "
+  echo "                                        release -                         "
+  echo "                                         builds with options for          "
+  echo "                                         performance optimized            "
+  echo "                                         executables for production env   "
+  echo "                                        (optional)                        "
+  echo "                                                                          "
+  echo "       -b <gitBranch>                    - Name of the git branch.        "
+  echo "                                           (optional)                     "
+  echo "                                                                          "
+  echo "                             Ex: main                                     "
+  echo "                                                                          "
+  echo "                                                                          "
+  echo "       -I <buildIdentifier>              - A unique build identifier      "
+  echo "                                           typically the buildID of the   "
+  echo "                                           pipeline                       "
+  echo "                                           (optional)                     "
+  echo "                                                                          "
+  echo "       -R <releaseIdentifier>             - The release identifier for    "
+  echo "                                           release pipeline builds        "
+  echo "                                           (optional)                     "
+  echo "                                                                          "
   echo "       -d                                - Debug tracing flag             "
   echo " "
   exit 0
@@ -108,6 +135,7 @@ Help() {
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+computePackageUrlUtil="${SCRIPT_HOME}/utilities/computePackageUrl.sh"
 # Customization - End
 
 #
@@ -122,13 +150,23 @@ SYS=$(uname -Ia)
 
 rc=0
 ERRMSG=""
+# Wazi Deploy configuration variables
 DeploymentMethod=""
 DeploymentPlan=""
 DeploymentPlanReport=""
 PackageInputFile=""
 PackageOutputFile=""
 ConfigFile=""
+
+# CBS configuration variables
 Workspace=""
+PipelineType="" # takes cli option P
+Branch=""       # takes cli option b
+
+# Package identifier variables
+buildIdentifier=""   # takes cli option I
+releaseIdentifier="" # takes cli option R
+
 Debug=""
 HELP=$1
 
@@ -162,10 +200,19 @@ if [ $rc -eq 0 ]; then
   fi
 fi
 
+# Read and import pipeline configuration
+if [ $rc -eq 0 ]; then
+  if [ ! -f "${computePackageUrlUtil}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERROR] The Package Url Util (${computePackageUrlUtil}) was not found. rc="$rc
+    echo $ERRMSG
+  fi
+fi
+
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "hdw:m:p:r:i:o:c:" opt; do
+  while getopts "hdw:m:p:r:i:o:c:I:R:P:b:" opt; do
     case $opt in
     h)
       Help
@@ -258,6 +305,50 @@ if [ $rc -eq 0 ]; then
       Debug=" -d"
       ;;
 
+    b)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] Name of the git branch is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      Branch="$argument"
+      ;;
+    P)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
+        echo $INFO
+        break
+      fi
+      PipelineType="$argument"
+      ;;
+    I)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      buildIdentifier="$argument"
+      ;;
+    R)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      releaseIdentifier="$argument"
+      ;;
     \?)
       Help
       rc=1
@@ -318,10 +409,9 @@ validateOptions() {
     fi
   fi
   # if relative path
-  if [[ ! ${DeploymentPlan:0:1} == "/" ]] ; then
+  if [[ ! ${DeploymentPlan:0:1} == "/" ]]; then
     DeploymentPlan="$(wdDeployPackageDir)/${DeploymentPlan}"
   fi
-
 
   # compute deployment plan report if not specified
   if [ -z "${DeploymentPlanReport}" ]; then
@@ -330,19 +420,19 @@ validateOptions() {
     DeploymentPlanReport="$(wdDeployPackageDir)/${wdDeploymentPlanReportName}"
   fi
   # if relative path
-  if [[ ! ${DeploymentPlanReport:0:1} == "/" ]] ; then
+  if [[ ! ${DeploymentPlanReport:0:1} == "/" ]]; then
     DeploymentPlanReport="$(wdDeployPackageDir)/${DeploymentPlanReport}"
   fi
 
   echo "${packageUrl}"
-  
+
   if [ ! -z "${packageUrl}" ]; then
-        echo $PGM": [INFO] Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
-        
-        PackageInputFile="${packageUrl}"
-        ## Take the last segment of the URL ... 
-        tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
-        PackageOutputFile="$(getLogDir)/${tarFileName}"
+    echo $PGM": [INFO] Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
+
+    PackageInputFile="${packageUrl}"
+    ## Take the last segment of the URL ...
+    tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
+    PackageOutputFile="$(getLogDir)/${tarFileName}"
   fi
 
   # validate package input file
@@ -352,12 +442,12 @@ validateOptions() {
     echo $ERRMSG
   else
     # check for relative path
-    if [[ ! ${PackageInputFile:0:1} == "/" ]] ; then 
-        checkWorkspace
-        PackageInputFile="$(getLogDir)/${PackageInputFile}"
+    if [[ ! ${PackageInputFile:0:1} == "/" ]]; then
+      checkWorkspace
+      PackageInputFile="$(getLogDir)/${PackageInputFile}"
     fi
   fi
-  
+
   # validate config file
   if [ -z "${ConfigFile}" ]; then
     ConfigFile="${wdDeployArtifactoryConfig}"
@@ -377,20 +467,44 @@ validateOptions() {
     PackageOutputFile="$(wdDeployPackageDir)"
   fi
   # if relative path
-  if [[ ! ${PackageOutputFile:0:1} == "/" ]] && [[ ! -z "${PackageOutputFile}" ]] ; then
+  if [[ ! ${PackageOutputFile:0:1} == "/" ]] && [[ ! -z "${PackageOutputFile}" ]]; then
     PackageOutputFile="$(wdDeployPackageDir)/${PackageOutputFile}"
   fi
 }
 
 # When publishing is enabled, try reading the tempVersionFile
 # that needs to be computed before this step.
-if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
+if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ] && ; then
+  checkWorkspace
+  CMD="${computePackageUrlUtil} -w $Workspace -a $App -b $Branch -i $buildIdentifier"
+
+
+  if [ ! -z "${PipelineType}" ]; then
+    CMD+=" -p ${PipelineType}"
+  else 
+      rc=8
+      ERRMSG=$PGM": [ERROR] To compute the Package Url to automatically download the tar file via Wazi Deploy generate, you need to provide the pipelineType. rc="$rc
+      echo $ERRMSG
+  fi
+
+  if [ ! -z "${releaseIdentifier}" ]; then
+    CMD+=" -r ${releaseIdentifier}"
+  fi
+
+  if [ $rc -eq 0 ]; then
+    echo $PGM": [INFO] ** Compute Package Url based on existing conventions using command"
+    echo $PGM": ${CMD}"
+    ${CMD}
+
     if [ -f "$(getLogDir)/${tempVersionFile}" ]; then
-        echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${tempVersionFile}"
-        source "$(getLogDir)/${tempVersionFile}"
-    else 
-        echo $PGM": [INFO] ** $(getLogDir)/${tempVersionFile} not found"
-    fi 
+      echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${tempVersionFile}"
+      source "$(getLogDir)/${tempVersionFile}"
+    else
+      rc=4
+      ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${tempVersionFile} was not found. Check previous console output. rc="$rc
+      echo $ERRMSG
+    fi
+  fi
 fi
 
 # Call validate Options
