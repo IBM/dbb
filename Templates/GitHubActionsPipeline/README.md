@@ -4,7 +4,7 @@ This template provides multiple .yml files to setup a GitHub Actions pipeline fo
 
 ## Overview & capabilities 
 
-This pipeline template is implementing the [Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/) within a GitHub Actions context.
+This pipeline template is implementing the [Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev/) within a GitHub Actions context.
 
 It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) to implement the Setup, Build, Packaging, and Deployment stages.
 
@@ -107,7 +107,7 @@ Unlike other pipeline orchestrators, GitHub Actions encourages the use of multip
 
 Please review the pipeline definitions to understand the various triggers for which these pipelines may be executed, and also the conditions when stages, jobs, or steps are executed. 
 
-Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation. 
+Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation. 
 
 ### Pipeline variables 
 
