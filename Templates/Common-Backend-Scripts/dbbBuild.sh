@@ -159,6 +159,7 @@ AppDir=""        # Derived Application Directory
 HLQ=""           # Derived High Level Qualifier
 HLQPrefix=""     # Prefix of HLQ, either specified via the cli option -q or via configuration file
 Type=""          # Derived Build Type
+userDefinedBuildType="" #  Flag if the user has provided the Build Type as argument
 baselineRef=""   # baselineReference that is computed by utilities/dbbBuildUtils.sh
 propOverrides="" # Override of default build parameters for zAppBuild
 #  computed by utilities/dbbBuildUtils.sh
@@ -262,6 +263,7 @@ if [ $rc -eq 0 ]; then
           break
         fi
         Type="$argument"
+        userDefinedBuildType=1
         ;;
       p)
         argument="$OPTARG"
