@@ -49,7 +49,6 @@ run(args)
 def upload(String url, String fileName, String user, String password, boolean verbose, String httpClientVersion) throws IOException {
 	System.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection")
 	Path testing = Paths.get(fileName)
-	println "asdadasdasdasd ----- ${testing.toString()}"
     println( "** ArtifactRepositoryHelper started for upload of $fileName to $url" );
     
     // create http client
@@ -70,7 +69,7 @@ def upload(String url, String fileName, String user, String password, boolean ve
 //  }
 
     HttpClient httpClient = httpClientBuilder.build();
-    
+
     // build http request
     HttpRequest.Builder httpRequestBuilder = HttpRequest.newBuilder()
     .uri(URI.create("$url"))
@@ -78,7 +77,7 @@ def upload(String url, String fileName, String user, String password, boolean ve
 	.header("Connection","Keep-Alive")
     .PUT(BodyPublishers.ofFile(Paths.get(fileName)));
 
-    // set http client version if set
+	// set http client version if set
     if (httpClientVersion) {
         def httpVer = HttpClient.Version.valueOf(httpClientVersion)
         if (httpVer) {
@@ -94,9 +93,10 @@ def upload(String url, String fileName, String user, String password, boolean ve
 	
 	HttpResponse.BodyHandler<String> handler = HttpResponse.BodyHandlers.ofString();
     // submit request
+	
 	CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request, handler).thenComposeAsync(r -> tryResend(httpClient, request, handler, 1, r));
 	HttpResponse finalResponse = response.get()
-    
+
     if (verbose)
 		println("** Response: " + finalResponse);
     
@@ -108,6 +108,7 @@ def upload(String url, String fileName, String user, String password, boolean ve
     else {
         println("*! Upload failed.");
     }
+	return rc
 }
 
 def download(String url, String fileName, String user, String password, boolean verbose) throws IOException  {
