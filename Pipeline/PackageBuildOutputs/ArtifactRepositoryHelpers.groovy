@@ -10,6 +10,7 @@ import java.net.http.HttpResponse.BodyHandler
 import java.util.concurrent.CompletableFuture
 
 import java.nio.file.Paths
+import java.nio.file.Path
 
 
 /** Very basic script to upload/download from an artifact repository server
@@ -46,6 +47,8 @@ run(args)
 
 def upload(String url, String fileName, String user, String password, boolean verbose, String httpClientVersion) throws IOException {
 	System.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection")
+	Path testing = Paths.get(fileName)
+	println "asdadasdasdasd ----- ${testing.toString()}"
     println( "** ArtifactRepositoryHelper started for upload of $fileName to $url" );
     
     // create http client
@@ -92,18 +95,18 @@ def upload(String url, String fileName, String user, String password, boolean ve
     // submit request
 	CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request, handler).thenComposeAsync(r -> tryResend(httpClient, request, handler, 1, r));
 	HttpResponse finalResponse = response.get()
-    
-    if (verbose)
-		println("** Response: " + finalResponse);
-    
-    def rc = evaluateHttpResponse(finalResponse, "upload", verbose)
-    
-    if (rc == 0 ) {
-        println("** Upload completed.");
-    }
-    else {
-        println("*! Upload failed.");
-    }
+//    
+//    if (verbose)
+//		println("** Response: " + finalResponse);
+//    
+//    def rc = evaluateHttpResponse(finalResponse, "upload", verbose)
+//    
+//    if (rc == 0 ) {
+//        println("** Upload completed.");
+//    }
+//    else {
+//        println("*! Upload failed.");
+//    }
 }
 
 def download(String url, String fileName, String user, String password, boolean verbose) throws IOException  {
@@ -173,6 +176,7 @@ def evaluateHttpResponse (HttpResponse response, String action, boolean verbose)
 //Parsing the command line
 def run(String[] cliArgs) {
     def cli = new CliBuilder(usage: "ArtifactRepositoryHelpers.groovy [options]", header: '', stopAtNonOption: false)
+	def Properties props = new Properties()
     cli.h(longOpt:'help', 'Prints this message')
     cli.u(longOpt:'url', args:1,'Absolute artifact repository url location to store package')
     cli.fU(longOpt:'fileToUpload', args:1, 'The full path of the file to upload')
@@ -183,15 +187,30 @@ def run(String[] cliArgs) {
     cli.v(longOpt:'verbose', 'Flag to turn on script trace')
 	
 	// recompute options
-    cli.c(longOpt:'computeArtifactUrl', 'Action Flag to identify to recompute the uri of a given package')
-	cli.aRU(longOpt:'artifactRepository.url', args:1, 'Artifact repository Url')
-	cli.aRN(longOpt:'artifactRepositoryName', args:1, '')
+	// Compute Flag to recompute url
+
+    cli.c(longOpt:'computePackageUrl', 'Action Flag to identify to recompute the uri of a given package')
+	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional unless using --buildReportOrder or --buildReportOrderFile)')
+	cli.aRU(longOpt:'artifactRepositoryUrl', args:1, 'Artifact repository url')
+	cli.aRN(longOpt:'artifactRepositoryName', args:1, 'Artifact repository name')
+	cli.aRD(longOpt:'artifactRepositoryDirectory', args:1, 'Artifact repository directory')
+	cli.aVN(longOpt:'versionName', args:1, argName:'versionName', 'Name of the version/package folder on the Artifact repository server.')
+	
     def opts = cli.parse(cliArgs)
 
     // if opt parsing fails, exit
     if (opts == null || !opts) {
         System.exit(1)
     }
+	
+	if (opts.c) props.computePackageUrl = true
+	if (opts.t) props.tarFileName = opts.t
+	if (opts.aRU) props.put('artifactRepository.url', opts.aRU)
+	if (opts.aRN) props.put('artifactRepository.repo', opts.aRN)
+	if (opts.aRD) props.put('artifactRepository.directory', opts.aRD)
+	if (opts.aVN) props.versionName = opts.aVN
+			
+			
 
     if (opts.h) {
         cli.usage()
@@ -210,8 +229,24 @@ def run(String[] cliArgs) {
 		assert opts.U : "Missing option: Artifact repository user id or token"
 		assert opts.P : "Missing option: Artifactory password"
         download(opts.u, opts.fD, opts.U, opts.P, opts.v)
-    } else {
-		println("** No action has been specified for the ArtifactoryHelpers (available action triggers 'fileToUpload' or 'fileToDownload') ");
+    } else if (props.computePackageUrl){
+		
+		// invoke processing
+		if (props.computePackageUrl && props.computePackageUrl.toBoolean()) {
+			// check requires cli arguments for this operation
+			assert props.tarFileName : "Missing option tarFileName (--tarFileName)"
+			assert props.versionName : "Missing option versionName (--versionName)"
+			assert props.get('artifactRepository.url') : "Missing option artifactRepository.url (--artifactRepositoryUrl)"
+			assert props.get('artifactRepository.repo'): "Missing option artifactRepository.repo (--artifactRepositoryName)"
+			assert props.get('artifactRepository.directory'): "Missing option artifactRepository.directory (--artifactRepositoryDirectory)"
+			
+			// load script	
+			def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
+			def artifactRepositoryPathUtilities = loadScript(new File("${scriptDir}/utilities/ArtifactRepositoryPathUtilities.groovy"))
+			packageUrl = artifactRepositoryPathUtilities.computeAbsoluteRepositoryUrl(props)
+			println "packageUrl=$packageUrl"
+		} else 		
+		println("** No action has been specified for the ArtifactoryHelpers (available action triggers 'fileToUpload' or 'fileToDownload' or 'computePackageUrl') ");
 	}
 }
 

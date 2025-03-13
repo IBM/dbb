@@ -383,15 +383,7 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${tarFileName}" ]; then
         echo $PGM": [INFO] **            Tar file Name:" ${tarFileName}
     fi
-    echo $PGM": [INFO] **     PackagingScript Path:" ${PackagingScript}
-
-    if [ ! -z "${packageBuildIdentifier}" ]; then
-        echo $PGM": [INFO] ** Package Build Identifier:" ${packageBuildIdentifier}
-    fi
-
-    if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
-        echo $PGM": [INFO] **  ArtifactRepo properties:" ${artifactRepositoryPropertyFile}
-    fi
+    echo $PGM": [INFO] ** Artifact Repository Helpers:" ${artifactRepositoryHelpersScript}
 
     if [ ! -z "${artifactRepositoryUrl}" ]; then
         echo $PGM": [INFO] **         ArtifactRepo Url:" ${artifactRepositoryUrl}
@@ -416,31 +408,16 @@ fi
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the Package Build Outputs script to compute Package Url."
 
-    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${PackagingScript} --computePackageUrl --workDir /tmp"
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${dbbCommunityRepoRootDir}/${artifactRepositoryHelpersScript} --computePackageUrl"
 
     # add tarfile name
     if [ ! -z "${tarFileName}" ]; then
         CMD="${CMD} --tarFileName ${tarFileName}"
     fi
 
-    # application name
-    if [ ! -z "${App}" ]; then
-        CMD="${CMD} --application ${App}"
-    fi
-
-    # branch name
-    if [ ! -z "${Branch}" ]; then
-        CMD="${CMD} --branch ${Branch}"
-    fi
-
     # artifactVersionName
     if [ ! -z "${artifactVersionName}" ]; then
         CMD="${CMD} --versionName ${artifactVersionName}"
-    fi
-
-    # Wazi Deploy build identifier
-    if [ ! -z "${packageBuildIdentifier}" ]; then
-        CMD="${CMD} --packageBuildIdentifier ${packageBuildIdentifier}"
     fi
 
     # Artifact repo options
@@ -460,11 +437,10 @@ if [ $rc -eq 0 ]; then
     rc=$?
 
     if [ $rc -eq 0 ]; then
-        ERRMSG=$PGM": [INFO] Compute Package Url Complete. Results stored in $outputFile. Printing file contents. rc="$rc
+        ERRMSG=$PGM": [INFO] Compute Package Url completed. Results stored in $outputFile. rc="$rc
         echo $ERRMSG
-        cat $outputFile
     else
-        ERRMSG=$PGM": [ERR] Compute Package Url Failed. Check Console for details. rc="$rc
+        ERRMSG=$PGM": [ERR] Compute Package Url failed. Check Console for details. rc="$rc
         echo $ERRMSG
         rc=12
     fi
