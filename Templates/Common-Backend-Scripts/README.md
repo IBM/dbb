@@ -489,7 +489,7 @@ CLI parameter | Description
 **Artifact Upload options**
 -u | Flag to enable upload of outputs to the configured artifact repository.
 -a `<application>` | **Application name** leveraged to define the artifact repository name. See function `computeArtifactRepositoryName()` in the pipelineBackend.config file. Ex.: `MortgageApplication-repo-local`. 
--b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. See function `computeArtifactRepositoryDirectory()` in the pipelineBackend.config file.
+-b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. Naming convention rules are implemented in `utilities/packageUtils.sh`.
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
 -v `<artifactVersion>` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
 -s `"<sbomAuthor>"` | (Optional) Name and email of the SBOM author enclosed with double quotes. Ex: "Build Engineer \<engineer@example.com\>" 
