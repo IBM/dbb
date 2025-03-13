@@ -284,7 +284,7 @@ if (props.externalDependenciesFilePath) {
 	}
 }
 
-exitFetchDependencyProcess(){
+def exitFetchDependencyProcess(){
 	println("** [ERROR] fetchBuildDependencies encountered a problem. Please review log. Exiting")
 	System.exit(1)
 }
