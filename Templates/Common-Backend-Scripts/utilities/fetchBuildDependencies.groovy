@@ -86,7 +86,7 @@ if (applicationDescriptor.dependencies) {
 		buildid: "123456"*/
 
 		// compute tar file name based on build type
-		if (dependency.reference.equalsIgnoreCase("release")) {
+		if (dependency.type.equalsIgnoreCase("release")) {
 			assert dependency.version : "Missing dependency version in dependency record"
 			assert dependency.buildid : "Missing buildid in dependency record"
 			props.put("tarFileName","${dependency.name}-${dependency.version}-${dependency.buildid}.tar")
@@ -95,7 +95,7 @@ if (applicationDescriptor.dependencies) {
 		}
 
 		props.put("versionName","${dependency.version}") // compute the version name being part of the path
-		props.put("artifactRepository.directory", "${dependency.reference}") // compute the main directory to classify builds
+		props.put("artifactRepository.directory", "${dependency.type}") // compute the main directory to classify builds
 		props.put("artifactRepository.repo", "${dependency.name}-repo-local") // Artifact repository name (hard-coded again)
 
 		// The absolute url the package in artifact repo
@@ -133,11 +133,11 @@ if (applicationDescriptor.dependencies) {
 			p_version.value = dependency.version
 			externalDependency.properties.add(p_version)
 			
-			// reference
-			Property p_reference = new Property()
-			p_reference.key = "reference"
-			p_reference.value = dependency.reference
-			externalDependency.properties.add(p_reference)
+			// type
+			Property p_type = new Property()
+			p_type.key = "type"
+			p_type.value = dependency.type
+			externalDependency.properties.add(p_type)
 		
 			// buildid
 			Property p_buildid = new Property()
