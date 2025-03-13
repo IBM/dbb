@@ -30,7 +30,10 @@ props.sort().each { k,v->
 }
 
 // Load and verify helpers
-File artifactRepositoryHelpersScriptFile = new File("${props.dbbCommunityRepoRootDir}" + "/" + "${props.artifactRepositoryHelpersScript}")
+def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
+
+// Artifact RepositoryHelpers are used to download the package
+File artifactRepositoryHelpersScriptFile = new File("${scriptDir}/../../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy")
 if (artifactRepositoryHelpersScriptFile.exists()) {
 	artifactRepositoryHelpers = loadScript(artifactRepositoryHelpersScriptFile)
 } else {
@@ -38,28 +41,27 @@ if (artifactRepositoryHelpersScriptFile.exists()) {
 	System.exit(1)
 }
 
-// Load and verify helpers
-File artifactRepositoryPathUtilitiesFile = new File("${props.artifactRepositoryPathUtilities}")
+// ArtifactRepositoryPathUtilities are used to recompute the URL
+File artifactRepositoryPathUtilitiesFile = new File("${scriptDir}/../../../Pipeline/PackageBuildOutputs/utilities/ArtifactRepositoryPathUtilities.groovy")
 if (artifactRepositoryPathUtilitiesFile.exists()) {
 	artifactRepositoryPathUtilities = loadScript(artifactRepositoryPathUtilitiesFile)
 } else {
-	println("*! [ERROR] The Artifact Repo Path Utility script '${props.artifactRepositoryPathUtilities}' doesn't exist. Exiting.")
-	System.exit(1)
+	println("*! [ERROR] The Artifact Repo Path Utility script '$artifactRepositoryPathUtilitiesFile.getName()' doesn't exist. Exiting.")
+	System.exit(8)
 }
 
-File applicationDescriptorUtilsFile = new File("${props.dbbCommunityRepoRootDir}" + "/" + "${props.applicationDescriptorHelperUtils}")
-
+File applicationDescriptorUtilsFile = new File("${scriptDir}/../../../Pipeline/PackageBuildOutputs/utilities/applicationDescriptorUtils.groovy")
 if (applicationDescriptorUtilsFile.exists()) {
 	applicationDescriptorUtils = loadScript(applicationDescriptorUtilsFile)
 } else {
-	println("*! [ERROR] The Application Descriptor Helper script '${props.applicationDescriptorHelperUtils}' was not found. Exiting.")
-	System.exit(1)
+	println("*! [ERROR] The Application Descriptor Helper script '$applicationDescriptorUtilsFile.getName()' was not found. Exiting.")
+	System.exit(8)
 }
 
 File applicationDescriptorFile = new File(props.applicationDescriptor)
 if (!applicationDescriptorFile.exists()) {
-	println("*! [ERROR] The Application Descriptor file '${props.applicationDescriptor}' doesn't exist. Exiting.")
-	System.exit(1)
+	println("*! [ERROR] The Application Descriptor file '${applicationDescriptorFile.getName()}' doesn't exist. Exiting.")
+	System.exit(8)
 }
 
 // setup import directory
@@ -347,13 +349,6 @@ def parseArgs(String[] args) {
 			props.pipelineBackendConfigFile = opts.p
 			Properties temporaryProperties = new Properties()
 			pipelineBackendConfigFile.withInputStream { temporaryProperties.load(it) }
-			if(temporaryProperties.get("dbbCommunityRepoRootDir")) props.put("dbbCommunityRepoRootDir", temporaryProperties.get("dbbCommunityRepoRootDir"))
-			// helper scripts
-			if(temporaryProperties.get("artifactRepositoryHelpersScript")) props.put("artifactRepositoryHelpersScript", temporaryProperties.get("artifactRepositoryHelpersScript"))
-			if(temporaryProperties.get("applicationDescriptorHelperUtils")) props.put("applicationDescriptorHelperUtils", temporaryProperties.get("applicationDescriptorHelperUtils"))
-			if(temporaryProperties.get("artifactRepositoryPathUtilities")) props.put("artifactRepositoryPathUtilities", temporaryProperties.get("artifactRepositoryPathUtilities"))
-					
-			if(temporaryProperties.get("PackagingScript")) props.put("PackagingScript", temporaryProperties.get("PackagingScript"))
 			// artifact repo configuration properties / Map CBS pipelineBackend.config to script properties
 			if(temporaryProperties.get("artifactRepositoryUrl")) props.put("artifactRepository.url", temporaryProperties.get("artifactRepositoryUrl"))
 			if(temporaryProperties.get("artifactRepositoryUser")) props.put("artifactRepository.user", temporaryProperties.get("artifactRepositoryUser"))
