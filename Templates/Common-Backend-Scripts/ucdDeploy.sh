@@ -291,13 +291,13 @@ fi
 if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] **************************************************************"
   echo $PGM": [INFO] ** Start UCD Component Deploy on HOST/USER: ${SYS}/${USER}"
-  echo $PGM": [INFO] **   Create UCD component version script:" ${deployScript}
-  echo $PGM": [INFO] **                  UCD Application Name:" ${Application}
-  echo $PGM": [INFO] **                  UCD Environment Name:" ${Environment}
-  echo $PGM": [INFO] **                         UCD User Name:" ${ucdUserName}
-  echo $PGM": [INFO] **                        UCD Server URL:" ${ucdServerURL}
-  echo $PGM": [INFO] **                 UCD Component Version:" ${Version}
-  echo $PGM": [INFO] **          UCD Application Process Name:" ${Process}
+  echo $PGM": [INFO] **            UCD deploy script :" ${deployScript}
+  echo $PGM": [INFO] **          UCD Application Name:" ${Application}
+  echo $PGM": [INFO] **          UCD Environment Name:" ${Environment}
+  echo $PGM": [INFO] **                 UCD User Name:" ${ucdUserName}
+  echo $PGM": [INFO] **                UCD Server URL:" ${ucdServerURL}
+  echo $PGM": [INFO] **         UCD Component Version:" ${Version}
+  echo $PGM": [INFO] *   UCD Application Process Name:" ${Process}
 
   if [ ! -z "${Timeout}" ]; then
     echo $PGM": [INFO] **           UCD Timeout (seconds):" ${Timeout}
