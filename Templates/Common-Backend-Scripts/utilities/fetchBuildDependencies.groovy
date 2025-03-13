@@ -76,25 +76,20 @@ if (applicationDescriptor.dependencies) {
 	// Loop through all dependencies found in AD
 	applicationDescriptor.dependencies.each { dependency ->
 
-/*		- name: "retirementCalculator"
-		reference: "release"
-		version: "1.2.3"
-		buildid: "875487"
-	  - name: "GenApp"
-		reference: "build"
-		version: "feature/789-enhance-something"
-		buildid: "123456"*/
-
+		// validate dependency record
+		assert dependency.type : "Missing dependency type attribute in dependency record"
+		assert dependency.reference : "Missing dependency reference attribute in dependency record"
+		assert dependency.buildid : "Missing buildid attribute in dependency record"
+		assert dependency.name : "Missing name attribute in dependency record"
+		
 		// compute tar file name based on build type
 		if (dependency.type.equalsIgnoreCase("release")) {
-			assert dependency.version : "Missing dependency version in dependency record"
-			assert dependency.buildid : "Missing buildid in dependency record"
-			props.put("tarFileName","${dependency.name}-${dependency.version}-${dependency.buildid}.tar")
+			props.put("tarFileName","${dependency.name}-${dependency.reference}-${dependency.buildid}.tar")
 		} else {
 			props.put("tarFileName","${dependency.name}-${dependency.buildid}.tar")	
 		}
 
-		props.put("versionName","${dependency.version}") // compute the version name being part of the path
+		props.put("versionName","${dependency.reference}") // compute the version name being part of the path
 		props.put("artifactRepository.directory", "${dependency.type}") // compute the main directory to classify builds
 		props.put("artifactRepository.repo", "${dependency.name}-repo-local") // Artifact repository name (hard-coded again)
 
@@ -127,18 +122,18 @@ if (applicationDescriptor.dependencies) {
 			p_uri.value = artifactUrl
 			externalDependency.properties.add(p_uri)
 			
-			// type
-			Property p_version = new Property()
-			p_version.key = "version"
-			p_version.value = dependency.version
-			externalDependency.properties.add(p_version)
-			
-			// type
+			// type - either build or release
 			Property p_type = new Property()
 			p_type.key = "type"
 			p_type.value = dependency.type
 			externalDependency.properties.add(p_type)
-		
+
+			// reference - the release name or the branch
+			Property p_reference = new Property()
+			p_reference.key = "reference"
+			p_reference.value = dependency.reference
+			externalDependency.properties.add(p_reference)
+					
 			// buildid
 			Property p_buildid = new Property()
 			p_buildid.key = "buildid"

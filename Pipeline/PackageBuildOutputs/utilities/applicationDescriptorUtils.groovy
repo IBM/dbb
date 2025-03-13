@@ -46,18 +46,10 @@ class Baseline {
     String baseline
 }
 
-/*
-- name: "retirementCalculator"
-  type: "release"
-  version: "rel-1.2.0"
-  buildid: "build-20241112.1"
-*/
-
-
 class DependencyDescriptor {
     String name
 	String type
-    String version
+    String reference
 	String buildid
 }
 
@@ -202,7 +194,7 @@ def removeFileDefinition(ApplicationDescriptor applicationDescriptor, String sou
  * Method to add an application dependency 
  */
 
-def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String applicationDependency, String type, String version, String buildid) {
+def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String applicationDependency, String type, String reference, String buildid) {
     if (!applicationDescriptor.dependencies) {
         applicationDescriptor.dependencies = new ArrayList<DependencyDescriptor>()
     }
@@ -214,7 +206,7 @@ def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String
         def dependency = new DependencyDescriptor()
         dependency.name = applicationDependency
 		dependency.type = type
-        dependency.version = version
+        dependency.reference = reference
         dependency.buildid = buildid
         applicationDescriptor.dependencies.add(dependency)
         applicationDescriptor.dependencies.sort {
