@@ -89,6 +89,7 @@ Help() {
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/../pipelineBackend.config"
 packageUtilities="${SCRIPT_HOME}/packageUtils.sh"
+artifactRepositoryHelpersScript="${SCRIPT_HOME}/../../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy"
 
 # Path and File Name to the advanced debug options.
 #log4j2="-Dlog4j.configurationFile=file:/../log4j2.properties"
@@ -282,12 +283,13 @@ validateOptions() {
         buildIdentifier=$(date +%Y%m%d_%H%M%S)
     fi
 
-    # Validate Packaging script
-    if [ ! -f "${PackagingScript}" ]; then
+    if [ ! -f "${artifactRepositoryHelpersScript}" ]; then
         rc=8
-        ERRMSG=$PGM": [ERR] Unable to locate ${PackagingScript}. rc="$rc
+        ERRMSG=$PGM": [ERR] Unable to locate ${artifactRepositoryHelpersScript}. rc="$rc
         echo $ERRMSG
     fi
+    
+    
 
 }
 
@@ -408,7 +410,7 @@ fi
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the Package Build Outputs script to compute Package Url."
 
-    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${dbbCommunityRepoRootDir}/${artifactRepositoryHelpersScript} --computePackageUrl"
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${artifactRepositoryHelpersScript} --computePackageUrl"
 
     # add tarfile name
     if [ ! -z "${tarFileName}" ]; then
