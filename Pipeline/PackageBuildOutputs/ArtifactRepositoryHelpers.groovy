@@ -159,6 +159,8 @@ def download(String url, String fileName, String user, String password, boolean 
     } else {
         println("*! Download failed.");
     }
+	
+	return rc
 }
 
 // Method directly accessed by PackageBuildOutputs and Common Backend script functionality
