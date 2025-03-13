@@ -768,9 +768,8 @@ if (rc == 0) {
 			def password = props.'artifactRepository.password'
 			def httpClientVersion = props.'artifactRepository.httpClientVersion'
 			def repo = props.get('artifactRepository.repo') as String
-
 			println ("** Upload package to Artifact Repository '$url'.")
-			artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean(), httpClientVersion)
+			rc = artifactRepositoryHelpers.upload(url, tarFile as String, user, password, props.verbose.toBoolean(), httpClientVersion)
 
 			// generate PackageInfo for Concert Manifest file
 			if (props.generateConcertBuildManifest && props.generateConcertBuildManifest.toBoolean()) {
