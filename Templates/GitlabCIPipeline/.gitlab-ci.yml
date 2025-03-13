@@ -569,11 +569,7 @@ Packaging:
         wdEvidencesDir: ${wdEvidencesRoot}/${application}/production
 
     artifacts:
-<<<<<<< HEAD
-        name: productionDeploymentReport-${CI_PIPELINE_ID}"
-=======
         name: "productionDeploymentReport-${CI_PIPELINE_ID}"
->>>>>>> bb3af91 ( remove odd char)
         when: always
         paths:
             - "${productionReportDir}/deployment-report.html"
