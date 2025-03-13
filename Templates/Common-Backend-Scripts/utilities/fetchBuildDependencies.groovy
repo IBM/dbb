@@ -103,7 +103,7 @@ if (applicationDescriptor.dependencies) {
 		println artifactUrl
 			
 		// Construct the path within the Artifact repo
-		repositoryName="${props.artifactRepositoryNamePattern}".replaceAll("§application§", dependency.name)
+		repositoryName="${dependency.name}-${props.artifactRepositoryNameSuffix}"
 		// retrieve path without artifact url
 		artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
 		
@@ -216,7 +216,7 @@ if (applicationDescriptor.dependencies) {
 //
 //			baselineName=applicationDescriptor.application
 //
-//			repositoryName="${props.artifactRepositoryNamePattern}".replaceAll("§application§", baselineName)
+//			repositoryName="${props.artifactRepositoryNameSuffix}".replaceAll("§application§", baselineName)
 //
 //			def String artifactUrl
 //			def String artifactReference
@@ -353,7 +353,7 @@ def parseArgs(String[] args) {
 			if(temporaryProperties.get("artifactRepositoryUrl")) props.put("artifactRepository.url", temporaryProperties.get("artifactRepositoryUrl"))
 			if(temporaryProperties.get("artifactRepositoryUser")) props.put("artifactRepository.user", temporaryProperties.get("artifactRepositoryUser"))
 			if(temporaryProperties.get("artifactRepositoryPassword")) props.put("artifactRepository.password", temporaryProperties.get("artifactRepositoryPassword"))
-			if(temporaryProperties.get("artifactRepositoryNamePattern")) props.put("artifactRepositoryNamePattern", temporaryProperties.get("artifactRepositoryNamePattern"))
+			if(temporaryProperties.get("artifactRepositoryNameSuffix")) props.put("artifactRepositoryNameSuffix", temporaryProperties.get("artifactRepositoryNameSuffix"))
 			if(temporaryProperties.get("enablePackageCache")) props.put("enablePackageCache", temporaryProperties.get("enablePackageCache"))
 		} else {
 			println("*! [ERROR] Configuration file ${opts.p} not found. Exiting.")
