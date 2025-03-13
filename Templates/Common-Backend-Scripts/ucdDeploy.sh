@@ -27,6 +27,7 @@
 # Date       Who Vers Description
 # ---------- --- ---- --------------------------------------------------------------
 # 2023/07/18 RBS 1.00 Initial Release
+# 2025/03/13 DB  1.10 Locate groovy scripts in file system
 #===================================================================================
 Help() {
   echo $PGM" - Deploy UCD Component                                               "
@@ -85,7 +86,7 @@ deployScript="${SCRIPT_HOME}/../../../Pipeline/DeployUCDComponentVersion/ucd-dep
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 

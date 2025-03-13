@@ -28,6 +28,11 @@
 #
 #        BuzTool             - Location of the UCD buztool.sh
 #
+# Maintenance Log
+# Date       Who Vers Description
+# ---------- --- ---- --------------------------------------------------------------
+# 2023/07/18 RBS 1.00 Initial Release
+# 2025/03/13 DB  1.10 Locate groovy scripts in file system
 #===================================================================================
 Help() {
     echo $PGM" - Invoke DBB Build ("$PGMVERS")                          "
@@ -107,7 +112,7 @@ ucdPackagingScript="${SCRIPT_HOME}/../../../Pipeline/CreateUCDComponentVersion/d
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
