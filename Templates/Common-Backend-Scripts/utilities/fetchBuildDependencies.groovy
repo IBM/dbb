@@ -164,7 +164,13 @@ if (applicationDescriptor.dependencies) {
 
 			println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tarFileDir}.")
 			def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
-			println "download complete $rc" // TODO: Error handling in helper
+
+			if (rc != 0) {
+				println "** Download of application package '$artifactUrl' failed. Process exists. Return code:"$rc
+				exitFetchDependencyProcess()
+			} else {
+				//println "* Download successful."
+			}
 		}
 
 
@@ -278,6 +284,10 @@ if (props.externalDependenciesFilePath) {
 	}
 }
 
+exitFetchDependencyProcess(){
+	println("** [ERROR] fetchBuildDependencies encountered a problem. Please review log. Exiting")
+	System.exit(1)
+}
 
 /**
  * Parse CLI config
