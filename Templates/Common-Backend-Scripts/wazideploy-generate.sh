@@ -27,6 +27,8 @@
 # Date       Who  Vers Description
 # ---------- ---- ---- --------------------------------------------------------------
 # 2023/10/19 MDLB 1.00 Initial Release
+# 2025/03/13 DB   1.10 Allow pipelines to compute the artifact location to download
+#                      packages via wazideploy-generate
 #===================================================================================
 Help() {
   echo $PGM" - Generate Wazi Deploy Deployment Plan                               "
@@ -142,7 +144,7 @@ computePackageUrlUtil="${SCRIPT_HOME}/utilities/computePackageUrl.sh"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
