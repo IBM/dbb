@@ -45,6 +45,7 @@ def <T> CompletableFuture<HttpResponse<T>>
 
 run(args)
 
+// public methods
 def upload(String url, String fileName, String user, String password, boolean verbose, String httpClientVersion) throws IOException {
 	System.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection")
 	Path testing = Paths.get(fileName)
@@ -95,18 +96,18 @@ def upload(String url, String fileName, String user, String password, boolean ve
     // submit request
 	CompletableFuture<HttpResponse<String>> response = httpClient.sendAsync(request, handler).thenComposeAsync(r -> tryResend(httpClient, request, handler, 1, r));
 	HttpResponse finalResponse = response.get()
-//    
-//    if (verbose)
-//		println("** Response: " + finalResponse);
-//    
-//    def rc = evaluateHttpResponse(finalResponse, "upload", verbose)
-//    
-//    if (rc == 0 ) {
-//        println("** Upload completed.");
-//    }
-//    else {
-//        println("*! Upload failed.");
-//    }
+    
+    if (verbose)
+		println("** Response: " + finalResponse);
+    
+    def rc = evaluateHttpResponse(finalResponse, "upload", verbose)
+    
+    if (rc == 0 ) {
+        println("** Upload completed.");
+    }
+    else {
+        println("*! Upload failed.");
+    }
 }
 
 def download(String url, String fileName, String user, String password, boolean verbose) throws IOException  {
@@ -159,6 +160,14 @@ def download(String url, String fileName, String user, String password, boolean 
     }
 }
 
+// Method directly accessed by PackageBuildOutputs and Common Backend script functionality
+def computeAbsoluteRepositoryUrl(Properties props) {
+	def String remotePath = (props.versionName) ? (props.versionName + "/" + props.tarFileName) : (props.tarFileLabel + "/" + props.tarFileName)
+	def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + (props.get('artifactRepository.directory') ? "${props.get('artifactRepository.directory')}/" : "") + remotePath).normalize().toString() // Normalized URL
+	return url
+}
+
+// private methods
 def evaluateHttpResponse (HttpResponse response, String action, boolean verbose) {
     int rc = 0
     def statusCode = response.statusCode()
@@ -242,9 +251,7 @@ def run(String[] cliArgs) {
 			
 			// load script	
 			def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
-			def artifactRepositoryPathUtilities = loadScript(new File("${scriptDir}/utilities/ArtifactRepositoryPathUtilities.groovy"))
-			packageUrl = artifactRepositoryPathUtilities.computeAbsoluteRepositoryUrl(props)
-			println "packageUrl=$packageUrl"
+			packageUrl = computeAbsoluteRepositoryUrl(props)
 		} else 		
 		println("** No action has been specified for the ArtifactoryHelpers (available action triggers 'fileToUpload' or 'fileToDownload' or 'computePackageUrl') ");
 	}

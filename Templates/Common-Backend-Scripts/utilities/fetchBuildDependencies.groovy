@@ -17,7 +17,6 @@ import java.nio.file.*
 @Field Properties props = new Properties()
 @Field def artifactRepositoryHelpers // Helpers to download
 @Field def applicationDescriptorUtils // Helper to parse Application Descriptor
-@Field def artifactRepositoryPathUtilities // Util to compute the URL path
 @Field def packageBuildOutputs // Helpers to download
 
 // Parse arguments from command-line
@@ -38,15 +37,6 @@ if (artifactRepositoryHelpersScriptFile.exists()) {
 	artifactRepositoryHelpers = loadScript(artifactRepositoryHelpersScriptFile)
 } else {
 	println("*! [ERROR] The Artifact Repository Helper script '${props.artifactRepositoryHelpersScript}' doesn't exist. Exiting.")
-	System.exit(1)
-}
-
-// ArtifactRepositoryPathUtilities are used to recompute the URL
-File artifactRepositoryPathUtilitiesFile = new File("${scriptDir}/../../../Pipeline/PackageBuildOutputs/utilities/ArtifactRepositoryPathUtilities.groovy")
-if (artifactRepositoryPathUtilitiesFile.exists()) {
-	artifactRepositoryPathUtilities = loadScript(artifactRepositoryPathUtilitiesFile)
-} else {
-	println("*! [ERROR] The Artifact Repo Path Utility script '$artifactRepositoryPathUtilitiesFile.getName()' doesn't exist. Exiting.")
 	System.exit(8)
 }
 
@@ -109,7 +99,7 @@ if (applicationDescriptor.dependencies) {
 		props.put("artifactRepository.repo", "${dependency.name}-repo-local") // Artifact repository name (hard-coded again)
 
 		// The absolute url the package in artifact repo
-		artifactUrl = artifactRepositoryPathUtilities.computeAbsoluteRepositoryUrl(props)
+		artifactUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
 		println artifactUrl
 			
 		// Construct the path within the Artifact repo

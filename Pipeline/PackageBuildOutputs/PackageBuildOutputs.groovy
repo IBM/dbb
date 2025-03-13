@@ -69,7 +69,6 @@ import com.ibm.jzos.ZFile;
 @Field Properties props = new Properties()
 def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 @Field def wdManifestGeneratorUtilities = loadScript(new File("${scriptDir}/utilities/WaziDeployManifestGenerator.groovy"))
-@Field def artifactRepositoryPathUtilities = loadScript(new File("${scriptDir}/utilities/ArtifactRepositoryPathUtilities.groovy"))
 @Field def artifactRepositoryHelpers = loadScript(new File("${scriptDir}/ArtifactRepositoryHelpers.groovy"))
 
 @Field def applicationDescriptorUtils
@@ -639,7 +638,7 @@ if (rc == 0) {
 				HashMap<String,String> packageInfo = new HashMap<String, String>()
 				packageInfo.put("type", "artifactRepository")
 				packageInfo.put("name", props.packageBuildIdentifier)
-				packageUrl = artifactRepositoryPathUtilities.computeAbsoluteRepositoryUrl(props)
+				packageUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
 				if (packageUrl) packageInfo.put("uri", packageUrl)
 				wdManifestGeneratorUtilities.setPackageInfo(packageInfo)
 			}
@@ -762,7 +761,7 @@ if (rc == 0) {
 		//Set up the artifact repository information to publish the tar file
 		if (props.publish && props.publish.toBoolean() && rc == 0){
 			// Configuring artifact repositoryHelper parms
-			def url = artifactRepositoryPathUtilities.computeAbsoluteRepositoryUrl(props)
+			def url = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
 
 			def apiKey = props.'artifactRepository.user'
 			def user = props.'artifactRepository.user'
