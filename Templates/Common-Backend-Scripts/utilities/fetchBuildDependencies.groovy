@@ -17,6 +17,7 @@ import java.nio.file.*
 @Field Properties props = new Properties()
 @Field def artifactRepositoryHelpers // Helpers to download
 @Field def applicationDescriptorUtils // Helper to parse Application Descriptor
+@Field def artifactRepositoryPathUtilities // Util to compute the URL path
 @Field def packageBuildOutputs // Helpers to download
 
 // Parse arguments from command-line
@@ -38,11 +39,11 @@ if (artifactRepositoryHelpersScriptFile.exists()) {
 }
 
 // Load and verify helpers
-File packageBuildOutputsFile = new File("${props.PackagingScript}")
-if (packageBuildOutputsFile.exists()) {
-	packageBuildOutputs = loadScript(packageBuildOutputsFile)
+File artifactRepositoryPathUtilitiesFile = new File("${props.artifactRepositoryPathUtilities}")
+if (artifactRepositoryPathUtilitiesFile.exists()) {
+	artifactRepositoryPathUtilities = loadScript(artifactRepositoryPathUtilitiesFile)
 } else {
-	println("*! [ERROR] The Package Build Outputs script '${props.PackagingScript}' doesn't exist. Exiting.")
+	println("*! [ERROR] The Artifact Repo Path Utility script '${props.artifactRepositoryPathUtilities}' doesn't exist. Exiting.")
 	System.exit(1)
 }
 
@@ -100,20 +101,23 @@ if (applicationDescriptor.dependencies) {
 		} else {
 			props.put("tarFileName","${dependency.name}-${dependency.buildid}.tar")	
 		}
+
 		props.put("versionName","${dependency.version}") // compute the version name being part of the path
 		props.put("artifactRepository.directory", "${dependency.reference}") // compute the main directory to classify builds
 		props.put("artifactRepository.repo", "${dependency.name}-repo-local") // Artifact repository name (hard-coded again)
-		
-		// The absolute url the package in artifact repo
-		artifactUrl = packageBuildOutputs.computeAbsoluteRepositoryUrl(props)
-		
-		println artifactUrl
-		// TODO: How do we deal with the latest available?
 
+		// The absolute url the package in artifact repo
+		artifactUrl = artifactRepositoryPathUtilities.computeAbsoluteRepositoryUrl(props)
+		println artifactUrl
+			
 		// Construct the path within the Artifact repo
 		repositoryName="${props.artifactRepositoryNamePattern}".replaceAll("§application§", dependency.name)
 		// retrieve path without artifact url
 		artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
+		
+		// File in cache / workspace
+		tarFile="${tmpPackageDir}/${artifactRelPath}"
+		tarFileDir=tarFile.replaceAll(props.tarFileName, "")
 		
 		println("*** Fetching package '${dependency.name}:${artifactUrl}' ")
 
@@ -158,16 +162,16 @@ if (applicationDescriptor.dependencies) {
 		// foldername in workspace directory
 		String includeFolder = "${importFolder}/${dependency.name}"
 
-		if (new File(props.tarFileName).exists()) {
-			println("** Package was already found in package cache at '${tmpPackageDir}/${artifactRelPath}'")
+		if (new File(tarFile).exists()) {
+			println("** Package was already found in package cache at '${tarFile}'")
 		} else {
 			String user = props.artifactRepositoryUser
 			String password = props.artifactRepositoryPassword
 
-			if (!(new File("${tmpPackageDir}/${artifactRelPath}").exists())) (new File("${tmpPackageDir}/${artifactRelPath}")).mkdirs()
+			if (!(new File("${tarFileDir}").exists())) (new File("${tarFileDir}")).mkdirs()
 
-			println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tmpPackageDir}/${artifactRelPath}.")
-			def rc = artifactRepositoryHelpers.download(artifactUrl, props.tarFileName, user, password, true)
+			println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tarFileDir}.")
+			def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
 			println "download complete $rc" // TODO: Error handling in helper
 		}
 
@@ -178,12 +182,12 @@ if (applicationDescriptor.dependencies) {
 		}
 
 
-		println("** Expanding tar file '${props.tarFileName}' to '$includeFolder' ")
+		println("** Expanding tar file '${tarFile}' to '$includeFolder' ")
 
 		def processCmd = [
 			"/bin/sh",
 			"-c",
-			"tar -C $includeFolder -xvf ${props.tarFileName}"
+			"tar -C $includeFolder -xvf ${tarFile}"
 		]
 
 		def rc = runProcess(processCmd)
@@ -347,6 +351,8 @@ def parseArgs(String[] args) {
 			// helper scripts
 			if(temporaryProperties.get("artifactRepositoryHelpersScript")) props.put("artifactRepositoryHelpersScript", temporaryProperties.get("artifactRepositoryHelpersScript"))
 			if(temporaryProperties.get("applicationDescriptorHelperUtils")) props.put("applicationDescriptorHelperUtils", temporaryProperties.get("applicationDescriptorHelperUtils"))
+			if(temporaryProperties.get("artifactRepositoryPathUtilities")) props.put("artifactRepositoryPathUtilities", temporaryProperties.get("artifactRepositoryPathUtilities"))
+					
 			if(temporaryProperties.get("PackagingScript")) props.put("PackagingScript", temporaryProperties.get("PackagingScript"))
 			// artifact repo configuration properties / Map CBS pipelineBackend.config to script properties
 			if(temporaryProperties.get("artifactRepositoryUrl")) props.put("artifactRepository.url", temporaryProperties.get("artifactRepositoryUrl"))
