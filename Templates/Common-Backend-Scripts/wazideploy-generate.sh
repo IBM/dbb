@@ -60,8 +60,6 @@ Help() {
   echo "                                           used as input                  "
   echo "                                           If a relative path is provided,"
   echo "                                           the log directory is suffixed  "
-  echo "                                           where PackageBuildOutputs      "
-  echo "                                           stores outputs                 "
   echo "                                           Default=None, Required.        "
   echo "                                                                          "
   echo "                 Ex: MortgageApplication.tar                              "
@@ -160,6 +158,7 @@ ConfigFile=""
 
 # CBS configuration variables
 Workspace=""
+App=""          # Application name - takes cli option a
 PipelineType="" # takes cli option P
 Branch=""       # takes cli option b
 
@@ -212,7 +211,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "hdw:m:p:r:i:o:c:I:R:P:b:" opt; do
+  while getopts "hdw:m:p:r:i:o:c:a:I:R:P:b:" opt; do
     case $opt in
     h)
       Help
@@ -304,7 +303,19 @@ if [ $rc -eq 0 ]; then
       # Add command to produce debug output with Wazi Deploy
       Debug=" -d"
       ;;
-
+    
+    a)
+      # Application argument
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] Application Folder Name is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            App="$argument"
+            ;;
     b)
       argument="$OPTARG"
       nextchar="$(expr substr $argument 1 1)"
@@ -427,8 +438,7 @@ validateOptions() {
 
   # When a the packageUrl environment variable found in the file
   if [ ! -z "${packageUrl}" ]; then
-        echo $PGM": [INFO] Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
-        
+        echo $PGM": [INFO] ** Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
         PackageInputFile="${packageUrl}"
         ## Take the last segment of the URL to define the tarFileName
         tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
@@ -474,7 +484,7 @@ validateOptions() {
 
 # When publishing is enabled, try reading the tempVersionFile
 # that needs to be computed before this step.
-if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ] && ; then
+if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; then
   checkWorkspace
   CMD="${computePackageUrlUtil} -w $Workspace -a $App -b $Branch -i $buildIdentifier"
 
@@ -493,16 +503,18 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ] &&
 
   if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] ** Compute Package Url based on existing conventions using command"
-    echo $PGM": ${CMD}"
+    echo $PGM": [INFO] ** Invoking subtask ${CMD}"
     ${CMD}
-
-    if [ -f "$(getLogDir)/${tempVersionFile}" ]; then
-      echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${tempVersionFile}"
-      source "$(getLogDir)/${tempVersionFile}"
-    else
-      rc=4
-      ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${tempVersionFile} was not found. Check previous console output. rc="$rc
-      echo $ERRMSG
+    rc=$?
+    if [ $rc -eq 0 ]; then
+        if [ -f "$(getLogDir)/${tempVersionFile}" ]; then
+          echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${tempVersionFile}"
+          source "$(getLogDir)/${tempVersionFile}"
+        else
+          rc=4
+          ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${tempVersionFile} was not found. Check previous console output. rc="$rc
+          echo $ERRMSG
+        fi
     fi
   fi
 fi
