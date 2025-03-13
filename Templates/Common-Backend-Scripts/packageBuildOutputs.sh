@@ -23,9 +23,6 @@
 #   1. Review and update the Customization Section to reference the
 #        central configuration file pipelineBackend.config
 #
-#   2. Review the Customization Section in the pipelineBackend.config file :
-#
-#        PackagingScript  - Location of the PackageBuildOutputs.groovy
 #
 #===================================================================================
 Help() {
@@ -106,6 +103,7 @@ Help() {
 # Central configuration file leveraged by the backend scripts
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+packagingScript="${SCRIPT_HOME}/../../Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy"
 packageUtilities="${SCRIPT_HOME}/utilities/packageUtils.sh"
 
 # Path and File Name to the advanced debug options.
@@ -326,9 +324,9 @@ validateOptions() {
     fi
 
     # Validate Packaging script
-    if [ ! -f "${PackagingScript}" ]; then
+    if [ ! -f "${packagingScript}" ]; then
         rc=8
-        ERRMSG=$PGM": [ERR] Unable to locate ${PackagingScript}. rc="$rc
+        ERRMSG=$PGM": [ERR] Unable to locate ${packagingScript}. rc="$rc
         echo $ERRMSG
     fi
 
@@ -458,7 +456,7 @@ if [ $rc -eq 0 ]; then
         echo $PGM": [INFO] **            Tar file Name:" ${tarFileName}
     fi
     echo $PGM": [INFO] **     BuildReport Location:" ${logDir}
-    echo $PGM": [INFO] **     PackagingScript Path:" ${PackagingScript}
+    echo $PGM": [INFO] **     PackagingScript Path:" ${packagingScript}
     if [ ! -z "${PkgPropFile}" ]; then
         echo $PGM": [INFO] **     Packaging properties:" ${PkgPropFile}
     fi
@@ -507,7 +505,7 @@ if [ $rc -eq 0 ]; then
     	cycloneDXlibraries="-cp ${cycloneDXlibraries}"
     fi
 
-    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${cycloneDXlibraries} ${PackagingScript} --workDir ${logDir}"
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${cycloneDXlibraries} ${packagingScript} --workDir ${logDir}"
 
     # add tarfile name
     if [ ! -z "${tarFileName}" ]; then
