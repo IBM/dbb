@@ -10,7 +10,6 @@ import java.net.http.HttpResponse.BodyHandler
 import java.util.concurrent.CompletableFuture
 
 import java.nio.file.Paths
-import java.nio.file.Path
 
 
 /** Very basic script to upload/download from an artifact repository server
@@ -48,7 +47,6 @@ run(args)
 // public methods
 def upload(String url, String fileName, String user, String password, boolean verbose, String httpClientVersion) throws IOException {
 	System.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection")
-	Path testing = Paths.get(fileName)
     println( "** ArtifactRepositoryHelper started for upload of $fileName to $url" );
     
     // create http client
