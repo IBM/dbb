@@ -252,6 +252,8 @@ def run(String[] cliArgs) {
 			// load script	
 			def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 			packageUrl = computeAbsoluteRepositoryUrl(props)
+			// the println is used in a script by the CBS to grep the packageUrl
+			println "packageUrl=$packageUrl"
 		} else 		
 		println("** No action has been specified for the ArtifactoryHelpers (available action triggers 'fileToUpload' or 'fileToDownload' or 'computePackageUrl') ");
 	}
