@@ -64,20 +64,10 @@ Help() {
     echo "                                                              "
     echo "                 Ex: MortgageApplication                      "
     echo "                                                              "
-    echo "       -p <pipelineType>  - Type of the pipeline to           "
-    echo "                            control in which directory builds "
-    echo "                            are stored in the artifact repo   "
-    echo "                            Accepted values:                  "
-    echo "                            build -                           "
-    echo "                             development builds               "
-    echo "                            release -                         "
-    echo "                             builds with options for          "
-    echo "                             performance optimized            "
-    echo "                             executables for production env   "
+    echo "       -t <tarFileName>     - Name of the package tar file    "
+    echo "                              (Optional)                      "
     echo "                                                              "
-    echo "       -b <gitBranch>      - Name of the git branch.          "
-    echo "                                                              "
-    echo "                 Ex: main                                     "
+    echo "                Ex: package.tar                               "
     echo "                                                              "
     echo "       -v <artifactVersion>                                   "
     echo "                           - Name of the artifactVersion      "
@@ -92,8 +82,34 @@ Help() {
     echo "                              enclosed with double quotes     "
     echo "                              (Optional)                      "
     echo "                                                              "
-    echo "                 Ex: \"Build Engineer <engineer@example.com>\"  "
+    echo "                Ex: \"Build Engineer <engineer@example.com>\" "
     echo "                                                              "
+    echo "                                                              "
+    echo "   Mandatory arguments when publishing to artifact repo       "
+    echo "                                                              "
+    echo "       -I <buildIdentifier>  - A unique build identifier      "
+    echo "                               typically the buildID of the   "
+    echo "                               pipeline                       "
+    echo "                Ex: 6756                                      "
+    echo "                                                              "
+    echo "       -R <releaseIdentifier> - The release identifier for    "
+    echo "                               release pipeline builds        "
+    echo "                Ex: rel-1.2.3                                 "
+    echo "                                                              "    
+    echo "       -p <pipelineType>  - Type of the pipeline to           "
+    echo "                            control in which directory builds "
+    echo "                            are stored in the artifact repo   "
+    echo "                            Accepted values:                  "
+    echo "                            build -                           "
+    echo "                             development builds               "
+    echo "                            release -                         "
+    echo "                             builds with options for          "
+    echo "                             performance optimized            "
+    echo "                             executables for production env   "
+    echo "                                                              "
+    echo "       -b <gitBranch>      - Name of the git branch.          "
+    echo "                                                              "
+    echo "                 Ex: main                                     "
     echo "       -h                  - Display this Help.               "
     echo "                                                              "
     exit 0
@@ -192,7 +208,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts ":h:w:a:b:i:r:v:p:us:" opt; do
+    while getopts ":h:w:a:b:t:i:r:v:p:us:" opt; do
         case $opt in
         h)
             Help
@@ -219,6 +235,17 @@ if [ $rc -eq 0 ]; then
             fi
             App="$argument"
             ;;
+        t)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            tarFileName="$argument"
+            ;;    
         i)
             argument="$OPTARG"
             nextchar="$(expr substr $argument 1 1)"
@@ -317,16 +344,10 @@ validateOptions() {
         fi
     fi
 
-    if [ -z "${buildIdentifier}" ]; then
-        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) has been supplied. A unique name based on version and build id is recommended. Using timestamp"
-        echo $ERRMSG
-        buildIdentifier=$(date +%Y%m%d_%H%M%S)
-    fi
-
     # Validate Packaging script
     if [ ! -f "${packagingScript}" ]; then
         rc=8
-        ERRMSG=$PGM": [ERR] Unable to locate ${packagingScript}. rc="$rc
+        ERRMSG=$PGM": [ERROR] Unable to locate ${packagingScript}. rc="$rc
         echo $ERRMSG
     fi
 
@@ -334,9 +355,15 @@ validateOptions() {
     if [ ! -z "${PkgPropFile}" ]; then
         if [ ! -f "${PkgPropFile}" ]; then
             rc=8
-            ERRMSG=$PGM": [ERR] Unable to locate ${PkgPropFile}. rc="$rc
+            ERRMSG=$PGM": [ERROR] Unable to locate ${PkgPropFile}. rc="$rc
             echo $ERRMSG
         fi
+    fi
+
+    if [ -z "${buildIdentifier}" ] && [ "$publish" == "true" ]; then
+        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) has been supplied. A unique name based on version and build id is recommended. Using timestamp"
+        echo $ERRMSG
+        buildIdentifier=$(date +%Y%m%d_%H%M%S)
     fi
 
 }
@@ -359,7 +386,7 @@ validatePublishingOptions() {
     if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
         if [ ! -f "${artifactRepositoryPropertyFile}" ]; then
             rc=8
-            ERRMSG=$PGM": [ERR] Unable to locate ${artifactRepositoryPropertyFile}. rc="$rc
+            ERRMSG=$PGM": [ERROR] Unable to locate ${artifactRepositoryPropertyFile}. rc="$rc
             echo $ERRMSG
         fi
     else
@@ -407,12 +434,12 @@ validatePublishingOptions() {
                 ;;
             "preview")
                 rc=4
-                ERRMSG=$PGM": [WARN] Default Pipeline Type : ${PipelineType} not supported for packaging."
+                ERRMSG=$PGM": [WARNING] Default Pipeline Type : ${PipelineType} not supported for packaging."
                 echo $ERRMSG
                 ;;
             *)
                 rc=4
-                ERRMSG=$PGM": [WARN] Inavlid Pipeline Type : ${PipelineType} specified."
+                ERRMSG=$PGM": [WARNING] Invalid Pipeline Type : ${PipelineType} specified."
                 echo $ERRMSG
                 ;;
             esac
@@ -421,20 +448,19 @@ validatePublishingOptions() {
     fi
 }
 
-# Call validate input options
-if [ $rc -eq 0 ]; then
-    validateOptions
-fi
-
-# compute packaging parameters
-if [ $rc -eq 0 ]; then
+# compute packaging parameters and validate publishing options
+if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
     # invoke function in packageUtils
     computePackageInformation
 fi
 
-# Call validate publishing options
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
     validatePublishingOptions
+fi
+
+# Call validate input options
+if [ $rc -eq 0 ]; then
+    validateOptions
 fi
 
 #

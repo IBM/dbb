@@ -18,7 +18,7 @@ computePackageInformation() {
     #############################################
     
     # configuration variable defining the Artifactory repository name pattern 
-    artifactRepositoryRepoPattern="${App}-repo-local"
+    artifactRepositoryRepoPattern="${App}-${artifactRepositoryNameSuffix}"
     
     branchConvention=(${Branch//// })
 
