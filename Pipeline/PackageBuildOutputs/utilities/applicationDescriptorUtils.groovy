@@ -48,9 +48,9 @@ class Baseline {
 
 class DependencyDescriptor {
     String name
-	String type
+    String type
     String reference
-	String buildid
+    String buildid
 }
 
 /**
