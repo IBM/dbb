@@ -504,13 +504,15 @@ CLI parameter | Description
 -t `<tarFileName>` | (Optional) Name of the **tar file** to create.
 **Artifact Upload options**
 -u | Flag to enable upload of outputs to the configured artifact repository.
--a `<application>` | **Application name** leveraged to define the artifact repository name. See function `computeArtifactRepositoryName()` in the pipelineBackend.config file. Ex.: `MortgageApplication-repo-local`. 
+-a `<application>` | **Application name** leveraged to define the artifact repository name.
 -b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. Naming convention rules are implemented in `utilities/packageUtils.sh`.
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
 -r `<releaseIdentifier>` | **Release identifier** to indicate the next planned release name. This is a computed value based on the pipeline templates.
 -i `<buildIdentifier>` | **Build identifier** a unique value to identify the tar file. This is a computed value provided by the pipeline templates. Typically the build number or a timestamp. 
 -v `<artifactVersion>` **removed** | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo. This has been removed. Please switch to releaseIdentifier and buildIdentifier.
 -s `"<sbomAuthor>"` | (Optional) Name and email of the SBOM author enclosed with double quotes. Ex: "Build Engineer \<engineer@example.com\>" 
+
+Check out the pipelineBackend.config to define the `artifactRepositoryNameSuffix` that is appended to the application name to set the repository name in the artifact repository.
 
 #### Script conventions
 

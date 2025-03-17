@@ -344,7 +344,7 @@ validatePackagingOptions() {
             ;;
         *)
             rc=4
-            ERRMSG=$PGM": [WARN] Inavlid Pipeline Type : ${PipelineType} specified."
+            ERRMSG=$PGM": [WARN] Invalid Pipeline Type : ${PipelineType} specified."
             echo $ERRMSG
             ;;
         esac
@@ -372,7 +372,7 @@ fi
 # Ready to go
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **************************************************************"
-    echo $PGM": [INFO] ** Started - Package Build Outputs on HOST/USER: ${SYS}/${USER}"
+    echo $PGM": [INFO] ** Started - Compute Package Url on HOST/USER: ${SYS}/${USER}"
     if [ ! -z "${App}" ]; then
         echo $PGM": [INFO] **              Application:" ${App}
     fi
@@ -408,7 +408,7 @@ fi
 #
 # Invoke the Package Build Outputs script
 if [ $rc -eq 0 ]; then
-    echo $PGM": [INFO] Invoking the Package Build Outputs script to compute Package Url."
+    echo $PGM": [INFO] Invoking the ArtifactRepositoryHelper groovy script to compute Package Url."
 
     CMD="$DBB_HOME/bin/groovyz ${log4j2} ${artifactRepositoryHelpersScript} --computePackageUrl"
 
