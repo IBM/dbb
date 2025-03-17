@@ -69,7 +69,7 @@ computeBuildConfiguration() {
                 HLQ="${HLQ}.${mainBranchSegmentTrimmed:0:1}${segmentName:0:7}"
             fi
 
-                        if [ -z "${Type}" ]; then
+            if [ -z "${Type}" ]; then
                 Type="--impactBuild"
 # obtain the baselineRef from file
                 getBaselineReference
@@ -209,7 +209,7 @@ computeBuildConfiguration() {
 
         # append pipeline preview if specified
         if [ "${PipelineType}" == "preview" ]; then
-            if [ -z "${Type}" ]; then
+            if [ -z "${userDefinedBuildType}" ]; then
                 Type="${Type} --preview"
             fi
         fi
