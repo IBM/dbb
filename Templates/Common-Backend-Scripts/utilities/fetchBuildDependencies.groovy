@@ -86,15 +86,17 @@ if (applicationDescriptor.dependencies) {
 			props.put("tarFileName","${dependency.name}-${dependency.buildid}.tar")	
 		}
 
+		// Construct the path within the Artifact repo
+		repositoryName="${dependency.name}-${props.artifactRepositoryNameSuffix}"
+
+		// Prepare for url computation using method in ArtifactRepoHelpers
 		props.put("versionName","${dependency.reference}") // compute the version name being part of the path
 		props.put("artifactRepository.directory", "${dependency.type}") // compute the main directory to classify builds
-		props.put("artifactRepository.repo", "${dependency.name}-repo-local") // Artifact repository name (hard-coded again)
+		props.put("artifactRepository.repo", "${repositoryName}") // Artifact repository name
 
 		// The absolute url the package in artifact repo
 		artifactUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
 			
-		// Construct the path within the Artifact repo
-		repositoryName="${dependency.name}-${props.artifactRepositoryNameSuffix}"
 		// retrieve path without artifact url
 		artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
 		
