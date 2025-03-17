@@ -5,7 +5,6 @@ import com.ibm.dbb.build.*
 import groovy.transform.*
 import com.ibm.dbb.build.report.*
 import com.ibm.dbb.build.report.records.*
-import groovy.yaml.YamlSlurper
 import groovy.yaml.YamlBuilder
 import groovy.lang.GroovyShell
 import groovy.cli.commons.*
@@ -63,8 +62,6 @@ importFolder.mkdirs()
 tmpPackageDir = (props.enablePackageCache && props.enablePackageCache.toBoolean() && props.packageCacheLocation) ? new File(props.packageCacheLocation) : new File("$props.workspace/imports_download/")
 if (!tmpPackageDir.exists()) tmpPackageDir.mkdirs()
 
-def yamlSlurper = new groovy.yaml.YamlSlurper()
-
 // Parse the application descriptor and application configurations based on the defined schema
 applicationDescriptor = applicationDescriptorUtils.readApplicationDescriptor(applicationDescriptorFile)
 
@@ -95,7 +92,6 @@ if (applicationDescriptor.dependencies) {
 
 		// The absolute url the package in artifact repo
 		artifactUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
-		println artifactUrl
 			
 		// Construct the path within the Artifact repo
 		repositoryName="${dependency.name}-${props.artifactRepositoryNameSuffix}"
