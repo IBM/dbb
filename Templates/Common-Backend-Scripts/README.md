@@ -551,7 +551,7 @@ packageBuildOutputs.sh: [INFO] **    ArtifactRepo Repo Dir: main/build
 packageBuildOutputs.sh: [INFO] **                 DBB_HOME: /usr/lpp/dbb/v2r0
 packageBuildOutputs.sh: [INFO] **************************************************************
 
-packageBuildOutputs.sh: [INFO] Invoking the Package Build Outputs script.
+packageBuildOutputs.sh: [INFO] Invoking the ArtifactRepositoryHelper groovy script.
 packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-09-22_13-55-20 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory main/build
 ** PackageBuildOutputs start at 20230922.125616.056
 ** Properties at startup:
