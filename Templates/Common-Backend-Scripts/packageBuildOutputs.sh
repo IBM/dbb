@@ -474,6 +474,11 @@ validatePublishingOptions() {
 # compute packaging parameters and validate publishing options
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
     # invoke function in packageUtils
+    
+    if [ ! -z "${tarFileName}" ]; then
+        echo $PGM": [INFO] ** Identified that tarFileName is passed into packageBuildOutputs.sh (${tarFileName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier."
+    fi
+    
     computePackageInformation
 fi
 
