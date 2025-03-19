@@ -142,6 +142,7 @@ rc=0
 ERRMSG=""
 Workspace=""
 App=""
+AppDir=""  
 tarFileName=""
 PkgPropFile=""
 PipelineType=""
@@ -365,6 +366,28 @@ validateOptions() {
         echo $ERRMSG
         buildIdentifier=$(date +%Y%m%d_%H%M%S)
     fi
+    
+    if [ -z "${App}" ]; then
+      rc=8
+      ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
+      echo $ERRMSG
+    else
+
+        AppDir=$(getApplicationDir)
+    
+        # Check if application directory contains
+        if [ -d "${AppDir}/${App}" ]; then
+          echo $PGM": [INFO] Detected the application repository (${App}) within the git repository layout structure."
+          echo $PGM": [INFO]  Assuming this as the new application location."
+          AppDir="${AppDir}/${App}"
+        fi
+    
+        if [ ! -d "${AppDir}" ]; then
+          rc=8
+          ERRMSG=$PGM": [ERROR] Application Directory (${AppDir}) was not found. rc="$rc
+          echo $ERRMSG
+        fi
+  fi
 
 }
 
@@ -475,6 +498,11 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${Branch}" ]; then
         echo $PGM": [INFO] **                   Branch:" ${Branch}
     fi
+    
+    if [ ! -z "${AppDir}" ]; then
+        echo $PGM": [INFO] **    Application directory:" ${AppDir}
+    fi
+    
     if [ ! -z "${PipelineType}" ]; then
         echo $PGM": [INFO] **         Type of pipeline:" ${PipelineType}
     fi
@@ -490,6 +518,8 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${packageBuildIdentifier}" ]; then
         echo $PGM": [INFO] ** Package Build Identifier:" ${packageBuildIdentifier}
     fi
+    
+    
 
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
     if [ "$publish" == "true" ]; then
@@ -546,6 +576,11 @@ if [ $rc -eq 0 ]; then
     # branch name
     if [ ! -z "${Branch}" ]; then
         CMD="${CMD} --branch ${Branch}"
+    fi
+    
+    # application directory
+    if [ ! -z "${AppDir}" ]; then
+        CMD="${CMD} --applicationFolderPath ${AppDir}"
     fi
 
     # packaging properties file
