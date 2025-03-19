@@ -306,6 +306,7 @@ validateOptions() {
         echo $ERRMSG
     fi
 
+
     # validate package input file
     if [ -z "${PackageInputFile}" ]; then
         rc=8
@@ -336,6 +337,22 @@ validateOptions() {
         fi
     fi
 }
+
+
+# When publishing is enabled, try reading the wdPackageVersionFile
+    if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
+        if [ -f "$(getLogDir)/${wdPackageVersionFile}" ]; then
+          echo $PGM": [INFO] ** Found Wazi Deploy Package configuration file $(getLogDir)/${wdPackageVersionFile}. Import configuration."
+          if [ ! -z "${PackageInputFile}" ]; then
+             echo $PGM": [INFO] ** Package Input File was passed in as ${PackageInputFile}. It will be replaced by the Wazi Deploy configuration setting from $(getLogDir)/${wdPackageVersionFile}."
+          fi
+          source "$(getLogDir)/${wdPackageVersionFile}"
+        else
+          rc=4
+          ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${wdPackageVersionFile} was not found. Check previous console output. rc="$rc
+          echo $ERRMSG
+        fi
+fi
 
 # Call validate Options
 if [ $rc -eq 0 ]; then

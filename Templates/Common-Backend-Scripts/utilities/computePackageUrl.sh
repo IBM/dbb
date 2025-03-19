@@ -274,7 +274,7 @@ validateOptions() {
             echo $ERRMSG
         fi
         
-        outputFile=$(getLogDir)/${tempVersionFile}
+        outputFile=$(getLogDir)/${wdPackageVersionFile}
     fi
 
     if [ -z "${buildIdentifier}" ]; then

@@ -438,15 +438,6 @@ validateOptions() {
   fi
 
 
-  # When a the packageUrl environment variable found in the file
-  if [ ! -z "${packageUrl}" ]; then
-        echo $PGM": [INFO] ** Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
-        PackageInputFile="${packageUrl}"
-        ## Take the last segment of the URL to define the tarFileName
-        tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
-        PackageOutputFile="$(getLogDir)/${tarFileName}"
-  fi
-
   # validate package input file
   if [ -z "${PackageInputFile}" ]; then
     rc=8
@@ -484,7 +475,7 @@ validateOptions() {
   fi
 }
 
-# When publishing is enabled, try reading the tempVersionFile
+# When publishing is enabled, try reading the wdPackageVersionFile
 # that needs to be computed before this step.
 if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; then
   checkWorkspace
@@ -509,15 +500,27 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
     ${CMD}
     rc=$?
     if [ $rc -eq 0 ]; then
-        if [ -f "$(getLogDir)/${tempVersionFile}" ]; then
-          echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${tempVersionFile}"
-          source "$(getLogDir)/${tempVersionFile}"
+        if [ -f "$(getLogDir)/${wdPackageVersionFile}" ]; then
+          echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${wdPackageVersionFile}"
+          source "$(getLogDir)/${wdPackageVersionFile}"
         else
           rc=4
-          ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${tempVersionFile} was not found. Check previous console output. rc="$rc
+          ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${wdPackageVersionFile} was not found. Check previous console output. rc="$rc
           echo $ERRMSG
         fi
     fi
+    
+     # When a the packageUrl environment variable found in the file continue to compute 
+    if [ $rc -eq 0 ] && [ ! -z "${packageUrl}" ]; then
+        echo $PGM": [INFO] ** Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
+        PackageInputFile="${packageUrl}"
+        ## Take the last segment of the URL to define the tarFileName
+        tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
+        PackageOutputFile="$(getLogDir)/${tarFileName}"
+        echo $PGM": [INFO] ** Package Output file information stored in $(getLogDir)/${wdPackageVersionFile}."
+        echo "PackageInputFile=${PackageOutputFile}" >> $(getLogDir)/${wdPackageVersionFile}
+    fi
+    
   fi
 fi
 
