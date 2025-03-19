@@ -97,7 +97,7 @@ Help() {
   echo "                                            See wdDeployArtifactoryConfig "
   echo "                                            in pipelineBackend.config     "
   echo "                                                                          "
-  echo "       -P <pipelineType>              - Type of the pipeline to           "           
+  echo "       -P <pipelineType>              - Type of the pipeline to           "
   echo "                                        control in which directory builds "
   echo "                                        are stored in the artifact repo   "
   echo "                                        Accepted values:                  "
@@ -305,19 +305,19 @@ if [ $rc -eq 0 ]; then
       # Add command to produce debug output with Wazi Deploy
       Debug=" -d"
       ;;
-    
+
     a)
       # Application argument
-            argument="$OPTARG"
-            nextchar="$(expr substr $argument 1 1)"
-            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                ERRMSG=$PGM": [WARNING] Application Folder Name is required. rc="$rc
-                echo $ERRMSG
-                break
-            fi
-            App="$argument"
-            ;;
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] Application Folder Name is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      App="$argument"
+      ;;
     b)
       argument="$OPTARG"
       nextchar="$(expr substr $argument 1 1)"
@@ -437,7 +437,6 @@ validateOptions() {
     DeploymentPlanReport="$(wdDeployPackageDir)/${DeploymentPlanReport}"
   fi
 
-
   # validate package input file
   if [ -z "${PackageInputFile}" ]; then
     rc=8
@@ -445,9 +444,9 @@ validateOptions() {
     echo $ERRMSG
   else
     # check for relative path
-    if [ ! ${PackageInputFile:0:1} == "/" ] && [ -z "${packageUrl}" ] ; then 
-        checkWorkspace
-        PackageInputFile="$(getLogDir)/${PackageInputFile}"
+    if [ ! ${PackageInputFile:0:1} == "/" ] && [ -z "${packageUrl}" ]; then
+      checkWorkspace
+      PackageInputFile="$(getLogDir)/${PackageInputFile}"
     fi
   fi
 
@@ -481,13 +480,12 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
   checkWorkspace
   CMD="${computePackageUrlUtil} -w $Workspace -a $App -b $Branch -i $buildIdentifier"
 
-
   if [ ! -z "${PipelineType}" ]; then
     CMD+=" -p ${PipelineType}"
-  else 
-      rc=8
-      ERRMSG=$PGM": [ERROR] To compute the Package Url to automatically download the tar file via Wazi Deploy generate, you need to provide the pipelineType. rc="$rc
-      echo $ERRMSG
+  else
+    rc=8
+    ERRMSG=$PGM": [ERROR] To compute the Package Url to automatically download the tar file via Wazi Deploy generate, you need to provide the pipelineType. rc="$rc
+    echo $ERRMSG
   fi
 
   if [ ! -z "${releaseIdentifier}" ]; then
@@ -500,27 +498,27 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
     ${CMD}
     rc=$?
     if [ $rc -eq 0 ]; then
-        if [ -f "$(getLogDir)/${wdPackageVersionFile}" ]; then
-          echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${wdPackageVersionFile}"
-          source "$(getLogDir)/${wdPackageVersionFile}"
-        else
-          rc=4
-          ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${wdPackageVersionFile} was not found. Check previous console output. rc="$rc
-          echo $ERRMSG
-        fi
+      if [ -f "$(getLogDir)/${wdPackageVersionFile}" ]; then
+        echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${wdPackageVersionFile}"
+        source "$(getLogDir)/${wdPackageVersionFile}"
+      else
+        rc=4
+        ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${wdPackageVersionFile} was not found. Check previous console output. rc="$rc
+        echo $ERRMSG
+      fi
     fi
-    
-     # When a the packageUrl environment variable found in the file continue to compute 
+
+    # When a the packageUrl environment variable found in the file continue to compute
     if [ $rc -eq 0 ] && [ ! -z "${packageUrl}" ]; then
-        echo $PGM": [INFO] ** Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
-        PackageInputFile="${packageUrl}"
-        ## Take the last segment of the URL to define the tarFileName
-        tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
-        PackageOutputFile="$(getLogDir)/${tarFileName}"
-        echo $PGM": [INFO] ** Package Output file information stored in $(getLogDir)/${wdPackageVersionFile}."
-        echo "PackageInputFile=${PackageOutputFile}" >> $(getLogDir)/${wdPackageVersionFile}
+      echo $PGM": [INFO] ** Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
+      PackageInputFile="${packageUrl}"
+      ## Take the last segment of the URL to define the tarFileName
+      tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
+      PackageOutputFile="$(getLogDir)/${tarFileName}"
+      echo $PGM": [INFO] ** Package Output file information stored in $(getLogDir)/${wdPackageVersionFile}."
+      echo "PackageInputFile=${PackageOutputFile}" >>$(getLogDir)/${wdPackageVersionFile}
     fi
-    
+
   fi
 fi
 

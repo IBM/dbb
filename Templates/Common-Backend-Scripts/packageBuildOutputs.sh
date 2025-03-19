@@ -77,7 +77,7 @@ Help() {
     echo "                                                              "
     echo "                Ex: Pipeline Build ID (Build.buildid.tar)     "
     echo "                                                              "
-    echo "       -s "<sbomAuthor>"    - Name and email of               "
+    echo "       -s " <sbomAuthor >"    - Name and email of               "
     echo "                              the SBOM author                 "
     echo "                              enclosed with double quotes     "
     echo "                              (Optional)                      "
@@ -95,7 +95,7 @@ Help() {
     echo "       -R <releaseIdentifier> - The release identifier for    "
     echo "                               release pipeline builds        "
     echo "                Ex: rel-1.2.3                                 "
-    echo "                                                              "    
+    echo "                                                              "
     echo "       -p <pipelineType>  - Type of the pipeline to           "
     echo "                            control in which directory builds "
     echo "                            are stored in the artifact repo   "
@@ -142,7 +142,7 @@ rc=0
 ERRMSG=""
 Workspace=""
 App=""
-AppDir=""  
+AppDir=""
 tarFileName=""
 PkgPropFile=""
 PipelineType=""
@@ -205,7 +205,6 @@ if [ $rc -eq 0 ]; then
     fi
 fi
 
-
 #
 # Get Options
 if [ $rc -eq 0 ]; then
@@ -246,7 +245,7 @@ if [ $rc -eq 0 ]; then
                 break
             fi
             tarFileName="$argument"
-            ;;    
+            ;;
         i)
             argument="$OPTARG"
             nextchar="$(expr substr $argument 1 1)"
@@ -306,7 +305,7 @@ if [ $rc -eq 0 ]; then
             fi
             releaseIdentifier="$argument"
             ;;
-        v)  
+        v)
             argument="$OPTARG"
             rc=4
             ERRMSG=$PGM": [WARNING] The argument (-v) for naming the version is no longer supported. Please switch to supply the build identifier argument (-i) and for release pipelines the release identifier argument (-r). rc="$rc
@@ -366,28 +365,28 @@ validateOptions() {
         echo $ERRMSG
         buildIdentifier=$(date +%Y%m%d_%H%M%S)
     fi
-    
+
     if [ -z "${App}" ]; then
-      rc=8
-      ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
-      echo $ERRMSG
+        rc=8
+        ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
+        echo $ERRMSG
     else
 
         AppDir=$(getApplicationDir)
-    
+
         # Check if application directory contains
         if [ -d "${AppDir}/${App}" ]; then
-          echo $PGM": [INFO] Detected the application repository (${App}) within the git repository layout structure."
-          echo $PGM": [INFO]  Assuming this as the new application location."
-          AppDir="${AppDir}/${App}"
+            echo $PGM": [INFO] Detected the application repository (${App}) within the git repository layout structure."
+            echo $PGM": [INFO]  Assuming this as the new application location."
+            AppDir="${AppDir}/${App}"
         fi
-    
+
         if [ ! -d "${AppDir}" ]; then
-          rc=8
-          ERRMSG=$PGM": [ERROR] Application Directory (${AppDir}) was not found. rc="$rc
-          echo $ERRMSG
+            rc=8
+            ERRMSG=$PGM": [ERROR] Application Directory (${AppDir}) was not found. rc="$rc
+            echo $ERRMSG
         fi
-  fi
+    fi
 
 }
 
@@ -474,11 +473,11 @@ validatePublishingOptions() {
 # compute packaging parameters and validate publishing options
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
     # invoke function in packageUtils
-    
+
     if [ ! -z "${tarFileName}" ]; then
         echo $PGM": [INFO] ** Identified that tarFileName is passed into packageBuildOutputs.sh (${tarFileName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier."
     fi
-    
+
     computePackageInformation
 fi
 
@@ -503,11 +502,11 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${Branch}" ]; then
         echo $PGM": [INFO] **                   Branch:" ${Branch}
     fi
-    
+
     if [ ! -z "${AppDir}" ]; then
         echo $PGM": [INFO] **    Application directory:" ${AppDir}
     fi
-    
+
     if [ ! -z "${PipelineType}" ]; then
         echo $PGM": [INFO] **         Type of pipeline:" ${PipelineType}
     fi
@@ -523,8 +522,6 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${packageBuildIdentifier}" ]; then
         echo $PGM": [INFO] ** Package Build Identifier:" ${packageBuildIdentifier}
     fi
-    
-    
 
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
     if [ "$publish" == "true" ]; then
@@ -561,9 +558,9 @@ fi
 # Invoke the Package Build Outputs script
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the Package Build Outputs script."
-    
+
     if [ ! -z "${cycloneDXlibraries}" ]; then
-    	cycloneDXlibraries="-cp ${cycloneDXlibraries}"
+        cycloneDXlibraries="-cp ${cycloneDXlibraries}"
     fi
 
     CMD="$DBB_HOME/bin/groovyz ${log4j2} ${cycloneDXlibraries} ${packagingScript} --workDir ${logDir}"
@@ -582,7 +579,7 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${Branch}" ]; then
         CMD="${CMD} --branch ${Branch}"
     fi
-    
+
     # application directory
     if [ ! -z "${AppDir}" ]; then
         CMD="${CMD} --applicationFolderPath ${AppDir}"
@@ -602,7 +599,7 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${artifactVersionName}" ]; then
         CMD="${CMD} --versionName ${artifactVersionName}"
     fi
-    
+
     # Wazi Deploy build identifier
     if [ ! -z "${packageBuildIdentifier}" ]; then
         CMD="${CMD} --packageBuildIdentifier ${packageBuildIdentifier}"
@@ -637,11 +634,10 @@ if [ $rc -eq 0 ]; then
     # SBOM options
     if [ "$generateSBOM" == "true" ]; then
         CMD="${CMD} --sbom"
-	    if [ ! -z "${sbomAuthor}" ]; then
-	        CMD="${CMD} --sbomAuthor \"${sbomAuthor}\""
-	    fi
+        if [ ! -z "${sbomAuthor}" ]; then
+            CMD="${CMD} --sbomAuthor \"${sbomAuthor}\""
+        fi
     fi
-
 
     echo $PGM": [INFO] ${CMD}"
     ${CMD}
