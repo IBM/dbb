@@ -24,7 +24,10 @@ parseArgs(args)
 // Print parms
 println("** Script configuration:")
 props.sort().each { k,v->
-	println "   $k -> $v"
+	if ( k == "artifactRepository.password" )
+		println "   $k -> xxxxxx "
+	else
+		println "   $k -> $v"
 }
 
 // Load and verify helpers
