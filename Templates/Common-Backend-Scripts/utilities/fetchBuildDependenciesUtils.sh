@@ -85,7 +85,7 @@ runFetchLogic() {
 fetchBuildDependencies() {
 
     # extracting external dependencies is based on the application descriptor
-    applicationDescriptor="${AppDir}/applicationDescriptor.yml"
+    applicationDescriptor="$(getApplicationDir)/applicationDescriptor.yml"
       
     # this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
     externalDependenciesLog="$(getLogDir)/externalDependenciesLog.yaml"

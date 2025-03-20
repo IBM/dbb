@@ -438,7 +438,7 @@ fi
 
 
 # Setup build environment and pull external dependencies if an Application Descriptor is found
-if [ $rc -eq 0 ] && [ "$fetchBuildDependencies" = true ]; then
+if [ $rc -eq 0 ]; then
     fetchBuildDependencies
 fi
 
