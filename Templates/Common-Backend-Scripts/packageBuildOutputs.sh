@@ -307,9 +307,16 @@ if [ $rc -eq 0 ]; then
             ;;
         v)
             argument="$OPTARG"
-            rc=4
-            ERRMSG=$PGM": [WARNING] The argument (-v) for naming the version is no longer supported. Please switch to supply the build identifier argument (-i) and for release pipelines the release identifier argument (-r). rc="$rc
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            ERRMSG=$PGM": [WARNING] The argument (-v) for naming the version is deprecated. Please switch to the new options and supply the build identifier argument (-i) and for release pipelines the release identifier argument (-r)."
             echo $ERRMSG
+            artifactVersionName="$argument"
             ;;
         \?)
             Help
@@ -475,7 +482,11 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
     # invoke function in packageUtils
 
     if [ ! -z "${tarFileName}" ]; then
-        echo $PGM": [INFO] ** Identified that tarFileName is passed into packageBuildOutputs.sh (${tarFileName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier."
+        echo $PGM": [INFO] ** Identified that tarFileName is passed into packageBuildOutputs.sh (${tarFileName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."
+    fi
+    
+    if [ ! -z "${artifactVersionName}" ]; then
+        echo $PGM": [INFO] ** Identified that artifactVersionName is passed into packageBuildOutputs.sh (${artifactVersionName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."
     fi
 
     computePackageInformation
