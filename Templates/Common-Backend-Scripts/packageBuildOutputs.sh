@@ -593,7 +593,7 @@ if [ $rc -eq 0 ]; then
 
     # application directory
     if [ ! -z "${AppDir}" ]; then
-        CMD="${CMD} --applicationFolderPath ${AppDir}"
+        CMD="${CMD} --applicationFolderPath $(getApplicationDir)"
     fi
 
     # packaging properties file
