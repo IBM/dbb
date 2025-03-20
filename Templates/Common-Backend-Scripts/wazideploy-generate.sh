@@ -514,9 +514,9 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
       PackageInputFile="${packageUrl}"
       ## Take the last segment of the URL to define the tarFileName
       tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
-      PackageOutputFile="$(getLogDir)/${tarFileName}"
+      PackageOutputFile="$(wdDeployPackageDir)/${tarFileName}"
       echo $PGM": [INFO] ** Package Output file information stored in $(getLogDir)/${wdPackageVersionFile}."
-      echo "PackageInputFile=${PackageOutputFile}" >>$(getLogDir)/${wdPackageVersionFile}
+      echo "PackageInputFile=${PackageOutputFile}" >>$(wdDeployPackageDir)/${wdPackageVersionFile}
     fi
 
   fi
