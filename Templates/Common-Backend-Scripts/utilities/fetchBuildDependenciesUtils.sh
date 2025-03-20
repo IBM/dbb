@@ -82,7 +82,7 @@ runFetchLogic() {
 
 #
 # Validate to fetch external dependencies is based on the ApplicationDescriptor
-fetchBuildDependencies() {
+fetchBuildDependenciesMethod() {
 
     # extracting external dependencies is based on the application descriptor
     applicationDescriptor="$(getApplicationDir)/applicationDescriptor.yml"
