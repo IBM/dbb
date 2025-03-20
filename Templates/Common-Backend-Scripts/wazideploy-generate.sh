@@ -516,7 +516,7 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
       tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
       PackageOutputFile="$(wdDeployPackageDir)/${tarFileName}"
       echo $PGM": [INFO] ** Package Output file information stored in $(getLogDir)/${wdPackageVersionFile}."
-      echo "PackageInputFile=${PackageOutputFile}" >>$(wdDeployPackageDir)/${wdPackageVersionFile}
+      echo "PackageInputFile=${PackageOutputFile}" >> $(getLogDir)/${wdPackageVersionFile}
     fi
 
   fi
