@@ -42,7 +42,7 @@ runFetchLogic() {
         echo $PGM": [INFO] **     Application Descriptor :" ${applicationDescriptor}
         echo $PGM": [INFO] **          Use Package Cache :" ${enablePackageCache}
         echo $PGM": [INFO] **     Package Cache Location :" ${packageCacheLocation}
-        echo $PGM": [INFO] **    External Dependency Log :" ${externalDependenciesLog}
+        echo $PGM": [INFO] **    External Dependency Log :" ${externalDependenciesLogFile}
         echo $PGM": [INFO] **************************************************************"
         echo ""
     fi
