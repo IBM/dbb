@@ -48,8 +48,9 @@ class Baseline {
 
 class DependencyDescriptor {
     String name
-    String version
     String type
+    String reference
+    String buildid
 }
 
 /**
@@ -193,18 +194,20 @@ def removeFileDefinition(ApplicationDescriptor applicationDescriptor, String sou
  * Method to add an application dependency 
  */
 
-def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String applicationDependency, String version, String type) {
+def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String applicationDependency, String type, String reference, String buildid) {
     if (!applicationDescriptor.dependencies) {
         applicationDescriptor.dependencies = new ArrayList<DependencyDescriptor>()
     }
+	// skip readding same/similar entries
     def existingDependencies = applicationDescriptor.dependencies.findAll() {
-        it.name.equals(applicationDependency) & it.type.equals(type)
+        it.name.equals(applicationDependency)
     }
     if (!existingDependencies) {
         def dependency = new DependencyDescriptor()
         dependency.name = applicationDependency
-        dependency.version = version
-        dependency.type = type
+		dependency.type = type
+        dependency.reference = reference
+        dependency.buildid = buildid
         applicationDescriptor.dependencies.add(dependency)
         applicationDescriptor.dependencies.sort {
             it.name
