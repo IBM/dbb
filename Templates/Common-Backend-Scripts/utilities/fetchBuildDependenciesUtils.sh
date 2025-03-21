@@ -60,8 +60,8 @@ runFetchLogic() {
         echo $PGM": [INFO] ** Fetch Application Dependencies from Artifact Repository"
         cmd="groovyz ${PIPELINE_SCRIPTS}/utilities/fetchBuildDependencies.groovy -w $(getWorkDirectory) -a ${applicationDescriptor} -p ${pipelineConfiguration} -b ${Branch}"
         #
-        if [ ! -z "${externalDependenciesLog}" ]; then
-            cmd="${cmd} -d ${externalDependenciesLog}"
+        if [ ! -z "${externalDependenciesLogFile}" ]; then
+            cmd="${cmd} -d ${externalDependenciesLogFile}"
         fi
 
         if [ ! -z "${packageCacheLocation}" ]; then
@@ -88,7 +88,11 @@ fetchBuildDependenciesMethod() {
     applicationDescriptor="$(getApplicationDir)/applicationDescriptor.yml"
       
     # this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
-    externalDependenciesLog="$(getLogDir)/externalDependenciesLog.yaml"
+    if [ ! -z "${externalDependenciesLogName}" ]; then
+        externalDependenciesLogFile="$(getLogDir)/${externalDependenciesLogName}"
+    fi
+
+    # create the log dir
     mkdir -p "$(getLogDir)"
 
     # Set up to perform the clone of the Repo

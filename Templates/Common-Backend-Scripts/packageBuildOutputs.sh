@@ -163,6 +163,8 @@ artifactRepositoryPassword=""     # required if artifactRepositoryPropertyFile n
 artifactRepositoryName=""         # required if artifactRepositoryPropertyFile not specified
 artifactRepositoryDirectory=""    # required if artifactRepositoryPropertyFile not specified
 artifactRepositoryPropertyFile="" # alternative to above cli parms
+externalDependenciesLogFile=""    # document fetched build dependencies
+
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -395,6 +397,17 @@ validateOptions() {
         fi
     fi
 
+    # validate if external dependency log exists
+    if [ "${fetchBuildDependencies}" == "true" ] && [ ! -z "${externalDependenciesLogName}" ]; then
+        externalDependenciesLogFile="$(getLogDir)/${externalDependenciesLogName}"
+        # Validate Properties file
+        if [ ! -f "${externalDependenciesLogFile}" ]; then
+                rc=8
+                ERRMSG=$PGM": [ERROR] Unable to locate ${externalDependenciesLogFile}. rc="$rc
+                echo $ERRMSG
+        fi
+    fi
+
 }
 
 # function to validate publishing options
@@ -508,59 +521,62 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] ** Started - Package Build Outputs on HOST/USER: ${SYS}/${USER}"
     echo $PGM": [INFO] **                  WorkDir:" $(getWorkDirectory)
     if [ ! -z "${App}" ]; then
-        echo $PGM": [INFO] **              Application:" ${App}
+        echo $PGM": [INFO] **                Application:" ${App}
     fi
     if [ ! -z "${Branch}" ]; then
-        echo $PGM": [INFO] **                   Branch:" ${Branch}
+        echo $PGM": [INFO] **                     Branch:" ${Branch}
     fi
 
     if [ ! -z "${AppDir}" ]; then
-        echo $PGM": [INFO] **    Application directory:" ${AppDir}
+        echo $PGM": [INFO] **      Application directory:" ${AppDir}
     fi
 
     if [ ! -z "${PipelineType}" ]; then
-        echo $PGM": [INFO] **         Type of pipeline:" ${PipelineType}
+        echo $PGM": [INFO] **           Type of pipeline:" ${PipelineType}
     fi
     if [ ! -z "${tarFileName}" ]; then
-        echo $PGM": [INFO] **            Tar file Name:" ${tarFileName}
+        echo $PGM": [INFO] **              Tar file Name:" ${tarFileName}
     fi
-    echo $PGM": [INFO] **     BuildReport Location:" ${logDir}
-    echo $PGM": [INFO] **     PackagingScript Path:" ${packagingScript}
+    echo $PGM": [INFO] **       BuildReport Location:" ${logDir}
+    echo $PGM": [INFO] **       PackagingScript Path:" ${packagingScript}
     if [ ! -z "${PkgPropFile}" ]; then
-        echo $PGM": [INFO] **     Packaging properties:" ${PkgPropFile}
+        echo $PGM": [INFO] **       Packaging properties:" ${PkgPropFile}
     fi
 
     if [ ! -z "${packageBuildIdentifier}" ]; then
-        echo $PGM": [INFO] ** Package Build Identifier:" ${packageBuildIdentifier}
+        echo $PGM": [INFO] **   Package Build Identifier:" ${packageBuildIdentifier}
     fi
-
+    echo $PGM": [INFO] **              Generate SBOM:" ${generateSBOM}
+    if [ ! -z "${sbomAuthor}" ]; then
+        echo $PGM": [INFO] **                SBOM Author:" ${sbomAuthor}
+    fi
+    if [ ! -z "${externalDependenciesLogFile}" ]; then
+        echo $PGM": [INFO] **   External Dependencies log:" ${externalDependenciesLogFile}
+    fi    
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
     if [ "$publish" == "true" ]; then
         if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
-            echo $PGM": [INFO] **  ArtifactRepo properties:" ${artifactRepositoryPropertyFile}
+            echo $PGM": [INFO] **    ArtifactRepo properties:" ${artifactRepositoryPropertyFile}
         fi
 
         if [ ! -z "${artifactRepositoryUrl}" ]; then
-            echo $PGM": [INFO] **         ArtifactRepo Url:" ${artifactRepositoryUrl}
+            echo $PGM": [INFO] **           ArtifactRepo Url:" ${artifactRepositoryUrl}
         fi
         if [ ! -z "${artifactRepositoryUser}" ]; then
-            echo $PGM": [INFO] **        ArtifactRepo User:" ${artifactRepositoryUser}
+            echo $PGM": [INFO] **          ArtifactRepo User:" ${artifactRepositoryUser}
         fi
         if [ ! -z "${artifactRepositoryPassword}" ]; then
-            echo $PGM": [INFO] **    ArtifactRepo Password: xxxxx"
+            echo $PGM": [INFO] **      ArtifactRepo Password: xxxxx"
         fi
         if [ ! -z "${artifactRepositoryName}" ]; then
-            echo $PGM": [INFO] **   ArtifactRepo Repo name:" ${artifactRepositoryName}
+            echo $PGM": [INFO] **     ArtifactRepo Repo name:" ${artifactRepositoryName}
         fi
         if [ ! -z "${artifactRepositoryDirectory}" ]; then
-            echo $PGM": [INFO] **    ArtifactRepo Repo Dir:" ${artifactRepositoryDirectory}
+            echo $PGM": [INFO] **      ArtifactRepo Repo Dir:" ${artifactRepositoryDirectory}
         fi
     fi
-    echo $PGM": [INFO] **            Generate SBOM:" ${generateSBOM}
-    if [ ! -z "${sbomAuthor}" ]; then
-        echo $PGM": [INFO] **              SBOM Author:" ${sbomAuthor}
-    fi
-    echo $PGM": [INFO] **                 DBB_HOME:" ${DBB_HOME}
+
+    echo $PGM": [INFO] **                   DBB_HOME:" ${DBB_HOME}
     echo $PGM": [INFO] **************************************************************"
     echo ""
 fi
@@ -615,6 +631,11 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${packageBuildIdentifier}" ]; then
         CMD="${CMD} --packageBuildIdentifier ${packageBuildIdentifier}"
     fi
+
+    # Pass information about externally fetched modules to packaging to document them
+    if [ ! -z "${externalDependenciesLogFile}" ]; then
+        CMD="${CMD} --externalDependenciesEvidences ${externalDependenciesLogFile}"
+    fi    
 
     # publishing options
     if [ "$publish" == "true" ]; then
