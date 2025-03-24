@@ -71,7 +71,7 @@ if [ $rc -eq 0 ]; then
 
 # Get Options
     if [ $rc -eq 0 ]; then
-        while getopts "h:w:a:b:p:t" opt; do
+        while getopts "h:w:a:b:p:r" opt; do
             case $opt in
             h)
                 Help
@@ -120,13 +120,14 @@ if [ $rc -eq 0 ]; then
                 fi
                 PipelineType="$argument"
                 ;;
-            t) 
+            r) 
                 # release type
                 argument="$OPTARG"
+                echo $argument
                 nextchar="$(expr substr $argument 1 1)"
                 if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                   rc=4
-                  INFO=$PGM": [WARNING] Release type is required (-t). rc="$rc
+                  INFO=$PGM": [WARNING] Release type is required (-r). rc="$rc
                   echo $INFO
                   break
                 fi
