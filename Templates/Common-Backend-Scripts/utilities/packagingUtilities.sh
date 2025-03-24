@@ -89,6 +89,15 @@ computePackageInformation() {
 
         if [ "${computeArchiveUrl}" == "true" ]; then
 
+            artifactRepositoryHelpersScript="${SCRIPT_HOME}/../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy"
+
+            # validate options
+            if [ ! -f "${artifactRepositoryHelpersScript}" ]; then
+                rc=8
+                ERRMSG=$PGM": [ERROR] Unable to locate ${artifactRepositoryHelpersScript}. rc="$rc
+                echo $ERRMSG
+            fi
+
             #
             # Invoke the Package Build Outputs script
             if [ $rc -eq 0 ]; then
