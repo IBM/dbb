@@ -112,10 +112,8 @@ if [ $rc -eq 0 ]; then
             p)
                 argument="$OPTARG"
                 nextchar="$(expr substr $argument 1 1)"
-                echo $argument
                 if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                echo $nextchar
                 INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
                 echo $INFO
                 break
