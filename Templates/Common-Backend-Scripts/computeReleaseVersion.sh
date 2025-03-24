@@ -112,23 +112,25 @@ if [ $rc -eq 0 ]; then
             p)
                 argument="$OPTARG"
                 nextchar="$(expr substr $argument 1 1)"
-                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
-                echo $INFO
-                break
-                fi
+                #if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                #rc=4
+                #INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
+                #echo $INFO
+                #break
+                #fi
+                echo $PGM": [INFO] PipelineType = ${argument}"
                 PipelineType="$argument"
                 ;;
             r)
                 argument="$OPTARG"
                 nextchar="$(expr substr $argument 1 1)"
-                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                INFO=$PGM": [INFO] No Release type specified. rc="$rc
-                echo $INFO
-                break
-                fi
+                #if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                #rc=4
+                #INFO=$PGM": [INFO] No Release type specified. rc="$rc
+                #echo $INFO
+                #break
+                #fi
+                echo $PGM": [INFO] ReleaseType = ${argument}"
                 ReleaseType="$argument"
                 ;;
             \?)
