@@ -120,7 +120,7 @@ Help() {
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 packagingScript="${SCRIPT_HOME}/../../Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy"
-packageUtilities="${SCRIPT_HOME}/utilities/packageUtils.sh"
+packagingUtilities="${SCRIPT_HOME}/utilities/packagingUtilities.sh"
 
 # Path and File Name to the advanced debug options.
 #log4j2="-Dlog4j.configurationFile=file:/../log4j2.properties"
@@ -198,12 +198,12 @@ fi
 
 # Source packaging helper
 if [ $rc -eq 0 ]; then
-    if [ ! -f "${packageUtilities}" ]; then
+    if [ ! -f "${packagingUtilities}" ]; then
         rc=8
-        ERRMSG=$PGM": [ERROR] Packaging Utils (${packageUtilities}) was not found. rc="$rc
+        ERRMSG=$PGM": [ERROR] Packaging Utils (${packagingUtilities}) was not found. rc="$rc
         echo $ERRMSG
     else
-        source $packageUtilities
+        source $packagingUtilities
     fi
 fi
 
@@ -492,7 +492,7 @@ validatePublishingOptions() {
 
 # compute packaging parameters and validate publishing options
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
-    # invoke function in packageUtils
+    # invoke function in packagingUtilities
 
     if [ ! -z "${tarFileName}" ]; then
         echo $PGM": [INFO] ** Identified that tarFileName is passed into packageBuildOutputs.sh (${tarFileName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."

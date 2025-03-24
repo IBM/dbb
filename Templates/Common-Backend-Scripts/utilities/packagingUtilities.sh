@@ -3,23 +3,21 @@ mainBranchSegment=""
 secondBranchSegment=""
 rc=0
 
-
-
+# Method implementing the conventions in the CBS for packaging using the PackageBuildOutputs.groovy script
 computePackageInformation() {
     #############################################
     # output environment variables
     #############################################
-    artifactRepositoryName=""           # identifier of the artifact repo
-    artifactRepositoryDirectory=""      # root directory folder in repo
-    artifactVersionName=""              # subfolder in repo path identifying version / origin branch
-    tarFileName=""                      # computed tarFileName how it is stored in the artifact repository
-    artifactRepositoryAbsoluteUrl=""    # absolute URL
-    packageBuildIdentifier=""           # Identifier for Wazi Deploy Application Manifest file
+    artifactRepositoryName=""      # identifier of the artifact repo
+    artifactRepositoryDirectory="" # root directory folder in repo
+    artifactVersionName=""         # subfolder in repo path identifying version / origin branch
+    tarFileName=""                 # computed tarFileName how it is stored in the artifact repository
+    packageBuildIdentifier=""      # Identifier for Wazi Deploy Application Manifest file
     #############################################
-    
-    # configuration variable defining the Artifactory repository name pattern 
+
+    # configuration variable defining the Artifactory repository name pattern
     artifactRepositoryRepoPattern="${App}-${artifactRepositoryNameSuffix}"
-    
+
     branchConvention=(${Branch//// })
 
     if [ $rc -eq 0 ]; then
@@ -39,7 +37,7 @@ computePackageInformation() {
 
         # remove chars (. -) from the name
         mainBranchSegmentTrimmed=$(echo ${mainBranchSegment} | tr -d '.-' | tr '[:lower:]' '[:upper:]')
-        
+
         artifactRepositoryName=$(echo "${artifactRepositoryRepoPattern}")
 
         # evaluate main segment
@@ -51,13 +49,13 @@ computePackageInformation() {
                 # <artifactRepositoryName>/<artifactRepositoryDirectory>/<releaseIdentifier>/<application>-<releaseIdentifier>-<buildIdentifier>.tar
                 # MortgageApplication-repo-local/release/1.2.3/MortgageApplication-1.2.3-1234567890.tar
                 #############################################
-            
+
                 # Release builds are captured in the release directory of the artifact repo
                 artifactRepositoryDirectory="release"
-                
+
                 # artifactVersionName is second identifier in the folder structure and represents the
                 artifactVersionName=${releaseIdentifier}
-                
+
                 # building up the tarFileName
                 tarFileName="${App}-${releaseIdentifier}-${buildIdentifier}.tar"
                 packageBuildIdentifier="${releaseIdentifier}-${buildIdentifier}"
@@ -67,7 +65,7 @@ computePackageInformation() {
                 # <artifactRepositoryName>/<artifactRepositoryDirectory>/<branch>/<application>-<buildIdentifier>.tar
                 # Mortgage-repo-local/build/feature/123-enhance-something/Mortgage-123456.tar
                 #############################################
-  
+
                 artifactRepositoryDirectory="build"
                 artifactVersionName=${Branch}
                 tarFileName="${App}-${buildIdentifier}.tar"
@@ -86,9 +84,55 @@ computePackageInformation() {
         esac
 
         #############################################
-        ### Construct the absolute repository URL
+        ### Construct the absolute repository URL (required when downloading the package)
         #############################################
-        artifactRepositoryAbsoluteUrl="${artifactRepositoryUrl}/${artifactRepositoryName}/${artifactRepositoryDirectory}/${artifactVersionName}/${tarFileName}"
+
+        if [ "${computeArchiveUrl}" == "true" ]; then
+
+            #
+            # Invoke the Package Build Outputs script
+            if [ $rc -eq 0 ]; then
+                echo $PGM": [INFO] Invoking the ArtifactRepositoryHelper groovy script to compute Package Url."
+
+                CMD="$DBB_HOME/bin/groovyz ${log4j2} ${artifactRepositoryHelpersScript} --computePackageUrl"
+
+                # add tarfile name
+                if [ ! -z "${tarFileName}" ]; then
+                    CMD="${CMD} --tarFileName ${tarFileName}"
+                fi
+
+                # artifactVersionName
+                if [ ! -z "${artifactVersionName}" ]; then
+                    CMD="${CMD} --versionName ${artifactVersionName}"
+                fi
+
+                # Artifact repo options
+                if [ ! -z "${artifactRepositoryUrl}" ]; then
+                    CMD="${CMD} --artifactRepositoryUrl \"${artifactRepositoryUrl}\""
+                fi
+
+                if [ ! -z "${artifactRepositoryName}" ]; then
+                    CMD="${CMD} --artifactRepositoryName ${artifactRepositoryName}"
+                fi
+                if [ ! -z "${artifactRepositoryDirectory}" ]; then
+                    CMD="${CMD} --artifactRepositoryDirectory ${artifactRepositoryDirectory}"
+                fi
+
+                echo $PGM": [INFO] ${CMD}"
+                artifactRepositoryAbsoluteUrl="$(${CMD} | grep packageUrl=)"
+
+                if [ ! -z "${artifactRepositoryAbsoluteUrl}" ]; then
+                    ERRMSG=$PGM": [INFO] Computation of Archive Url completed. rc="$rc
+                    echo $ERRMSG
+                else
+                    rc=12
+                    ERRMSG=$PGM": [ERR] Computation of Archive Url failed. Check Console for details. rc="$rc
+                    echo $ERRMSG
+
+                fi
+            fi
+
+        fi
 
         # unset internal variables
         mainBranchSegment=""
@@ -97,4 +141,3 @@ computePackageInformation() {
 
     fi
 }
-

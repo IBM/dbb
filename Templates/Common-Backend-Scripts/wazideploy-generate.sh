@@ -135,7 +135,7 @@ Help() {
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
-computePackageUrlUtil="${SCRIPT_HOME}/utilities/computePackageUrl.sh"
+packagingUtilities="${SCRIPT_HOME}/utilities/packagingUtilities.sh"
 # Customization - End
 
 #
@@ -167,6 +167,10 @@ Branch=""       # takes cli option b
 # Package identifier variables
 buildIdentifier=""   # takes cli option I
 releaseIdentifier="" # takes cli option R
+
+# 
+computeArchiveUrl="true"            # enables the computation of the url
+artifactRepositoryAbsoluteUrl=""    # Used to store the computed Url
 
 Debug=""
 HELP=$1
@@ -201,13 +205,15 @@ if [ $rc -eq 0 ]; then
   fi
 fi
 
-# Read and import pipeline configuration
+# Source packaging helper
 if [ $rc -eq 0 ]; then
-  if [ ! -f "${computePackageUrlUtil}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] The Package Url Util (${computePackageUrlUtil}) was not found. rc="$rc
-    echo $ERRMSG
-  fi
+    if [ ! -f "${packagingUtilities}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Packaging Utilities file (${packagingUtilities}) was not found. rc="$rc
+        echo $ERRMSG
+    else
+        source $packagingUtilities
+    fi
 fi
 
 #
@@ -478,46 +484,22 @@ validateOptions() {
 # that needs to be computed before this step.
 if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; then
   checkWorkspace
-  CMD="${computePackageUrlUtil} -w $Workspace -a $App -b $Branch -i $buildIdentifier"
 
-  if [ ! -z "${PipelineType}" ]; then
-    CMD+=" -p ${PipelineType}"
-  else
+  # validate options
+  if [ -z "${PipelineType}" ]; then
     rc=8
-    ERRMSG=$PGM": [ERROR] To compute the Package Url to automatically download the tar file via Wazi Deploy generate, you need to provide the pipelineType. rc="$rc
+    ERRMSG=$PGM": [ERROR] To compute the Url of the stored package to enable the download of the archive file via Wazi Deploy generate, you need to provide the pipelineType. rc="$rc
     echo $ERRMSG
   fi
 
-  if [ ! -z "${releaseIdentifier}" ]; then
-    CMD+=" -r ${releaseIdentifier}"
-  fi
-
   if [ $rc -eq 0 ]; then
-    echo $PGM": [INFO] ** Compute Package Url based on existing conventions using command"
-    echo $PGM": [INFO] ** Invoking subtask ${CMD}"
-    ${CMD}
-    rc=$?
-    if [ $rc -eq 0 ]; then
-      if [ -f "$(getLogDir)/${wdPackageVersionFile}" ]; then
-        echo $PGM": [INFO] ** Read configuration file $(getLogDir)/${wdPackageVersionFile}"
-        source "$(getLogDir)/${wdPackageVersionFile}"
-      else
-        rc=4
-        ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${wdPackageVersionFile} was not found. Check previous console output. rc="$rc
-        echo $ERRMSG
-      fi
-    fi
 
-    # When a the packageUrl environment variable found in the file continue to compute
-    if [ $rc -eq 0 ] && [ ! -z "${packageUrl}" ]; then
-      echo $PGM": [INFO] ** Package Url configuration file found. Package Input File will be set to ${packageUrl}. Package Output file will be computed."
-      PackageInputFile="${packageUrl}"
-      ## Take the last segment of the URL to define the tarFileName
-      tarFileName=$(echo $PackageInputFile | awk -F "/" '{print $NF}')
-      PackageOutputFile="$(wdDeployPackageDir)/${tarFileName}"
-      echo $PGM": [INFO] ** Package Output file information stored in $(getLogDir)/${wdPackageVersionFile}."
-      echo "PackageInputFile=${PackageOutputFile}" >> $(getLogDir)/${wdPackageVersionFile}
-    fi
+    # Call utilities method
+    computePackageInformation
+
+    # Set Input and output files for Wazi Deploy
+    PackageInputFile="${artifactRepositoryAbsoluteUrl}"
+    PackageOutputFile="$(wdDeployPackageDir)/applicationPackage.tar" # shared convention with wazideploy-deploy.sh
 
   fi
 fi

@@ -337,18 +337,16 @@ validateOptions() {
     fi
 }
 
-# When publishing is enabled, try reading the wdPackageVersionFile
+# When publishing is enabled, check if the tarfile exists in the expected location
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
-    if [ -f "$(getLogDir)/${wdPackageVersionFile}" ]; then
-        echo $PGM": [INFO] ** Found Wazi Deploy Package configuration file $(getLogDir)/${wdPackageVersionFile}. Import configuration."
+    if [ -f "$(wdDeployPackageDir)/applicationPackage.tar" ]; then # shared convention with wazideploy-generate.sh
+        echo $PGM": [INFO] ** Package file was found in expected location at $(wdDeployPackageDir)/applicationPackage.tar ."
         if [ ! -z "${PackageInputFile}" ]; then
-            echo $PGM": [INFO] ** Package Input File was passed in as ${PackageInputFile}. It will be replaced by the Wazi Deploy configuration setting from $(getLogDir)/${wdPackageVersionFile}."
+            echo $PGM": [INFO] ** Package Input File was passed in as ${PackageInputFile}. It will be replaced with $(wdDeployPackageDir)/applicationPackage.tar ."
         fi
-        source "$(getLogDir)/${wdPackageVersionFile}"
+        PackageInputFile="$(wdDeployPackageDir)/applicationPackage.tar"
     else
-        rc=4
-        ERRMSG=$PGM": [ERROR] ** The configuration file $(getLogDir)/${wdPackageVersionFile} was not found. Check previous console output. rc="$rc
-        echo $ERRMSG
+        echo $PGM": [INFO] ** The CBS can automatically compute the Url of the package. Wazi Deploy will then download it. Read more about the capabilities in the CBS readme."
     fi
 fi
 
