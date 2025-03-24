@@ -112,25 +112,24 @@ if [ $rc -eq 0 ]; then
             p)
                 argument="$OPTARG"
                 nextchar="$(expr substr $argument 1 1)"
-                #if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                #rc=4
-                #INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
-                #echo $INFO
-                #break
-                #fi
-                echo $PGM": [INFO] PipelineType = ${argument}"
+                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                  rc=4
+                  INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
+                  echo $INFO
+                  break
+                fi
                 PipelineType="$argument"
                 ;;
-            r)
+            r) 
+                # release type
                 argument="$OPTARG"
                 nextchar="$(expr substr $argument 1 1)"
-                #if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                #rc=4
-                #INFO=$PGM": [INFO] No Release type specified. rc="$rc
-                #echo $INFO
-                #break
-                #fi
-                echo $PGM": [INFO] ReleaseType = ${argument}"
+                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                  rc=4
+                  INFO=$PGM": [WARNING] Release type is required (-q). rc="$rc
+                  echo $INFO
+                  break
+                fi
                 ReleaseType="$argument"
                 ;;
             \?)
@@ -147,7 +146,7 @@ if [ $rc -eq 0 ]; then
             esac
         done
     fi
-fi
+fi              
 #
 
 # Validate Options
