@@ -43,7 +43,9 @@ class FileDef {
 
 class Baseline {
     String branch
-    String baseline
+    String type
+    String reference
+    String buildid
 }
 
 class DependencyDescriptor {
@@ -369,30 +371,4 @@ def getFilesByTypeAndUsage(ApplicationDescriptor applicationDescriptor, String a
 			return files
 		}
 	}
-}
-
-/**
- * Method to add a baseline 
- * If an existing baseline for a given branch already exists, the method replaces it
- */
-
-def addBaseline(ApplicationDescriptor applicationDescriptor, String branch, String baseline) {
-	if (applicationDescriptor.baselines) {
-		def existingBaselines = applicationDescriptor.baselines.findAll() { baselineDefinition ->
-			baselineDefinition.branch.equals(branch)
-		}
-		existingBaselines.forEach() { existingBaseline ->
-			applicationDescriptor.baselines.remove(existingBaseline)
-	    }
-	} else {
-		applicationDescriptor.baselines = new ArrayList<Baseline>()
-	}
-
-	if (applicationDescriptor.baselines) {
-		applicationDescriptor.sources = new ArrayList<Source>()
-	}
-	Baseline newBaseline = new Baseline()
-	newBaseline.branch = branch
-	newBaseline.baseline = baseline
-	applicationDescriptor.baselines.add(newBaseline)
 }

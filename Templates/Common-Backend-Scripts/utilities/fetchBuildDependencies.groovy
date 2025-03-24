@@ -58,6 +58,7 @@ if (!applicationDescriptorFile.exists()) {
 
 // setup import directory
 File importFolder = new File("$props.workspace/imports")
+File baselineFolder = new File("$props.workspace/baseline")
 if (importFolder.exists()) importFolder.deleteDir()
 importFolder.mkdirs()
 
@@ -81,12 +82,12 @@ if (applicationDescriptor.dependencies) {
 		assert dependency.reference : "Missing dependency reference attribute in dependency record"
 		assert dependency.buildid : "Missing buildid attribute in dependency record"
 		assert dependency.name : "Missing name attribute in dependency record"
-		
+
 		// compute tar file name based on build type
 		if (dependency.type.equalsIgnoreCase("release")) {
 			props.put("tarFileName","${dependency.name}-${dependency.reference}-${dependency.buildid}.tar")
 		} else {
-			props.put("tarFileName","${dependency.name}-${dependency.buildid}.tar")	
+			props.put("tarFileName","${dependency.name}-${dependency.buildid}.tar")
 		}
 
 		// Construct the path within the Artifact repo
@@ -99,14 +100,14 @@ if (applicationDescriptor.dependencies) {
 
 		// The absolute url the package in artifact repo
 		artifactUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
-			
+
 		// retrieve path without artifact url
 		artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
-		
+
 		// File in cache / workspace
 		tarFile="${tmpPackageDir}/${artifactRelPath}"
 		tarFileDir=tarFile.replaceAll(props.tarFileName, "")
-		
+
 		println("*** Fetching package '${dependency.name}:${artifactUrl}' ")
 
 		// Generating information for documentation in yaml file of retrieved dependencies
@@ -122,7 +123,7 @@ if (applicationDescriptor.dependencies) {
 			p_uri.key = "uri"
 			p_uri.value = artifactUrl
 			externalDependency.properties.add(p_uri)
-			
+
 			// type - either build or release
 			Property p_type = new Property()
 			p_type.key = "type"
@@ -134,7 +135,7 @@ if (applicationDescriptor.dependencies) {
 			p_reference.key = "reference"
 			p_reference.value = dependency.reference
 			externalDependency.properties.add(p_reference)
-					
+
 			// buildid
 			Property p_buildid = new Property()
 			p_buildid.key = "buildid"
@@ -146,7 +147,7 @@ if (applicationDescriptor.dependencies) {
 		}
 
 		// download from artifact repo
-		
+
 		// foldername in workspace directory
 		String includeFolder = "${importFolder}/${dependency.name}"
 
@@ -197,75 +198,115 @@ if (applicationDescriptor.dependencies) {
 	}
 }
 
-// Do we actually need this or can this just be obtained from the dependencies?
 
-// Fetch baseline package for internal dependencies such as
-// derived copybooks and object decks
 
-//baselineRecord = applicationDescriptor.baselines.find() { baseline ->
-//	baseline.branch.equals(props.branch)
-//}
-//
-//if (baselineRecord){
-//	version = matchingBaseline.baseline
-//	println("** Retrieving baseline package at version '${version}' for '${applicationDescriptor.application}'")
-//
-//			baselineName=applicationDescriptor.application
-//
-//			repositoryName="${props.artifactRepositoryNameSuffix}".replaceAll("§application§", baselineName)
-//
-//			def String artifactUrl
-//			def String artifactReference
-//			def String artifactRelPath
-//
-//			if (dependency.version.startsWith("rel-")){
-//				artifactRelPath="${repositoryName}/main/release/${baseline.version}"
-//				artifactReference="${artifactRelPath}/${baselineName}.tar"
-//				artifactUrl="${props.artifactRepositoryUrl}/${artifactReference}"
-//			} else {
-//				artifactRelPath="${repositoryName}"
-//				artifactReference="${artifactRelPath}/${baselineName}.tar"
-//				artifactUrl="${props.artifactRepositoryUrl}/${artifactReference}"
-//			}
-//			println("*** Fetching baseline package '${baselineName}:${baseline.version}' ")
-//
-//			String tarFile = "${tmpPackageDir}/${artifactReference}"
-//			String includeFolder = "${importFolder}/${baselineName}"
-//
-//			if (new File(tarFile).exists()) {
-//				println("** Package was already found in package cache at '${tmpPackageDir}/${artifactRelPath}'")
-//			} else {
-//				String user = props.artifactRepositoryUser
-//				String password = props.artifactRepositoryPassword
-//
-//				if (!(new File("${tmpPackageDir}/${artifactRelPath}").exists())) (new File("${tmpPackageDir}/${artifactRelPath}")).mkdirs()
-//
-//				println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tmpPackageDir}/${artifactRelPath}.")
-//				def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile as String, user, password, true)
-//				println "download complete $rc" // TODO: Error handling in helper
-//			}
-//
-//			// subdir for each dependency
-//			File includeFolderFile = new File(includeFolder)
-//			if (!includeFolderFile.exists()) {
-//				includeFolderFile.mkdirs()
-//			}
-//
-//			// Expand tar file
-//			def processCmd = [
-//				"/bin/sh",
-//				"-c",
-//				"tar -C $includeFolder -xvf $tarFile"
-//			]
-//
-//			def rc = runProcess(processCmd)
-//			if (rc != 0) {
-//				println("** [ERROR] Failed to untar '$tarFile' to '$includeFolder' with rc=$rc")
-//				System.exit(1)
-//			}
-//} else {
-//	println("** [INFO] No baseline record found for application '${applicationDescriptor.application}'.")
-//}
+baselineRecord = applicationDescriptor.baselines.find() { baseline ->
+	baseline.branch.equals(props.branch)
+}
+
+if (baselineRecord){
+	println("*** Fetching baseline package")
+
+	// validate dependency record
+	assert baselineRecord.type : "Missing baseline type attribute in baseline record"
+	assert baselineRecord.reference : "Missing baseline reference attribute in baseline record"
+	assert baselineRecord.buildid : "Missing buildid attribute in baseline record"
+	assert applicationDescriptor.application : "Missing application name in Application Descriptor"
+	def applicationName = applicationDescriptor.application
+
+	// compute tar file name based on build type
+	if (baselineRecord.type.equalsIgnoreCase("release")) {
+		props.put("tarFileName","${applicationName}-${baselineRecord.reference}-${baselineRecord.buildid}.tar")
+	} else {
+		props.put("tarFileName","${applicationName}-${baselineRecord.buildid}.tar")
+	}
+
+	// Construct the path within the Artifact repo
+	repositoryName="${applicationName}-${props.artifactRepositoryNameSuffix}"
+
+	// Prepare for url computation using method in ArtifactRepoHelpers
+	props.put("versionName","${baselineRecord.reference}") // compute the version name being part of the path
+	props.put("artifactRepository.directory", "${baselineRecord.type}") // compute the main directory to classify builds
+	props.put("artifactRepository.repo", "${repositoryName}") // Artifact repository name
+
+	// The absolute url the package in artifact repo
+	artifactUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
+
+	// retrieve path without artifact url
+	artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
+
+	// File in cache / workspace
+	tarFile="${tmpPackageDir}/${artifactRelPath}"
+	tarFileDir=tarFile.replaceAll(props.tarFileName, "")
+	if (!tmpPackageDir.exists()) tmpPackageDir.mkdirs() // create tmpDownload
+
+	println("*** Fetching baseline package '${applicationName}:${artifactUrl}' ")
+
+	if (new File(tarFile).exists()) {
+		println("** Package was already found in package cache at '${tarFile}'")
+	} else {
+		String user = props.artifactRepositoryUser
+		String password = props.artifactRepositoryPassword
+
+		if (!(new File("${tarFileDir}").exists())) (new File("${tarFileDir}")).mkdirs()
+
+		println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tarFileDir}.")
+		def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
+
+		if (rc != 0) {
+			println "** Download of application package '$artifactUrl' failed. Process exists. Return code:"$rc
+			exitFetchDependencyProcess()
+		} else {
+			//println "* Download successful."
+		}
+	}
+
+	// setup baseline directory
+	if (baselineFolder.exists()) baselineFolder.deleteDir()
+	baselineFolder.mkdirs()
+
+	println("** Saving tar file '${tarFile}' into '$baselineFolder' ")
+
+	def processCmd = [
+		"/bin/sh",
+		"-c",
+		"cp ${tarFile} ${baselineFolder}/"
+	]
+
+	def rc = runProcess(processCmd)
+	if (rc != 0) {
+		println("** [ERROR] Failed to copy '$tarFile' to '$baselineFolder' with rc=$rc")
+		System.exit(1)
+	}
+
+	// setup import folder
+	String includeFolder = "${importFolder}/${applicationName}"
+	File includeFolderFile = new File(includeFolder)
+	if (!includeFolderFile.exists()) {
+		includeFolderFile.mkdirs()
+	}
+
+	println("** Expanding tar file '${tarFile}' to '$includeFolder' ")
+
+	processCmd = [
+		"/bin/sh",
+		"-c",
+		"tar -C $includeFolder -xvf ${tarFile}"
+	]
+
+	rc = runProcess(processCmd)
+	if (rc != 0) {
+		println("** [ERROR] Failed to untar '$tarFile' to '$includeFolder' with rc=$rc")
+		System.exit(1)
+	}
+
+	// Delete temporary download location if cache is not used
+	if (!(props.enablePackageCache && props.enablePackageCache.toBoolean())) {
+		tmpPackageDir.deleteDir()
+	}
+} else {
+	println("** [INFO] No baseline record found for application '${applicationDescriptor.application}'.")
+}
 
 def yamlBuilder = new YamlBuilder()
 // write file

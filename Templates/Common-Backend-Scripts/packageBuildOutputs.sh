@@ -636,6 +636,19 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${externalDependenciesLogFile}" ]; then
         CMD="${CMD} --externalDependenciesEvidences ${externalDependenciesLogFile}"
     fi    
+    
+    baselineDirectory="$(getWorkDirectory)/baseline"
+    if [ -d "${baselineDirectory}" ]; then
+            baselineTarName=$(ls "${baselineDirectory}")
+            baselineTarFile="${baselineDirectory}/${baselineTarName}"
+            if [ -f "$baselineTarFile" ]; then
+                CMD="${CMD} --baselinePackage ${baselineTarFile}"
+            else
+                echo $PGM": [INFO] Baseline Tar file $baselineTarFile not found."
+            fi 
+    else 
+         echo $PGM": [INFO] Baseline directory $baselineDirectory not found."
+    fi
 
     # publishing options
     if [ "$publish" == "true" ]; then
