@@ -71,7 +71,7 @@ if [ $rc -eq 0 ]; then
 
 # Get Options
     if [ $rc -eq 0 ]; then
-        while getopts "h:w:a:b:p:r" opt; do
+        while getopts "h:w:a:b:p:r:" opt; do
             case $opt in
             h)
                 Help
