@@ -288,11 +288,12 @@ fi
 if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] **************************************************************"
   echo $PGM": [INFO] ** Started Next Release Computation on HOST/USER: ${SYS}/${USER}"
-  echo $PGM": [INFO] **              Workspace:" $(getWorkDirectory)
-  echo $PGM": [INFO] **            Application:" ${App}
-  echo $PGM": [INFO] **                 Branch:" ${Branch}
-  echo $PGM": [INFO] **             Build Type:" ${Type}
-  echo $PGM": [INFO] ** Baselinereference file:" ${Type}
+  echo $PGM": [INFO] **                Workspace:" $(getWorkDirectory)
+  echo $PGM": [INFO] **              Application:" ${App}
+  echo $PGM": [INFO] **                   Branch:" ${Branch}
+  echo $PGM": [INFO] **               Build Type:" ${PipelineType}
+  echo $PGM": [INFO] **             Release Type:" ${ReleaseType}
+  echo $PGM": [INFO] **   Baselinereference file:" ${baselineReferenceFile}
   echo $PGM": [INFO] **************************************************************"
   echo ""
 
