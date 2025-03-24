@@ -171,6 +171,7 @@ releaseIdentifier="" # takes cli option R
 # 
 computeArchiveUrl="true"            # enables the computation of the url
 artifactRepositoryAbsoluteUrl=""    # Used to store the computed Url
+usePackageUrl=""                    # Internal flag indicating if the package url was computed
 
 Debug=""
 HELP=$1
@@ -450,7 +451,7 @@ validateOptions() {
     echo $ERRMSG
   else
     # check for relative path
-    if [ ! ${PackageInputFile:0:1} == "/" ] && [ -z "${packageUrl}" ]; then
+    if [ ! ${PackageInputFile:0:1} == "/" ] && [ -z "${usePackageUrl}" ]; then
       checkWorkspace
       PackageInputFile="$(getLogDir)/${PackageInputFile}"
     fi
@@ -500,7 +501,7 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
     # Set Input and output files for Wazi Deploy
     PackageInputFile="${artifactRepositoryAbsoluteUrl}"
     PackageOutputFile="$(wdDeployPackageDir)/applicationPackage.tar" # shared convention with wazideploy-deploy.sh
-
+    usePackageUrl="true"
   fi
 fi
 
