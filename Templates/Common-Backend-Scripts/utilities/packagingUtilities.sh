@@ -128,7 +128,7 @@ computePackageInformation() {
                 fi
 
                 echo $PGM": [INFO] ${CMD}"
-                artifactRepositoryAbsoluteUrl="${CMD} | awk -F "packageUrl=" '{print $NF}')
+                artifactRepositoryAbsoluteUrl="$(${CMD} | awk -F \"packageUrl=\" '{print $NF}')"
 
                 if [ ! -z "${artifactRepositoryAbsoluteUrl}" ]; then
                     ERRMSG=$PGM": [INFO] Computation of Archive Url completed. rc="$rc
