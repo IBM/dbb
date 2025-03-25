@@ -165,6 +165,10 @@ artifactRepositoryDirectory=""    # required if artifactRepositoryPropertyFile n
 artifactRepositoryPropertyFile="" # alternative to above cli parms
 externalDependenciesLogFile=""    # document fetched build dependencies
 
+# managing baseline package
+baselineTarFile=""        # computed if a baseline package has been retrieved during the fetch phase
+baselineFolder="baseline" # per convention this is the subdir into which the fetch script loads the baseline
+
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -402,9 +406,25 @@ validateOptions() {
         externalDependenciesLogFile="$(getLogDir)/${externalDependenciesLogName}"
         # Validate Properties file
         if [ ! -f "${externalDependenciesLogFile}" ]; then
-                rc=8
-                ERRMSG=$PGM": [ERROR] Unable to locate ${externalDependenciesLogFile}. rc="$rc
-                echo $ERRMSG
+            rc=8
+            ERRMSG=$PGM": [ERROR] Unable to locate ${externalDependenciesLogFile}. rc="$rc
+            echo $ERRMSG
+        fi
+    fi
+
+    # validate baseline package
+    if [ "${fetchBuildDependencies}" == "true" ]; then
+
+        # validate baseline directory and baseline package
+        baselineDirectory="$(getWorkDirectory)/${baselineFolder}"
+        if [ -d "${baselineDirectory}" ]; then
+            baselineTarName=$(ls "${baselineDirectory}")
+            baselineTarFile="${baselineDirectory}/${baselineTarName}"
+            if [ ! -f "$baselineTarFile" ]; then
+                echo $PGM": [INFO] The baseline package $baselineTarFile was not found."
+            fi
+        else
+            echo $PGM": [INFO] The directory for the baseline package $baselineDirectory was not found."
         fi
     fi
 
@@ -497,7 +517,7 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
     if [ ! -z "${tarFileName}" ]; then
         echo $PGM": [INFO] ** Identified that tarFileName is passed into packageBuildOutputs.sh (${tarFileName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."
     fi
-    
+
     if [ ! -z "${artifactVersionName}" ]; then
         echo $PGM": [INFO] ** Identified that artifactVersionName is passed into packageBuildOutputs.sh (${artifactVersionName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."
     fi
@@ -552,7 +572,10 @@ if [ $rc -eq 0 ]; then
     fi
     if [ ! -z "${externalDependenciesLogFile}" ]; then
         echo $PGM": [INFO] **   External Dependencies log:" ${externalDependenciesLogFile}
-    fi    
+    fi
+    if [ ! -f "$baselineTarFile" ]; then
+        echo $PGM": [INFO] **            Baseline package:" ${baselineTarFile}
+    fi
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
     if [ "$publish" == "true" ]; then
         if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
@@ -635,19 +658,11 @@ if [ $rc -eq 0 ]; then
     # Pass information about externally fetched modules to packaging to document them
     if [ ! -z "${externalDependenciesLogFile}" ]; then
         CMD="${CMD} --externalDependenciesEvidences ${externalDependenciesLogFile}"
-    fi    
-    
-    baselineDirectory="$(getWorkDirectory)/baseline"
-    if [ -d "${baselineDirectory}" ]; then
-            baselineTarName=$(ls "${baselineDirectory}")
-            baselineTarFile="${baselineDirectory}/${baselineTarName}"
-            if [ -f "$baselineTarFile" ]; then
-                CMD="${CMD} --baselinePackage ${baselineTarFile}"
-            else
-                echo $PGM": [INFO] Baseline Tar file $baselineTarFile not found."
-            fi 
-    else 
-         echo $PGM": [INFO] Baseline directory $baselineDirectory not found."
+    fi
+
+    # Pass baseline package
+    if [ ! -f "$baselineTarFile" ]; then
+        CMD="${CMD} --baselinePackage ${baselineTarFile}"
     fi
 
     # publishing options
