@@ -652,7 +652,7 @@ if [ $rc -eq 0 ]; then
 
     # Wazi Deploy build identifier
     if [ ! -z "${packageBuildIdentifier}" ]; then
-        CMD="${CMD} --packageBuildIdentifier ${packageBuildIdentifier}"
+        CMD="${CMD} --buildIdentifier ${packageBuildIdentifier}"
     fi
 
     # Pass information about externally fetched modules to packaging to document them
