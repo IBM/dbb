@@ -54,6 +54,7 @@ fi
 #
 
 if [ $rc -eq 0 ]; then
+  echo $PGM": [INFO] Script home="
   echo $PGM": [INFO] Release Version Wrapper. Version="$PGMVERS
 fi
 
@@ -65,6 +66,7 @@ if [ $rc -eq 0 ]; then
         ERRMSG=$PGM": [ERROR] Pipeline Configuration File (${pipelineConfiguration}) was not found. rc="$rc
         echo $ERRMSG
     else
+        echo $PGM": [INFO] Reading pipeline configuration file: ${pipelineConfiguration}"
         source $pipelineConfiguration
     fi
 #
@@ -123,7 +125,6 @@ if [ $rc -eq 0 ]; then
             r) 
                 # release type
                 argument="$OPTARG"
-                echo $argument
                 nextchar="$(expr substr $argument 1 1)"
                 if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                   rc=4
@@ -153,6 +154,7 @@ fi
 # Validate Options
 validateOptions() {
 
+  echo $PGM": [INFO] Validating Options"
   if [ -z "${Workspace}" ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] Unique Workspace parameter (-w) is required. rc="$rc
@@ -173,12 +175,13 @@ validateOptions() {
   else
 
     AppDir=$(getApplicationDir)
+    echo $PGM": [INFO] Application Directory: ${AppDir}"
 
     # Check if application directory contains
-    if [ -d "${AppDir}/${App}" ]; then
+    if [ -d "${AppDir}" ]; then
       echo $PGM": [INFO] Detected the application respository (${App}) within the git repository layout structure."
       echo $PGM": [INFO]  Assuming this as the new application location."
-      AppDir="${AppDir}/${App}"
+      AppDir="${AppDir}"
       nestedApplicationFolder="true"
       
       # Locate the baseline reference file based on the baselineReferenceLocation config in pipelineBackend.config
@@ -246,6 +249,11 @@ getBaselineReference() {
         "MAIN")
             baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }') 
          ;;
+         "FEATURE")
+            rc=4
+            ERRMSG=$PGM": [ERROR] Branch name ${Branch} is a feature branch and does not need to compute the baseline reference. rc="$rc
+            echo $ERRMSG
+         ;;
         *)
             rc=8
             ERRMSG=$PGM": [ERROR] Branch name ${Branch} does not follow the recommended naming conventions to compute the baseline reference. Received '${mainBranchSegment}' which does not fall into the conventions of release, epic or main. rc="$rc
@@ -253,12 +261,13 @@ getBaselineReference() {
          ;;
     esac
     
-
-    if [ -z "${baselineRef}" ]; then
-        rc=8
-        ERRMSG=$PGM": [ERROR] No baseline ref was found for branch name ${Branch} in ${baselineReferenceFile}. rc="$rc
-        echo $ERRMSG
-    fi
+    if [ $rc -eq 0 ]; then
+        if [ -z "${baselineRef}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] No baseline ref was found for branch name ${Branch} in ${baselineReferenceFile}. rc="$rc
+            echo $ERRMSG
+        fi
+     fi
 
     ##DEBUG ## echo -e "baselineRef \t: ${baselineRef}"    ## DEBUG
 }
@@ -305,11 +314,14 @@ if [ $rc -eq 0 ]; then
 
 # Find base line version of the current branch from the baseLineReferenceFile
   getBaselineReference
-  echo $PGM": [INFO] Baseline reference: ${baselineRef}"
-
-  computeNextReleaseVersion
-  echo $PGM": [INFO] Next release version: ${newVersion}"
-
+  if [ $rc -eq 0 ]; then
+      echo $PGM": [INFO] Baseline reference: ${baselineRef}"
+    
+      computeNextReleaseVersion
+      if [ $rc -eq 0 ]; then
+        echo $PGM": [INFO] Next release version: ${newVersion}"
+      fi
+  fi
 fi
 
 exit $rc
