@@ -573,7 +573,7 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${externalDependenciesLogFile}" ]; then
         echo $PGM": [INFO] **   External Dependencies log:" ${externalDependenciesLogFile}
     fi
-    if [ ! -f "$baselineTarFile" ]; then
+    if [ ! -z "$baselineTarFile" ]; then
         echo $PGM": [INFO] **            Baseline package:" ${baselineTarFile}
     fi
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
@@ -661,7 +661,7 @@ if [ $rc -eq 0 ]; then
     fi
 
     # Pass baseline package
-    if [ ! -f "$baselineTarFile" ]; then
+    if [ ! -z "$baselineTarFile" ]; then
         CMD="${CMD} --baselinePackage ${baselineTarFile}"
     fi
 
