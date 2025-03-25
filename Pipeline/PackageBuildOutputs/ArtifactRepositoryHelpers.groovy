@@ -251,7 +251,6 @@ def run(String[] cliArgs) {
 			assert props.get('artifactRepository.directory'): "Missing option artifactRepository.directory (--artifactRepositoryDirectory)"
 			
 			// load script	
-			def scriptDir = new File(getClass().protectionDomain.codeSource.location.path).parent
 			packageUrl = computeAbsoluteRepositoryUrl(props)
 			// the println is used in a script by the CBS to grep the packageUrl
 			println "packageUrl=$packageUrl"
