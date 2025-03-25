@@ -166,9 +166,7 @@ if (applicationDescriptor.dependencies) {
 
 			if (rc != 0) {
 				println("*! [ERROR] Download of archive '$artifactUrl' failed. Exiting with return code:${rc}.")
-				exitFetchDependencyProcess()
-			} else {
-				//println "* Download successful."
+				System.exit(rc)
 			}
 		}
 
@@ -257,9 +255,7 @@ if (baselineRecord){
 
 		if (rc != 0) {
 			println "** Download of application package '$artifactUrl' failed. Process exists. Return code:"$rc
-			exitFetchDependencyProcess()
-		} else {
-			//println "* Download successful."
+			System.exit(rc)
 		}
 	}
 
@@ -323,10 +319,6 @@ if (props.externalDependenciesFilePath) {
 	}
 }
 
-def exitFetchDependencyProcess(){
-	println("** [ERROR] fetchBuildDependencies encountered a problem. Please review log. Exiting")
-	System.exit(1)
-}
 
 /**
  * Parse CLI config
