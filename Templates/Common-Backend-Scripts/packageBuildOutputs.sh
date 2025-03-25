@@ -316,7 +316,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The name of the artifact version is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
@@ -374,7 +374,7 @@ validateOptions() {
     fi
 
     if [ -z "${buildIdentifier}" ] && [ "$publish" == "true" ]; then
-        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) has been supplied. A unique name based on version and build id is recommended. Using timestamp"
+        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) was supplied. Using timestamp."
         echo $ERRMSG
         buildIdentifier=$(date +%Y%m%d_%H%M%S)
     fi
