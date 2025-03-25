@@ -72,13 +72,12 @@ Help() {
 }
 
 #
-# Customization
 # Configuration file leveraged by the backend scripts
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 buildUtilities="${SCRIPT_HOME}/utilities/dbbBuildUtils.sh"
-# Customization - End
+deleteScript="${SCRIPT_HOME}/../..//Utilities/DeletePDS/DeletePDS.groovy"
 
 #
 # Internal Variables
@@ -319,7 +318,7 @@ genDeleteStatementsCollections() {
 
     for applicationCollection in ${collectionsToBeDeleted[@]}; do
 
-        echo "dbb collection delete $applicationCollection ${dbbMetadataStoreOptions}" >>${cmdFileDeleteCollections}
+        echo "dbb collection delete $applicationCollection ${cleanupDbbMetadataStoreOptions}" >>${cmdFileDeleteCollections}
 
     done
 
@@ -341,7 +340,7 @@ genDeleteStatementsBuildGroups() {
 
     for buildGroup in ${buildgroupsToBeDeleted[@]}; do
 
-        echo "dbb build-group delete $buildGroup ${dbbMetadataStoreOptions}" >>${cmdFileDeleteBuildGroups}
+        echo "dbb build-group delete $buildGroup ${cleanupDbbMetadataStoreOptions}" >>${cmdFileDeleteBuildGroups}
 
     done
 
@@ -381,7 +380,7 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **    Cmd obsolete collections:" ${cmdFileDeleteCollections}
     echo $PGM": [INFO] **   Cmd obsolete build groups:" ${cmdFileDeleteBuildGroups}
     echo $PGM": [INFO] ** Cmd obsolete build datasets:" ${cmdFileDeleteBuildDatasets}
-    echo $PGM": [INFO] **      DBB Metadastore Config:" ${dbbMetadataStoreOptions}
+    echo $PGM": [INFO] **      DBB Metadastore Config:" ${cleanupDbbMetadataStoreOptions}
     echo $PGM": [INFO] **     Process Cleanup Scripts:" ${executeCleanupCommandScripts}
     echo $PGM": [INFO] **************************************************************"
     echo ""
@@ -390,7 +389,7 @@ fi
 if [ $rc -eq 0 ]; then
     # Retrieve existing DBB Collections
     echo $PGM": [STAGE] Retrieve all collections with application qualifier $App"
-    applicationCollections=$(dbb collection list $dbbMetadataStoreOptions | grep $App)
+    applicationCollections=$(dbb collection list $cleanupDbbMetadataStoreOptions | grep $App)
     rc=$?
     if [ ! $rc -eq 0 ]; then
         ERRMSG=$PGM": [ERROR] Retrieving Collections failed. Check Log. rc="$rc
