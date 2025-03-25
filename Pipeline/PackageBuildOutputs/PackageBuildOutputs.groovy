@@ -638,7 +638,7 @@ if (rc == 0) {
 				HashMap<String,String> packageInfo = new HashMap<String, String>()
 				packageInfo.put("type", "artifactRepository")
 				packageInfo.put("name", props.packageBuildIdentifier)
-				packageUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
+				packageUrl = artifactRepositoryHelpers.computePackageUrl(props)
 				if (packageUrl) packageInfo.put("uri", packageUrl)
 				wdManifestGeneratorUtilities.setPackageInfo(packageInfo)
 			}
@@ -761,7 +761,7 @@ if (rc == 0) {
 		//Set up the artifact repository information to publish the tar file
 		if (props.publish && props.publish.toBoolean() && rc == 0){
 			// Configuring artifact repositoryHelper parms
-			def url = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
+			def url = artifactRepositoryHelpers.computePackageUrl(props)
 
 			def apiKey = props.'artifactRepository.user'
 			def user = props.'artifactRepository.user'

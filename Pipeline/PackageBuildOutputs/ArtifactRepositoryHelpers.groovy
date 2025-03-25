@@ -162,7 +162,7 @@ def download(String url, String fileName, String user, String password, boolean 
 }
 
 // Method directly accessed by PackageBuildOutputs and Common Backend script functionality
-def computeAbsoluteRepositoryUrl(Properties props) {
+def computePackageUrl(Properties props) {
 	def String remotePath = (props.versionName) ? (props.versionName + "/" + props.tarFileName) : (props.tarFileLabel + "/" + props.tarFileName)
 	def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + (props.get('artifactRepository.directory') ? "${props.get('artifactRepository.directory')}/" : "") + remotePath).normalize().toString() // Normalized URL
 	return url
@@ -251,7 +251,7 @@ def run(String[] cliArgs) {
 			assert props.get('artifactRepository.directory'): "Missing option artifactRepository.directory (--artifactRepositoryDirectory)"
 			
 			// load script	
-			packageUrl = computeAbsoluteRepositoryUrl(props)
+			packageUrl = computePackageUrl(props)
 			// the println is used in a script by the CBS to grep the packageUrl
 			println "packageUrl=$packageUrl"
 		} else 		

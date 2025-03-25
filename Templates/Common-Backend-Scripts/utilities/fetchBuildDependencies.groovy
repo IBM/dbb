@@ -74,6 +74,8 @@ ArrayList<ExternalDependency> externalDependencies = new ArrayList<>()
 
 if (applicationDescriptor.dependencies) {
 
+	println("*** Fetching external application packages")
+
 	// Loop through all dependencies found in AD
 	applicationDescriptor.dependencies.each { dependency ->
 
@@ -99,7 +101,7 @@ if (applicationDescriptor.dependencies) {
 		props.put("artifactRepository.repo", "${repositoryName}") // Artifact repository name
 
 		// The absolute url the package in artifact repo
-		artifactUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
+		artifactUrl = artifactRepositoryHelpers.computePackageUrl(props)
 
 		// retrieve path without artifact url
 		artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
@@ -108,7 +110,7 @@ if (applicationDescriptor.dependencies) {
 		tarFile="${tmpPackageDir}/${artifactRelPath}"
 		tarFileDir=tarFile.replaceAll(props.tarFileName, "")
 
-		println("*** Fetching package '${dependency.name}:${artifactUrl}' ")
+		println("** Fetching package '${dependency.name}:${artifactUrl}' ")
 
 		// Generating information for documentation in yaml file of retrieved dependencies
 		if (dependency.name != applicationDescriptor.application) {
@@ -230,7 +232,7 @@ if (baselineRecord){
 	props.put("artifactRepository.repo", "${repositoryName}") // Artifact repository name
 
 	// The absolute url the package in artifact repo
-	artifactUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
+	artifactUrl = artifactRepositoryHelpers.computePackageUrl(props)
 
 	// retrieve path without artifact url
 	artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
@@ -240,7 +242,7 @@ if (baselineRecord){
 	tarFileDir=tarFile.replaceAll(props.tarFileName, "")
 	if (!tmpPackageDir.exists()) tmpPackageDir.mkdirs() // create tmpDownload
 
-	println("*** Fetching baseline package '${applicationName}:${artifactUrl}' ")
+	println("** Fetching baseline package '${applicationName}:${artifactUrl}' ")
 
 	if (new File(tarFile).exists()) {
 		println("** Package was already found in package cache at '${tarFile}'")
@@ -402,9 +404,6 @@ def parseArgs(String[] args) {
 	}
 }
 
-/**********************************************************************************
- * run process
- **********************************************************************************/
 def runProcess(ArrayList cmd){
 	StringBuffer response = new StringBuffer()
 	StringBuffer error = new StringBuffer()
