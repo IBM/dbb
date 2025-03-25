@@ -159,11 +159,11 @@ if (applicationDescriptor.dependencies) {
 
 			if (!(new File("${tarFileDir}").exists())) (new File("${tarFileDir}")).mkdirs()
 
-			println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tarFileDir}.")
+			println("** Downloading archive '$artifactUrl' from Artifact Repository into '${tarFileDir}'.")
 			def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
 
 			if (rc != 0) {
-				println "** Download of application package '$artifactUrl' failed. Process exists. Return code:"$rc
+				println("*! [ERROR] Download of archive '$artifactUrl' failed. Exiting with return code:${rc}.")
 				exitFetchDependencyProcess()
 			} else {
 				//println "* Download successful."

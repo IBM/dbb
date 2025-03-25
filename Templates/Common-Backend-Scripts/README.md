@@ -238,13 +238,13 @@ Note that the location of the baselineReferences.config file can be customized i
 
 #### Fetching build dependencies
 
-Both implementations for the build stage are enabled to optionally pull external dependencies into the build workspace based on the dependency definitions specified in the *Application Descriptor*.
+The build stage is enabled to pull external dependencies into the build workspace, based on the dependencies definition specified in the Application Descriptor file.
 
-The Application Descriptor contains metadata about the application itself, but can contain references to other application packages managed in an artifact repository, which are necessary inputs to the build. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
+The Application Descriptor contains metadata about the application itself, but can contain references to other applications versions managed in an artifact repository, which contain necessary inputs to the build. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
 
-The Application descriptor file `applicationDescriptor.yml` is expected to be on the root level of the application repository. 
+The Application Descriptor file, called `applicationDescriptor.yml`, is expected to be on the root level of the application's Git repository.
 
-Each application package can export shared components such as public or shared include files and even build outputs, such as object decks or NCAL load modules. The package needs to be created with the [PackageBuildOutputs](../../Pipeline/PackageBuildOutputs/README.md) script and be uploaded to the artifact repository through the Common Backend scripts. For fetching the dependencies, it uses the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) that is referenced by both dbbBuild.sh and zBuilder.sh. Under the covers it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) and the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script to download the external dependencies. The external packages can be stored at a cache location to improve performance. Fetched packages will be expanded to the pipeline working directory 'imports'.
+Each application version, represented by an archive, can export shared components such as public or shared include files, and build outputs such as object decks or NCAL load modules. The package needs to be created with the [PackageBuildOutputs](../../Pipeline/PackageBuildOutputs/README.md) script and be uploaded to the artifact repository through the Common Backend Scripts. To fetch the dependencies, it uses the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) that is referenced by both dbbBuild.sh and zBuilder.sh. Under the covers, it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) and the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script to download the external dependencies. The downloaded archives can be stored at a cache location to improve performance. Fetched archives are expanded in the `imports` subfolder of the pipeline's working directory.
 
 ### dbbBuild.sh for zAppBuild framework
 
@@ -463,25 +463,26 @@ The [dbbzBuilderUtils](utilities/dbbzBuilderUtils.sh) script is a core utility s
 
 ## Packaging stage
 
-You can choose from either creating a package using the [PackageBuildOutputs](#packagebuildoutputssh) script that can be deployed with IBM Wazi Deploy or the [UCD packaging](#ucdpackagingsh) that creates the UCD shiplist and UCD component version
+Depending on the Deployment Manager tool you are using, you can choose from either creating a package with the [PackageBuildOutputs](#packagebuildoutputssh) script that can be used with IBM Wazi Deploy, or the [UCD packaging](#ucdpackagingsh) script that creates the UCD shiplist and UCD component version.
 
 ### packageBuildOutputs.sh
 
 This script is to execute the `PackageBuildOutputs.groovy` that packages up the build outputs and optionally uploads it to an artifact repository to publish the artifacts created by a DBB build in the pipeline.
 
-When uploading into the artifact repository, it implements strict conventions about the structure in the Artifact repository. The conventions are implemented in [utilities/packageUtils.sh](utilities/packageUtils.sh). The rules are:
+When uploading the archive to an artifact repository, this script implements naming conventions for the repository layout. The conventions are implemented in [utilities/packageUtils.sh](utilities/packageUtils.sh).
+The rules for the naming conventions are detailed hereafter.
 
-For any temporary, preliminary build that uses the `pipelineType=build`, the outputs are uploaded into the directory `build/<reference>/<application>-<buildIdentifier>`:
+For any preliminary build (that uses the `pipelineType=build`), the outputs are uploaded into the directory `build/<reference>/<application>-<buildIdentifier>`:
 
 * **build** is defined for any builds, that are considered to some extend temporary and preliminary. 
-* **reference** is the branch name from which the builds originates from, so for instance `feature/123-update-mortgage-computation`, `main` or any hotfix and epic branches.
-* **tarFile.tar** is computed by the application name and a unique build identifier (see argument `-i`), such as the pipeline build number that is passed in by the pipeline template. If it is not provided, it will use the current timestamp.
+* **reference** is the name of the branch which the build originates from: for instance, `feature/123-update-mortgage-computation`, `main` or any hotfix and epic branches.
+* The archive's file name is computed using the application's name and a unique build identifier (`-i` argument). This parameter is typically the pipeline build number that is passed by the pipeline orchestrator. If a build identifier is not provided, the current timestamp is used.
 
-For release builds that use the `pipelineType=release`, the outputs are uploaded into the directory `release/<reference>/<application>-<buildIdentifier>`:
+For release builds (that use the `pipelineType=release`), the archive is uploaded to the directory `release/<reference>/<application>-<buildIdentifier>`:
 
 * **release** is defined for release builds. 
-* **reference** is planned release name, so for instance `rel-1.2.3` (mandatory argument `-r`).
-* **tarFile.tar** is computed by the application name, the release name (`-r`) and the unique build identifier (see argument `-i`), such as the pipeline build number that is passed in by the pipeline template. If it is not provided, it will use the current timestamp.
+* **reference** is the release name: for instance, `rel-1.2.3` (provided through the mandatory `-r` argument).
+The archive's file name is computed using the application's name, the release name (`-r` argument) and a unique build identifier (`-i` argument). This parameter is typically the pipeline build number that is passed by the pipeline orchestrator. If a build identifier is not provided, the current timestamp is used.
 
 
 #### Invocation
@@ -509,8 +510,8 @@ CLI parameter | Description
 -b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. Naming convention rules are implemented in `utilities/packageUtils.sh`.
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
 -r `<releaseIdentifier>` | **Release identifier** to indicate the next planned release name. This is a computed value based on the pipeline templates.
--i `<buildIdentifier>` | **Build identifier** a unique value to identify the tar file. This is a computed value provided by the pipeline templates. Typically the build number or a timestamp. 
--v `<artifactVersion>` **removed** | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo. This has been removed. Please switch to releaseIdentifier and buildIdentifier.
+-i `<buildIdentifier>` | **Build identifier** a unique value, typically the build number provided by the pipeline orchestrator or a timestamp. Used to help qualifying the archive file. This is a computed value provided by the pipeline templates.
+-v `<artifactVersion>` **deprecated** | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo. Deprecated - switch to `-r <releaseIdentifier>` and `-i <buildIdentifier>`.
 -s `"<sbomAuthor>"` | (Optional) Name and email of the SBOM author enclosed with double quotes. Ex: "Build Engineer \<engineer@example.com\>" 
 
 Check out the pipelineBackend.config to define the `artifactRepositoryNameSuffix` that is appended to the application name to set the repository name in the artifact repository.
@@ -685,7 +686,7 @@ wazideploy-generate.sh -w  MortgageApplication/feature/15-fetch-application-depe
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `deploymentPlanReport` and `packageOutputFile` are fully referenced. 
--i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. If providing a relative path, the file is assumed to be located in the directory `<workspace directory>/<logsDir>`. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported). <br><br> If the Common Backend scripts are configured to perform the upload, the scripts computes the location in the artifact repo and overrides the `-i` and `-o` argument and in that case the this arument is not required.
+-i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. If providing a relative path, the file is assumed to be located in the directory `<workspace directory>/<logsDir>`. This parameter can either be path to an archive (TAR file) on UNIX System Services, or the URL of the archive (TAR file) to retrieve (only Artifactory is supported). <br><br> If the Common Backend Scripts are configured to perform the upload, the scripts computes the location in the artifact repo and overrides the `-i` and `-o` argument and in that case the this arument is not required.
 -m `<deploymentMethod>` | (Optional) Absolute path to the Wazi Deploy **Deployment Method** stored on UNIX System Services. If not specified, the deployment method file location is obtained from the `pipelineBackend.config`.
 -p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`.  If not specified, the deployment plan location is obtained from the `pipelineBackend.config`.
 -r `<deploymentPlanReport>` | (Optional) Absolute or relative path to the **Deployment Plan Report**. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. If not specified, the deployment plan report location is obtained from the `pipelineBackend.config`.
