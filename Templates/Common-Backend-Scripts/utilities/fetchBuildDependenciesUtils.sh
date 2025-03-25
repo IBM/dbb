@@ -81,26 +81,24 @@ runFetchLogic() {
 }
 
 #
-# Validate to fetch external dependencies is based on the ApplicationDescriptor
-fetchBuildDependenciesMethod() {
+# Script Logic
+#
 
-    # extracting external dependencies is based on the application descriptor
-    applicationDescriptor="$(getApplicationDir)/applicationDescriptor.yml"
-      
-    # this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
-    if [ ! -z "${externalDependenciesLogName}" ]; then
-        externalDependenciesLogFile="$(getLogDir)/${externalDependenciesLogName}"
-    fi
+# extracting external dependencies is based on the application descriptor
+applicationDescriptor="$(getApplicationDir)/applicationDescriptor.yml"
 
-    # create the log dir
-    mkdir -p "$(getLogDir)"
+# this log file documents the "fetched" dependencies and their version, that is then stored in the package itself (WD application manifest)
+if [ ! -z "${externalDependenciesLogName}" ]; then
+    externalDependenciesLogFile="$(getLogDir)/${externalDependenciesLogName}"
+fi
 
-    # Set up to perform the clone of the Repo
-    if [ ! -f "${applicationDescriptor}" ]; then
-        rc=8
-        ERRMSG=$PGM": [INFO] Application Descriptor file (${applicationDescriptor}) was not found. rc="$rc
-        echo $ERRMSG
-    else 
-        runFetchLogic
-    fi
-}
+# create the log dir
+mkdir -p "$(getLogDir)"
+
+# Set up to perform the clone of the Repo
+if [ ! -f "${applicationDescriptor}" ]; then
+    ERRMSG=$PGM": [INFO] Application Descriptor file (${applicationDescriptor}) was not found. rc="
+    echo $ERRMSG
+else
+    runFetchLogic
+fi
