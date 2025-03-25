@@ -238,9 +238,11 @@ Note that the location of the baselineReferences.config file can be customized i
 
 #### Fetching build dependencies
 
-The build stage can be enabled to pull external build dependencies into the build workspace based on the dependencies definition specified in the Application Descriptor file.
+The build stage can be enabled to pull external build dependencies into the build workspace based on the dependencies definition specified in the Application Descriptor file. 
 
-The Application Descriptor contains metadata about the application itself, but can contain the dependency configuration to other applications versions managed in an artifact repository, which contain necessary inputs to the build process. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
+Each application version, represented by an archive, can export shared components such as public or shared include files, and build outputs such as object decks or NCAL load modules. The application archive needs to be created with the [packageBuildOutputs.sh](#packagebuildoutputssh) script and be uploaded to the artifact repository based on the implemented conventions.
+
+The Application Descriptor contains metadata about the application itself, but can contain the dependency configuration to other applications versions managed in an artifact repository, which are necessary inputs to the build process. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
 
 In the `dependencies` section in the Application Descriptor file, users can configure which application versions should be fetched into the build workspace. The below snippet references the release build of the Cards application with the reference to `rel-1.2.0` and the concrete buildid `build-20241112.1`
 
@@ -254,11 +256,11 @@ dependencies:
 
 The Application Descriptor file, called `applicationDescriptor.yml`, is expected to be on the root level of the application's Git repository.
 
-Each application version, represented by an archive, can export shared components such as public or shared include files, and build outputs such as object decks or NCAL load modules. The package needs to be created with the [PackageBuildOutputs](../../Pipeline/PackageBuildOutputs/README.md) script and be uploaded to the artifact repository through the Common Backend Scripts. To fetch the dependencies, it uses the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) that is referenced by both dbbBuild.sh and zBuilder.sh. Under the covers, it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) and the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script to download the external dependencies into the working directory. The downloaded archives can be stored at a cache location to improve performance. Fetched archives are expanded in the `imports` subfolder of the pipeline's working directory.
+To fetch the dependencies, the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) is used. Under the covers, it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) and the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script to download the external dependencies into the working directory. The downloaded archives can be stored at a cache location to improve performance. Fetched archives are expanded in the `imports` subfolder of the pipeline's working directory.
 
-#### Fetch baseline package
+**Fetch baseline package**
 
-(Prototype) Along with the fetching of external build dependencies, the fetch phase can retrieve the application's baseline package from the Artifact repository. This is configured through the `baselines` section of the Application Descriptor. Use the baseline if your application architecture uses static calls or required derived build outputs that is an mandatory input to subsequent builds. A good sample for derived build outputs are bms copybooks, that are inputs to CICS programs. Instead of storing the generated bms copybooks, it is made available through the baseline package.
+Along with the fetching of external build dependencies, the fetch phase can retrieve the application's baseline package from the Artifact repository. This is configured through the `baselines` section of the Application Descriptor. Use the baseline if your application architecture uses static calls or requires derived build outputs that is an mandatory input to subsequent builds. A good sample for derived build outputs are bms copybooks, that are inputs to CICS programs. Instead of including the generated bms copybooks via concatenation of pds libraries, it is made available through the baseline package.
 
 Baseline archives are defined similarly like external dependencies. Under the `baselines` section, the application team manages the references for the corresponding build branch:
 
@@ -496,13 +498,17 @@ This script is to execute the `PackageBuildOutputs.groovy` that packages up the 
 When uploading the archive to an artifact repository, this script implements naming conventions for the repository layout. The conventions are implemented in [utilities/packageUtils.sh](utilities/packageUtils.sh).
 The rules for the naming conventions are detailed hereafter.
 
-For any preliminary build (that uses the `pipelineType=build`), the outputs are uploaded into the directory `build/<reference>/<application>-<buildIdentifier>`:
+For any preliminary build (that uses the `pipelineType=build`), the outputs are uploaded into the directory
 
-* **build** is defined for any builds, that are considered to some extend temporary and preliminary. 
+`build/<reference>/<application>-<buildIdentifier>`:
+
+* **build** is defined for any builds, that are considered to be preliminary. They cannot be deployed to production.
 * **reference** is the name of the branch which the build originates from: for instance, `feature/123-update-mortgage-computation`, `main` or any hotfix and epic branches.
 * The archive's file name is computed using the application's name and a unique build identifier (`-i` argument). This parameter is typically the pipeline build number that is passed by the pipeline orchestrator. If a build identifier is not provided, the current timestamp is used.
 
-For release builds (that use the `pipelineType=release`), the archive is uploaded to the directory `release/<reference>/<application>-<buildIdentifier>`:
+For release builds (that use the `pipelineType=release`), the archive is uploaded to the directory
+
+`release/<reference>/<application>-<buildIdentifier>`:
 
 * **release** is defined for release builds. 
 * **reference** is the release name: for instance, `rel-1.2.3` (provided through the mandatory `-r` argument).
@@ -529,7 +535,7 @@ CLI parameter | Description
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. The `packageBuildOutputs.sh` script is evaluating the logs directory.
 -t `<tarFileName>` | (Optional) Name of the **tar file** to create.
 **Artifact Upload options**
--u | Flag to enable upload of outputs to the configured artifact repository.
+-u | Flag to enable upload of outputs to the configured artifact repository. Also available as a general setting in `pipelineBackend.config`.
 -a `<application>` | **Application name** leveraged to define the artifact repository name.
 -b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. Naming convention rules are implemented in `utilities/packageUtils.sh`.
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
