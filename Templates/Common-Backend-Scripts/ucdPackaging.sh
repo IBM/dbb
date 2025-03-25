@@ -26,9 +26,13 @@
 #
 #   2. Review the Customization Section in the pipelineBackend.config file :
 #
-#        ucdPackagingScript  - Location of the dbb-ucd-packaging.groovy
 #        BuzTool             - Location of the UCD buztool.sh
 #
+# Maintenance Log
+# Date       Who Vers Description
+# ---------- --- ---- --------------------------------------------------------------
+# 2023/07/18 RBS 1.00 Initial Release
+# 2025/03/13 DB  1.10 Locate groovy scripts in file system
 #===================================================================================
 Help() {
     echo $PGM" - Invoke DBB Build ("$PGMVERS")                          "
@@ -96,6 +100,7 @@ Help() {
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="`dirname "$0"`"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+ucdPackagingScript="${SCRIPT_HOME}/../../../Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy"
 # Customization - End
 
 # Path and File Name to the advanced debug options.
@@ -107,7 +112,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 

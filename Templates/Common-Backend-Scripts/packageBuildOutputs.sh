@@ -23,9 +23,6 @@
 #   1. Review and update the Customization Section to reference the
 #        central configuration file pipelineBackend.config
 #
-#   2. Review the Customization Section in the pipelineBackend.config file :
-#
-#        PackagingScript  - Location of the PackageBuildOutputs.groovy
 #
 #===================================================================================
 Help() {
@@ -57,11 +54,6 @@ Help() {
     echo "                                                              "
     echo "  Optional parameters                                         "
     echo "                                                              "
-    echo "       -t <tarFileName>     - Name of the package tar file    "
-    echo "                              (Optional)                      "
-    echo "                                                              "
-    echo "                Ex: package.tar                               "
-    echo "                                                              "
     echo "       -u                   - flag to enable uploading        "
     echo "                             outputs to configured            "
     echo "                             artifact repository              "
@@ -71,6 +63,38 @@ Help() {
     echo "                             Artifact repository name.        "
     echo "                                                              "
     echo "                 Ex: MortgageApplication                      "
+    echo "                                                              "
+    echo "       -t <tarFileName>     - Name of the package tar file    "
+    echo "                              (Optional)                      "
+    echo "                                                              "
+    echo "                Ex: package.tar                               "
+    echo "                                                              "
+    echo "       -v <artifactVersion>                                   "
+    echo "                           - Name of the artifactVersion      "
+    echo "                             within the artifact repository   "
+    echo "                             Default=None,                    "
+    echo "                             Required, when upload=true       "
+    echo "                                                              "
+    echo "                Ex: Pipeline Build ID (Build.buildid.tar)     "
+    echo "                                                              "
+    echo "       -s " <sbomAuthor >"    - Name and email of               "
+    echo "                              the SBOM author                 "
+    echo "                              enclosed with double quotes     "
+    echo "                              (Optional)                      "
+    echo "                                                              "
+    echo "                Ex: \"Build Engineer <engineer@example.com>\" "
+    echo "                                                              "
+    echo "                                                              "
+    echo "   Mandatory arguments when publishing to artifact repo       "
+    echo "                                                              "
+    echo "       -I <buildIdentifier>  - A unique build identifier      "
+    echo "                               typically the buildID of the   "
+    echo "                               pipeline                       "
+    echo "                Ex: 6756                                      "
+    echo "                                                              "
+    echo "       -R <releaseIdentifier> - The release identifier for    "
+    echo "                               release pipeline builds        "
+    echo "                Ex: rel-1.2.3                                 "
     echo "                                                              "
     echo "       -p <pipelineType>  - Type of the pipeline to           "
     echo "                            control in which directory builds "
@@ -86,22 +110,6 @@ Help() {
     echo "       -b <gitBranch>      - Name of the git branch.          "
     echo "                                                              "
     echo "                 Ex: main                                     "
-    echo "                                                              "
-    echo "       -v <artifactVersion>                                   "
-    echo "                           - Name of the artifactVersion      "
-    echo "                             within the artifact repository   "
-    echo "                             Default=None,                    "
-    echo "                             Required, when upload=true       "
-    echo "                                                              "
-    echo "                Ex: Pipeline Build ID (Build.buildid.tar)     "
-    echo "                                                              "
-    echo "       -s "<sbomAuthor>"    - Name and email of               "
-    echo "                              the SBOM author                 "
-    echo "                              enclosed with double quotes     "
-    echo "                              (Optional)                      "
-    echo "                                                              "
-    echo "                 Ex: \"Build Engineer <engineer@example.com>\"  "
-    echo "                                                              "
     echo "       -h                  - Display this Help.               "
     echo "                                                              "
     exit 0
@@ -111,6 +119,9 @@ Help() {
 # Central configuration file leveraged by the backend scripts
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+packagingScript="${SCRIPT_HOME}/../../Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy"
+packagingUtilities="${SCRIPT_HOME}/utilities/packagingUtilities.sh"
+
 # Path and File Name to the advanced debug options.
 #log4j2="-Dlog4j.configurationFile=file:/../log4j2.properties"
 
@@ -120,7 +131,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -131,6 +142,7 @@ rc=0
 ERRMSG=""
 Workspace=""
 App=""
+AppDir=""
 tarFileName=""
 PkgPropFile=""
 PipelineType=""
@@ -142,6 +154,8 @@ generateSBOM=""
 sbomAuthor=""
 
 publish=""
+buildIdentifier=""
+releaseIdentifier=""
 artifactVersionName=""            # required for publishing to artifact repo
 artifactRepositoryUrl=""          # required if artifactRepositoryPropertyFile not specified
 artifactRepositoryUser=""         # required if artifactRepositoryPropertyFile not specified
@@ -149,6 +163,12 @@ artifactRepositoryPassword=""     # required if artifactRepositoryPropertyFile n
 artifactRepositoryName=""         # required if artifactRepositoryPropertyFile not specified
 artifactRepositoryDirectory=""    # required if artifactRepositoryPropertyFile not specified
 artifactRepositoryPropertyFile="" # alternative to above cli parms
+externalDependenciesLogFile=""    # document fetched build dependencies
+
+# managing baseline package
+baselineTarFile=""        # computed if a baseline package has been retrieved during the fetch phase
+baselineFolder="baseline" # per convention this is the subdir into which the fetch script loads the baseline
+
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -180,10 +200,21 @@ if [ $rc -eq 0 ]; then
     fi
 fi
 
+# Source packaging helper
+if [ $rc -eq 0 ]; then
+    if [ ! -f "${packagingUtilities}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Packaging Utils (${packagingUtilities}) was not found. rc="$rc
+        echo $ERRMSG
+    else
+        source $packagingUtilities
+    fi
+fi
+
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts ":h:w:a:t:b:v:p:us:" opt; do
+    while getopts ":h:w:a:b:t:i:r:v:p:us:" opt; do
         case $opt in
         h)
             Help
@@ -220,6 +251,17 @@ if [ $rc -eq 0 ]; then
                 break
             fi
             tarFileName="$argument"
+            ;;
+        i)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            buildIdentifier="$argument"
             ;;
         b)
             argument="$OPTARG"
@@ -258,15 +300,28 @@ if [ $rc -eq 0 ]; then
             fi
             PipelineType="$argument"
             ;;
+        r)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            releaseIdentifier="$argument"
+            ;;
         v)
             argument="$OPTARG"
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the artifact version in Artifact repository is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
+            ERRMSG=$PGM": [WARNING] The argument (-v) for naming the version is deprecated. Please switch to the new options and supply the build identifier argument (-i) and for release pipelines the release identifier argument (-r)."
+            echo $ERRMSG
             artifactVersionName="$argument"
             ;;
         \?)
@@ -284,7 +339,7 @@ if [ $rc -eq 0 ]; then
     done
 fi
 #
-# Validate options
+
 validateOptions() {
     if [ -z "${Workspace}" ]; then
         rc=8
@@ -303,9 +358,9 @@ validateOptions() {
     fi
 
     # Validate Packaging script
-    if [ ! -f "${PackagingScript}" ]; then
+    if [ ! -f "${packagingScript}" ]; then
         rc=8
-        ERRMSG=$PGM": [ERR] Unable to locate ${PackagingScript}. rc="$rc
+        ERRMSG=$PGM": [ERROR] Unable to locate ${packagingScript}. rc="$rc
         echo $ERRMSG
     fi
 
@@ -313,8 +368,63 @@ validateOptions() {
     if [ ! -z "${PkgPropFile}" ]; then
         if [ ! -f "${PkgPropFile}" ]; then
             rc=8
-            ERRMSG=$PGM": [ERR] Unable to locate ${PkgPropFile}. rc="$rc
+            ERRMSG=$PGM": [ERROR] Unable to locate ${PkgPropFile}. rc="$rc
             echo $ERRMSG
+        fi
+    fi
+
+    if [ -z "${buildIdentifier}" ] && [ "$publish" == "true" ]; then
+        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) has been supplied. A unique name based on version and build id is recommended. Using timestamp"
+        echo $ERRMSG
+        buildIdentifier=$(date +%Y%m%d_%H%M%S)
+    fi
+
+    if [ -z "${App}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Application parameter (-a) is required. rc="$rc
+        echo $ERRMSG
+    else
+
+        AppDir=$(getApplicationDir)
+
+        # Check if application directory contains
+        if [ -d "${AppDir}/${App}" ]; then
+            echo $PGM": [INFO] Detected the application repository (${App}) within the git repository layout structure."
+            echo $PGM": [INFO]  Assuming this as the new application location."
+            AppDir="${AppDir}/${App}"
+        fi
+
+        if [ ! -d "${AppDir}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Application Directory (${AppDir}) was not found. rc="$rc
+            echo $ERRMSG
+        fi
+    fi
+
+    # validate if external dependency log exists
+    if [ "${fetchBuildDependencies}" == "true" ] && [ ! -z "${externalDependenciesLogName}" ]; then
+        externalDependenciesLogFile="$(getLogDir)/${externalDependenciesLogName}"
+        # Validate Properties file
+        if [ ! -f "${externalDependenciesLogFile}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Unable to locate ${externalDependenciesLogFile}. rc="$rc
+            echo $ERRMSG
+        fi
+    fi
+
+    # validate baseline package
+    if [ "${fetchBuildDependencies}" == "true" ]; then
+
+        # validate baseline directory and baseline package
+        baselineDirectory="$(getWorkDirectory)/${baselineFolder}"
+        if [ -d "${baselineDirectory}" ]; then
+            baselineTarName=$(ls "${baselineDirectory}")
+            baselineTarFile="${baselineDirectory}/${baselineTarName}"
+            if [ ! -f "$baselineTarFile" ]; then
+                echo $PGM": [INFO] The baseline package $baselineTarFile was not found."
+            fi
+        else
+            echo $PGM": [INFO] The directory for the baseline package $baselineDirectory was not found."
         fi
     fi
 
@@ -338,16 +448,10 @@ validatePublishingOptions() {
     if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
         if [ ! -f "${artifactRepositoryPropertyFile}" ]; then
             rc=8
-            ERRMSG=$PGM": [ERR] Unable to locate ${artifactRepositoryPropertyFile}. rc="$rc
+            ERRMSG=$PGM": [ERROR] Unable to locate ${artifactRepositoryPropertyFile}. rc="$rc
             echo $ERRMSG
         fi
     else
-
-        if [ -z "${artifactVersionName}" ]; then
-            rc=8
-            ERRMSG=$PGM": [ERROR] Name of the artifact version (artifactVersionName) is required. rc="$rc
-            echo $ERRMSG
-        fi
 
         if [ -z "${artifactRepositoryUrl}" ]; then
             rc=8
@@ -392,12 +496,12 @@ validatePublishingOptions() {
                 ;;
             "preview")
                 rc=4
-                ERRMSG=$PGM": [WARN] Default Pipeline Type : ${PipelineType} not supported for packaging."
+                ERRMSG=$PGM": [WARNING] Default Pipeline Type : ${PipelineType} not supported for packaging."
                 echo $ERRMSG
                 ;;
             *)
                 rc=4
-                ERRMSG=$PGM": [WARN] Inavlid Pipeline Type : ${PipelineType} specified."
+                ERRMSG=$PGM": [WARNING] Invalid Pipeline Type : ${PipelineType} specified."
                 echo $ERRMSG
                 ;;
             esac
@@ -406,26 +510,28 @@ validatePublishingOptions() {
     fi
 }
 
+# compute packaging parameters and validate publishing options
+if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
+    # invoke function in packagingUtilities
+
+    if [ ! -z "${tarFileName}" ]; then
+        echo $PGM": [INFO] ** Identified that tarFileName is passed into packageBuildOutputs.sh (${tarFileName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."
+    fi
+
+    if [ ! -z "${artifactVersionName}" ]; then
+        echo $PGM": [INFO] ** Identified that artifactVersionName is passed into packageBuildOutputs.sh (${artifactVersionName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."
+    fi
+
+    computePackageInformation
+fi
+
+if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
+    validatePublishingOptions
+fi
+
 # Call validate input options
 if [ $rc -eq 0 ]; then
     validateOptions
-fi
-
-# compute parameters
-if [ $rc -eq 0 ]; then
-    # Compute artifactRepositoryName based on function in packageBuildOutputs.config
-    artifactRepositoryName=$(computeArtifactRepositoryName)
-    artifactRepositoryDirectory=$(computeArtifactRepositoryDirectory)
-
-    # set default PipelineType for pipelines on main
-    if [ "${Branch}" == "main" ] && [ -z "${PipelineType}" ]; then
-        PipelineType="build"
-    fi
-fi
-
-# Call validate publishing options
-if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
-    validatePublishingOptions
 fi
 
 #
@@ -435,54 +541,65 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] ** Started - Package Build Outputs on HOST/USER: ${SYS}/${USER}"
     echo $PGM": [INFO] **                  WorkDir:" $(getWorkDirectory)
     if [ ! -z "${App}" ]; then
-        echo $PGM": [INFO] **              Application:" ${App}
+        echo $PGM": [INFO] **                Application:" ${App}
     fi
     if [ ! -z "${Branch}" ]; then
-        echo $PGM": [INFO] **                   Branch:" ${Branch}
+        echo $PGM": [INFO] **                     Branch:" ${Branch}
     fi
+
+    if [ ! -z "${AppDir}" ]; then
+        echo $PGM": [INFO] **      Application directory:" ${AppDir}
+    fi
+
     if [ ! -z "${PipelineType}" ]; then
-        echo $PGM": [INFO] **         Type of pipeline:" ${PipelineType}
+        echo $PGM": [INFO] **           Type of pipeline:" ${PipelineType}
     fi
     if [ ! -z "${tarFileName}" ]; then
-        echo $PGM": [INFO] **            Tar file Name:" ${tarFileName}
+        echo $PGM": [INFO] **              Tar file Name:" ${tarFileName}
     fi
-    echo $PGM": [INFO] **     BuildReport Location:" ${logDir}
-    echo $PGM": [INFO] **     PackagingScript Path:" ${PackagingScript}
+    echo $PGM": [INFO] **       BuildReport Location:" ${logDir}
+    echo $PGM": [INFO] **       PackagingScript Path:" ${packagingScript}
     if [ ! -z "${PkgPropFile}" ]; then
-        echo $PGM": [INFO] **     Packaging properties:" ${PkgPropFile}
+        echo $PGM": [INFO] **       Packaging properties:" ${PkgPropFile}
     fi
 
-    if [ ! -z "${artifactVersionName}" ]; then
-        echo $PGM": [INFO] **            Artifact name:" ${artifactVersionName}
+    if [ ! -z "${packageBuildIdentifier}" ]; then
+        echo $PGM": [INFO] **   Package Build Identifier:" ${packageBuildIdentifier}
     fi
-
+    echo $PGM": [INFO] **              Generate SBOM:" ${generateSBOM}
+    if [ ! -z "${sbomAuthor}" ]; then
+        echo $PGM": [INFO] **                SBOM Author:" ${sbomAuthor}
+    fi
+    if [ ! -z "${externalDependenciesLogFile}" ]; then
+        echo $PGM": [INFO] **   External Dependencies log:" ${externalDependenciesLogFile}
+    fi
+    if [ ! -f "$baselineTarFile" ]; then
+        echo $PGM": [INFO] **            Baseline package:" ${baselineTarFile}
+    fi
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
     if [ "$publish" == "true" ]; then
         if [ ! -z "${artifactRepositoryPropertyFile}" ]; then
-            echo $PGM": [INFO] **  ArtifactRepo properties:" ${artifactRepositoryPropertyFile}
+            echo $PGM": [INFO] **    ArtifactRepo properties:" ${artifactRepositoryPropertyFile}
         fi
 
         if [ ! -z "${artifactRepositoryUrl}" ]; then
-            echo $PGM": [INFO] **         ArtifactRepo Url:" ${artifactRepositoryUrl}
+            echo $PGM": [INFO] **           ArtifactRepo Url:" ${artifactRepositoryUrl}
         fi
         if [ ! -z "${artifactRepositoryUser}" ]; then
-            echo $PGM": [INFO] **        ArtifactRepo User:" ${artifactRepositoryUser}
+            echo $PGM": [INFO] **          ArtifactRepo User:" ${artifactRepositoryUser}
         fi
         if [ ! -z "${artifactRepositoryPassword}" ]; then
-            echo $PGM": [INFO] **    ArtifactRepo Password: xxxxx"
+            echo $PGM": [INFO] **      ArtifactRepo Password: xxxxx"
         fi
         if [ ! -z "${artifactRepositoryName}" ]; then
-            echo $PGM": [INFO] **   ArtifactRepo Repo name:" ${artifactRepositoryName}
+            echo $PGM": [INFO] **     ArtifactRepo Repo name:" ${artifactRepositoryName}
         fi
         if [ ! -z "${artifactRepositoryDirectory}" ]; then
-            echo $PGM": [INFO] **    ArtifactRepo Repo Dir:" ${artifactRepositoryDirectory}
+            echo $PGM": [INFO] **      ArtifactRepo Repo Dir:" ${artifactRepositoryDirectory}
         fi
     fi
-    echo $PGM": [INFO] **            Generate SBOM:" ${generateSBOM}
-    if [ ! -z "${sbomAuthor}" ]; then
-        echo $PGM": [INFO] **              SBOM Author:" ${sbomAuthor}
-    fi
-    echo $PGM": [INFO] **                 DBB_HOME:" ${DBB_HOME}
+
+    echo $PGM": [INFO] **                   DBB_HOME:" ${DBB_HOME}
     echo $PGM": [INFO] **************************************************************"
     echo ""
 fi
@@ -491,12 +608,12 @@ fi
 # Invoke the Package Build Outputs script
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Invoking the Package Build Outputs script."
-    
+
     if [ ! -z "${cycloneDXlibraries}" ]; then
-    	cycloneDXlibraries="-cp ${cycloneDXlibraries}"
+        cycloneDXlibraries="-cp ${cycloneDXlibraries}"
     fi
 
-    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${cycloneDXlibraries} ${PackagingScript} --workDir ${logDir}"
+    CMD="$DBB_HOME/bin/groovyz ${log4j2} ${cycloneDXlibraries} ${packagingScript} --workDir ${logDir}"
 
     # add tarfile name
     if [ ! -z "${tarFileName}" ]; then
@@ -513,6 +630,11 @@ if [ $rc -eq 0 ]; then
         CMD="${CMD} --branch ${Branch}"
     fi
 
+    # application directory
+    if [ ! -z "${AppDir}" ]; then
+        CMD="${CMD} --applicationFolderPath $(getApplicationDir)"
+    fi
+
     # packaging properties file
     if [ ! -z "${PkgPropFile}" ]; then
         CMD="${CMD} --packagingPropertiesFile ${PkgPropFile}"
@@ -526,6 +648,21 @@ if [ $rc -eq 0 ]; then
     # artifactVersionName
     if [ ! -z "${artifactVersionName}" ]; then
         CMD="${CMD} --versionName ${artifactVersionName}"
+    fi
+
+    # Wazi Deploy build identifier
+    if [ ! -z "${packageBuildIdentifier}" ]; then
+        CMD="${CMD} --packageBuildIdentifier ${packageBuildIdentifier}"
+    fi
+
+    # Pass information about externally fetched modules to packaging to document them
+    if [ ! -z "${externalDependenciesLogFile}" ]; then
+        CMD="${CMD} --externalDependenciesEvidences ${externalDependenciesLogFile}"
+    fi
+
+    # Pass baseline package
+    if [ ! -f "$baselineTarFile" ]; then
+        CMD="${CMD} --baselinePackage ${baselineTarFile}"
     fi
 
     # publishing options
@@ -551,19 +688,19 @@ if [ $rc -eq 0 ]; then
         if [ ! -z "${artifactRepositoryDirectory}" ]; then
             CMD="${CMD} --artifactRepositoryDirectory ${artifactRepositoryDirectory}"
         fi
+
     fi
 
     # SBOM options
     if [ "$generateSBOM" == "true" ]; then
         CMD="${CMD} --sbom"
-	    if [ ! -z "${sbomAuthor}" ]; then
-	        CMD="${CMD} --sbomAuthor \"${sbomAuthor}\""
-	    fi
+        if [ ! -z "${sbomAuthor}" ]; then
+            CMD="${CMD} --sbomAuthor \"${sbomAuthor}\""
+        fi
     fi
 
-
     echo $PGM": [INFO] ${CMD}"
-    /bin/env bash -c "${CMD}"
+    ${CMD}
     rc=$?
 
     if [ $rc -eq 0 ]; then

@@ -569,7 +569,11 @@ Packaging:
         wdEvidencesDir: ${wdEvidencesRoot}/${application}/production
 
     artifacts:
+<<<<<<< HEAD
         name: productionDeploymentReport-${CI_PIPELINE_ID}"
+=======
+        name: "productionDeploymentReport-${CI_PIPELINE_ID}"
+>>>>>>> dennis/feature/297-enhance-cbs-scripts-to-pull-configured-application-dependencies
         when: always
         paths:
             - "${productionReportDir}/deployment-report.html"
