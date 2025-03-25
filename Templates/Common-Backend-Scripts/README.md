@@ -135,10 +135,10 @@ Artifact Name |  Description | Script details
 [zBuilder.sh](zBuilder.sh) | Pipeline Shell script to invoke the zBuilder framework [zBuilder](https://www.ibm.com/docs/en/dbb/3.0?topic=building-zos-applications-zbuilder) | [script details](#zbuildersh-for-dbb-zbuilder)
 [packageBuildOutputs.sh](packageBuildOutputs.sh) | Pipeline Shell Script to create a Package using the [PackageBuildOutputs groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/PackageBuildOutputs) | [script details](#packagebuildoutputssh)
 [ucdPackage.sh](ucdPackaging.sh) | Pipeline Shell Script to publish to UCD Code Station binary repository using the [CreateUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/CreateUCDComponentVersion) | [script details](#ucdpackagingsh)
-[ucdDeploy.sh](ucdDeploy.sh) | Pipeline Shell Script to trigger a UCD Deployment via its REST interface using the [DeployUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/DeployUCDComponentVersion) | [script details](#ucddeploysh)
 [wazideploy-generate.sh](wazideploy-generate.sh) | Pipeline Shell Script to generate a Deployment Plan to be used with Wazi Deploy | [script details](#wazideploy-generatesh)
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](#wazideploy-deploysh)
 [wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](#wazideploy-generatesh)
+[ucdDeploy.sh](ucdDeploy.sh) | Pipeline Shell Script to trigger a UCD Deployment via its REST interface using the [DeployUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/DeployUCDComponentVersion) | [script details](#ucddeploysh)
 [prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](#preparelogssh)
 [generateCleanupCommands.sh](generateCleanupCommands.sh) | Pipeline Shell Script to generate necessary DBB Metadatastore cleanup tasks including the deletion of the build datasets. | [script details](#generatecleanupcommandssh)
 [deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](#deleteworkspacesh)
@@ -238,13 +238,37 @@ Note that the location of the baselineReferences.config file can be customized i
 
 #### Fetching build dependencies
 
-The build stage is enabled to pull external dependencies into the build workspace, based on the dependencies definition specified in the Application Descriptor file.
+The build stage can be enabled to pull external build dependencies into the build workspace based on the dependencies definition specified in the Application Descriptor file.
 
-The Application Descriptor contains metadata about the application itself, but can contain references to other applications versions managed in an artifact repository, which contain necessary inputs to the build. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
+The Application Descriptor contains metadata about the application itself, but can contain the dependency configuration to other applications versions managed in an artifact repository, which contain necessary inputs to the build process. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
+
+In the `dependencies` section in the Application Descriptor file, users can configure which application versions should be fetched into the build workspace. The below snippet references the release build of the Cards application with the reference to `rel-1.2.0` and the concrete buildid `build-20241112.1`
+
+```yaml
+dependencies: 
+- name: ”Cards"
+  type: "release"
+  reference: "rel-1.2.0"
+  buildid: "build-20241112.1"
+```
 
 The Application Descriptor file, called `applicationDescriptor.yml`, is expected to be on the root level of the application's Git repository.
 
-Each application version, represented by an archive, can export shared components such as public or shared include files, and build outputs such as object decks or NCAL load modules. The package needs to be created with the [PackageBuildOutputs](../../Pipeline/PackageBuildOutputs/README.md) script and be uploaded to the artifact repository through the Common Backend Scripts. To fetch the dependencies, it uses the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) that is referenced by both dbbBuild.sh and zBuilder.sh. Under the covers, it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) and the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script to download the external dependencies. The downloaded archives can be stored at a cache location to improve performance. Fetched archives are expanded in the `imports` subfolder of the pipeline's working directory.
+Each application version, represented by an archive, can export shared components such as public or shared include files, and build outputs such as object decks or NCAL load modules. The package needs to be created with the [PackageBuildOutputs](../../Pipeline/PackageBuildOutputs/README.md) script and be uploaded to the artifact repository through the Common Backend Scripts. To fetch the dependencies, it uses the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) that is referenced by both dbbBuild.sh and zBuilder.sh. Under the covers, it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) and the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script to download the external dependencies into the working directory. The downloaded archives can be stored at a cache location to improve performance. Fetched archives are expanded in the `imports` subfolder of the pipeline's working directory.
+
+#### Fetch baseline package
+
+(Prototype) Along with the fetching of external build dependencies, the fetch phase can retrieve the application's baseline package from the Artifact repository. This is configured through the `baselines` section of the Application Descriptor. Use the baseline if your application architecture uses static calls or required derived build outputs that is an mandatory input to subsequent builds. A good sample for derived build outputs are bms copybooks, that are inputs to CICS programs. Instead of storing the generated bms copybooks, it is made available through the baseline package.
+
+Baseline archives are defined similarly like external dependencies. Under the `baselines` section, the application team manages the references for the corresponding build branch:
+
+```
+baselines: 
+- branch: ”main"
+  type: "release"
+  reference: "rel-1.2.0"
+  buildid: "build-7656"
+```
 
 ### dbbBuild.sh for zAppBuild framework
 
@@ -1066,7 +1090,7 @@ CLI parameter | Description
 
 Note that the script deletes all empty folders in the working tree. It supresses the message `EDC5136I Directory not empty.` and handles that as a INFO message.
 
-### Script output
+#### Script output
 
 The section below contains the output that is produced by the `deleteWorkspace.sh` script.
 
