@@ -77,7 +77,7 @@ Help() {
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 buildUtilities="${SCRIPT_HOME}/utilities/dbbBuildUtils.sh"
-deleteScript="${SCRIPT_HOME}/../..//Utilities/DeletePDS/DeletePDS.groovy"
+deleteScript="${SCRIPT_HOME}/../../Utilities/DeletePDS/DeletePDS.groovy"
 
 #
 # Internal Variables
