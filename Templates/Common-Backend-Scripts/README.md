@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Common Backend Scripts for Pipeline Implementations is a collection of scripts that deliver central "services" and a simplified interface for pipeline configurations that implement a Git/DBB-based pipeline for Mainframe applications. They use and simplify the parameterization of existing scripts of this repository to perform build, packaging and deployment steps.
+The Common Backend Scripts for Pipeline Implementations is a collection of scripts that deliver central "services" and a simplified interface for pipeline configurations that implement a Git/DBB-based pipeline for mainframe applications. They use and simplify the parameterization of existing scripts in this repository to perform build, packaging, and deployment steps.
 
 Implementing a pipeline configuration, such as an Azure pipeline, a JenkinsFile, or the .gitlab-ci.yml file, requires accommodation of the selected development workflow with Git. To achieve consistency across various applications, rules must be implemented in pipeline code or configurations to address:
 * naming conventions of build datasets,
@@ -23,19 +23,19 @@ This asset implements the rules and conventions of the Git-based workflow outlin
 
 ## Setup
 
-The provided scripts of this asset are implemented as bash scripts. The entire repository needs to be installed on UNIX System Services of the z/OS system that is used to execute the pipeline's tasks, because as previously mentioned the scripts invoke individual pipeline scripts from the [Pipeline](../../Pipeline/) directory.
+The provided scripts of this asset are implemented as bash scripts. The entire repository needs to be installed on UNIX System Services of the z/OS system that is used to execute the pipeline's tasks, as the scripts invoke individual pipeline scripts from the [Pipeline](../../Pipeline/) directory.
 
 ### Pre-requisites
 The following are required to use these scripts:
-* DBB v2.x / 3.x toolkit is installed.
+* DBB 2.x or DBB 3.x toolkit is installed.
 * zAppBuild or zBuilder is set up on Unix Systems Services.
 * Git repository which follows the Git-based workflow outlined in IBM's documentation `The Git-based workflow for Mainframe development`.
 
 ### Installation
 
-* Make this Git repository available in your internal git provider. Perform necessary site-specific [script configuration](#script-configuration).
+1. Make this Git repository available in your enterprise Git provider. Perform necessary site-specific [script configurations](#script-configuration).
 
-* Clone the repository that include the Common Backend Scripts into z/OS UNIX System Services under a protected directory.
+2. Clone the repository customized in the previous step (including the Common Backend Scripts) into z/OS UNIX System Services under a protected directory.
   
   * Verify that permission of these scripts to allow for `read/execute` to only the users who will invoke the scripts. This is typically the technical user defined for the pipeline orchestrator. 
 
