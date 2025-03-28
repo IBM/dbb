@@ -39,7 +39,7 @@ The following are required to use these scripts:
   
   * Verify that permission of these scripts to allow for `read/execute` to only the users who will invoke the scripts. This is typically the technical user defined for the pipeline orchestrator. 
 
-* The following environment variables need to be defined (for instance within the `.profile`) for the mainframe users who will execute the scripts on UNIX System Services:
+3. The following environment variables need to be defined (for instance within the `.profile`) for the mainframe users who will execute the scripts on UNIX System Services:
 
   * `PIPELINE_SCRIPTS` - Environment variable to define the path to the Common Backend Scripts. 
   
