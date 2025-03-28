@@ -314,7 +314,7 @@ if (props.externalDependenciesFilePath) {
 	yamlBuilder externalDependencies
 
 	externalDependencyFile = new File(props.externalDependenciesFilePath)
-	externalDependencyFile.withWriter("IBM-1047") { extDepWriter ->
+	externalDependencyFile.withWriter("UTF-8") { extDepWriter ->
 		extDepWriter.write(yamlBuilder.toString())
 	}
 }
