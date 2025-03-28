@@ -27,6 +27,7 @@
 # Date       Who Vers Description
 # ---------- --- ---- --------------------------------------------------------------
 # 2023/07/18 RBS 1.00 Initial Release
+# 2025/03/13 DB  1.10 Locate groovy scripts in file system
 #===================================================================================
 Help() {
   echo $PGM" - Deploy UCD Component                                               "
@@ -76,6 +77,7 @@ Help() {
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="`dirname "$0"`"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+deployScript="${SCRIPT_HOME}/../../../Pipeline/DeployUCDComponentVersion/ucd-deploy.groovy"
 # Customization - End
 
 #
@@ -84,7 +86,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -269,6 +271,15 @@ if [ $rc -eq 0 ]; then
   fi
 fi
 
+if [ $rc -eq 0 ]; then
+  # Validate Packaging script
+  if [ ! -f "${deployScript}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERR] Unable to locate ${deployScript}. rc="$rc
+    echo $ERRMSG
+  fi
+fi
+
 #
 # Set up Environment
 if [ $rc -eq 0 ]; then
@@ -280,13 +291,13 @@ fi
 if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] **************************************************************"
   echo $PGM": [INFO] ** Start UCD Component Deploy on HOST/USER: ${SYS}/${USER}"
-  echo $PGM": [INFO] **   Location of ucd-deploy.groovy:" ${deployScriptLoc}
-  echo $PGM": [INFO] **            UCD Application Name:" ${Application}
-  echo $PGM": [INFO] **            UCD Environment Name:" ${Environment}
-  echo $PGM": [INFO] **                   UCD User Name:" ${ucdUserName}
-  echo $PGM": [INFO] **                  UCD Server URL:" ${ucdServerURL}
-  echo $PGM": [INFO] **           UCD Component Version:" ${Version}
-  echo $PGM": [INFO] **    UCD Application Process Name:" ${Process}
+  echo $PGM": [INFO] **            UCD deploy script :" ${deployScript}
+  echo $PGM": [INFO] **          UCD Application Name:" ${Application}
+  echo $PGM": [INFO] **          UCD Environment Name:" ${Environment}
+  echo $PGM": [INFO] **                 UCD User Name:" ${ucdUserName}
+  echo $PGM": [INFO] **                UCD Server URL:" ${ucdServerURL}
+  echo $PGM": [INFO] **         UCD Component Version:" ${Version}
+  echo $PGM": [INFO] *   UCD Application Process Name:" ${Process}
 
   if [ ! -z "${Timeout}" ]; then
     echo $PGM": [INFO] **           UCD Timeout (seconds):" ${Timeout}
@@ -315,8 +326,8 @@ fi
 #
 # Set up to execute the UCD Deploy groovy script
 if [ $rc -eq 0 ]; then
-  echo $DBB_HOME/bin/groovyz ${deployScriptLoc}/ucd-deploy.groovy -a '"'${Application}'"' -e '"'${Environment}'"' -U ${ucdUserName} -P ${ucdPassword} -u ${ucdServerURL} -d '"'${Version}'"' -p ${Process} ${OptionalCommands} 2>&1
-  $DBB_HOME/bin/groovyz ${deployScriptLoc}/ucd-deploy.groovy -a '"'${Application}'"' -e '"'${Environment}'"' -U ${ucdUserName} -P ${ucdPassword} -u '"'${ucdServerURL}'"' -d '"'${Version}'"' -p ${Process} ${OptionalCommands} 2>&1
+  echo $DBB_HOME/bin/groovyz ${deployScript} -a '"'${Application}'"' -e '"'${Environment}'"' -U ${ucdUserName} -P ${ucdPassword} -u ${ucdServerURL} -d '"'${Version}'"' -p ${Process} ${OptionalCommands} 2>&1
+  $DBB_HOME/bin/groovyz ${deployScript} -a '"'${Application}'"' -e '"'${Environment}'"' -U ${ucdUserName} -P ${ucdPassword} -u '"'${ucdServerURL}'"' -d '"'${Version}'"' -p ${Process} ${OptionalCommands} 2>&1
   rc=$?
 
   if [ $rc -ne 0 ]; then

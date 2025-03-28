@@ -27,6 +27,8 @@
 # Date       Who  Vers Description
 # ---------- ---- ---- --------------------------------------------------------------
 # 2023/10/19 MDLB 1.00 Initial Release
+# 2025/03/13 DB   1.10 Allow pipelines to compute the artifact location to download
+#                      packages via wazideploy-generate
 #===================================================================================
 Help() {
   echo $PGM" - Generate Wazi Deploy Deployment Plan                               "
@@ -60,9 +62,7 @@ Help() {
   echo "                                           used as input                  "
   echo "                                           If a relative path is provided,"
   echo "                                           the log directory is suffixed  "
-  echo "                                           where PackageBuildOutputs      "
-  echo "                                           stores outputs                 "  
-  echo "                                           Default=None, Required.        "  
+  echo "                                           Default=None, Required.        "
   echo "                                                                          "
   echo "                 Ex: MortgageApplication.tar                              "
   echo "                                                                          "
@@ -97,6 +97,33 @@ Help() {
   echo "                                            See wdDeployArtifactoryConfig "
   echo "                                            in pipelineBackend.config     "
   echo "                                                                          "
+  echo "       -P <pipelineType>              - Type of the pipeline to           "
+  echo "                                        control in which directory builds "
+  echo "                                        are stored in the artifact repo   "
+  echo "                                        Accepted values:                  "
+  echo "                                        build -                           "
+  echo "                                         development builds               "
+  echo "                                        release -                         "
+  echo "                                         builds with options for          "
+  echo "                                         performance optimized            "
+  echo "                                         executables for production env   "
+  echo "                                        (optional)                        "
+  echo "                                                                          "
+  echo "       -b <gitBranch>                    - Name of the git branch.        "
+  echo "                                           (optional)                     "
+  echo "                                                                          "
+  echo "                             Ex: main                                     "
+  echo "                                                                          "
+  echo "                                                                          "
+  echo "       -I <buildIdentifier>              - A unique build identifier      "
+  echo "                                           typically the buildID of the   "
+  echo "                                           pipeline                       "
+  echo "                                           (optional)                     "
+  echo "                                                                          "
+  echo "       -R <releaseIdentifier>             - The release identifier for    "
+  echo "                                           release pipeline builds        "
+  echo "                                           (optional)                     "
+  echo "                                                                          "
   echo "       -d                                - Debug tracing flag             "
   echo " "
   exit 0
@@ -108,6 +135,7 @@ Help() {
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+packagingUtilities="${SCRIPT_HOME}/utilities/packagingUtilities.sh"
 # Customization - End
 
 #
@@ -116,21 +144,39 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
 rc=0
 ERRMSG=""
+# Wazi Deploy configuration variables
 DeploymentMethod=""
 DeploymentPlan=""
 DeploymentPlanReport=""
 PackageInputFile=""
 PackageOutputFile=""
 ConfigFile=""
+
+# CBS configuration variables
 Workspace=""
+App=""          # Application name - takes cli option a
+PipelineType="" # takes cli option P
+Branch=""       # takes cli option b
+
+# Package identifier variables
+buildIdentifier=""   # takes cli option I
+releaseIdentifier="" # takes cli option R
+
+# 
+computeArchiveUrl="true"            # enables the computation of the url
+artifactRepositoryAbsoluteUrl=""    # Used to store the computed Url
+usePackageUrl=""                    # Internal flag indicating if the package url was computed
+
 Debug=""
 HELP=$1
+
+tarFileName="" # variable to store the package tar
 
 if [ "$HELP" = "?" ]; then
   Help
@@ -160,10 +206,21 @@ if [ $rc -eq 0 ]; then
   fi
 fi
 
+# Source packaging helper
+if [ $rc -eq 0 ]; then
+    if [ ! -f "${packagingUtilities}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Packaging Utilities file (${packagingUtilities}) was not found. rc="$rc
+        echo $ERRMSG
+    else
+        source $packagingUtilities
+    fi
+fi
+
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "hdw:m:p:r:i:o:c:" opt; do
+  while getopts "hdw:m:p:r:i:o:c:a:I:R:P:b:" opt; do
     case $opt in
     h)
       Help
@@ -256,6 +313,62 @@ if [ $rc -eq 0 ]; then
       Debug=" -d"
       ;;
 
+    a)
+      # Application argument
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] Application Folder Name is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      App="$argument"
+      ;;
+    b)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] Name of the git branch is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      Branch="$argument"
+      ;;
+    P)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
+        echo $INFO
+        break
+      fi
+      PipelineType="$argument"
+      ;;
+    I)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      buildIdentifier="$argument"
+      ;;
+    R)
+      argument="$OPTARG"
+      nextchar="$(expr substr $argument 1 1)"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      releaseIdentifier="$argument"
+      ;;
     \?)
       Help
       rc=1
@@ -316,10 +429,9 @@ validateOptions() {
     fi
   fi
   # if relative path
-  if [[ ! ${DeploymentPlan:0:1} == "/" ]] ; then
+  if [[ ! ${DeploymentPlan:0:1} == "/" ]]; then
     DeploymentPlan="$(wdDeployPackageDir)/${DeploymentPlan}"
   fi
-
 
   # compute deployment plan report if not specified
   if [ -z "${DeploymentPlanReport}" ]; then
@@ -328,7 +440,7 @@ validateOptions() {
     DeploymentPlanReport="$(wdDeployPackageDir)/${wdDeploymentPlanReportName}"
   fi
   # if relative path
-  if [[ ! ${DeploymentPlanReport:0:1} == "/" ]] ; then
+  if [[ ! ${DeploymentPlanReport:0:1} == "/" ]]; then
     DeploymentPlanReport="$(wdDeployPackageDir)/${DeploymentPlanReport}"
   fi
 
@@ -339,15 +451,10 @@ validateOptions() {
     echo $ERRMSG
   else
     # check for relative path
-    if [[ ! ${PackageInputFile:0:1} == "/" ]] ; then 
-        checkWorkspace
-        PackageInputFile="$(getLogDir)/${PackageInputFile}"
+    if [ ! ${PackageInputFile:0:1} == "/" ] && [ -z "${usePackageUrl}" ]; then
+      checkWorkspace
+      PackageInputFile="$(getLogDir)/${PackageInputFile}"
     fi
-  fi
-  if [ ! -f "${PackageInputFile}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] Package Input File (${PackageInputFile}) was not found. rc="$rc
-    echo $ERRMSG
   fi
 
   # validate config file
@@ -358,22 +465,45 @@ validateOptions() {
   if [ ! -z "${ConfigFile}" ]; then
     if [ ! -f "${ConfigFile}" ]; then
       rc=8
-      ERRMSG=$PGM": [ERROR] Specified Wazi Deploy Artifactory Configuration file (${ConfigFile}) was not found. rc="$rc
+      ERRMSG=$PGM": [ERROR] Specified Wazi Deploy Artifact repository configuration file (${ConfigFile}) was not found. rc="$rc
       echo $ERRMSG
     fi
   fi
 
   # compute the output file
   if [ -z "${PackageOutputFile}" ] && [ ! -z "${ConfigFile}" ]; then
-    # c
     checkWorkspace
     PackageOutputFile="$(wdDeployPackageDir)"
   fi
   # if relative path
-  if [[ ! ${PackageOutputFile:0:1} == "/" ]] && [[ ! -z "${PackageOutputFile}" ]] ; then
+  if [[ ! ${PackageOutputFile:0:1} == "/" ]] && [[ ! -z "${PackageOutputFile}" ]]; then
     PackageOutputFile="$(wdDeployPackageDir)/${PackageOutputFile}"
   fi
 }
+
+# When publishing is enabled, try reading the wdPackageVersionFile
+# that needs to be computed before this step.
+if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; then
+  checkWorkspace
+
+  # validate options
+  if [ -z "${PipelineType}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERROR] To compute the Url of the stored package to enable the download of the archive file via Wazi Deploy generate, you need to provide the pipelineType. rc="$rc
+    echo $ERRMSG
+  fi
+
+  if [ $rc -eq 0 ]; then
+
+    # Call utilities method
+    computePackageInformation
+
+    # Set Input and output files for Wazi Deploy
+    PackageInputFile="${artifactRepositoryAbsoluteUrl}"
+    PackageOutputFile="$(wdDeployPackageDir)/applicationPackage.tar" # shared convention with wazideploy-deploy.sh
+    usePackageUrl="true"
+  fi
+fi
 
 # Call validate Options
 if [ $rc -eq 0 ]; then

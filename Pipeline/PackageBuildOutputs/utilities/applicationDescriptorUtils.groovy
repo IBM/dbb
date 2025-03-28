@@ -43,13 +43,16 @@ class FileDef {
 
 class Baseline {
     String branch
-    String baseline
+    String type
+    String reference
+    String buildid
 }
 
 class DependencyDescriptor {
     String name
-    String version
     String type
+    String reference
+    String buildid
 }
 
 /**
@@ -193,18 +196,20 @@ def removeFileDefinition(ApplicationDescriptor applicationDescriptor, String sou
  * Method to add an application dependency 
  */
 
-def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String applicationDependency, String version, String type) {
+def addApplicationDependency(ApplicationDescriptor applicationDescriptor, String applicationDependency, String type, String reference, String buildid) {
     if (!applicationDescriptor.dependencies) {
         applicationDescriptor.dependencies = new ArrayList<DependencyDescriptor>()
     }
+	// skip readding same/similar entries
     def existingDependencies = applicationDescriptor.dependencies.findAll() {
-        it.name.equals(applicationDependency) & it.type.equals(type)
+        it.name.equals(applicationDependency)
     }
     if (!existingDependencies) {
         def dependency = new DependencyDescriptor()
         dependency.name = applicationDependency
-        dependency.version = version
-        dependency.type = type
+		dependency.type = type
+        dependency.reference = reference
+        dependency.buildid = buildid
         applicationDescriptor.dependencies.add(dependency)
         applicationDescriptor.dependencies.sort {
             it.name
@@ -366,30 +371,4 @@ def getFilesByTypeAndUsage(ApplicationDescriptor applicationDescriptor, String a
 			return files
 		}
 	}
-}
-
-/**
- * Method to add a baseline 
- * If an existing baseline for a given branch already exists, the method replaces it
- */
-
-def addBaseline(ApplicationDescriptor applicationDescriptor, String branch, String baseline) {
-	if (applicationDescriptor.baselines) {
-		def existingBaselines = applicationDescriptor.baselines.findAll() { baselineDefinition ->
-			baselineDefinition.branch.equals(branch)
-		}
-		existingBaselines.forEach() { existingBaseline ->
-			applicationDescriptor.baselines.remove(existingBaseline)
-	    }
-	} else {
-		applicationDescriptor.baselines = new ArrayList<Baseline>()
-	}
-
-	if (applicationDescriptor.baselines) {
-		applicationDescriptor.sources = new ArrayList<Source>()
-	}
-	Baseline newBaseline = new Baseline()
-	newBaseline.branch = branch
-	newBaseline.baseline = baseline
-	applicationDescriptor.baselines.add(newBaseline)
 }
