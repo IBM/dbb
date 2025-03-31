@@ -100,7 +100,7 @@ Help() {
 # Either an absolute path or a relative path to the current working directory
 SCRIPT_HOME="`dirname "$0"`"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
-ucdPackagingScript="${SCRIPT_HOME}/../../../Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy"
+ucdPackagingScript="${SCRIPT_HOME}/../../Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy"
 # Customization - End
 
 # Path and File Name to the advanced debug options.
