@@ -128,7 +128,7 @@ Help() {
 # Build Type Customization
 # Configuration file leveraged by the backend scripts
 # Either an absolute path or a relative path to the current working directory
-SCRIPT_HOME="`dirname "$0"`"
+SCRIPT_HOME="/u/gitlab/dbb/Templates/Common-Backend-Scripts"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 buildUtilities="${SCRIPT_HOME}/utilities/dbbBuildUtils.sh"
 # Customization - End
@@ -390,7 +390,7 @@ validateOptions() {
     fi
   fi
 
-  BuildGroovy="${zAppBuild}/build.groovy"
+  BuildGroovy="/var/dbb/dbb-zappbuild_300/build.groovy"
 
   if [ ! -f "${BuildGroovy}" ]; then
     rc=8
@@ -516,18 +516,22 @@ if [ $rc -eq 0 ]; then
 
       # For each list in logListArray, if found in the last Build Log Directory, get its size (character count), then
       # increase logListSize by that amount.
-      for list in ${logListArray}; do
+      for list in ${logListArray[@]}; do
+        echo "Print: "${list}
         if [ -f ${list} ]; then
+          echo "Found: "${list}
           # wc -c will return the two values; Character Count and Log File Path.  Parse out the Character Count.
           set $(wc -c <${list})
-          echo ?${list} size: ?$1
-          logListSize=${totalLogListSize}+$1
-          echo ?totalLogListSize: ?${totalLogListSize}
+          echo "${list} size: "$1
+          totalLogListSize=$((${totalLogListSize}+$1))
+          echo "totalLogListSize: "${totalLogListSize}
+        else
+          echo "Not found: "${list}
         fi
       done
 
       # Error/warning if both build and file list have 0 character count (i.e. are empty)       
-      if [ ${totalLogListSize} ] = 0; then
+      if [ ${totalLogListSize} = 0 ]; then
         rc=4
         ERRMSG=$PGM": [WARNING] DBB Build Error. No files on build list or deleted files list. rc="$rc
         echo $ERRMSG
