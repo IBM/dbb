@@ -524,13 +524,12 @@ if [ $rc -eq 0 ]; then
       # Error/warning if both build and file list have 0 character count (i.e. are empty)       
       if [ ${totalLogListSize} = 0 ]; then
         rc=4
-        ERRMSG=$PGM": [WARNING] DBB Build Error. No files on build list or deleted files list. rc="$rc
+        ERRMSG=$PGM": [WARNING] DBB Build Error. No source changes detected. rc="$rc
         echo $ERRMSG
       else
         ERRMSG=$PGM": [INFO] DBB Build Complete. rc="$rc
         echo $ERRMSG
       fi
-
     else
       ERRMSG=$PGM": [INFO] DBB Reset Complete. rc="$rc
       echo $ERRMSG
