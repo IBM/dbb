@@ -128,7 +128,7 @@ Help() {
 # Build Type Customization
 # Configuration file leveraged by the backend scripts
 # Either an absolute path or a relative path to the current working directory
-SCRIPT_HOME="/u/gitlab/dbb/Templates/Common-Backend-Scripts"
+SCRIPT_HOME="`dirname "$0"`"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 buildUtilities="${SCRIPT_HOME}/utilities/dbbBuildUtils.sh"
 # Customization - End
@@ -166,13 +166,10 @@ propOverrides="" # Override of default build parameters for zAppBuild
 outDir=""                  # Computed output directory to store build protocols
 nestedApplicationFolder="" # Flag to understand a nested repository
 
-LastBuildLog=""
-buildlistsize=0
-# TODO: new
+# Local variables for checking the contents of buildList and deletedFilesList
 totalLogListSize=0
 buildListFile=""
 deletedFilesListFile=""
-# TODO: end new
 
 DBBLogger=""
 zAppBuildVerbose=""
@@ -390,7 +387,7 @@ validateOptions() {
     fi
   fi
 
-  BuildGroovy="/var/dbb/dbb-zappbuild_300/build.groovy"
+  BuildGroovy="${zAppBuild}/build.groovy"
 
   if [ ! -f "${BuildGroovy}" ]; then
     rc=8
@@ -517,16 +514,10 @@ if [ $rc -eq 0 ]; then
       # For each list in logListArray, if found in the last Build Log Directory, get its size (character count), then
       # increase logListSize by that amount.
       for list in ${logListArray[@]}; do
-        echo "Print: "${list}
         if [ -f ${list} ]; then
-          echo "Found: "${list}
           # wc -c will return the two values; Character Count and Log File Path.  Parse out the Character Count.
           set $(wc -c <${list})
-          echo "${list} size: "$1
           totalLogListSize=$((${totalLogListSize}+$1))
-          echo "totalLogListSize: "${totalLogListSize}
-        else
-          echo "Not found: "${list}
         fi
       done
 
