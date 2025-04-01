@@ -257,7 +257,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The build identifier is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
@@ -305,7 +305,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The release identifier is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
@@ -316,7 +316,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the artifact version is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The artifact version is required. rc="$rc
                 echo $ERRMSG
                 break
             fi

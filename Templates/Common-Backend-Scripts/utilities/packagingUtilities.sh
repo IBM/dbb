@@ -4,7 +4,7 @@ secondBranchSegment=""
 rc=0
 
 # Method implementing the conventions in the CBS for packaging using the PackageBuildOutputs.groovy script
-computePackageInformation() {
+computeArchiveInformation() {
     #############################################
     # output environment variables
     #############################################
@@ -12,7 +12,7 @@ computePackageInformation() {
     artifactRepositoryDirectory="" # root directory folder in repo
     artifactVersionName=""         # subfolder in repo path identifying version / origin branch
     tarFileName=""                 # computed tarFileName how it is stored in the artifact repository
-    packageBuildIdentifier=""      # Identifier for Wazi Deploy Application Manifest file
+    archiveIdentifier=""      # Identifier for Wazi Deploy Application Manifest file
     #############################################
 
     # configuration variable defining the Artifactory repository name pattern
@@ -58,7 +58,7 @@ computePackageInformation() {
 
                 # building up the tarFileName
                 tarFileName="${App}-${releaseIdentifier}-${buildIdentifier}.tar"
-                packageBuildIdentifier="${releaseIdentifier}-${buildIdentifier}"
+                archiveIdentifier="${releaseIdentifier}-${buildIdentifier}"
             else
                 #############################################
                 # Conventions for snapshot builds:
@@ -69,7 +69,7 @@ computePackageInformation() {
                 artifactRepositoryDirectory="build"
                 artifactVersionName=${Branch}
                 tarFileName="${App}-${buildIdentifier}.tar"
-                packageBuildIdentifier="${buildIdentifier}"
+                archiveIdentifier="${buildIdentifier}"
             fi
             ;;
         *)
@@ -79,7 +79,7 @@ computePackageInformation() {
             artifactRepositoryDirectory="build"
             artifactVersionName=${Branch}
             tarFileName="${App}-${buildIdentifier}.tar"
-            packageBuildIdentifier="${buildIdentifier}"
+            archiveIdentifier="${buildIdentifier}"
             ;;
         esac
 

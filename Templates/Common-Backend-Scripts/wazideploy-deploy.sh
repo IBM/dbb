@@ -340,7 +340,7 @@ validateOptions() {
 # When publishing is enabled, check if the tarfile exists in the expected location
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
     if [ -f "$(wdDeployPackageDir)/applicationPackage.tar" ]; then # shared convention with wazideploy-generate.sh
-        echo $PGM": [INFO] ** Package file was found in expected location at $(wdDeployPackageDir)/applicationPackage.tar ."
+        echo $PGM": [INFO] ** Archive was found at location '${wdDeployPackageDir}/applicationArchive.tar'."
         if [ ! -z "${PackageInputFile}" ]; then
             echo $PGM": [INFO] ** Package Input File was passed in as ${PackageInputFile}. It will be replaced with $(wdDeployPackageDir)/applicationPackage.tar ."
         fi

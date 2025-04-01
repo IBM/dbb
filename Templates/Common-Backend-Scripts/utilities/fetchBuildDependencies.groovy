@@ -110,7 +110,7 @@ if (applicationDescriptor.dependencies) {
 		tarFile="${tmpPackageDir}/${artifactRelPath}"
 		tarFileDir=tarFile.replaceAll(props.tarFileName, "")
 
-		println("** Fetching package '${dependency.name}:${artifactUrl}' ")
+		println("** Fetching archive for application '${dependency.name}' from '${artifactUrl}'")
 
 		// Generating information for documentation in yaml file of retrieved dependencies
 		if (dependency.name != applicationDescriptor.application) {
@@ -151,10 +151,10 @@ if (applicationDescriptor.dependencies) {
 		// download from artifact repo
 
 		// foldername in workspace directory
-		String includeFolder = "${importFolder}/${dependency.name}"
+		String importFolder= "${importFolder}/${dependency.name}"
 
 		if (new File(tarFile).exists()) {
-			println("** Package was already found in package cache at '${tarFile}'")
+			println("** Archive was already found in archive cache at '${tarFile}'")
 		} else {
 			String user = props.artifactRepositoryUser
 			String password = props.artifactRepositoryPassword
@@ -171,9 +171,9 @@ if (applicationDescriptor.dependencies) {
 		}
 
 
-		File includeFolderFile = new File(includeFolder)
-		if (!includeFolderFile.exists()) {
-			includeFolderFile.mkdirs()
+		File importFolderFile = new File(importFolder)
+		if (!importFolderFile.exists()) {
+			importFolderFile.mkdirs()
 		}
 
 
@@ -182,12 +182,12 @@ if (applicationDescriptor.dependencies) {
 		def processCmd = [
 			"/bin/sh",
 			"-c",
-			"tar -C $includeFolder -xvf ${tarFile}"
+			"tar -C $importFolder -xvf ${tarFile}"
 		]
 
 		def rc = runProcess(processCmd)
 		if (rc != 0) {
-			println("** [ERROR] Failed to untar '$tarFile' to '$includeFolder' with rc=$rc")
+			println("** [ERROR] Failed to untar '$tarFile' to '$importFolder' with rc=$rc")
 			System.exit(1)
 		}
 
@@ -205,7 +205,7 @@ baselineRecord = applicationDescriptor.baselines.find() { baseline ->
 }
 
 if (baselineRecord){
-	println("*** Fetching baseline package")
+	println("*** Fetching baseline archive")
 
 	// validate dependency record
 	assert baselineRecord.type : "Missing baseline type attribute in baseline record"
@@ -243,18 +243,18 @@ if (baselineRecord){
 	println("** Fetching baseline package '${applicationName}:${artifactUrl}' ")
 
 	if (new File(tarFile).exists()) {
-		println("** Package was already found in package cache at '${tarFile}'")
+		println("** Archive was already found in archive cache at '${tarFile}'")
 	} else {
 		String user = props.artifactRepositoryUser
 		String password = props.artifactRepositoryPassword
 
 		if (!(new File("${tarFileDir}").exists())) (new File("${tarFileDir}")).mkdirs()
 
-		println("** Downloading application package '$artifactUrl' from Artifact Repository into ${tarFileDir}.")
+		println("** Downloading archive with '$artifactUrl' from Artifact Repository into ${tarFileDir}.")
 		def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
 
 		if (rc != 0) {
-			println "** Download of application package '$artifactUrl' failed. Process exists. Return code:"$rc
+			println("** Download of archive '$artifactUrl' failed. Process exists. Return code:"$rc)
 			System.exit(rc)
 		}
 	}
@@ -263,7 +263,7 @@ if (baselineRecord){
 	if (baselineFolder.exists()) baselineFolder.deleteDir()
 	baselineFolder.mkdirs()
 
-	println("** Saving tar file '${tarFile}' into '$baselineFolder' ")
+	println("** Saving tar file '${tarFile}' into '${baselineFolder}'")
 
 	def processCmd = [
 		"/bin/sh",

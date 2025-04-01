@@ -944,7 +944,7 @@ def parseInput(String[] cliArgs){
 
 	// Wazi Deploy Application Manifest generation
 	cli.wd(longOpt:'generateWaziDeployAppManifest', 'Flag indicating to generate and add the Wazi Deploy Application Manifest file.')
-	cli.bi(longOpt:'buildIdentifier', args:1, argName:'buildIdentifier', 'Unique build identifier metadata stored in Wazi Deploys Application Manifest file.')
+	cli.bi(longOpt:'buildIdentifier', args:1, argName:'buildIdentifier', 'Unique build identifier stored in Wazi Deploy Application Manifest file.')
 	cli.ed(longOpt:'externalDependenciesEvidences', args:1, argName:'externalDependenciesEvidences', 'File documenting the external dependencies that were provided to the build phase.')
 
 
