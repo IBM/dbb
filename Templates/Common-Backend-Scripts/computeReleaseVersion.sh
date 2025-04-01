@@ -39,6 +39,7 @@ secondBranchSegment=""
 thirdBranchSegment=""
 baselineReferenceFile=""
 newVersion=""
+releaseVersion=""
 
 if [ "$HELP" = "?" ]; then
   Help
@@ -54,8 +55,7 @@ fi
 #
 
 if [ $rc -eq 0 ]; then
-  echo $PGM": [INFO] Script home="
-  echo $PGM": [INFO] Release Version Wrapper. Version="$PGMVERS
+  echo $PGM": [INFO] Release Version Wrapper. Version=${PGMVERS}"
 fi
 
 
@@ -318,8 +318,9 @@ if [ $rc -eq 0 ]; then
       echo $PGM": [INFO] Baseline reference: ${baselineRef}"
     
       computeNextReleaseVersion
+      export releaseVersion="rel-"${newVersion}
       if [ $rc -eq 0 ]; then
-        echo $PGM": [INFO] Next release version: ${newVersion}"
+        echo $PGM": [INFO] Next release version: ${releaseVersion}"
       fi
   fi
 fi
