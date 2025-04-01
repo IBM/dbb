@@ -103,7 +103,7 @@ computeArchiveInformation() {
             if [ $rc -eq 0 ]; then
                 echo $PGM": [INFO] Invoking the ArtifactRepositoryHelper groovy script to compute Package Url."
 
-                CMD="$DBB_HOME/bin/groovyz ${log4j2} ${artifactRepositoryHelpersScript} --computePackageUrl"
+                CMD="$DBB_HOME/bin/groovyz ${log4j2} ${artifactRepositoryHelpersScript} --computeArchiveUrl"
 
                 # add tarfile name
                 if [ ! -z "${tarFileName}" ]; then

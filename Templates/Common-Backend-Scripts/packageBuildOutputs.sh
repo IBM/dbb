@@ -522,7 +522,7 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
         echo $PGM": [INFO] ** Identified that artifactVersionName is passed into packageBuildOutputs.sh (${artifactVersionName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."
     fi
 
-    computePackageInformation
+    computeArchiveInformation
 fi
 
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then

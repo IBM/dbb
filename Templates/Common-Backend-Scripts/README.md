@@ -695,7 +695,7 @@ Depending on the selected Deployment tool, select either from the scripts for IB
 
 This script invokes the Wazi Deploy Generate command to generate a Deployment Plan based on the content of a package. The package should be created with the `PackageBuildOutputs.groovy` script or through the `packageBuildOutputs.sh` script.
 
-This script assesses the configuration option `publish` from the `pipelineBackend.config` file. In case the configuration has enabled the upload to the Artifact repository, the script computes the URL where the package is expected to be found, and passes the URL into the wazideploy-generate command. This means that wazideloy-generate will download the package from the Artifact repository and allows to restore the package on a different system. This step leverages the generic utility script computePackageUrl. It requires to pass in the additional arguments `-P`, `-R`, `-B`
+This script assesses the configuration option `publish` from the `pipelineBackend.config` file. In case the configuration has enabled the upload to the Artifact repository, the script computes the URL where the package is expected to be found, and passes the URL into the wazideploy-generate command. This means that wazideloy-generate will download the package from the Artifact repository and allows to restore the package on a different system. It requires to pass in the additional arguments `-P`, `-R`, `-B`
 
 #### Invocation
 

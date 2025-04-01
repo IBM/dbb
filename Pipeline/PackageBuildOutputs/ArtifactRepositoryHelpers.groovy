@@ -162,7 +162,7 @@ def download(String url, String fileName, String user, String password, boolean 
 }
 
 // Method directly accessed by PackageBuildOutputs and Common Backend script functionality
-def computePackageUrl(Properties props) {
+def computeArchiveUrl(Properties props) {
 	def String remotePath = (props.versionName) ? (props.versionName + "/" + props.tarFileName) : (props.tarFileLabel + "/" + props.tarFileName)
 	def url = new URI(props.get('artifactRepository.url') + "/" + props.get('artifactRepository.repo') + "/" + (props.get('artifactRepository.directory') ? "${props.get('artifactRepository.directory')}/" : "") + remotePath).normalize().toString() // Normalized URL
 	return url
@@ -199,7 +199,7 @@ def run(String[] cliArgs) {
 	// recompute options
 	// Compute Flag to recompute url
 
-    cli.c(longOpt:'computePackageUrl', 'Action Flag to identify to recompute the uri of a given package')
+    cli.c(longOpt:'computeArchiveUrl', 'Action Flag to identify to recompute the uri of a given package')
 	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional unless using --buildReportOrder or --buildReportOrderFile)')
 	cli.aRU(longOpt:'artifactRepositoryUrl', args:1, 'Artifact repository url')
 	cli.aRN(longOpt:'artifactRepositoryName', args:1, 'Artifact repository name')
@@ -213,7 +213,7 @@ def run(String[] cliArgs) {
         System.exit(1)
     }
 	
-	if (opts.c) props.computePackageUrl = true
+	if (opts.c) props.computeArchiveUrl = true
 	if (opts.t) props.tarFileName = opts.t
 	if (opts.aRU) props.put('artifactRepository.url', opts.aRU)
 	if (opts.aRN) props.put('artifactRepository.repo', opts.aRN)
@@ -239,10 +239,10 @@ def run(String[] cliArgs) {
 		assert opts.U : "Missing option: Artifact repository user id or token"
 		assert opts.P : "Missing option: Artifactory password"
         download(opts.u, opts.fD, opts.U, opts.P, opts.v)
-    } else if (props.computePackageUrl){
+    } else if (props.computeArchiveUrl){
 		
 		// invoke processing
-		if (props.computePackageUrl && props.computePackageUrl.toBoolean()) {
+		if (props.computeArchiveUrl && props.computeArchiveUrl.toBoolean()) {
 			// check requires cli arguments for this operation
 			assert props.tarFileName : "Missing option tarFileName (--tarFileName)"
 			assert props.versionName : "Missing option versionName (--versionName)"
@@ -251,11 +251,11 @@ def run(String[] cliArgs) {
 			assert props.get('artifactRepository.directory'): "Missing option artifactRepository.directory (--artifactRepositoryDirectory)"
 			
 			// load script	
-			packageUrl = computePackageUrl(props)
+			packageUrl = computeArchiveUrl(props)
 			// the println is used in a script by the CBS to grep the packageUrl
 			println "packageUrl=$packageUrl"
 		} else 		
-		println("** No action has been specified for the ArtifactoryHelpers (available action triggers 'fileToUpload' or 'fileToDownload' or 'computePackageUrl') ");
+		println("** No action has been specified for the ArtifactoryHelpers (available action triggers 'fileToUpload' or 'fileToDownload' or 'computeArchiveUrl') ");
 	}
 }
 

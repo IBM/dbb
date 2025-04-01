@@ -101,7 +101,7 @@ if (applicationDescriptor.dependencies) {
 		props.put("artifactRepository.repo", "${repositoryName}") // Artifact repository name
 
 		// The absolute url the package in artifact repo
-		artifactUrl = artifactRepositoryHelpers.computePackageUrl(props)
+		artifactUrl = artifactRepositoryHelpers.computeArchiveUrl(props)
 
 		// retrieve path without artifact url
 		artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
@@ -230,7 +230,7 @@ if (baselineRecord){
 	props.put("artifactRepository.repo", "${repositoryName}") // Artifact repository name
 
 	// The absolute url the package in artifact repo
-	artifactUrl = artifactRepositoryHelpers.computePackageUrl(props)
+	artifactUrl = artifactRepositoryHelpers.computeArchiveUrl(props)
 
 	// retrieve path without artifact url
 	artifactRelPath = artifactUrl.replaceAll(props.get("artifactRepository.url"),"")
