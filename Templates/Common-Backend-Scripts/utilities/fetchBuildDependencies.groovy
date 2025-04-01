@@ -151,7 +151,7 @@ if (applicationDescriptor.dependencies) {
 		// download from artifact repo
 
 		// foldername in workspace directory
-		String importFolder= "${importFolder}/${dependency.name}"
+		String importSubFolder= "${importFolder}/${dependency.name}"
 
 		if (new File(tarFile).exists()) {
 			println("** Archive was already found in archive cache at '${tarFile}'")
@@ -171,23 +171,23 @@ if (applicationDescriptor.dependencies) {
 		}
 
 
-		File importFolderFile = new File(importFolder)
-		if (!importFolderFile.exists()) {
-			importFolderFile.mkdirs()
+		File importSubFolderFile = new File(importSubFolder)
+		if (!importSubFolderFile.exists()) {
+			importSubFolderFile.mkdirs()
 		}
 
 
-		println("** Expanding tar file '${tarFile}' to '$includeFolder' ")
+		println("** Expanding tar file '${tarFile}' to '$importSubFolder' ")
 
 		def processCmd = [
 			"/bin/sh",
 			"-c",
-			"tar -C $importFolder -xvf ${tarFile}"
+			"tar -C $importSubFolder -xvf ${tarFile}"
 		]
 
 		def rc = runProcess(processCmd)
 		if (rc != 0) {
-			println("** [ERROR] Failed to untar '$tarFile' to '$importFolder' with rc=$rc")
+			println("** [ERROR] Failed to untar '$tarFile' to '$importSubFolder' with rc=$rc")
 			System.exit(1)
 		}
 
@@ -254,7 +254,7 @@ if (baselineRecord){
 		def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
 
 		if (rc != 0) {
-			println("** Download of archive '$artifactUrl' failed. Process exists. Return code:"$rc)
+			println("** Download of archive '$artifactUrl' failed. Process exists. Return code:$rc")
 			System.exit(rc)
 		}
 	}
@@ -278,23 +278,23 @@ if (baselineRecord){
 	}
 
 	// setup import folder
-	String includeFolder = "${importFolder}/${applicationName}"
-	File includeFolderFile = new File(includeFolder)
-	if (!includeFolderFile.exists()) {
-		includeFolderFile.mkdirs()
+	String importSubFolder = "${importFolder}/${applicationName}"
+	File importSubFolderFile = new File(importSubFolder)
+	if (!importSubFolderFile.exists()) {
+		importSubFolderFile.mkdirs()
 	}
 
-	println("** Expanding tar file '${tarFile}' to '$includeFolder' ")
+	println("** Expanding tar file '${tarFile}' to '$importSubFolder' ")
 
 	processCmd = [
 		"/bin/sh",
 		"-c",
-		"tar -C $includeFolder -xvf ${tarFile}"
+		"tar -C $importSubFolder -xvf ${tarFile}"
 	]
 
 	rc = runProcess(processCmd)
 	if (rc != 0) {
-		println("** [ERROR] Failed to untar '$tarFile' to '$includeFolder' with rc=$rc")
+		println("** [ERROR] Failed to untar '$tarFile' to '$importSubFolder' with rc=$rc")
 		System.exit(1)
 	}
 
