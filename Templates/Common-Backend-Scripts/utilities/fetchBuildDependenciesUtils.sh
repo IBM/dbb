@@ -41,7 +41,7 @@ runFetchLogic() {
         echo $PGM": [INFO] **                      Branch:" ${Branch}
         echo $PGM": [INFO] **     Application Descriptor :" ${applicationDescriptor}
         echo $PGM": [INFO] **          Use Package Cache :" ${enablePackageCache}
-        echo $PGM": [INFO] **     Package Cache Location :" ${packageCacheLocation}
+        echo $PGM": [INFO] **     Archive Cache Location :" ${archiveCache}
         echo $PGM": [INFO] **    External Dependency Log :" ${externalDependenciesLogFile}
         echo $PGM": [INFO] **************************************************************"
         echo ""
@@ -64,8 +64,8 @@ runFetchLogic() {
             cmd="${cmd} -d ${externalDependenciesLogFile}"
         fi
 
-        if [ ! -z "${packageCacheLocation}" ]; then
-            cmd="${cmd} -c ${packageCacheLocation}"
+        if [ ! -z "${archiveCache}" ]; then
+            cmd="${cmd} -c ${archiveCache}"
         fi
         echo $PGM": [INFO] ** CMD : ${cmd}"
         ${cmd}

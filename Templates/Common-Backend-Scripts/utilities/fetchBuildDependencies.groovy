@@ -63,7 +63,7 @@ if (importFolder.exists()) importFolder.deleteDir()
 importFolder.mkdirs()
 
 // setup package cache
-tmpPackageDir = (props.enablePackageCache && props.enablePackageCache.toBoolean() && props.packageCacheLocation) ? new File(props.packageCacheLocation) : new File("$props.workspace/imports_download/")
+tmpPackageDir = (props.enablePackageCache && props.enablePackageCache.toBoolean() && props.archiveCache) ? new File(props.archiveCache) : new File("$props.workspace/imports_download/")
 if (!tmpPackageDir.exists()) tmpPackageDir.mkdirs()
 
 // Parse the application descriptor and application configurations based on the defined schema
@@ -334,7 +334,7 @@ def parseArgs(String[] args) {
 	cli.d(longOpt:'externalDependenciesFilePath', args:1, 'Absolute path to the external dependencies file')
 	cli.p(longOpt:'pipelineBackendConfigFilePath', args:1, 'Absolute path to the pipelineBackend.config file')
 	cli.b(longOpt:'branch', args:1, 'Current branch of the application')
-	cli.c(longOpt:'packageCacheLocation', args:1, 'Location of the Package cache')
+	cli.c(longOpt:'archiveCache', args:1, 'Location of the Package cache')
 
 
 	def opts = cli.parse(args)
@@ -371,7 +371,7 @@ def parseArgs(String[] args) {
 	}
 
 	if(opts.c){
-		props.packageCacheLocation = opts.c
+		props.archiveCache = opts.c
 	}
 
 	if (opts.p) {
