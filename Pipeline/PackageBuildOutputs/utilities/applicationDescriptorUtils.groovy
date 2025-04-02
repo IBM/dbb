@@ -17,13 +17,13 @@ import java.nio.file.*
 
 class ApplicationDescriptor {
 	String application
-    String schemaVersion = "applicationDescriptor/0.11.0"
+	String schemaVersion = "applicationDescriptor/0.11.0"
 	String description
 	String owner
 	ArrayList<Source> sources
 	ArrayList<Baseline> baselines
 	ArrayList<DependencyDescriptor> dependencies
-    ArrayList<Consumer> consumers
+	ArrayList<Consumer> consumers
 }
 
 class Source {
@@ -57,7 +57,7 @@ class DependencyDescriptor {
 }
 
 class Consumer {
-    String name
+	String name
 }
 
 /**
@@ -94,7 +94,7 @@ def writeApplicationDescriptor(File yamlFile, ApplicationDescriptor applicationD
 
 	yamlBuilder {
 		application applicationDescriptor.application
-        schemaVersion applicationDescriptor.schemaVersion
+		schemaVersion applicationDescriptor.schemaVersion
 		description applicationDescriptor.description
 		owner applicationDescriptor.owner
 		sources (applicationDescriptor.sources)
@@ -239,12 +239,12 @@ def addApplicationConsumer(ApplicationDescriptor applicationDescriptor, String c
 	// don't add the "owning" application
 	if (applicationDescriptor.application != consumingApplication) {
 		def existingConsumers = applicationDescriptor.consumers.findAll() {
-            it.name.equals(consumingApplication)
+			it.name.equals(consumingApplication)
 		}
 		if (!existingConsumers) {
-            Consumer consumer = new Consumer()
-            consumer.name = consumingApplication
-            applicationDescriptor.consumers.add(consumer)
+			Consumer consumer = new Consumer()
+			consumer.name = consumingApplication
+			applicationDescriptor.consumers.add(consumer)
 			applicationDescriptor.consumers.sort()
 		}
 	}
@@ -386,7 +386,7 @@ def getFilesByTypeAndUsage(ApplicationDescriptor applicationDescriptor, String a
 }
 
 /**
- * Method to add a baseline 
+ * Method to add a baseline
  * If an existing baseline for a given branch already exists, the method replaces it
  */
 
@@ -397,7 +397,7 @@ def addBaseline(ApplicationDescriptor applicationDescriptor, String branch, Stri
 		}
 		existingBaselines.forEach() { existingBaseline ->
 			applicationDescriptor.baselines.remove(existingBaseline)
-	    }
+		}
 	} else {
 		applicationDescriptor.baselines = new ArrayList<Baseline>()
 	}
