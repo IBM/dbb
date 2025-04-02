@@ -74,7 +74,7 @@ ArrayList<ExternalDependency> externalDependencies = new ArrayList<>()
 
 if (applicationDescriptor.dependencies) {
 
-	println("*** Fetching external application packages")
+	println("*** Fetching dependent application archives")
 
 	// Loop through all dependencies found in AD
 	applicationDescriptor.dependencies.each { dependency ->
@@ -161,7 +161,7 @@ if (applicationDescriptor.dependencies) {
 
 			if (!(new File("${tarFileDir}").exists())) (new File("${tarFileDir}")).mkdirs()
 
-			println("** Downloading archive '$artifactUrl' from Artifact Repository into '${tarFileDir}'.")
+			println("** Downloading archive '$artifactUrl' from artifact repository into '${tarFileDir}'.")
 			def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
 
 			if (rc != 0) {
@@ -240,7 +240,7 @@ if (baselineRecord){
 	tarFileDir=tarFile.replaceAll(props.tarFileName, "")
 	if (!tmpPackageDir.exists()) tmpPackageDir.mkdirs() // create tmpDownload
 
-	println("** Fetching baseline package '${applicationName}:${artifactUrl}' ")
+	println("** Fetching baseline archive for '${applicationName}' from '${artifactUrl}' ")
 
 	if (new File(tarFile).exists()) {
 		println("** Archive was already found in archive cache at '${tarFile}'")
