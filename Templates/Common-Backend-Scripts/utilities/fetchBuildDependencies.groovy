@@ -77,13 +77,38 @@ if (applicationDescriptor.dependencies) {
 	println("*** Fetching dependent application archives")
 
 	// Loop through all dependencies found in AD
-	applicationDescriptor.dependencies.each { dependency ->
+	applicationDescriptor.dependencies.each {
+		dependency ->
 
 		// validate dependency record
-		assert dependency.type : "Missing dependency type attribute in dependency record"
-		assert dependency.reference : "Missing dependency reference attribute in dependency record"
-		assert dependency.buildid : "Missing buildid attribute in dependency record"
-		assert dependency.name : "Missing name attribute in dependency record"
+		if {
+			!dependency.name
+		} {
+			rc=1
+			println("*! [ERROR] Dependency record in Application Descriptor missing the 'name' attribute. rc=$rc")
+		}
+		if (!dependency.type) {
+			rc=1
+			println("*! [ERROR] Dependency record in Application Descriptor missing the 'type' attribute. rc=$rc")
+		}
+		if {
+			!dependency.reference
+		} {
+			rc=1
+			println("*! [ERROR] Dependency record in Application Descriptor missing the dependency 'reference' attribute. rc=$rc")
+		}
+		if {
+			!dependency.buildid
+		} {
+			rc=1
+			println("*! [ERROR] Dependency record in Application Descriptor missing the 'buildid' attribute. rc=$rc")
+		}
+
+		if (rc != 0) {
+			println("*! Fetching external dependencies exits after failing the validation of the dependency record.")
+			System.exit(1)
+		}
+
 
 		// compute tar file name based on build type
 		if (dependency.type.equalsIgnoreCase("release")) {
@@ -207,11 +232,35 @@ baselineRecord = applicationDescriptor.baselines.find() { baseline ->
 if (baselineRecord){
 	println("*** Fetching baseline archive")
 
-	// validate dependency record
-	assert baselineRecord.type : "Missing baseline type attribute in baseline record"
-	assert baselineRecord.reference : "Missing baseline reference attribute in baseline record"
-	assert baselineRecord.buildid : "Missing buildid attribute in baseline record"
-	assert applicationDescriptor.application : "Missing application name in Application Descriptor"
+	// validate baseline record
+	if {
+		!applicationDescriptor.application
+	} {
+		rc=1
+		println("*! [ERROR] Application Descriptor missing the 'application' name attribute. rc=$rc")
+	}
+	if (!baselineRecord.type) {
+		rc=1
+		println("*! [ERROR] Baseline record in Application Descriptor missing the 'type' attribute. rc=$rc")
+	}
+	if {
+		!baselineRecord.reference
+	} {
+		rc=1
+		println("*! [ERROR] Baseline record in Application Descriptor missing the dependency 'reference' attribute. rc=$rc")
+	}
+	if {
+		!baselineRecord.buildid
+	} {
+		rc=1
+		println("*! [ERROR] Baseline record in Application Descriptor missing the 'buildid' attribute. rc=$rc")
+	}
+	if (rc != 0) {
+		// exit after validation
+		println("*! Fetching external dependencies exits after failing the validation of the baseline record.")
+		System.exit(1)
+	}
+
 	def applicationName = applicationDescriptor.application
 
 	// compute tar file name based on build type
