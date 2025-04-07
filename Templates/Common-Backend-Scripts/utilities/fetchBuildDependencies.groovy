@@ -79,6 +79,8 @@ if (applicationDescriptor.dependencies) {
 	// Loop through all dependencies found in AD
 	applicationDescriptor.dependencies.each { dependency ->
 
+		def rc=0
+
 		// validate dependency record
 		if (!dependency.name) {
 			rc=1
@@ -180,7 +182,7 @@ if (applicationDescriptor.dependencies) {
 			if (!(new File("${tarFileDir}").exists())) (new File("${tarFileDir}")).mkdirs()
 
 			println("** Downloading archive '$artifactUrl' from artifact repository into '${tarFileDir}'.")
-			def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
+			rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
 
 			if (rc != 0) {
 				println("*! [ERROR] Download of archive '$artifactUrl' failed. Exiting with return code:${rc}.")
@@ -203,7 +205,7 @@ if (applicationDescriptor.dependencies) {
 			"tar -C $importSubFolder -xvf ${tarFile}"
 		]
 
-		def rc = runProcess(processCmd)
+		rc = runProcess(processCmd)
 		if (rc != 0) {
 			println("** [ERROR] Failed to untar '$tarFile' to '$importSubFolder' with rc=$rc")
 			System.exit(1)
@@ -224,6 +226,8 @@ baselineRecord = applicationDescriptor.baselines.find() { baseline ->
 
 if (baselineRecord){
 	println("*** Fetching baseline archive")
+
+	def rc=0
 
 	// validate baseline record
 	if (!applicationDescriptor.application) {
@@ -287,7 +291,7 @@ if (baselineRecord){
 		if (!(new File("${tarFileDir}").exists())) (new File("${tarFileDir}")).mkdirs()
 
 		println("** Downloading archive with '$artifactUrl' from Artifact Repository into ${tarFileDir}.")
-		def rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
+		rc = artifactRepositoryHelpers.download(artifactUrl, tarFile, user, password, true)
 
 		if (rc != 0) {
 			println("** Download of archive '$artifactUrl' failed. Process exists. Return code:$rc")
@@ -307,7 +311,7 @@ if (baselineRecord){
 		"cp ${tarFile} ${baselineFolder}/"
 	]
 
-	def rc = runProcess(processCmd)
+	rc = runProcess(processCmd)
 	if (rc != 0) {
 		println("** [ERROR] Failed to copy '$tarFile' to '$baselineFolder' with rc=$rc")
 		System.exit(1)
