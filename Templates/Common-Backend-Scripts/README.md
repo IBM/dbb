@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Common Backend Scripts for Pipeline Implementations is a collection of scripts that deliver central "services" and a simplified interface for pipeline configurations that implement a Git/DBB-based pipeline for Mainframe applications.
+The Common Backend Scripts for Pipeline Implementations is a collection of scripts that deliver central "services" and a simplified interface for pipeline configurations that implement a Git/DBB-based pipeline for mainframe applications. They use and simplify the parameterization of existing scripts in this repository to perform build, packaging, and deployment steps.
 
 Implementing a pipeline configuration, such as an Azure pipeline, a JenkinsFile, or the .gitlab-ci.yml file, requires accommodation of the selected development workflow with Git. To achieve consistency across various applications, rules must be implemented in pipeline code or configurations to address:
 * naming conventions of build datasets,
@@ -23,22 +23,23 @@ This asset implements the rules and conventions of the Git-based workflow outlin
 
 ## Setup
 
-The provided scripts of this asset are implemented as bash scripts and need to be installed on UNIX System Services of the z/OS system that is used to execute the pipeline's tasks.
+The provided scripts of this asset are implemented as bash scripts. The entire repository needs to be installed on UNIX System Services of the z/OS system that is used to execute the pipeline's tasks, as the scripts invoke individual pipeline scripts from the [Pipeline](../../Pipeline/) directory.
 
 ### Pre-requisites
 The following are required to use these scripts:
-* DBB v2.x toolkit is installed.
-* zAppBuild is set up on Unix Systems Services.
+* DBB 2.x or DBB 3.x toolkit is installed.
+* zAppBuild or zBuilder is set up on Unix Systems Services.
 * Git repository which follows the Git-based workflow outlined in IBM's documentation `The Git-based workflow for Mainframe development`.
-* Build dependency information is available before performing the build run.
-
 
 ### Installation
 
-* Copy/clone the Common Backend Scripts into z/OS UNIX System Services under a protected directory, e.g. `/usr/dbb/pipelineBackend`.
-  * Update the permission of these scripts to allow for `read/execute` to only the users who will invoke the scripts. This is typically the technical user defined for the pipeline orchestrator. 
+1. Make this Git repository available in your enterprise Git provider. Perform necessary site-specific [script configurations](#script-configuration).
 
-* The following environment variables need to be defined (for instance within the `.profile`) for the mainframe users who will execute the scripts on UNIX System Services:
+2. Clone the repository customized in the previous step (including the Common Backend Scripts) into z/OS UNIX System Services under a protected directory.
+  
+  * Verify that permission of these scripts to allow for `read/execute` to only the users who will invoke the scripts. This is typically the technical user defined for the pipeline orchestrator. 
+
+3. The following environment variables need to be defined (for instance within the `.profile`) for the mainframe users who will execute the scripts on UNIX System Services:
 
   * `PIPELINE_SCRIPTS` - Environment variable to define the path to the Common Backend Scripts. 
   
@@ -135,10 +136,10 @@ Artifact Name |  Description | Script details
 [zBuilder.sh](zBuilder.sh) | Pipeline Shell script to invoke the zBuilder framework [zBuilder](https://www.ibm.com/docs/en/dbb/3.0?topic=building-zos-applications-zbuilder) | [script details](#zbuildersh-for-dbb-zbuilder)
 [packageBuildOutputs.sh](packageBuildOutputs.sh) | Pipeline Shell Script to create a Package using the [PackageBuildOutputs groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/PackageBuildOutputs) | [script details](#packagebuildoutputssh)
 [ucdPackage.sh](ucdPackaging.sh) | Pipeline Shell Script to publish to UCD Code Station binary repository using the [CreateUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/CreateUCDComponentVersion) | [script details](#ucdpackagingsh)
-[ucdDeploy.sh](ucdDeploy.sh) | Pipeline Shell Script to trigger a UCD Deployment via its REST interface using the [DeployUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/DeployUCDComponentVersion) | [script details](#ucddeploysh)
 [wazideploy-generate.sh](wazideploy-generate.sh) | Pipeline Shell Script to generate a Deployment Plan to be used with Wazi Deploy | [script details](#wazideploy-generatesh)
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](#wazideploy-deploysh)
 [wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](#wazideploy-generatesh)
+[ucdDeploy.sh](ucdDeploy.sh) | Pipeline Shell Script to trigger a UCD Deployment via its REST interface using the [DeployUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/DeployUCDComponentVersion) | [script details](#ucddeploysh)
 [prepareLogs.sh](prepareLogs.sh) | Pipeline Shell Script to prepare a TAR file containing log files that can then be retrieved. | [script details](#preparelogssh)
 [generateCleanupCommands.sh](generateCleanupCommands.sh) | Pipeline Shell Script to generate necessary DBB Metadatastore cleanup tasks including the deletion of the build datasets. | [script details](#generatecleanupcommandssh)
 [deleteWorkspace.sh](deleteWorkspace.sh) | Pipeline Shell Script to delete the working directory on Unix System Services. | [script details](#deleteworkspacesh)
@@ -209,7 +210,7 @@ gitClone.sh: [INFO] Clone Repository Complete. rc=0
 
 ## Build stage
 
-### Conventions
+### Conventions and capabilities
 
 #### Git branch naming conventions
 
@@ -236,6 +237,41 @@ Note that the location of the baselineReferences.config file can be customized i
 
 [baselineReference.config](samples/baselineReference.config) is a sample, that indicates the baseline for the `main` and `release maintenance` branches.
 
+#### Fetching build dependencies
+
+The build stage can be enabled to pull external build dependencies into the build workspace based on the dependencies definition specified in the Application Descriptor file. 
+
+Each application version, represented by an archive, can export shared components such as public or shared include files, and build outputs such as object decks or NCAL load modules. The application archive needs to be created with the [packageBuildOutputs.sh](#packagebuildoutputssh) script and be uploaded to the artifact repository based on the implemented conventions.
+
+The Application Descriptor contains metadata about the application itself, but can contain the dependency configuration to other applications versions managed in an artifact repository, which are necessary inputs to the build process. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
+
+In the `dependencies` section in the Application Descriptor file, users can configure which application versions should be fetched into the build workspace. The below snippet references the release build of the Cards application with the reference to `rel-1.2.0` and the concrete buildid `build-20241112.1`
+
+```yaml
+dependencies: 
+- name: ”Cards"
+  type: "release"
+  reference: "rel-1.2.0"
+  buildid: "build-20241112.1"
+```
+
+The Application Descriptor file, called `applicationDescriptor.yml`, is expected to be on the root level of the application's Git repository.
+
+To fetch the dependencies, the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) is used. Under the covers, it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) and the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script to download the external dependencies into the working directory. The downloaded archives can be stored at a cache location to improve performance. Fetched archives are expanded in the `imports` subfolder of the pipeline's working directory.
+
+**Fetch baseline package**
+
+Along with the fetching of external build dependencies, the fetch phase can retrieve the application's baseline package from the Artifact repository. This is configured through the `baselines` section of the Application Descriptor. Use the baseline if your application architecture uses static calls or requires derived build outputs that is an mandatory input to subsequent builds. A good sample for derived build outputs are bms copybooks, that are inputs to CICS programs. Instead of including the generated bms copybooks via concatenation of pds libraries, it is made available through the baseline package.
+
+Baseline archives are defined similarly like external dependencies. Under the `baselines` section, the application team manages the references for the corresponding build branch:
+
+```
+baselines: 
+- branch: ”main"
+  type: "release"
+  reference: "rel-1.2.0"
+  buildid: "build-7656"
+```
 
 ### dbbBuild.sh for zAppBuild framework
 
@@ -452,11 +488,35 @@ The [dbbzBuilderUtils](utilities/dbbzBuilderUtils.sh) script is a core utility s
 <!-- flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules). -->
 * the `mainBuildBranch` to configure feature branch pipelines to clone the corresponding DBB dependency metadata collections by generating a config.yaml that is passed into zBuilder.
 
-## packageBuildOutputs.sh
+## Packaging stage
+
+Depending on the Deployment Manager tool you are using, you can choose from either creating a package with the [PackageBuildOutputs](#packagebuildoutputssh) script that can be used with IBM Wazi Deploy, or the [UCD packaging](#ucdpackagingsh) script that creates the UCD shiplist and UCD component version.
+
+### packageBuildOutputs.sh
 
 This script is to execute the `PackageBuildOutputs.groovy` that packages up the build outputs and optionally uploads it to an artifact repository to publish the artifacts created by a DBB build in the pipeline.
 
-### Invocation
+When uploading the archive to an artifact repository, this script implements naming conventions for the repository layout. The conventions are implemented in [utilities/packageUtils.sh](utilities/packageUtils.sh).
+The rules for the naming conventions are detailed hereafter.
+
+For any preliminary build (that uses the `pipelineType=build`), the outputs are uploaded into the directory
+
+`build/<reference>/<application>-<buildIdentifier>`:
+
+* **build** is defined for any builds, that are considered to be preliminary. They cannot be deployed to production.
+* **reference** is the name of the branch which the build originates from: for instance, `feature/123-update-mortgage-computation`, `main` or any hotfix and epic branches.
+* The archive's file name is computed using the application's name and a unique build identifier (`-i` argument). This parameter is typically the pipeline build number that is passed by the pipeline orchestrator. If a build identifier is not provided, the current timestamp is used.
+
+For release builds (that use the `pipelineType=release`), the archive is uploaded to the directory
+
+`release/<reference>/<application>-<buildIdentifier>`:
+
+* **release** is defined for release builds. 
+* **reference** is the release name: for instance, `rel-1.2.3` (provided through the mandatory `-r` argument).
+The archive's file name is computed using the application's name, the release name (`-r` argument) and a unique build identifier (`-i` argument). This parameter is typically the pipeline build number that is passed by the pipeline orchestrator. If a build identifier is not provided, the current timestamp is used.
+
+
+#### Invocation
 
 The `packageBuildOutputs.sh` script can be invoked as follows:
 
@@ -467,7 +527,7 @@ packageBuildOutputs.sh -w MortApp/main/build-1 -t rel-1.0.0.tar
 ```
 - Package and Upload
 ```
-packageBuildOutputs.sh -w MortApp/main/build-1 -t rel-1.0.0.tar -a MortgageApplication -b main -u -p release -v rel-1.0.0.2023-09-22-08.55.20
+packageBuildOutputs.sh -w MortApp/main/build-1 -t rel-1.0.0.tar -a MortgageApplication -b main -u -p release -r rel-1.0.0 -i 4657
 ```
 
 CLI parameter | Description
@@ -476,30 +536,24 @@ CLI parameter | Description
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. The `packageBuildOutputs.sh` script is evaluating the logs directory.
 -t `<tarFileName>` | (Optional) Name of the **tar file** to create.
 **Artifact Upload options**
--u | Flag to enable upload of outputs to the configured artifact repository.
--a `<application>` | **Application name** leveraged to define the artifact repository name. See function `computeArtifactRepositoryName()` in the pipelineBackend.config file. Ex.: `MortgageApplication-repo-local`. 
--b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. See function `computeArtifactRepositoryDirectory()` in the pipelineBackend.config file.
+-u | Flag to enable upload of outputs to the configured artifact repository. Also available as a general setting in `pipelineBackend.config`.
+-a `<application>` | **Application name** leveraged to define the artifact repository name.
+-b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. Naming convention rules are implemented in `utilities/packageUtils.sh`.
 -p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
--v `<artifactVersion>` | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo.
+-r `<releaseIdentifier>` | **Release identifier** to indicate the next planned release name. This is a computed value based on the pipeline templates.
+-i `<buildIdentifier>` | **Build identifier** a unique value, typically the build number provided by the pipeline orchestrator or a timestamp. Used to help qualifying the archive file. This is a computed value provided by the pipeline templates.
+-v `<artifactVersion>` **deprecated** | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo. Deprecated - switch to `-r <releaseIdentifier>` and `-i <buildIdentifier>`.
 -s `"<sbomAuthor>"` | (Optional) Name and email of the SBOM author enclosed with double quotes. Ex: "Build Engineer \<engineer@example.com\>" 
 
-### Script conventions
+Check out the pipelineBackend.config to define the `artifactRepositoryNameSuffix` that is appended to the application name to set the repository name in the artifact repository.
 
-**Directory Path within the artifact repo**
-
-For uploading, the backend script computes the directory path within the artifact repository :
-* **Branch**/**artifactVersion**
-
-If it is the `main` branch, the pipeline type (-p) is evaluated to 
-* **Branch**/**pipelineType <build/release>**/**artifactVersion**
- 
-while **artifactVersion** is appended by the `PackageBuildOutputs.groovy` script.
+#### Script conventions
 
 **SBOM Generation**
 
 The generation of an SBOM is controlled by the `generateSBOM` property defined in the [pipelineBackend.config](pipelineBackend.config) file. The default SBOM Author is also specified in the [pipelineBackend.config](pipelineBackend.config) file in the `sbomAuthor` property, but this property can be overridden with the `-s` parameter of this script. When the SBOM Author is provided as a parameter, it automatically enables the SBOM generation, even if set to `false` in the [pipelineBackend.config](pipelineBackend.config) file.
 
-### Output 
+#### Output 
 
 The section below contains the output that is produced by the `packageBuildOutputs.sh` script.
 
@@ -530,7 +584,7 @@ packageBuildOutputs.sh: [INFO] **    ArtifactRepo Repo Dir: main/build
 packageBuildOutputs.sh: [INFO] **                 DBB_HOME: /usr/lpp/dbb/v2r0
 packageBuildOutputs.sh: [INFO] **************************************************************
 
-packageBuildOutputs.sh: [INFO] Invoking the Package Build Outputs script.
+packageBuildOutputs.sh: [INFO] Invoking the ArtifactRepositoryHelper groovy script.
 packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-09-22_13-55-20 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory main/build
 ** PackageBuildOutputs start at 20230922.125616.056
 ** Properties at startup:
@@ -577,11 +631,11 @@ rc=0
 
 
 
-## ucdPackaging.sh
+### ucdPackaging.sh
 
 This script is to execute the `dbb-ucd-packaging.groovy` that invokes the Urban Code Deploy (UCD) buztool utility, to publish the artifacts created by the DBB Build from a pipeline.
 
-### Invocation
+#### Invocation
 
 The `ucdPackaging.sh` script can be invoked as follows:
 
@@ -600,7 +654,7 @@ CLI parameter | Description
 -b `<branchName>` | (Optional) Name of the **git branch**.
 -p `<prUrl>` | (Optional) URL to the pull request.
 
-### Output
+#### Output
 
 The section below contains the output that is produced by the `ucdPackaging.sh` script.
 
@@ -632,80 +686,18 @@ ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDCom
 </details>
 
 
-## ucdDeploy.sh
+## Deployment Stage
 
-This script is implementing the invocation of the `ucd-deploy.groovy` script to perform Urban Code Deploy (UCD) deployments.
+Depending on the selected Deployment tool, select either from the scripts for IBM Wazi Deploy ([wazideploy-generate.sh](#wazideploy-generatesh), [wazideploy-deploy.sh](#wazideploy-deploysh) and [wazideploy-generate.sh](#wazideploy-evidencesh)) or [UCD deployment](#ucddeploysh) to submit a deployment request in IBM UrbanCode Deploy.
 
 
-### Invocation
-
-The `ucdDeploy.sh` script can be invoked as follows:
-
-```
-ucdDeploy.sh -a ucdApplicationName -p ucdApplicationProcessName -e ucdEnvironmentName -d ucdComponentName:ucdDeployVersion
-```
-
-CLI parameter | Description
----------- | ----------------------------------------------------------------------------------------
--a `<ucdApplicationName>` | **Application** name defined in UCD containing the component version to be deployed.
--p `<ucdApplicationProcessName>` | **Process** name in UCD associated with the application being deployed.
--e `<ucdEnvironmentName>` | **Environment** name in UCD that the component version will be deployed to.
--d `<ucdComponentName:ucdDeployVersion>` | **Component name and version** to be deployed to the UCD environment.
--t `<timeout>` | (Optional) **Deployment timeout** value in seconds.  Defaults to 300 seconds.
--s `<SSLProtocol>`| (Optional) **SSL protocol** to use. Default is TLSv1.2.
--k | (Optional) Disable SSL verification flag.
--v | (Optional) Verbose tracing flag. Used to produce additional tracing in the groovy script.
-
-### Output
-
-The section below contains the output that is produced by the `ucdDeploy.sh` script.
-
-<details>
-  <summary>Script Output</summary>
-
-```
-ucdDeploy.sh -a rbs-retirementCalculator -p rbs-retirementCalculator-process -e rbs-IntegrationTest -d rbs-retirementCalculator:latest
-bash: [INFO] Deploy UCD Component. Version=1.00
-bash: [INFO] **************************************************************
-bash: [INFO] ** Start UCD Component Deploy on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-bash: [INFO] **   Location of ucd-deploy.groovy: /u/brice/groovyScripts
-bash: [INFO] **            UCD Application Name: rbs-retirementCalculator
-bash: [INFO] **            UCD Environment Name: rbs-IntegrationTest
-bash: [INFO] **                   UCD User Name: admin
-bash: [INFO] **                  UCD Server URL: http://10.3.20.231:8080/
-bash: [INFO] **           UCD Component Version: rbs-retirementCalculator:latest
-bash: [INFO] **    UCD Application Process Name: rbs-retirementCalculator-process
-bash: [INFO] **                         Verbose: No
-bash: [INFO] **                SSL Verification: Yes
-bash: [INFO] **************************************************************
-
-/usr/lpp/dbb/v2r0/bin/groovyz /u/brice/groovyScripts/ucd-deploy.groovy -a "rbs-retirementCalculator" -e "rbs-IntegrationTest" -U admin -P ******** -u http://10.3.20.231:8080/ -d "rbs-retirementCalculator:latest" -p rbs-retirementCalculator-process
-** Request UCD Deployment start at 20230830.064205.042
-** Properties at startup:
-   application -> rbs-retirementCalculator 
-   environment -> rbs-IntegrationTest 
-   user -> admin 
-   password -> xxxxxx 
-   url -> http://10.3.20.231:8080/ 
-   deployVersions -> rbs-retirementCalculator:latest 
-   applicationProcess -> rbs-retirementCalculator-process 
-**  Deploying component versions: rbs-retirementCalculator:latest
-*** Starting deployment process 'rbs-retirementCalculator-process' of application 'rbs-retirementCalculator' in environment 'rbs-IntegrationTest'
-*** SSL Verification disabled
-*** Follow Process Request: https://ucd.server.com:8443/#applicationProcessRequest/184c812f-605f-5040-ad31-d3a31f87bb3c
-Executing ......
-*** The deployment result is SUCCEEDED. See the UrbanCode Deploy deployment logs for details.
-** Build finished
-```  
-
-</details>
-
-## wazideploy-generate.sh
+### wazideploy-generate.sh
 
 This script invokes the Wazi Deploy Generate command to generate a Deployment Plan based on the content of a package. The package should be created with the `PackageBuildOutputs.groovy` script or through the `packageBuildOutputs.sh` script.
 
+This script assesses the configuration option `publish` from the `pipelineBackend.config` file. In case the configuration has enabled the upload to the Artifact repository, the script computes the URL where the package is expected to be found, and passes the URL into the wazideploy-generate command. This means that wazideloy-generate will download the package from the Artifact repository and allows to restore the package on a different system. It requires to pass in the additional arguments `-P`, `-R`, `-B`
 
-### Invocation
+#### Invocation
 
 The `wazideploy-generate.sh` script can be invoked as follows:
 
@@ -717,18 +709,29 @@ Or by fully specifying the settings
 wazideploy-generate.sh -m deploymentMethod -p deploymentPlan -r deploymentPlanReport -i packageInputFile
 ```
 
+To enable the download based on build and release identifier
+```
+wazideploy-generate.sh -w  MortgageApplication/feature/15-fetch-application-dependencies/dbb-zappbuild.build_1234 -a MortgageApplication -P build -b feature/15-fetch-application-dependencies -I 1234
+```
+
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `deploymentPlanReport` and `packageOutputFile` are fully referenced. 
--i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. If providing a relative path, the file is assumed to be located in the directory `<workspace directory>/<logsDir>`. This parameter can either be path to a TAR file on UNIX System Services, or the URL of the TAR file to retrieve (only Artifactory is supported).
+-i `<packageInputFile>` | **Package Input File** to be used for the generation phase with Wazi Deploy. This is likely the package to be deployed. If providing a relative path, the file is assumed to be located in the directory `<workspace directory>/<logsDir>`. This parameter can either be path to an archive (TAR file) on UNIX System Services, or the URL of the archive (TAR file) to retrieve (only Artifactory is supported). <br><br> If the Common Backend Scripts are configured to perform the upload, the scripts computes the location in the artifact repo and overrides the `-i` and `-o` argument and in that case the this arument is not required.
 -m `<deploymentMethod>` | (Optional) Absolute path to the Wazi Deploy **Deployment Method** stored on UNIX System Services. If not specified, the deployment method file location is obtained from the `pipelineBackend.config`.
 -p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`.  If not specified, the deployment plan location is obtained from the `pipelineBackend.config`.
 -r `<deploymentPlanReport>` | (Optional) Absolute or relative path to the **Deployment Plan Report**. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. If not specified, the deployment plan report location is obtained from the `pipelineBackend.config`.
 -o `<packageOutputFile>` | (Optional) Absolute or relative path to the **Package Output File** that specifies the location where to store the downloaded tar file. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
--c `<configurationFile>` | (Optional) Absolute path to the **Configuration File** that contains information to connect to Artifactory. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
--d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
 
-### Output
+-d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
+-- | - when retrieving the tar file from Artifact repo the below options are mandatory -
+-b `<branch>`| Name of the **git branch** turning into a segment of the directory path for the location within the artifact repository.
+-p `<build/release>` | **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules for release candidates).
+-R `<releaseIdentifier>` | **Release identifier** to indicate the next planned release name. This is a computed value based on the pipeline templates.
+-I `<buildIdentifier>` | **Build identifier** a unique value to identify the tar file. This is a computed value provided by the pipeline templates. Typically the build number of the pipeline run.
+-c `<configurationFile>` | Absolute path to the Wazi Deploy **Configuration File** that contains information to connect to the artifact repository. See [IBM Wazi Deploy documentation](https://www.ibm.com/docs/en/developer-for-zos/17.0?topic=files-configuration-file)
+
+#### Output
 
 The section below contains the output that is produced by the `wazideploy-generate.sh` script.
 
@@ -774,11 +777,11 @@ wazideploy-generate.sh: [INFO] *************************************************
 
 </details>
 
-## wazideploy-deploy.sh
+### wazideploy-deploy.sh
 
 This script invokes the Wazi Deploy Deploy (with the Python Translator) command to deploy the content of a provided package with a Deployment Plan.
 
-### Invocation
+#### Invocation
 
 The `wazideploy-deploy.sh` script can be invoked as follows:
 
@@ -864,11 +867,11 @@ wazideploy-deploy -wf /u/ado/workspace/MortgageApplication/main/build-20231019.1
 </details>
 
 
-## wazideploy-evidence.sh
+### wazideploy-evidence.sh
 
 This script invokes the Wazi Deploy Evidence command to generate a Deployment report from the Wazi Deploy Evidence YAML file created by the Wazi Deploy Deploy command.
 
-### Invocation
+#### Invocation
 
 The `wazideploy-evidence.sh` script can be invoked as follows:
 
@@ -887,7 +890,7 @@ CLI parameter | Description
 -l `<evidenceFile>` | (Optional) Absolute or relative path to the **Evidence File** that contains the logs of all Wazi Deploy tasks. If not specified, evidence file location will be obtained from the `pipelineBackend.config`.
 -o `<outputFile>` | (Optional) Absolute or relative path to the **Output File** that will contain the Deployment Report. If not specified, evidence file location will be obtained from the `pipelineBackend.config`.
 
-### Output
+#### Output
 
 The section below contains the output that is produced by the `wazideploy-evidence.sh` script.
 
@@ -921,11 +924,85 @@ wazideploy-evidence --index /u/ado/workspace/MortgageApplication/main/build-2023
 
 </details>
 
-## prepareLogs.sh
+### ucdDeploy.sh
 
-Script to obtain the logs that were produced as part of the pipeline steps in the *logs* directory. 
+This script is implementing the invocation of the `ucd-deploy.groovy` script to perform Urban Code Deploy (UCD) deployments.
 
-### Invocation
+
+#### Invocation
+
+The `ucdDeploy.sh` script can be invoked as follows:
+
+```
+ucdDeploy.sh -a ucdApplicationName -p ucdApplicationProcessName -e ucdEnvironmentName -d ucdComponentName:ucdDeployVersion
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-a `<ucdApplicationName>` | **Application** name defined in UCD containing the component version to be deployed.
+-p `<ucdApplicationProcessName>` | **Process** name in UCD associated with the application being deployed.
+-e `<ucdEnvironmentName>` | **Environment** name in UCD that the component version will be deployed to.
+-d `<ucdComponentName:ucdDeployVersion>` | **Component name and version** to be deployed to the UCD environment.
+-t `<timeout>` | (Optional) **Deployment timeout** value in seconds.  Defaults to 300 seconds.
+-s `<SSLProtocol>`| (Optional) **SSL protocol** to use. Default is TLSv1.2.
+-k | (Optional) Disable SSL verification flag.
+-v | (Optional) Verbose tracing flag. Used to produce additional tracing in the groovy script.
+
+#### Output
+
+The section below contains the output that is produced by the `ucdDeploy.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+
+```
+ucdDeploy.sh -a rbs-retirementCalculator -p rbs-retirementCalculator-process -e rbs-IntegrationTest -d rbs-retirementCalculator:latest
+bash: [INFO] Deploy UCD Component. Version=1.00
+bash: [INFO] **************************************************************
+bash: [INFO] ** Start UCD Component Deploy on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
+bash: [INFO] **   Location of ucd-deploy.groovy: /u/brice/groovyScripts
+bash: [INFO] **            UCD Application Name: rbs-retirementCalculator
+bash: [INFO] **            UCD Environment Name: rbs-IntegrationTest
+bash: [INFO] **                   UCD User Name: admin
+bash: [INFO] **                  UCD Server URL: http://10.3.20.231:8080/
+bash: [INFO] **           UCD Component Version: rbs-retirementCalculator:latest
+bash: [INFO] **    UCD Application Process Name: rbs-retirementCalculator-process
+bash: [INFO] **                         Verbose: No
+bash: [INFO] **                SSL Verification: Yes
+bash: [INFO] **************************************************************
+
+/usr/lpp/dbb/v2r0/bin/groovyz /u/brice/groovyScripts/ucd-deploy.groovy -a "rbs-retirementCalculator" -e "rbs-IntegrationTest" -U admin -P ******** -u http://10.3.20.231:8080/ -d "rbs-retirementCalculator:latest" -p rbs-retirementCalculator-process
+** Request UCD Deployment start at 20230830.064205.042
+** Properties at startup:
+   application -> rbs-retirementCalculator 
+   environment -> rbs-IntegrationTest 
+   user -> admin 
+   password -> xxxxxx 
+   url -> http://10.3.20.231:8080/ 
+   deployVersions -> rbs-retirementCalculator:latest 
+   applicationProcess -> rbs-retirementCalculator-process 
+**  Deploying component versions: rbs-retirementCalculator:latest
+*** Starting deployment process 'rbs-retirementCalculator-process' of application 'rbs-retirementCalculator' in environment 'rbs-IntegrationTest'
+*** SSL Verification disabled
+*** Follow Process Request: https://ucd.server.com:8443/#applicationProcessRequest/184c812f-605f-5040-ad31-d3a31f87bb3c
+Executing ......
+*** The deployment result is SUCCEEDED. See the UrbanCode Deploy deployment logs for details.
+** Build finished
+```  
+
+</details>
+
+## Generic stages
+
+When your pipeline setup uses a remote agents that runs outside of the z/OS build machine (like with an agent on an x86 environment), you can benefit from the [prepareLogs.sh](#preparelogssh) script to create an archive of the logs, before transferring it to the remote agent for attaching them to the pipeline run.
+
+Once the pipeline has completed all its tasks, you can use the [deleteWorkspace.sh](#deleteworkspacesh) to cleanup the created workspace on z/OS Unix Services and optionally the [generateCleanupCommands.sh](#generatecleanupcommandssh) for housekeeping activities of the DBB metadataststore. 
+
+### prepareLogs.sh
+
+Script to obtain the logs that were produced as part of the pipeline step in the *logs* directory. 
+
+#### Invocation
 
 The `prepareLogs.sh` script can be invoked as follows:
 
@@ -942,7 +1019,7 @@ On successful completion, the script writes a message to indicate the output dir
 Logs successfully stored at /var/dbb/pipelineBackend/workspace/MortApp/feature/setmainbuildbranch/build-1/logs.tar
 ```
 
-### Script output
+#### Script output
 
 The section below contains the output that is produced by the `prepareLogs.sh` script.
 
@@ -976,7 +1053,7 @@ prepareLogs.sh: [INFO] Logs successfully stored at /var/dbb/pipelineBackend/work
 
 </details>
 
-### Download logs to non-z/OS runner/agent environment
+#### Download logs to non-z/OS runner/agent environment
 
 While the script `prepareLogs.sh` only creates the TAR file on the workspace directory, the next step is to download the TAR file to the non-z/OS runner/agent environment, in order to attach it to the pipeline results.
 
@@ -1001,116 +1078,11 @@ It _greps_ the information and invokes a download action.
     fi
 ```
 
-## generateCleanupCommands.sh
-
-Script to generate and run the necessary cleanup steps of DBB Metadatastore collections and build groups (build results), and the deletion of the build datasets using the [DeletePDS.groovy](../../Utilities/DeletePDS/README.md) utility.
-
-The script lists all the existing DBB collections obtained by applying a filter based on the zAppBuild naming conventions. It checks if Git branches corresponding to the provided application name exist in the Git repository. If one or more branches are found, it generates the necessary command files that contain the removal statements. The generated scripts can be can automatically executed, if the `-p` flag is passed to the script.
-
-### Invocation
-
-The `generateCleanupCommands.sh` script can be invoked as follows:
-
-```
-generateCleanupCommands.sh -w MortApp/main/build-1 -a MortApp -p
-```
-
-CLI parameter | Description
----------- | ----------------------------------------------------------------------------------------
--w `<workspace>` | **Workspace directory** - an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
--a `<application>` | **Application name** to be analyzed for stale DBB Metadatastore objects and build datasets.
--p | Flag to control if the generated commands files should be executed by the pipeline. If the commands are not executed by the script, it is recommended to publish the generated files to the pipeline orchestrator, where an administrator can review and eventually execute them manually.
-
-### Additional notes
-
-This script can be embedded into a pipeline execution, but can also be used in a standalone setup. For a pipeline implementation, this task can be included in the release process to facilitate the cleanup of stale DBB collections and DBB build groups, and to delete the build datasets as well.
-
-For the standalone implementation, use the following process:
-1. Have the Common Backend Scripts installed to z/OS Unix System Services and have them configured. 
-2. Clone the application repository including all remote references.
-3. Execute the `generateCleanupCommands.sh` script like in the above sample. The user executing the script needs proper permissions on the DBB Metadatastore.
-
-Please note that the script leverages the [utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) to compute the build high-level qualifier (HLQ).
-
-### Script output
-
-The section below contains the output that is produced by the `generateCleanupCommands.sh` script.
-
-<details>
-  <summary>Script Output</summary>
-
-```
-". ./.profile && generateCleanupCommands.sh -w /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104 -a MortgageApplication -p"
-generateCleanupCommands.sh: [INFO] Generate Cleanup Command File. Version=1.0.0
-generateCleanupCommands.sh: [INFO] Creating output directory. /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds
-generateCleanupCommands.sh: [INFO] **************************************************************
-generateCleanupCommands.sh: [INFO] ** Start Gen Cleanup Cmds on HOST/USER: z/OS ZT01 05.00 02 8561/GITHUB
-generateCleanupCommands.sh: [INFO] **                   Workspace: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104
-generateCleanupCommands.sh: [INFO] **                 Application: MortgageApplication
-generateCleanupCommands.sh: [INFO] **                      AppDir: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/MortgageApplication
-generateCleanupCommands.sh: [INFO] **    Cmd obsolete collections: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd
-generateCleanupCommands.sh: [INFO] **   Cmd obsolete build groups: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd
-generateCleanupCommands.sh: [INFO] ** Cmd obsolete build datasets: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd
-generateCleanupCommands.sh: [INFO] **      DBB Metadastore Config: --type file --location /u/github/
-generateCleanupCommands.sh: [INFO] **     Process Cleanup Scripts: true
-generateCleanupCommands.sh: [INFO] **************************************************************
-
-generateCleanupCommands.sh: [STAGE] Retrieve all collections with application qualifier MortgageApplication
-generateCleanupCommands.sh: [STAGE] Verifying Git references
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-main has a corresponding active Git branch
-generateCleanupCommands.sh:        For the collection MortgageApplication-main a corresponding branch (main) was detected.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-main-outputs has a corresponding active Git branch
-generateCleanupCommands.sh:        For the collection MortgageApplication-main-outputs a corresponding branch (main) was detected.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/johnpipelinetesting has a corresponding active Git branch
-generateCleanupCommands.sh:        For the collection MortgageApplication-feature/johnpipelinetesting a corresponding branch (feature/johnpipelinetesting) was detected.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/johnpipelinetesting-outputs has a corresponding active Git branch
-generateCleanupCommands.sh:        For the collection MortgageApplication-feature/johnpipelinetesting-outputs a corresponding branch (feature/johnpipelinetesting) was detected.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/20-some-more-testing has a corresponding active Git branch
-generateCleanupCommands.sh:        DBB Collection MortgageApplication-feature/20-some-more-testing does not have a corresponding branch (feature/20-some-more-testing). It can be deleted.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/20-some-more-testing-outputs has a corresponding active Git branch
-generateCleanupCommands.sh:        DBB Collection MortgageApplication-feature/20-some-more-testing-outputs does not have a corresponding branch (feature/20-some-more-testing). It can be deleted.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/pipeline-trigger-testing has a corresponding active Git branch
-generateCleanupCommands.sh:        For the collection MortgageApplication-feature/pipeline-trigger-testing a corresponding branch (feature/pipeline-trigger-testing) was detected.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/pipeline-trigger-testing-outputs has a corresponding active Git branch
-generateCleanupCommands.sh:        For the collection MortgageApplication-feature/pipeline-trigger-testing-outputs a corresponding branch (feature/pipeline-trigger-testing) was detected.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/18-add-generate-cleanup-instructions has a corresponding active Git branch
-generateCleanupCommands.sh:        For the collection MortgageApplication-feature/18-add-generate-cleanup-instructions a corresponding branch (feature/18-add-generate-cleanup-instructions) was detected.
-generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/18-add-generate-cleanup-instructions-outputs has a corresponding active Git branch
-generateCleanupCommands.sh:        For the collection MortgageApplication-feature/18-add-generate-cleanup-instructions-outputs a corresponding branch (feature/18-add-generate-cleanup-instructions) was detected.
-generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale collections for application MortgageApplication
-generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd created. 
-generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale build groups for application MortgageApplication
-generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd created. 
-generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale build datasets for application MortgageApplication
-generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd created. 
-generateCleanupCommands.sh: [STAGE] Executing Cleanup of DBB Metadatastore Objects
-generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd
-BGZTK0195I Successfully deleted collection "MortgageApplication-feature/20-some-more-testing"
-BGZTK0195I Successfully deleted collection "MortgageApplication-feature/20-some-more-testing-outputs"
-generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd
-BGZTK0195I Successfully deleted group "MortgageApplication-feature/20-some-more-testing"
-generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd
-** Deleting all datasets filtered with HLQ 'GITHUB.MORTGAGE.F20'
-*** Deleting 'GITHUB.MORTGAGE.F20.COBOL'
-*** Deleting 'GITHUB.MORTGAGE.F20.COPY'
-*** Deleting 'GITHUB.MORTGAGE.F20.DBRM'
-*** Deleting 'GITHUB.MORTGAGE.F20.LOAD'
-*** Deleting 'GITHUB.MORTGAGE.F20.OBJ'
-** Deleted 5 entries.
-** Build finished
-generateCleanupCommands.sh: [INFO] Generate Cleanup Cmds Complete. rc=0
-
-```  
-
-</details>
-
-
-
-## deleteWorkspace.sh
+### deleteWorkspace.sh
 
 Script delete the workspace and all empty directories in the working tree. 
 
-### Invocation
+#### Invocation
 
 The `deleteWorkspace.sh` script can be invoked as follows:
 
@@ -1125,7 +1097,7 @@ CLI parameter | Description
 
 Note that the script deletes all empty folders in the working tree. It supresses the message `EDC5136I Directory not empty.` and handles that as a INFO message.
 
-### Script output
+#### Script output
 
 The section below contains the output that is produced by the `deleteWorkspace.sh` script.
 
@@ -1219,6 +1191,113 @@ deleteWorkspace.sh: [INFO] Workspace directory successfully deleted.
 ```  
 
 </details>
+
+### generateCleanupCommands.sh
+
+Script to generate and run the necessary cleanup steps of DBB Metadatastore collections and build groups (build results), and the deletion of the build datasets using the [DeletePDS.groovy](../../Utilities/DeletePDS/README.md) utility.
+
+The script lists all the existing DBB collections obtained by applying a filter based on the zAppBuild naming conventions. It checks if Git branches corresponding to the provided application name exist in the Git repository. If one or more branches are found, it generates the necessary command files that contain the removal statements. The generated scripts can be can automatically executed, if the `-p` flag is passed to the script.
+
+#### Invocation
+
+The `generateCleanupCommands.sh` script can be invoked as follows:
+
+```
+generateCleanupCommands.sh -w MortApp/main/build-1 -a MortApp -p
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-w `<workspace>` | **Workspace directory** - an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
+-a `<application>` | **Application name** to be analyzed for stale DBB Metadatastore objects and build datasets.
+-p | Flag to control if the generated commands files should be executed by the pipeline. If the commands are not executed by the script, it is recommended to publish the generated files to the pipeline orchestrator, where an administrator can review and eventually execute them manually.
+
+#### Additional notes
+
+This script can be embedded into a pipeline execution, but can also be used in a standalone setup. For a pipeline implementation, this task can be included in the release process to facilitate the cleanup of stale DBB collections and DBB build groups, and to delete the build datasets as well.
+
+For the standalone implementation, use the following process:
+1. Have the Common Backend Scripts installed to z/OS Unix System Services and have them configured. 
+2. Clone the application repository including all remote references.
+3. Execute the `generateCleanupCommands.sh` script like in the above sample. The user executing the script needs proper permissions on the DBB Metadatastore.
+
+Please note that the script leverages the [utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) to compute the build high-level qualifier (HLQ).
+
+### Script output
+
+The section below contains the output that is produced by the `generateCleanupCommands.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+
+```
+". ./.profile && generateCleanupCommands.sh -w /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104 -a MortgageApplication -p"
+generateCleanupCommands.sh: [INFO] Generate Cleanup Command File. Version=1.0.0
+generateCleanupCommands.sh: [INFO] Creating output directory. /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds
+generateCleanupCommands.sh: [INFO] **************************************************************
+generateCleanupCommands.sh: [INFO] ** Start Gen Cleanup Cmds on HOST/USER: z/OS ZT01 05.00 02 8561/GITHUB
+generateCleanupCommands.sh: [INFO] **                   Workspace: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104
+generateCleanupCommands.sh: [INFO] **                 Application: MortgageApplication
+generateCleanupCommands.sh: [INFO] **                      AppDir: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/MortgageApplication
+generateCleanupCommands.sh: [INFO] **    Cmd obsolete collections: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd
+generateCleanupCommands.sh: [INFO] **   Cmd obsolete build groups: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd
+generateCleanupCommands.sh: [INFO] ** Cmd obsolete build datasets: /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd
+generateCleanupCommands.sh: [INFO] **      DBB Metadastore Config: --type file --location /u/github/
+generateCleanupCommands.sh: [INFO] **     Process Cleanup Scripts: true
+generateCleanupCommands.sh: [INFO] **************************************************************
+
+generateCleanupCommands.sh: [STAGE] Retrieve all collections with application qualifier MortgageApplication
+generateCleanupCommands.sh: [STAGE] Verifying Git references
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-main has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-main a corresponding branch (main) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-main-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-main-outputs a corresponding branch (main) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/johnpipelinetesting has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/johnpipelinetesting a corresponding branch (feature/johnpipelinetesting) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/johnpipelinetesting-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/johnpipelinetesting-outputs a corresponding branch (feature/johnpipelinetesting) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/20-some-more-testing has a corresponding active Git branch
+generateCleanupCommands.sh:        DBB Collection MortgageApplication-feature/20-some-more-testing does not have a corresponding branch (feature/20-some-more-testing). It can be deleted.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/20-some-more-testing-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        DBB Collection MortgageApplication-feature/20-some-more-testing-outputs does not have a corresponding branch (feature/20-some-more-testing). It can be deleted.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/pipeline-trigger-testing has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/pipeline-trigger-testing a corresponding branch (feature/pipeline-trigger-testing) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/pipeline-trigger-testing-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/pipeline-trigger-testing-outputs a corresponding branch (feature/pipeline-trigger-testing) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/18-add-generate-cleanup-instructions has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/18-add-generate-cleanup-instructions a corresponding branch (feature/18-add-generate-cleanup-instructions) was detected.
+generateCleanupCommands.sh: [INFO] Check if MortgageApplication-feature/18-add-generate-cleanup-instructions-outputs has a corresponding active Git branch
+generateCleanupCommands.sh:        For the collection MortgageApplication-feature/18-add-generate-cleanup-instructions-outputs a corresponding branch (feature/18-add-generate-cleanup-instructions) was detected.
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale collections for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd created. 
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale build groups for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd created. 
+generateCleanupCommands.sh: [STAGE] Generate Cmd File with Delete Statements for stale build datasets for application MortgageApplication
+generateCleanupCommands.sh: [INFO] Cmd File /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd created. 
+generateCleanupCommands.sh: [STAGE] Executing Cleanup of DBB Metadatastore Objects
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleCollections.cmd
+BGZTK0195I Successfully deleted collection "MortgageApplication-feature/20-some-more-testing"
+BGZTK0195I Successfully deleted collection "MortgageApplication-feature/20-some-more-testing-outputs"
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildGroups.cmd
+BGZTK0195I Successfully deleted group "MortgageApplication-feature/20-some-more-testing"
+generateCleanupCommands.sh: [INFO] Executing cleanup script /u/github/workspace/IBM-DAT/MortgageApplication/feature/18-add-generate-cleanup-instructions/build_f104/cleanupCmds/deleteStaleBuildDatasets.cmd
+** Deleting all datasets filtered with HLQ 'GITHUB.MORTGAGE.F20'
+*** Deleting 'GITHUB.MORTGAGE.F20.COBOL'
+*** Deleting 'GITHUB.MORTGAGE.F20.COPY'
+*** Deleting 'GITHUB.MORTGAGE.F20.DBRM'
+*** Deleting 'GITHUB.MORTGAGE.F20.LOAD'
+*** Deleting 'GITHUB.MORTGAGE.F20.OBJ'
+** Deleted 5 entries.
+** Build finished
+generateCleanupCommands.sh: [INFO] Generate Cleanup Cmds Complete. rc=0
+
+```  
+
+</details>
+
+
+
+
 
 # Disclaimer
 
