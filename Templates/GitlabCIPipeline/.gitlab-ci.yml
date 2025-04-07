@@ -569,7 +569,7 @@ Packaging:
         wdEvidencesDir: ${wdEvidencesRoot}/${application}/production
 
     artifacts:
-        name: “productionDeploymentReport-${CI_PIPELINE_ID}"
+        name: "productionDeploymentReport-${CI_PIPELINE_ID}"
         when: always
         paths:
             - "${productionReportDir}/deployment-report.html"

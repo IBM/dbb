@@ -279,7 +279,7 @@ validateOptions() {
             echo $ERRMSG
         fi
     fi
-    
+
     # validate that deployment plan exists
     if [ ! -f "${DeploymentPlan}" ]; then
         rc=8
@@ -298,7 +298,7 @@ validateOptions() {
             EnvironmentFile="${wdEnvironmentConfigurations}/${EnvironmentFile}"
         fi
     fi
-    
+
     # validate that environment file exists
     if [ ! -f "${EnvironmentFile}" ]; then
         rc=8
@@ -336,6 +336,19 @@ validateOptions() {
         fi
     fi
 }
+
+# When publishing is enabled, check if the tarfile exists in the expected location
+if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
+    if [ -f "$(wdDeployPackageDir)/applicationArchive.tar" ]; then # shared convention with wazideploy-generate.sh
+        echo $PGM": [INFO] ** Archive was found at location '${wdDeployPackageDir}/applicationArchive.tar'."
+        if [ ! -z "${PackageInputFile}" ]; then
+            echo $PGM": [INFO] ** Package Input File was passed in as ${PackageInputFile}. It will be replaced with $(wdDeployPackageDir)/applicationArchive.tar ."
+        fi
+        PackageInputFile="$(wdDeployPackageDir)/applicationArchive.tar"
+    else
+        echo $PGM": [INFO] ** The CBS can automatically compute the Url of the archive. Wazi Deploy will then download it. Read more about the capabilities in the CBS readme."
+    fi
+fi
 
 # Call validate Options
 if [ $rc -eq 0 ]; then
