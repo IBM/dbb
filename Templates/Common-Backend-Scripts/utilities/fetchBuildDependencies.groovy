@@ -77,13 +77,10 @@ if (applicationDescriptor.dependencies) {
 	println("*** Fetching dependent application archives")
 
 	// Loop through all dependencies found in AD
-	applicationDescriptor.dependencies.each {
-		dependency ->
+	applicationDescriptor.dependencies.each { dependency ->
 
 		// validate dependency record
-		if {
-			!dependency.name
-		} {
+		if (!dependency.name) {
 			rc=1
 			println("*! [ERROR] Dependency record in Application Descriptor missing the 'name' attribute. rc=$rc")
 		}
@@ -91,15 +88,11 @@ if (applicationDescriptor.dependencies) {
 			rc=1
 			println("*! [ERROR] Dependency record in Application Descriptor missing the 'type' attribute. rc=$rc")
 		}
-		if {
-			!dependency.reference
-		} {
+		if (!dependency.reference) {
 			rc=1
 			println("*! [ERROR] Dependency record in Application Descriptor missing the dependency 'reference' attribute. rc=$rc")
 		}
-		if {
-			!dependency.buildid
-		} {
+		if (!dependency.buildid) {
 			rc=1
 			println("*! [ERROR] Dependency record in Application Descriptor missing the 'buildid' attribute. rc=$rc")
 		}
@@ -233,9 +226,7 @@ if (baselineRecord){
 	println("*** Fetching baseline archive")
 
 	// validate baseline record
-	if {
-		!applicationDescriptor.application
-	} {
+	if (!applicationDescriptor.application) {
 		rc=1
 		println("*! [ERROR] Application Descriptor missing the 'application' name attribute. rc=$rc")
 	}
@@ -243,15 +234,11 @@ if (baselineRecord){
 		rc=1
 		println("*! [ERROR] Baseline record in Application Descriptor missing the 'type' attribute. rc=$rc")
 	}
-	if {
-		!baselineRecord.reference
-	} {
+	if (!baselineRecord.reference) {
 		rc=1
 		println("*! [ERROR] Baseline record in Application Descriptor missing the dependency 'reference' attribute. rc=$rc")
 	}
-	if {
-		!baselineRecord.buildid
-	} {
+	if (!baselineRecord.buildid) {
 		rc=1
 		println("*! [ERROR] Baseline record in Application Descriptor missing the 'buildid' attribute. rc=$rc")
 	}
