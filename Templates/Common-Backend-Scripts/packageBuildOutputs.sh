@@ -257,7 +257,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the version to create is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The build identifier is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
@@ -305,7 +305,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The release identifier is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
@@ -316,7 +316,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [WARNING] The name of the release identifier is required. rc="$rc
+                ERRMSG=$PGM": [WARNING] The artifact version is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
@@ -374,7 +374,7 @@ validateOptions() {
     fi
 
     if [ -z "${buildIdentifier}" ] && [ "$publish" == "true" ]; then
-        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) has been supplied. A unique name based on version and build id is recommended. Using timestamp"
+        ERRMSG=$PGM": [INFO] No buildIdentifier (option -i) was supplied. Using timestamp."
         echo $ERRMSG
         buildIdentifier=$(date +%Y%m%d_%H%M%S)
     fi
@@ -522,7 +522,7 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
         echo $PGM": [INFO] ** Identified that artifactVersionName is passed into packageBuildOutputs.sh (${artifactVersionName}). This will be reset and recomputed based on buildIdentifier and releaseIdentifier to align with the conventions for packaging."
     fi
 
-    computePackageInformation
+    computeArchiveInformation
 fi
 
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
@@ -573,7 +573,7 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${externalDependenciesLogFile}" ]; then
         echo $PGM": [INFO] **   External Dependencies log:" ${externalDependenciesLogFile}
     fi
-    if [ ! -f "$baselineTarFile" ]; then
+    if [ ! -z "$baselineTarFile" ]; then
         echo $PGM": [INFO] **            Baseline package:" ${baselineTarFile}
     fi
     echo $PGM": [INFO] ** Publish to Artifact Repo:" ${publish}
@@ -652,7 +652,7 @@ if [ $rc -eq 0 ]; then
 
     # Wazi Deploy build identifier
     if [ ! -z "${packageBuildIdentifier}" ]; then
-        CMD="${CMD} --packageBuildIdentifier ${packageBuildIdentifier}"
+        CMD="${CMD} --buildIdentifier ${packageBuildIdentifier}"
     fi
 
     # Pass information about externally fetched modules to packaging to document them
@@ -661,7 +661,7 @@ if [ $rc -eq 0 ]; then
     fi
 
     # Pass baseline package
-    if [ ! -f "$baselineTarFile" ]; then
+    if [ ! -z "$baselineTarFile" ]; then
         CMD="${CMD} --baselinePackage ${baselineTarFile}"
     fi
 
