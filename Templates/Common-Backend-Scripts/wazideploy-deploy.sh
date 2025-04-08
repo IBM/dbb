@@ -339,14 +339,14 @@ validateOptions() {
 
 # When publishing is enabled, check if the tarfile exists in the expected location
 if [ $rc -eq 0 ] && [ "$publish" == "true" ]; then
-    if [ -f "$(wdDeployPackageDir)/applicationPackage.tar" ]; then # shared convention with wazideploy-generate.sh
-        echo $PGM": [INFO] ** Package file was found in expected location at $(wdDeployPackageDir)/applicationPackage.tar ."
+    if [ -f "$(wdDeployPackageDir)/applicationArchive.tar" ]; then # shared convention with wazideploy-generate.sh
+        echo $PGM": [INFO] ** Archive was found at location '${wdDeployPackageDir}/applicationArchive.tar'."
         if [ ! -z "${PackageInputFile}" ]; then
-            echo $PGM": [INFO] ** Package Input File was passed in as ${PackageInputFile}. It will be replaced with $(wdDeployPackageDir)/applicationPackage.tar ."
+            echo $PGM": [INFO] ** Package Input File was passed in as ${PackageInputFile}. It will be replaced with $(wdDeployPackageDir)/applicationArchive.tar ."
         fi
-        PackageInputFile="$(wdDeployPackageDir)/applicationPackage.tar"
+        PackageInputFile="$(wdDeployPackageDir)/applicationArchive.tar"
     else
-        echo $PGM": [INFO] ** The CBS can automatically compute the Url of the package. Wazi Deploy will then download it. Read more about the capabilities in the CBS readme."
+        echo $PGM": [INFO] ** The CBS can automatically compute the Url of the archive. Wazi Deploy will then download it. Read more about the capabilities in the CBS readme."
     fi
 fi
 

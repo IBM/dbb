@@ -211,8 +211,6 @@ if [ $rc -eq 0 ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] DBB-Build internal utilities (${fetchBuildDependenciesUtilities}) was not found. rc="$rc
     echo $ERRMSG
-  else
-    source $fetchBuildDependenciesUtilities
   fi
 
     #
@@ -451,7 +449,8 @@ fi
 
 # Setup build environment and pull external dependencies if an ApplicationDescriptor is found
 if [ $rc -eq 0 ] && [ "$fetchBuildDependencies" == "true" ]; then
-    fetchBuildDependenciesMethod
+    # call utilities script
+    . ${fetchBuildDependenciesUtilities}
 fi
 
 #

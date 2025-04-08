@@ -637,8 +637,8 @@ if (rc == 0) {
 			if (props.publish && props.publish.toBoolean()) {
 				HashMap<String,String> packageInfo = new HashMap<String, String>()
 				packageInfo.put("type", "artifactRepository")
-				packageInfo.put("name", props.packageBuildIdentifier)
-				packageUrl = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
+				packageInfo.put("name", props.buildIdentifier)
+				packageUrl = artifactRepositoryHelpers.computeArchiveUrl(props)
 				if (packageUrl) packageInfo.put("uri", packageUrl)
 				wdManifestGeneratorUtilities.setPackageInfo(packageInfo)
 			}
@@ -761,7 +761,7 @@ if (rc == 0) {
 		//Set up the artifact repository information to publish the tar file
 		if (props.publish && props.publish.toBoolean() && rc == 0){
 			// Configuring artifact repositoryHelper parms
-			def url = artifactRepositoryHelpers.computeAbsoluteRepositoryUrl(props)
+			def url = artifactRepositoryHelpers.computeArchiveUrl(props)
 
 			def apiKey = props.'artifactRepository.user'
 			def user = props.'artifactRepository.user'
@@ -944,7 +944,7 @@ def parseInput(String[] cliArgs){
 
 	// Wazi Deploy Application Manifest generation
 	cli.wd(longOpt:'generateWaziDeployAppManifest', 'Flag indicating to generate and add the Wazi Deploy Application Manifest file.')
-	cli.bi(longOpt:'packageBuildIdentifier', args:1, argName:'buildIdentifier', 'Unique build identifier metadata stored in Wazi Deploys Application Manifest file.')
+	cli.bi(longOpt:'buildIdentifier', args:1, argName:'buildIdentifier', 'Unique build identifier stored in Wazi Deploy Application Manifest file.')
 	cli.ed(longOpt:'externalDependenciesEvidences', args:1, argName:'externalDependenciesEvidences', 'File documenting the external dependencies that were provided to the build phase.')
 
 
@@ -1018,7 +1018,7 @@ def parseInput(String[] cliArgs){
 	if (opts.il) props.includeLogs = opts.il
 	if (opts.a) props.application = opts.a
 	if (opts.b) props.branch = opts.b
-	if (opts.bi) props.packageBuildIdentifier = opts.bi
+	if (opts.bi) props.buildIdentifier = opts.bi
 
 	// cli overrides defaults set in 'packageBuildOutputs.properties'
 	props.generateWaziDeployAppManifest = (opts.wd) ? 'true' : (props.generateWaziDeployAppManifest ? props.generateWaziDeployAppManifest : 'false')

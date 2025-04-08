@@ -496,11 +496,11 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
   if [ $rc -eq 0 ]; then
 
     # Call utilities method
-    computePackageInformation
+    computeArchiveInformation
 
     # Set Input and output files for Wazi Deploy
     PackageInputFile="${artifactRepositoryAbsoluteUrl}"
-    PackageOutputFile="$(wdDeployPackageDir)/applicationPackage.tar" # shared convention with wazideploy-deploy.sh
+    PackageOutputFile="$(wdDeployPackageDir)/applicationArchive.tar" # shared convention with wazideploy-deploy.sh
     usePackageUrl="true"
   fi
 fi

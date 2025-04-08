@@ -29,7 +29,7 @@ def initWaziDeployManifestGenerator(Properties props) {
 	}
 
 	// Metadata information
-	wdManifest.metadata.version = (props.packageBuildIdentifier) ? props.packageBuildIdentifier : props.startTime
+	wdManifest.metadata.version = (props.buildIdentifier) ? props.buildIdentifier : props.startTime
 	if (props.application) wdManifest.metadata.name = props.application
 
 	// Annotations
