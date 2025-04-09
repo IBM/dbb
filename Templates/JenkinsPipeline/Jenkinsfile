@@ -131,6 +131,9 @@ def BuildOutputDir            = ""         // DBB Build Output Directory (Discov
 def BuildFile                 = ""         // Will contain the contents of the DBB buildFile.txt.
 def BuildHasFiles             = true       // DBB buildFile.txt indicates changed files.
 
+def TazLogs                   = "*.tazunittest.report.log" // Will contain the contents of the TAZ unit test runner result file * (*.bzures)
+def TazReports                = ""         // Will contain the contents of the TAZ unit test runner result file converted to JUnit test run file (*.xml)
+def XLSConv                   = "/var/dbb/extensions/zunit2junit/AZUZ2J40.xsl" //  XSL stylesheet that converts a unit test runner result file to a JUnit test run file
 def PackageCmd                = ""         // Packaging Command.
 def Packagerc                 = 0          // Packaging Command Return Code.
 
@@ -411,6 +414,16 @@ pipeline {
 						
 							dir ("${BuildOutputDir}") {
 								BuildFile = findFiles(glob: "buildList.txt")
+								TazReports = findFiles(glob: TazLogs)
+
+									TazReports.each { item ->
+                								//echo  item.name
+               									 sh "Xalan -o ${BuildOutputDir}/${item.name}.xml ${BuildOutputDir}/${item.name} ${XLSConv}"
+           									 }
+		
+		  						  if(TazReports.length > 0){
+               								 junit '*.log.xml'
+           									 }
 							}
 						
 							if (pipeverbose) {
