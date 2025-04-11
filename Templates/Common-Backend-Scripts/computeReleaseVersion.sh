@@ -3,12 +3,81 @@
 #===================================================================================
 # NAME: computeReleaseVersion.sh
 #
-# DESCRIPTION: The purpose of this script is to perform a DBB Build from within
-# a Pipeline.
+# DESCRIPTION: The purpose of this script is to perform computation of the version
+# for the next release. 
 #
+# SYNTAX: See Help() section below for usage
+#
+# RETURNS:
+#
+#    rc         - Return Code
+#
+# RETURN CODES:
+#
+#    0          - Successful
+#    4          - Warning message(s) issued.  See Console messages
+#    8          - Error encountered.  See Console messages
+#
+# NOTE(S):
+#
+#   1. Review and update the Customization Section to reference the
+#        central configuration file pipelineBackend.config
+#
+#   2. The naming convention of the release version is 'rel-x.y.z'
+#      when: x increased for a major release
+#            y increased for a minor release
+#            z increased for a patch release
+#
+#===================================================================================
+Help() {
+    echo $PGM" - Invoke Release Version Computation ("$PGMVERS")              "
+    echo "                                                              "
+    echo "DESCRIPTION: The purpose of this script is to execute the     "
+    echo "computeReleaseVersion scripts to compute the version          "
+    echo "of the next release.                                          "
+    echo "                                                              "
+    echo "Syntax:                                                       "
+    echo "                                                              "
+    echo "       "$PGM" [Options]                                       "
+    echo "                                                              "
+    echo "Options:                                                      "
+    echo "                                                              "
+    echo "  Mandatory parameters                                        "
+    echo "                                                              "
+    echo "       -w <workspace>      - Directory Path to a unique       "
+    echo "                             working directory                "
+    echo "                             Either an absolute path          "
+    echo "                             or relative path.                "
+    echo "                             If a relative path is provided,  "
+    echo "                             buildRootDir and the workspace   "
+    echo "                             path are combined                "
+    echo "                             Default=None, Required.          "
+    echo "                                                              "
+    echo "                 Ex: MortgageApplication/main/build-1         "
+    echo "                                                              "
+    echo "       -a <Application>    - Application name                 "
+    echo "                             Used to compute                  "
+    echo "                             Artifact repository name.        "
+    echo "                                                              "
+    echo "                 Ex: MortgageApplication                      "
+    echo "                                                              "
+    echo "       -b <gitBranch>      - Name of the git branch.          "
+    echo "                                                              "
+    echo "                 Ex: main                                     "
+    echo "                                                              "
+    echo "       -r <releaseType>    - Type of the release              "
+    echo "                             to calculate the version.        "
+    echo "                             Accepted values:                 "
+    echo "                             - Major                          "
+    echo "                             - Minor (Default)                "
+    echo "                             - Patch                          "
+    echo "                                                              "
+    exit 0
+}
+
 # Customization
 # Central configuration file leveraged by the backend scripts
-SCRIPT_HOME="$(dirname "$0")"
+SCRIPT_HOME="`dirname "$0"`"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 # Customization - End
 
@@ -25,7 +94,6 @@ ERRMSG=""
 Workspace=""
 App=""
 Branch=""
-PipelineType=""
 ReleaseType=""
 HELP=$1
 
@@ -73,7 +141,7 @@ if [ $rc -eq 0 ]; then
 
 # Get Options
     if [ $rc -eq 0 ]; then
-        while getopts "h:w:a:b:p:r:" opt; do
+        while getopts "h:w:a:b:r:" opt; do
             case $opt in
             h)
                 Help
@@ -110,17 +178,6 @@ if [ $rc -eq 0 ]; then
                 break
                 fi
                 Branch="$argument"
-                ;;
-            p)
-                argument="$OPTARG"
-                nextchar="$(expr substr $argument 1 1)"
-                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                  rc=4
-                  INFO=$PGM": [INFO] No Pipeline type specified. rc="$rc
-                  echo $INFO
-                  break
-                fi
-                PipelineType="$argument"
                 ;;
             r) 
                 # release type
@@ -206,20 +263,6 @@ validateOptions() {
     echo $ERRMSG
   fi
 
-  tmp1=$(echo $PipelineType | tr '[:upper:]' '[:lower:]')
-
-  case $tmp1 in
-  "build") ;;
-  "release") ;;
-  "preview") ;;
-  *)
-    rc=0
-    PipelineType="build"
-    ERRMSG=$PGM": [INFO] Set default Pipeline Type : ${PipelineType} ."
-    echo $ERRMSG
-    ;;
-  esac
-
   tmp2=$(echo $ReleaseType | tr '[:upper:]' '[:lower:]')
 
   case $tmp2 in
@@ -228,7 +271,7 @@ validateOptions() {
   "patch") ;;
   *)
     rc=0
-    PipelineType="patch"
+    ReleaseType="patch"
     ERRMSG=$PGM": [INFO] Set default Release Type : ${ReleaseType} ."
     echo $ERRMSG
     ;;
@@ -300,7 +343,6 @@ if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] **                Workspace:" $(getWorkDirectory)
   echo $PGM": [INFO] **              Application:" ${App}
   echo $PGM": [INFO] **                   Branch:" ${Branch}
-  echo $PGM": [INFO] **               Build Type:" ${PipelineType}
   echo $PGM": [INFO] **             Release Type:" ${ReleaseType}
   echo $PGM": [INFO] **   Baselinereference file:" ${baselineReferenceFile}
   echo $PGM": [INFO] **************************************************************"
