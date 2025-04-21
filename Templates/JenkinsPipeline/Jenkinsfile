@@ -131,9 +131,21 @@ def BuildOutputDir            = ""         // DBB Build Output Directory (Discov
 def BuildFile                 = ""         // Will contain the contents of the DBB buildFile.txt.
 def BuildHasFiles             = true       // DBB buildFile.txt indicates changed files.
 
+// TAZ Unit Test results to JUnit
+//
+// The sample style sheets are provided in the installation_path/taz_samples/xsl directory of the Early Development Testing for z/OS client.
+// These need to to uploaded to USS and should be made accessible to the pipeline user
+// To convert the TAZ results the command xalan needs to be avaiable in the PATH of the pipeline user
+// Below is an example of the .profile configuration
+// #xml
+// export XALANCROOT=/usr/lpp/ixm/IBM/xslt4c-1_12
+// export XERCESCROOT=/usr/lpp/ixm/IBM/xml4c-5_8
+// export PATH=$PATH:$XALANCROOT/bin
+// The Jenkins node too needs to be configured to include xalan as an environment variable, for example - XALANCROOT=/usr/lpp/ixm/IBM/xslt4c-1_12
 def TazLogs                   = "*.tazunittest.report.log" // Will contain the contents of the TAZ unit test runner result file * (*.bzures)
 def TazReports                = ""         // Will contain the contents of the TAZ unit test runner result file converted to JUnit test run file (*.xml)
 def XLSConv                   = "/var/dbb/extensions/zunit2junit/AZUZ2J40.xsl" //  XSL stylesheet that converts a unit test runner result file to a JUnit test run file
+
 def PackageCmd                = ""         // Packaging Command.
 def Packagerc                 = 0          // Packaging Command Return Code.
 
@@ -417,7 +429,7 @@ pipeline {
 								TazReports = findFiles(glob: TazLogs)
 
 									TazReports.each { item ->
-                								//echo  item.name
+                								// Convert TAZ EDT results to JUnit format
                									 sh "Xalan -o ${BuildOutputDir}/${item.name}.xml ${BuildOutputDir}/${item.name} ${XLSConv}"
            									 }
 		
