@@ -1,7 +1,7 @@
 
 # JCL Migration Sample
 ### Overview
-This sample provides a script to migrate JCL from a Z/OS dataset to a local Groovy script. The sample is a combination of Unix shell scripts, Apache Groovy scripts, templates, and configuration files.
+This sample provides a script to migrate JCL from a Z/OS dataset to a Groovy script. The sample is a combination of Unix shell scripts, Apache Groovy scripts, templates, and configuration files.
 
 ### Prerequisites
 * DBB Toolkit
@@ -26,6 +26,7 @@ Fill in information related to the JCL project in conf/jclmig.config file. The c
 
 ## Migration Process
 The JCL migration is a single step process that includes scanning the JCL to produce DBB XML and then converting the XML into a Groovy script using DBB functionality to accomplish the same tasks.  The migration is performed by invoking JCLtoDBB.sh in the bin directory.
+
 ```
 ./JCLtoDBB.sh -d USER.PROJECT.JCL -m MEMBER -p PROJECT -o jclMigration -c ../conf/jclmig.config -s false -g false
 
@@ -37,12 +38,12 @@ usage: JCLtoDBB.groovy [options]
  -g,--genExecVars <Generate executable variables>   Specify true to generate executable variables
  -h,--help                                          Show usage information
  -m,--member <JCL member>                           JCL member being migrated
- -o,--outputDir <output directory>                  Directory in the HFS where all files will be written. If specified, path is considered absolute if
+ -o,--outputDir <output directory>                  Directory in zFS where all files will be written. If specified, path is considered absolute if
                                                     it begins with a slash else it is relative path from the users home directory.  Default is
                                                     jclMigration.
  -p,--project <JCL project>                         JCL project to be migrated
  -s,--saveOutputs <save JCLExec outputs>            Specify true to generated code to save outputs from a JCLExec
-
+```
 
 ### JCL Migration to DBB XML
 This portion of the process will scan the JCL and produce a DBB XML file that represents the steps, programs, and datasets, used in the JCL.
