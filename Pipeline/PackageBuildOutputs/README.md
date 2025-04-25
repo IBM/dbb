@@ -166,15 +166,14 @@ When deploying with Wazi Deploy, and generating the Wazi Deploy Application Mani
 * `--application` (recommended)
 
 ```
-+ groovyz /var/pipeline/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
-      --workDir /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator  \
++ groovyz /u/anjali/dbb/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy \
+      --workDir /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429  \
       --tarFileName retirementCalculator.tar  \
       --application retirementCalculator  \
       --addExtension \
       --branch main \
       --generateWaziDeployAppManifest  \
-      --includeLogs "*.log"  \
-      --versionName rel-2.0.0 \
+      --includeLogs *.log,*.xml \
       --verbose
 ```
 
@@ -184,121 +183,174 @@ When deploying with Wazi Deploy, and generating the Wazi Deploy Application Mani
 PackageBuildOutputs console output
 
 ```
-** PackageBuildOutputs start at 20241028.145841.890
+** PackageBuildOutputs start at 20250425.062456.302
 ** Properties at startup:
    addExtension -> true
    application -> retirementCalculator
    branch -> main
-   buildReportOrder -> [/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json]
-   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY", "OBJ" :
-"BINARY"]
+   buildReportOrder -> [/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/BuildReport.json]
+   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT", "EQALANGX" : "BINARY", "OBJ" : "BINARY"]
    fileEncoding -> UTF-8
+   generateConcertBuildManifest -> false
    generateSBOM -> false
    generateWaziDeployAppManifest -> true
-   includeLogs -> *.log
-   packagingPropertiesFile -> /u/mdalbin/dbb-MD/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
+   includeLogs -> *.log,*.xml
+   packagingPropertiesFile -> /u/anjali/dbb/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
+   privateInterfacesDeployTypes -> OBJ,BMSCOPY
+   publicInterfacesDeployTypes -> OBJ
    publish -> false
-   startTime -> 20241028.145841.890
+   publishInterfaces -> false
+   startTime -> 20250425.062456.302
    tarFileName -> retirementCalculator.tar
    verbose -> true
-   versionName -> rel-2.0.0
-   workDir -> /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator
-** Read build report data from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json'.
+   workDir -> /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429
+** Read build report data from '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/BuildReport.json'.
 ** Remove output records without deployType or with deployType=ZUNIT-TESTCASE
-** Deployable artifacts detected in '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/BuildReport.json':
-        'EBUD03' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
-        'EBUD02' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
-        'EBUD0RUN' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
-        'EBUD01' from 'DBEHM.MIG.LOAD' with Deploy Type 'LOAD'
-*** Number of build outputs to package: 4
-** Copy build outputs to temporary package directory '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir'
-        Copy 'DBEHM.MIG.LOAD(EBUD03)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD
-03.LOAD' with DBB Copymode 'LOAD'
-        Copy 'DBEHM.MIG.LOAD(EBUD02)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD
-02.LOAD' with DBB Copymode 'LOAD'
-        Copy 'DBEHM.MIG.LOAD(EBUD0RUN)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EB
-UD0RUN.LOAD' with DBB Copymode 'LOAD'
-        Copy 'DBEHM.MIG.LOAD(EBUD01)' to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/bin/LOAD/EBUD
-01.LOAD' with DBB Copymode 'LOAD'
-** Generate Wazi Deploy Application Manifest file to /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/wa
-zideploy_manifest.yml
+*! Build output JENKINS.ZDATAN.RETIRE.OBJ(EBUD01) with deployType 'OBJ' has been excluded from packaging.
+*! Build output JENKINS.ZDATAN.RETIRE.OBJ(EBUD02) with deployType 'OBJ' has been excluded from packaging.
+*! Build output JENKINS.ZDATAN.RETIRE.OBJ(EBUD03) with deployType 'OBJ' has been excluded from packaging.
+*! Build output JENKINS.ZDATAN.RETIRE.OBJ(TEBUD01) with deployType 'OBJ' has been excluded from packaging.
+** 3 Build outputs detected in '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/BuildReport.json':
+	'EBUD03' from 'JENKINS.ZDATAN.RETIRE.LOAD' with Deploy Type 'LOAD'
+	'EBUD02' from 'JENKINS.ZDATAN.RETIRE.LOAD' with Deploy Type 'LOAD'
+	'EBUD01' from 'JENKINS.ZDATAN.RETIRE.LOAD' with Deploy Type 'LOAD'
+** Total number of build outputs to package: 3
+** Copy 3 deployable artifacts to temporary package directory '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/tempPackageDir/bin'
+	Copy 'JENKINS.ZDATAN.RETIRE.LOAD(EBUD03)' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/tempPackageDir/bin/load/EBUD03.LOAD' with DBB Copymode 'LOAD'
+	Copy 'JENKINS.ZDATAN.RETIRE.LOAD(EBUD02)' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/tempPackageDir/bin/load/EBUD02.LOAD' with DBB Copymode 'LOAD'
+	Copy 'JENKINS.ZDATAN.RETIRE.LOAD(EBUD01)' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/tempPackageDir/bin/load/EBUD01.LOAD' with DBB Copymode 'LOAD'
+** Generate Wazi Deploy Application Manifest file to /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/tempPackageDir/wazideploy_manifest.yml
 ---
 apiVersion: "wazideploy.ibm.com/v1"
 kind: "ManifestState"
 metadata:
   name: "retirementCalculator"
   description: "retirementCalculator"
-  version: "rel-2.0.0"
+  version: "20250425.062456.302"
   annotations:
-    creationTimestamp: "20241028.145841.890"
+    creationTimestamp: "20250425.062456.302"
     scmInfo:
       type: "git"
-      uri: null
+      uri: "git@github.ibm.com:anjaabr1/retirementCalculator.git"
       branch: "main"
-      shortCommit: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+      shortCommit: "472d554cb701aaa9f6fa9084870320a98175531e"
     packageInfo: null
+    external_dependencies: null
+    buildInfo: null
 artifacts:
 - name: "EBUD03"
-  description: "RetirementCalculator/src/cobol/ebud03.cbl"
+  description: "retirementCalculator/cobol/EBUD03.cbl"
   properties:
   - key: "path"
-    value: "bin/LOAD/EBUD03.LOAD"
+    value: "bin/load/EBUD03.LOAD"
   - key: "githash"
-    value: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+    value: "472d554cb701aaa9f6fa9084870320a98175531e"
+  - key: "giturl"
+    value: "git@github.ibm.com:anjaabr1/retirementCalculator.git"
+  - key: "dependency_set"
+    value:
+    - lname: "CEEIGZCT"
+      library: "SYSLIB"
+      category: "COPY"
+      collection: null
+      sourceDir: null
+      file: null
+      archive: null
+      resolved: false
+      excluded: false
+    - lname: "EBUD03"
+      library: "JENKINS.ZDATAN.RETIRE.OBJ"
+      category: "LINK"
+      collection: null
+      sourceDir: null
+      file: "JENKINS.ZDATAN.RETIRE.OBJ(EBUD03)"
+      archive: null
+      resolved: true
+      excluded: false
   type: "LOAD"
-  hash: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+  hash: "472d554cb701aaa9f6fa9084870320a98175531e"
 - name: "EBUD02"
-  description: "RetirementCalculator/src/cobol/ebud02.cbl"
+  description: "retirementCalculator/cobol/EBUD02.cbl"
   properties:
   - key: "path"
-    value: "bin/LOAD/EBUD02.LOAD"
+    value: "bin/load/EBUD02.LOAD"
   - key: "githash"
-    value: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+    value: "472d554cb701aaa9f6fa9084870320a98175531e"
+  - key: "giturl"
+    value: "git@github.ibm.com:anjaabr1/retirementCalculator.git"
+  - key: "dependency_set"
+    value:
+    - lname: "EBUD02"
+      library: "JENKINS.ZDATAN.RETIRE.OBJ"
+      category: "LINK"
+      collection: null
+      sourceDir: null
+      file: "JENKINS.ZDATAN.RETIRE.OBJ(EBUD02)"
+      archive: null
+      resolved: true
+      excluded: false
   type: "LOAD"
-  hash: "581f315a70a69454fcd880b6c3a4bb59f991414d"
-- name: "EBUD0RUN"
-  description: "RetirementCalculator/src/cobol/ebud0run.cbl"
-  properties:
-  - key: "path"
-    value: "bin/LOAD/EBUD0RUN.LOAD"
-  - key: "githash"
-    value: "581f315a70a69454fcd880b6c3a4bb59f991414d"
-  type: "LOAD"
-  hash: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+  hash: "472d554cb701aaa9f6fa9084870320a98175531e"
 - name: "EBUD01"
-  description: "RetirementCalculator/src/cobol/ebud01.cbl"
+  description: "retirementCalculator/cobol/EBUD01.cbl"
   properties:
   - key: "path"
-    value: "bin/LOAD/EBUD01.LOAD"
+    value: "bin/load/EBUD01.LOAD"
   - key: "githash"
-    value: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+    value: "472d554cb701aaa9f6fa9084870320a98175531e"
+  - key: "giturl"
+    value: "git@github.ibm.com:anjaabr1/retirementCalculator.git"
+  - key: "dependency_set"
+    value:
+    - lname: "EBUD01"
+      library: "JENKINS.ZDATAN.RETIRE.OBJ"
+      category: "LINK"
+      collection: null
+      sourceDir: null
+      file: "JENKINS.ZDATAN.RETIRE.OBJ(EBUD01)"
+      archive: null
+      resolved: true
+      excluded: false
   type: "LOAD"
-  hash: "581f315a70a69454fcd880b6c3a4bb59f991414d"
+  hash: "472d554cb701aaa9f6fa9084870320a98175531e"
 
-** Generate package build report order file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/buildRe
-portOrder.txt'
-** Copy packaging properties config file to '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/tempPackageDir/packageBui
-ldOutputs.properties'
-** Create tar file at /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar
-   Executing [sh, -c, tar cUXf /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar *]
-** Package '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar' successfully created.
-** Add files with file pattern '*.log' from '/u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator' to '/u/mdalbin/Migration
--Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar'
-   Executing [sh, -c, tar rUXf /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar *.log]
+** Generate package build report order file to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/tempPackageDir/buildReportOrder.txt'
+** Copy packaging properties config file to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/tempPackageDir/packageBuildOutputs.properties'
+** Create tar file at /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar
+   Executing [sh, -c, tar cUXf /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar *]
+** Package '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar' successfully created.
+** Checking for files matching file extension '*.log' in '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429'.
+** Adding file '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.cobol.log' from '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar'
+   Executing [sh, -c, tar rUXf '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar' /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.cobol.log]
+** Adding file '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD02.cobol.log' from '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar'
+   Executing [sh, -c, tar rUXf '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar' /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD02.cobol.log]
+** Adding file '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD03.cobol.log' from '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar'
+   Executing [sh, -c, tar rUXf '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar' /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD03.cobol.log]
+** Adding file '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/TEBUD01.cobol.log' from '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar'
+   Executing [sh, -c, tar rUXf '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar' /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/TEBUD01.cobol.log]
+** Adding file '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.tazunittest.jcl.log' from '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar'
+   Executing [sh, -c, tar rUXf '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar' /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.tazunittest.jcl.log]
+** Adding file '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.tazunittest.report.log' from '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429' to '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar'
+   Executing [sh, -c, tar rUXf '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar' /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.tazunittest.report.log]
+** Checking for files matching file extension '*.xml' in '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429'.
+*! [WARNING] No files matching file extension '*.xml' was found in '/var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429'. Skipping.
 ** List package contents.
-   Executing [sh, -c, tar tvf /u/mdalbin/Migration-Modeler-MDLB-work/logs/RetirementCalculator/retirementCalculator.tar]
--rw-rw-rw-   1 BPXROOT  TIVUSR      9169 Oct 28 11:29 001_BuildReport.json
-drwxr-xr-x   1 BPXROOT  TIVUSR         0 Oct 28 14:58 bin/
-drwxr-xr-x   1 BPXROOT  TIVUSR         0 Oct 28 14:58 bin/LOAD/
--rwxr-xr-x   1 BPXROOT  TIVUSR     86016 Oct 28 14:58 bin/LOAD/EBUD03.LOAD
--rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 14:58 bin/LOAD/EBUD02.LOAD
--rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 14:58 bin/LOAD/EBUD0RUN.LOAD
--rwxr-xr-x   1 BPXROOT  TIVUSR     49152 Oct 28 14:58 bin/LOAD/EBUD01.LOAD
--rw-r--r--   1 BPXROOT  TIVUSR        22 Oct 28 14:58 buildReportOrder.txt
--rw-r--r--   1 BPXROOT  ZSECURE     2502 Oct 28 14:54 packageBuildOutputs.properties
--rw-r--r--   1 BPXROOT  TIVUSR      1509 Oct 28 14:58 wazideploy_manifest.yml
--rw-r--r--   1 BPXROOT  TIVUSR      2296 Oct 18 16:38 build-preview-RetirementCalculator.log
--rw-r--r--   1 BPXROOT  TIVUSR      4411 Oct 18 16:38 packaging-preview-RetirementCalculator.log
+   Executing [sh, -c, tar tvf /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/retirementCalculator.tar]
+-rw-rw-r--   1 JENKINS  JENKINSG   14688 Apr 25 06:24 001_BuildReport.json
+drwxrwxr-x   1 JENKINS  JENKINSG       0 Apr 25 06:24 bin/
+drwxrwxr-x   1 JENKINS  JENKINSG       0 Apr 25 06:24 bin/load/
+-rwxrwxr-x   1 JENKINS  JENKINSG  102400 Apr 25 06:24 bin/load/EBUD03.LOAD
+-rwxrwxr-x   1 JENKINS  JENKINSG   61440 Apr 25 06:24 bin/load/EBUD02.LOAD
+-rwxrwxr-x   1 JENKINS  JENKINSG   65536 Apr 25 06:24 bin/load/EBUD01.LOAD
+-rw-rw-r--   1 JENKINS  JENKINSG      22 Apr 25 06:24 buildReportOrder.txt
+-rw-r--r--   1 JENKINS  JENKINSG    4599 Apr 25 06:24 packageBuildOutputs.properties
+-rw-rw-r--   1 JENKINS  JENKINSG    2616 Apr 25 06:24 wazideploy_manifest.yml
+-rw-rw-r--   1 JENKINS  JENKINSG  143797 Apr 25 06:24 /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.cobol.log
+-rw-rw-r--   1 JENKINS  JENKINSG  107163 Apr 25 06:24 /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD02.cobol.log
+-rw-rw-r--   1 JENKINS  JENKINSG  318796 Apr 25 06:24 /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD03.cobol.log
+-rw-rw-r--   1 JENKINS  JENKINSG 1154494 Apr 25 06:24 /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/TEBUD01.cobol.log
+-rw-rw-r--   1 JENKINS  JENKINSG   22357 Apr 25 06:24 /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.tazunittest.jcl.log
+-rw-rw-r--   1 JENKINS  JENKINSG     948 Apr 25 06:24 /var/jenkins/workspace/retirementCalculator-anjali-packaging/BUILD-23/build.20250425.062430.429/EBUD01.tazunittest.report.log
 
 ** Packaging completed successfully.
 ```
@@ -462,8 +514,8 @@ Parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 `copyModeMap` | configures the mapping of last level qualifier and the necessary copymode from PDS to USS.
 `deployTypesFilter` | to limit the scope of DBB deployTypes that are added to the package
-`includeLogs` | List of file patterns from the workDir, that should be addded to the package, such as build logs
-`addExtension` | Boolean flag to append the DBB deployType as the file extension to provide information about the deployment 
+`includeLogs` | List of file extensions matching files from the workDir, that should be addded to the package, such as build logs
+`addExtension` | Boolean flag to append the DBB deployType as the file extension to provide information about the deployment
 `generateWaziDeployAppManifest` |  Boolean flag to indicate if the Wazi Deploy Application Manifest file should be created
 `generateSBOM` |  Boolean flag to indicate if a CycloneDX SBOM file should be created
 `publish` |  Boolean flag to indicate if the created TAR file should be uploaded to an Artifact Repository
@@ -520,7 +572,7 @@ Parameter | Description
  -h,--help
       Prints this message
  -il,--includeLogs <includeLogs>
-      Comma-separated list of files/patterns from the USS build workspace.  (Optional)
+      Comma-separated list of file extensions matching files from the USS build workspace.  (Optional)
  -o,--owner <owner>
       Owner of the packaged artifacts
  -p,--publish
