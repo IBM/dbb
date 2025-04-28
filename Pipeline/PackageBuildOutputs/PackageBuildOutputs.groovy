@@ -749,7 +749,7 @@ if (rc == 0) {
 
 				if (!matchedFiles.isEmpty()) {
 					matchedFiles.each() { file ->
-						println("** Adding file '${file}' from '${props.workDir}' to '${tarFile}'")
+						println("    Adding file '${file}' from '${props.workDir}' to '${tarFile}'")
 						processCmd = [
 							"sh",
 							"-c",
