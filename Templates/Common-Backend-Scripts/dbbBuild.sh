@@ -158,14 +158,17 @@ AppDir=""        # Derived Application Directory
 HLQ=""           # Derived High Level Qualifier
 HLQPrefix=""     # Prefix of HLQ, either specified via the cli option -q or via configuration file
 Type=""          # Derived Build Type
+userDefinedBuildType="" #  Flag if the user has provided the Build Type as argument
 baselineRef=""   # baselineReference that is computed by utilities/dbbBuildUtils.sh
 propOverrides="" # Override of default build parameters for zAppBuild
 #  computed by utilities/dbbBuildUtils.sh
 outDir=""                  # Computed output directory to store build protocols
 nestedApplicationFolder="" # Flag to understand a nested repository
 
-LastBuildLog=""
-buildlistsize=0
+# Local variables for checking the contents of buildList and deletedFilesList
+totalLogListSize=0
+buildListFile=""
+deletedFilesListFile=""
 
 DBBLogger=""
 zAppBuildVerbose=""
@@ -268,6 +271,7 @@ if [ $rc -eq 0 ]; then
           break
         fi
         Type="$argument"
+        userDefinedBuildType=1
         ;;
       p)
         argument="$OPTARG"
@@ -515,26 +519,24 @@ if [ $rc -eq 0 ]; then
 
     ## Except for the reset mode, check for "nothing to build" condition and throw an error to stop pipeline
     if [ "$Type" != "--reset" ]; then
+      
+      # Locate buildList and deletedFilesList in Build Log Directory within outDir, and group them in logListArray
+      buildListFile="${outDir}/buildList.txt"
+      deletedFilesListFile="${outDir}/deletedFilesList.txt"
+      logListArray=(${buildListFile} ${deletedFilesListFile})
 
-      # Locate the most recent Build Log Directory within outDir. The Build Log Directories are Time Stamped.
-      # Therefore, the last directory entry will be the most recent Build Log. The directory will always be
-      # be created by DBB, but "buildList.txt" may not.  If not created, array will will be blank.
-      array=$(find ${outDir} -name "buildList.txt")
-      for log in ${array[@]}; do
-        LastBuildLog=${log}
-        echo $PGM": [INFO] LastBuildLog = ${LastBuildLog}"
+      # For each list in logListArray, if found in the last Build Log Directory, get its size (character count), then
+      # increase logListSize by that amount.
+      for list in ${logListArray[@]}; do
+        if [ -f ${list} ]; then
+          # wc -c will return the two values; Character Count and Log File Path.  Parse out the Character Count.
+          set $(wc -c <${list})
+          totalLogListSize=$((${totalLogListSize}+$1))
+        fi
       done
 
-      # If "buildList.txt" was found in the last Build Log Directory, determine the character count.
-      # wc -c will return the two values; Character Count and Log File Path.  Parse out the Character Count.
-      if [ -z ${LastBuildLog} ]; then
-        buildlistsize=0
-      else
-        set $(wc -c <${LastBuildLog})
-        buildlistsize=$1
-      fi
-
-      if [ $buildlistsize = 0 ]; then
+      # Error/warning if both build and file list have 0 character count (i.e. are empty)       
+      if [ ${totalLogListSize} = 0 ]; then
         rc=4
         ERRMSG=$PGM": [WARNING] DBB Build Error. No source changes detected. rc="$rc
         echo $ERRMSG
