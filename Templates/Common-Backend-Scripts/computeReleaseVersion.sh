@@ -352,7 +352,7 @@ if [ $rc -eq 0 ]; then
   export mainBranchSegment=`echo ${Branch} | awk -F "/" '{ print $1 }'`
   export secondBranchSegment=`echo ${Branch} | awk -F "/" '{ print $2 }'`
   export thirdBranchSegment=`echo ${Branch} | awk -F "/" '{ print $3 }'`
-  echo $PGM": [INFO] Branch segments: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}"
+  # echo $PGM": [DEBUG] Branch segments: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}"
 
 # Find base line version of the current branch from the baseLineReferenceFile
   getBaselineReference
