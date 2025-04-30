@@ -317,17 +317,26 @@ getBaselineReference() {
 
 computeNextReleaseVersion() {
     # Compute the name of the next release based on the releaseType
-    if [ "${ReleaseType}" == "patch" ]; then
-      export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$3 += 1 ; print}'`
-    fi
-    
-    if [ "${ReleaseType}" == "minor" ]; then
-      export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$2 += 1 ; $3 = 0; print}'`
-    fi
-            
-    if [ "${ReleaseType}" == "major" ]; then
-      export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
-    fi
+    case ${ReleaseType} in
+        "patch")
+            export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$3 += 1 ; print}'`
+            rc=0
+         ;;
+        "minor")
+            export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$2 += 1 ; $3 = 0; print}'`
+            rc=0 
+         ;;
+         "major")
+            export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
+            rc=0
+         ;;
+        *)
+            rc=8
+            ERRMSG=$PGM": [ERROR] Release type can only be Major, Minor or Patch. rc="$rc
+            echo $ERRMSG
+         ;;
+    esac
+
 }
 
 # Call validate Options
@@ -357,12 +366,18 @@ if [ $rc -eq 0 ]; then
 # Find base line version of the current branch from the baseLineReferenceFile
   getBaselineReference
   if [ $rc -eq 0 ]; then
-      echo $PGM": [INFO] Baseline reference: ${baselineRef}"
+      ERRMSG=$PGM": [INFO] Baseline reference: ${baselineRef}"
+      eecho $ERRMSG
     
       computeNextReleaseVersion
-      export releaseVersion="rel-"${newVersion}
+      
       if [ $rc -eq 0 ]; then
-        echo $PGM": [INFO] Next release version: ${releaseVersion}"
+        export releaseVersion="rel-"${newVersion}
+        ERRMSG=$PGM": [INFO] Compute the next release version complete. The next release version: ${releaseVersion}. rc="$rc
+        echo $ERRMSG
+      else
+        ERRMSG=$PGM": [ERROR] Compute the next release version failed. Check Console for details. rc="$rc
+        echo $ERRMSG
       fi
   fi
 fi
