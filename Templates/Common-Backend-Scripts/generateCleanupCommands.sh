@@ -240,6 +240,27 @@ validateOptions() {
         echo $ERRMSG
     fi
 
+    if [ -z "${dbbMetadataStoreType}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] DBB MetadataStore Type is a required configuration in pipelineBackend.config . rc="$rc
+        echo $ERRMSG
+    else
+
+        case ${dbbMetadataStoreType} in
+        file)
+            cleanupDbbMetadataStoreOptions="--type file --location ${dbbFileMetadataStoreLocation}"
+            ;;
+        db2)
+            cleanupDbbMetadataStoreOptions="--type db2 --user ${dbbMetadataStoreJdbcId} --password-file ${dbbMetadataStoreJdbcPwdFile} --db2-config ${dbbMetadataStoreJdbcConfigFile} --url ${dbbMetadataStoreJdbcUrl}"
+            ;;
+        *)
+            rc=8
+            ERRMSG=$PGM": [INFO] Invalid DBB MetadataStore Type: ${dbbMetadataStoreType}. Check required configuration in pipelineBackend.config. rc="$rc
+            echo $ERRMSG
+            ;;
+        esac
+
+    fi
 }
 
 # Prepare output files
