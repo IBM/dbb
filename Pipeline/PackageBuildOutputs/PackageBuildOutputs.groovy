@@ -704,6 +704,41 @@ if (rc == 0) {
 				}
 			}
 
+			//Package additional outputs to tar file.
+		        if (props.includeLogs && rc == 0) {
+			       def workDir = new File(props.workDir)
+			       (props.includeLogs).split(",").each { fileExtension ->
+			       def matchedFiles = []
+
+				println("** Checking for files matching file extension '${fileExtension}' in '${workDir.absolutePath}'.")
+
+				// Convert '*.ext' to extension (like ".log") for basic matching
+				if (fileExtension ==~ /\*\.[a-zA-Z0-9]+/) {
+					def ext = fileExtension.replace("*", "")
+					if (workDir.exists() && workDir.isDirectory()) {
+					    workDir.eachFile(FileType.FILES) { file ->
+						if (file.name.endsWith(ext)) {
+						    matchedFiles << file
+						}
+					    }
+					}
+				} else {
+					println("*! [WARNING] Unsupported file extension format '${fileExtension}'. Skipping.")
+				}
+
+				if (!matchedFiles.isEmpty()) {
+                                     def logDir = new File(tempLoadDir, "log")
+                                     logDir.mkdirs()  // Create the 'log' directory if it doesn't exist
+				     matchedFiles.each() { file ->
+                                        def destFile = new File(logDir, file.name)
+                                        copyFiles(file.absolutePath, destFile.absolutePath)
+					println("       Copy '${file.name}' to '${destFile.absolutePath}'")
+                                     }
+                                } else {
+                                        println("*! [WARNING] No files matching file extension '${fileExtension}' were found in '${props.workDir}'. Skipping.")                                }
+                               
+                           }
+                      }
 			if (rc == 0) {
 				println("** Create tar file at ${tarFile}")
 				// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
@@ -724,24 +759,7 @@ if (rc == 0) {
 			}
 		}
 
-		//Package additional outputs to tar file.
-		if (props.includeLogs && rc == 0) {
-			(props.includeLogs).split(",").each { logPattern ->
-				println("** Add files with file pattern '$logPattern' from '${props.workDir}' to '${tarFile}'")
-				processCmd = [
-					"sh",
-					"-c",
-					"tar rUXf $tarFile $logPattern"
-				]
-
-				processRC = runProcess(processCmd, new File(props.workDir))
-				rc = Math.max(rc, processRC)
-				if (rc != 0) {
-					println("*! [ERROR] Error when appending '$logPattern' files to Package '${tarFile}' with rc=$rc.")
-				}
-			}
-		}
-
+		
 		if (props.verbose && props.verbose.toBoolean() && rc  == 0) {
 			println ("** List package contents.")
 
@@ -939,7 +957,7 @@ def parseInput(String[] cliArgs){
 	// optional packaging options
 	cli.d(longOpt:'deployTypes', args:1, argName:'deployTypes','Comma-seperated list of deployTypes to filter on the scope of the tar file. (Optional)')
 	cli.t(longOpt:'tarFileName', args:1, argName:'filename', 'Name of the package tar file. (Optional unless using --buildReportOrder or --buildReportOrderFile)')
-	cli.il(longOpt:'includeLogs', args:1, argName:'includeLogs', 'Comma-separated list of files/patterns from the USS build workspace. (Optional)')
+	cli.il(longOpt:'includeLogs', args:1, argName:'includeLogs', 'Comma-separated list of file extensions matching files from the USS build workspace. (Optional)')
 	cli.ae(longOpt:'addExtension', 'Flag to add the deploy type extension to the member in the package tar file. (Optional)')
 
 	// Wazi Deploy Application Manifest generation
