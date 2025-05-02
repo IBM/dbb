@@ -704,6 +704,41 @@ if (rc == 0) {
 				}
 			}
 
+			//Package additional outputs to tar file.
+		        if (props.includeLogs && rc == 0) {
+			       def workDir = new File(props.workDir)
+			       (props.includeLogs).split(",").each { fileExtension ->
+			       def matchedFiles = []
+
+				println("** Checking for files matching file extension '${fileExtension}' in '${workDir.absolutePath}'.")
+
+				// Convert '*.ext' to extension (like ".log") for basic matching
+				if (fileExtension ==~ /\*\.[a-zA-Z0-9]+/) {
+					def ext = fileExtension.replace("*", "")
+					if (workDir.exists() && workDir.isDirectory()) {
+					    workDir.eachFile(FileType.FILES) { file ->
+						if (file.name.endsWith(ext)) {
+						    matchedFiles << file
+						}
+					    }
+					}
+				} else {
+					println("*! [WARNING] Unsupported file extension format '${fileExtension}'. Skipping.")
+				}
+
+				if (!matchedFiles.isEmpty()) {
+                                     def logDir = new File(tempLoadDir, "log")
+                                     logDir.mkdirs()  // Create the 'log' directory if it doesn't exist
+				     matchedFiles.each() { file ->
+                                        def destFile = new File(logDir, file.name)
+                                        copyFiles(file.absolutePath, destFile.absolutePath)
+					println("       Copy '${file.name}' to '${destFile.absolutePath}'")
+                                     }
+                                } else {
+                                        println("*! [WARNING] No files matching file extension '${fileExtension}' were found in '${props.workDir}'. Skipping.")                                }
+                               
+                           }
+                      }
 			if (rc == 0) {
 				println("** Create tar file at ${tarFile}")
 				// Note: https://www.ibm.com/docs/en/zos/2.4.0?topic=scd-tar-manipulate-tar-archive-files-copy-back-up-file
@@ -724,52 +759,7 @@ if (rc == 0) {
 			}
 		}
 
-		//Package additional outputs to tar file.
-		if (props.includeLogs && rc == 0) {
-			def workDir = new File(props.workDir)
-
-			(props.includeLogs).split(",").each { fileExtension ->
-				def matchedFiles = []
-
-				println("** Checking for files matching file extension '${fileExtension}' in '${workDir.absolutePath}'.")
-
-				// Convert '*.ext' to extension (like ".log") for basic matching
-				if (fileExtension ==~ /\*\.[a-zA-Z0-9]+/) {
-					def ext = fileExtension.replace("*", "")
-					if (workDir.exists() && workDir.isDirectory()) {
-						workDir.eachFile(FileType.FILES) { file ->
-							if (file.name.endsWith(ext)) {
-								matchedFiles << file
-							}
-						}
-					}
-				} else {
-					println("*! [WARNING] Unsupported file extension format '${fileExtension}'. Skipping.")
-				}
-
-				if (!matchedFiles.isEmpty()) {
-					matchedFiles.each() { file ->
-						println("    Adding file '${file}' from '${props.workDir}' to '${tarFile}'")
-						processCmd = [
-							"sh",
-							"-c",
-							"tar rUXf '${tarFile}' ${file}"
-						]
-
-						processRC = runProcess(processCmd, workDir)
-						rc = Math.max(rc, processRC)
-
-						if (rc != 0) {
-							println("*! [ERROR] Error when adding file '$file' to package '${tarFile}' with rc=$rc.")
-						}
-					}
-				} else {
-					println("*! [WARNING] No files matching file extension '$fileExtension' was found in '${props.workDir}'. Skipping.")
-				}
-			}
-		}
-
-
+		
 		if (props.verbose && props.verbose.toBoolean() && rc  == 0) {
 			println ("** List package contents.")
 
