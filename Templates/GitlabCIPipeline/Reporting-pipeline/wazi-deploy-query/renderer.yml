@@ -1,0 +1,31 @@
+{% if type is defined -%}
+{% if env is defined -%}
+{% if app is defined -%}
+Artifacts of type {{type}} for application {{app}} in environment {{env}}:
+{% else -%}
+Artifacts of type {{type}} in environment {{env}}:
+{% endif -%}
+{% else -%}
+{% if app is defined -%}
+Artifacts of type {{type}} for {{app}}:
+{% else -%}
+Artifacts of type {{type}}:
+{% endif -%}
+{% endif -%}
+{% else -%}
+{% if env is defined -%}
+{% if app is defined -%}
+Artifacts for {{app}} in {{env}}:
+{% else -%}
+Artifacts in {{env}}:
+{% endif -%}
+{% else -%}
+{% if app is defined -%}
+Artifacts for {{app}}:
+{% else -%}
+Artifacts:
+{% endif -%}
+{% endif -%}
+{% endif -%}
+{% for result in results %}- {{result.name}}.{{result.properties | selectattr('key', 'equalto', 'type') | map(attribute='value') | list | first }}
+{% endfor %}

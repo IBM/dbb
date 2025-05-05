@@ -1,0 +1,82 @@
+variables:
+    GIT_STRATEGY: clone
+    GIT_CHECKOUT: "true"
+    # Directories on the GitLab runner environment to persist Wazi Deploy Evidences and Index
+    wdEvidencesRoot: /var/work/wazi_deploy_evidences_gitlab/
+    wdEvidencesIndex: /var/work/wazi_deploy_evidences_gitlab_index/
+    # Working directory on Linux machine
+    reportOutputDirectory: ${CI_PROJECT_DIR}/REPORT-OUTPUT
+    application:
+        value: "*"
+        description: "Application Name filter"
+    module:
+        value: "*"
+        description: "Module Name filter"
+    type:
+        value: "*"
+        description: "Type filter"
+    environment: 
+        value: "*"
+        options:
+          - "*"
+          - "EOLEB7-Integration"
+          - "EOLEB7-Acceptance"
+          - "EOLEB7-Production"
+        description: "Environment name filter"
+    reportFile: ${reportOutputDirectory}/deployment-inventory-report-${CI_PIPELINE_ID}.txt  
+    rendererFile: $CI_PROJECT_DIR/wazi-deploy-query/renderer.yml
+    templateFile: $CI_PROJECT_DIR/wazi-deploy-query/queryTemplate.yml
+    
+# Only run pipeline on manual request
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+stages:
+    - Query
+
+Query:
+    stage: Query
+    tags: [shell]
+    artifacts:
+        name: "WD-Report-${CI_PIPELINE_ID}"
+        paths:
+            - "${reportOutputDirectory}/*.txt"
+    script: |
+                echo " "
+                echo "Refresh Wazi Deploy index for all applications and querying the Wazi Deploy Index"
+                echo "*******************************************"
+                echo "Query Parameters: "
+                echo "  Environment   = $environment"
+                echo "  Application   = $application"
+                echo "  Element Name  = $module"
+                echo "  Element Type  = $type"
+                echo " "
+                echo "Query Setup: "
+                echo "  Template        = $templateFile"
+                echo "  Renderer        = $rendererFile"
+                echo "  WaziDeployIdx   = $wdEvidencesIndex"
+                echo " "
+                echo "Project is checked out to: $CI_PROJECT_DIR"
+                ls -l "$CI_PROJECT_DIR"
+
+
+                # Variables
+                rc=0
+
+                # Init Output directory
+                mkdir ${reportOutputDirectory}
+
+                CMD="wazideploy-evidence  --indexFolder $wdEvidencesIndex --dataFolder $wdEvidencesRoot --template $templateFile --output=$reportFile ir app="$application" env="$environment" type="$type" module="$module" renderer="$rendererFile""
+                echo "[INFO] Executing following command : $CMD"
+                ${CMD}
+                rc=$?
+
+                # Error Handling
+                if [ $rc -eq 0 ]; then
+                    echo "[INFO] - Query Wazi Deploy index completed. Report $reportFile generated."
+                else
+
+                    echo "[WARNING] - Query Wazi Deploy index failed."
+                    exit 1
+                fi
