@@ -6,7 +6,7 @@ This pipeline template is implementing the [Git-based process and branching mode
 It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) to implement the Setup, Build, Packaging and Deployment stages.
 
 The pipeline implements the following stages
-* `Query` stage to [clone](../Common-Backend-Scripts/README.md#41---gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
+* `Setup` stage to [clone](../Common-Backend-Scripts/README.md#41---gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
 * `Build` stage 
   * to invoke the zAppBuild [build](../Common-Backend-Scripts/README.md#42---dbbbuildsh) framework,
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them as Gitlab Artifacts.
