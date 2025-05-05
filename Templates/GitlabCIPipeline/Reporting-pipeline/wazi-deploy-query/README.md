@@ -81,9 +81,8 @@ The following variables need to be updated within the pipeline definition file: 
 
 Variable | Description
 --- | ---
-
-templateFile | Path to the query file that contains the extraction criteria for the analysis
-rendererFile | Path to renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt
+templateFile |  Path to the query file that contains the extraction criteria for the analysis
+rendererFile | Path to renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt 
 reportFile | Path to store the output file produced as a result of running the Wazi deploy query
 
 
@@ -113,4 +112,4 @@ environment | Specify the environment
 When a developer wants to analyze the Wazi deploy deployment process and the content of the target deployment environment, the pipeline can be triggered manually.
 
 It covers the followings steps:
-* Query - Refreshes Wazi deploy index and query it using wazideploy-evidence command 
+* Query - Refreshes Wazi deploy index and query the index using wazideploy-evidence command. It is then published into the location stored under variable `reportFile`
