@@ -11,7 +11,6 @@ The pipeline implements the following stages
    * to query the Wazi Deploy Index. 
 
 
-#Depending on your selected deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
 The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
