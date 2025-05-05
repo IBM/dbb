@@ -1,5 +1,5 @@
 # Gitlab Wazideploy query template
-This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to trigger an analysis of the evidence file with the Wazi Deploy evidence command and a query template [queryTemplate.yml] that contains the extraction criteria for the analysis.
+This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to trigger an analysis of the evidence file with the Wazi Deploy evidence command and a  [queryTemplate.yml](queryTemplate.yml) template that contains the extraction criteria for the analysis.
 
 ## Overview and capabilities
 This pipeline template is analyzing the Wazi Deploy deployment process and the content of the target deployment environment to list the names of the deployed artifacts that are stored in your evidence file a result of the deployment. 
@@ -8,14 +8,15 @@ This pipeline template is analyzing the Wazi Deploy deployment process and the c
 The pipeline implements the following stages
 * `Query` stage 
    * to refresh Wazi Deploy index for all applications
-   * to [Query] the Wazi Deploy Index. 
+   * to query the Wazi Deploy Index. 
 
 
 #Depending on your selected deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
 The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
-![Gitlab Release Pipeline](images/gitlab-pipeline-release.png)
+<img width="658" alt="image" src="https://github.com/user-attachments/assets/dead3fd1-3bf1-41e6-9c0a-394b5fc6c743" />
+
 
 ## Prerequisites
 
