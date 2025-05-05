@@ -1,5 +1,5 @@
 # Gitlab Wazideploy query template
-This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to trigger an analysis of the evidence file with the Wazi Deploy evidence command and a query template [queryTemplate.yml] that contains the extraction criteria for the analysis.
+This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to trigger an analysis of the evidence file with the Wazi Deploy evidence command and a  [queryTemplate.yml](queryTemplate.yml) template that contains the extraction criteria for the analysis.
 
 ## Overview and capabilities
 This pipeline template is analyzing the Wazi Deploy deployment process and the content of the target deployment environment to list the names of the deployed artifacts that are stored in your evidence file a result of the deployment. 
@@ -8,20 +8,21 @@ This pipeline template is analyzing the Wazi Deploy deployment process and the c
 The pipeline implements the following stages
 * `Query` stage 
    * to refresh Wazi Deploy index for all applications
-   * to [Query] the Wazi Deploy Index. 
+   * to query the Wazi Deploy Index. 
 
 
 #Depending on your selected deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
 The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
-![Gitlab Release Pipeline](images/gitlab-pipeline-release.png)
+<img width="658" alt="image" src="https://github.com/user-attachments/assets/dead3fd1-3bf1-41e6-9c0a-394b5fc6c743" />
+
 
 ## Prerequisites
 
 To leverage this template, access to a Gitlab CI/CD environment is required, and an Gitlab runner must be configured to connect to your mainframe environment. Please review the setup instructions of this [document](https://www.ibm.com/support/pages/system/files/inline-files/Integrating%20IBM%20zOS%20platform%20in%20CICD%20pipelines%20with%20GitLab%20-%20v1.7_1.pdf).
 
-The template leverages [Zowe CLI](https://docs.zowe.org/stable/user-guide/cli-installcli/) to issue command invoking the [Common Backend scripts](../Common-Backend-Scripts/) on USS. It specifically uses the `issue unix-shell` command which allows streaming of the console outputs back to the Zowe Command-Line Interface, that was introduced in IBM RSE API Plug-in for Zowe CLI version 4.0.0 (see [Changelog](https://marketplace.visualstudio.com/items/IBM.zopeneditor/changelog))
+The template leverages [Zowe CLI](https://docs.zowe.org/stable/user-guide/cli-installcli/) to issue command invoking the [Common Backend scripts](../Common-Backend-Scripts) on USS. It specifically uses the `issue unix-shell` command which allows streaming of the console outputs back to the Zowe Command-Line Interface, that was introduced in IBM RSE API Plug-in for Zowe CLI version 4.0.0 (see [Changelog](https://marketplace.visualstudio.com/items/IBM.zopeneditor/changelog))
 
 * Zowe `base` and `rse` profiles needs to be configured in the `zowe.config.json` file under `.zowe` directory
 
@@ -54,7 +55,7 @@ The template leverages [Zowe CLI](https://docs.zowe.org/stable/user-guide/cli-in
     "autoStore": false
     ```
 
-The [Common Backend scripts](../Common-Backend-Scripts/) need to be configured for the selected deployment technologies to operate correctly.
+The [Common Backend scripts](../Common-Backend-Scripts) need to be configured for the selected deployment technologies to operate correctly.
 
 ## Installation and setup of template
 
@@ -101,7 +102,7 @@ In a default setup, the values of all the below parameters are set to '*'. It al
 
 Parameter | Description
 --- | ---
-application | Specify the name of your application which will be used to invoke the [Common Backend scripts](../Common-Backend-Scripts/).
+application | Specify the name of your application which will be used to invoke the [Common Backend scripts](../Common-Backend-Scripts).
 module |
 type | Specify the type of artifacts
 environment | Specify the environment
