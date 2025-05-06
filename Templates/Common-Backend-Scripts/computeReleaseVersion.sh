@@ -263,19 +263,11 @@ validateOptions() {
     echo $ERRMSG
   fi
 
-  tmp2=$(echo $ReleaseType | tr '[:upper:]' '[:lower:]')
-
-  case $tmp2 in
-  "major") ;;
-  "minor") ;;
-  "patch") ;;
-  *)
-    rc=0
-    ReleaseType="patch"
-    ERRMSG=$PGM": [INFO] Set default Release Type : ${ReleaseType} ."
+  if [ -z "${ReleaseType}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERROR] Release Type parameter (-r) is required. Valid release types are 'major', 'minor' or 'patch'. rc="$rc
     echo $ERRMSG
-    ;;
-  esac
+  fi
 
 }
 #
@@ -317,7 +309,7 @@ getBaselineReference() {
 
 computeNextReleaseVersion() {
     # Compute the name of the next release based on the releaseType
-    case ${ReleaseType} in
+    case $(echo $ReleaseType | tr '[:upper:]' '[:lower:]') in
         "patch")
             export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$3 += 1 ; print}'`
             rc=0
@@ -332,7 +324,7 @@ computeNextReleaseVersion() {
          ;;
         *)
             rc=8
-            ERRMSG=$PGM": [ERROR] Release type can only be Major, Minor or Patch. rc="$rc
+            ERRMSG=$PGM": [ERROR] No valid release type found. Valid release types are 'major', 'minor' or 'patch'. rc="$rc
             echo $ERRMSG
          ;;
     esac
@@ -367,7 +359,7 @@ if [ $rc -eq 0 ]; then
   getBaselineReference
   if [ $rc -eq 0 ]; then
       ERRMSG=$PGM": [INFO] Baseline reference: ${baselineRef}"
-      eecho $ERRMSG
+      echo $ERRMSG
     
       computeNextReleaseVersion
       
@@ -376,13 +368,10 @@ if [ $rc -eq 0 ]; then
         ERRMSG=$PGM": [INFO] Compute the next release version complete. The next release version: ${releaseVersion}. rc="$rc
         echo $ERRMSG
       else
-        ERRMSG=$PGM": [ERROR] Compute the next release version failed. Check Console for details. rc="$rc
+        ERRMSG=$PGM": [ERROR] Compute the next release version failed. Check console for details. rc="$rc
         echo $ERRMSG
       fi
   fi
 fi
 
 exit $rc
-
-
-
