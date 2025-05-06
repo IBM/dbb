@@ -24,7 +24,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonBuilder
 import groovy.json.JsonOutput
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
+import com.ibm.jzos.FileAttribute
 
 class DSN {
 	String DSN
@@ -546,11 +547,15 @@ Map<String, Object> yaml = configuration.toYaml()
 
 YAMLoutput(yaml)
 //println YAMLoutput.toString()
-
-try (FileOutputStream stream = new FileOutputStream(new File(outputDir, "${member}.yaml"));
+File yamlFile = new File(outputDir, "${member}.yaml");
+try (FileOutputStream stream = new FileOutputStream(yamlFile);
 		OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
 	YAMLoutput.writeTo(writer)
 }
+
+char CCSID_UTF_8 = 1208;
+FileAttribute.Tag tag = new FileAttribute.Tag( CCSID_UTF_8, true );
+FileAttribute.setTag( yamlFile.getPath(), tag );
 
 return
 
