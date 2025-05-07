@@ -522,7 +522,7 @@ The section below contains the output that is produced by the `computeReleaseVer
   <summary>Script Output</summary>
 
 ```
-+ computeReleaseVersion.sh -w /var/jenkins/workspace/tgageApplication-Pipelines2_main -a MortgageApplication -b main -r minor 
++ computeReleaseVersion.sh -w /var/jenkins/workspace/tgageApplication-Pipelines2_main -a MortgageApplication -b main -r major 
 [Pipeline] echo
 computeReleaseVersion.sh: [INFO] Release Version Wrapper. Version=1.10
 computeReleaseVersion.sh: [INFO] Reading pipeline configuration file: /var/jenkins/dbb/Templates/Common-Backend-Scripts/pipelineBackend.config
@@ -532,15 +532,30 @@ computeReleaseVersion.sh: [INFO] Detected the application respository (MortgageA
 computeReleaseVersion.sh: [INFO]  Assuming this as the new application location.
 computeReleaseVersion.sh: [INFO] **************************************************************
 computeReleaseVersion.sh: [INFO] ** Started Next Release Computation on HOST/USER: z/OS ZT01 05.00 02 8561/
-computeReleaseVersion.sh: [INFO] ** Workspace: /var/jenkins/workspace/tgageApplication-Pipelines2_main/MortgageApplication
-computeReleaseVersion.sh: [INFO] ** Application: MortgageApplication
-computeReleaseVersion.sh: [INFO] ** Branch: main
-computeReleaseVersion.sh: [INFO] ** Release Type: minor
-computeReleaseVersion.sh: [INFO] ** Baselinereference file: /var/jenkins/workspace/tgageApplication-Pipelines2_main/MortgageApplication/application-conf/baselineReference.config
+computeReleaseVersion.sh: [INFO] **                Workspace: /var/jenkins/workspace/tgageApplication-Pipelines2_main/MortgageApplication
+computeReleaseVersion.sh: [INFO] **              Application: MortgageApplication
+computeReleaseVersion.sh: [INFO] **                   Branch: main
+computeReleaseVersion.sh: [INFO] **             Release Type: major
+computeReleaseVersion.sh: [INFO] **   Baselinereference file: /var/jenkins/workspace/tgageApplication-Pipelines2_main/MortgageApplication/application-conf/baselineReference.config
 computeReleaseVersion.sh: [INFO] **************************************************************
 
 computeReleaseVersion.sh: [INFO] Baseline reference: refs/tags/rel-1.6.0
-computeReleaseVersion.sh: [INFO] Next release version: rel-1.7.0
+computeReleaseVersion.sh: [INFO] Compute the next release version complete. The next release version: rel-2.0.0. rc=0
+
+```
+
+#### Extract the next release version
+
+The next release version computed from the `computeReleaseVersion.sh` script is sent as part of the output log. To extract the version number, you can use any string manipulation commands to search for the patternThe pipeline needs to search for the `version: .*rc=0` pattern and extract the version number for the search result.
+
+<details>
+  <summary>Example snippet to extract the version number</summary>
+
+```
+def version = searchLogOutput("version: .*rc=0", outText)
+if (version){
+  releaseVersion = version.substring(9,version.length()-6)
+}
 
 ```
 
