@@ -546,7 +546,7 @@ computeReleaseVersion.sh: [INFO] Compute the next release version complete. The 
 
 #### Extract the next release version
 
-The next release version computed from the `computeReleaseVersion.sh` script is sent as part of the output log. To extract the version number by the pipeline orchestrator, you can use any string manipulation commands to search for the the `version: .*rc=0` pattern and extract the version number form the search result.
+To obtain the release version from the `computeReleaseVersion.sh` script's output log, utilize string manipulation commands within your pipeline orchestrator to search for the pattern `version: .*rc=0` pattern and extract the version number form the search result.
 
 <details>
   <summary>Example snippet to extract the version number</summary>
