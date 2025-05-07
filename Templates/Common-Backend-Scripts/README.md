@@ -552,9 +552,17 @@ The next release version computed from the `computeReleaseVersion.sh` script is 
   <summary>Example snippet to extract the version number</summary>
 
 ```
-def version = searchLogOutput("version: .*rc=0", outText)
-if (version){
-  releaseVersion = version.substring(9,version.length()-6)
+regexPattern = "version: .*rc=0"
+pattern = java.util.regex.Pattern.compile(regexPattern)
+//logContent is the output from invoking the computeReleaseVersion.sh script
+def pMatcher = pattern.matcher(logContent)
+if (pMatcher.find()) {
+	def version = "${pMatcher.group()}"
+  if (version){
+    releaseVersion = version.substring(9,version.length()-6)
+  }
+} else {
+	println("[INFO]: Failed to search for ${regexPattern}")
 }
 
 ```
