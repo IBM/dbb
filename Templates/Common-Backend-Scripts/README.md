@@ -544,6 +544,8 @@ computeReleaseVersion.sh: [INFO] Compute the next release version complete. The 
 
 ```
 
+</details>
+
 #### Extract the next release version
 
 To obtain the release version from the `computeReleaseVersion.sh` script's output log, utilize string manipulation commands within your pipeline orchestrator to search for the pattern `version: .*rc=0` pattern and extract the version number form the search result.
@@ -566,6 +568,8 @@ if (pMatcher.find()) {
 }
 
 ```
+
+</details>
 
 ### packageBuildOutputs.sh
 
@@ -704,8 +708,6 @@ rc=0
 ```
 
 </details>
-
-
 
 ### ucdPackaging.sh
 
