@@ -343,7 +343,7 @@ def member  = parameters.m
 def outputDir = parameters.o
 
 if (!outputDir) {
-	outputDir = 'jclMigration'
+	outputDir = 'jclMigration/'
 }
 
 outputDir          = new File(outputDir).getAbsoluteFile()
