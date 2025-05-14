@@ -960,7 +960,7 @@ def parseArgs(String[] args) {
 		cli.usage()
 		System.exit(0)
 	}
-	if (!opts.p || !opts.d || !opts.m)
+	if (!opts.d || !opts.m)
 	{
 		cli.usage()
 		System.exit(0)
