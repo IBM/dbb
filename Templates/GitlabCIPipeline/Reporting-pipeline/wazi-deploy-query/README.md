@@ -1,5 +1,5 @@
 # Gitlab Wazi Deploy query template
-This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to query the evidence file using the [queryTemplate.yml](queryTemplate.yml) template.
+This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to query the evidence file using  [queryTemplate.yml](queryTemplate.yml) template.
 
 ## Overview and capabilities
 This pipeline template is analyzing the evidence file, to list the names of the deployed artifacts that are stored in it as a result of the deployment. 
@@ -8,8 +8,8 @@ This pipeline template is analyzing the evidence file, to list the names of the 
 The pipeline has only one stage called,
 
 `Query`
-   * To refresh Wazi Deploy index for all applications (index is a pointer to latest data available)
-   * To query the Wazi Deploy Index. 
+   * To refresh Wazi Deploy index for all applications (index is a pointer to the latest data available)
+   * To query the Wazi Deploy index. 
 
 The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
@@ -18,8 +18,8 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
 ## Structure and setup of template
 
-In the current setting, `.gitlab-ci.yml` and `.queryTemplate.yml` are kept in Wazi-Deploy-Query under the Reporting-pipeline folder of the Gitlab Git repository. 
-To be able to query the evidence file successfully , you should be having the above mentioned files along with renderer.yml and evidence file in your Gitlab runner. Please review the definitions thoroughly with your Gitlab administrator.
+In the current setting, `.gitlab-ci.yml` and `.queryTemplate.yml` are kept in `Wazi-Deploy-Query` under the `Reporting-pipeline` folder of the Gitlab Git repository. 
+To be able to query the evidence file successfully , you should be having the above mentioned files along with `renderer.yml` and evidence file in your Gitlab runner. Please review the definitions thoroughly with your Gitlab administrator.
 
 
 ### Variables configuration
@@ -35,7 +35,7 @@ reportFile | Path to store the output file produced as a result of running the W
 
 ## Pipeline usage
 
-The pipeline template is analyzing the evidences file to list the names of the deployed artifacts that are mentioned in your evidence files. Listing these names is useful because you can then easily copy and paste them as arguments in the analysis command line when you want to base an analysis on a specified name.
+The pipeline template is analyzing the evidence file to list the names of the deployed artifacts that are mentioned in your evidence files. Listing these names is useful because you can then easily copy and paste them as arguments in the analysis command line when you want to base an analysis on a specified name.
 
 
 Please check the pipeline definition to understand the various triggers for which this pipeline is executed.
@@ -60,4 +60,4 @@ When a developer wants to analyze the Wazi deploy evidence file to get the list 
 
 The only step that it covers is, 
 
-* `Query` - Refreshes Wazi deploy index and query the index using wazideploy-evidence command. It is then published into the location stored under variable `reportFile`
+* `Query` - Refreshes Wazi deploy index and query the index using wazideploy-evidence command. It is then published into the location that you specify under the variable `reportFile`
