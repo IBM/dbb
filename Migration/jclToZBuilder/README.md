@@ -8,7 +8,10 @@ bin/JCLtoYAML.sh [options]
 ### Required Options:
 - `-d, --dataset <MVS dataset>`: The PDS containing the JCL member to migrate.
 - `-m, --member <JCL member>`: The JCL member to migrate.
-- `-p, --project <JCL project>`: A name to associate with the project
+
+### Optional Options:
+- `-o,--outputDir <output directory>`: Directory in the HFS where all files will be written.
+- `-c,--configFolder <configFolder>`: Path to the configuration folder ccontaining the JCL migration configuration file and dataset mappings configuration file. The default is `jclMigration/`.
 
 ### Migration Steps:
 - Ensure the JCL file is uploaded to a dataset for migration. It must be executed JCL, a standalone proc cannot be migrated.
