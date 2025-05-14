@@ -1,0 +1,141 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "JSON Schema for Deployment State",
+    "description": "Deployment State",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "apiVersion": {
+            "type": "string"
+        },
+        "kind": {
+            "type": "string"
+        },
+        "metadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the application to be deployed."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "The optional description of the application to be deployed."
+                },
+                "version": {
+                    "type": "string",
+                    "description": "The version of the application to be deployed."
+                },
+                "annotations": {
+                    "type": "object",
+                    "description": "Any valid YAML contents. The annotations parameter typically contains the following fields: \n 1. The creationTimestamp of the manifest. \n 2. The package level with the name and location of the application package in the source control management system."
+                }
+            },
+            "required": ["name", "version"]
+        },
+        "manifests": {
+            "type": "array",
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "annotations": {
+                        "type": "object"
+                    }
+                },
+                "required": ["name", "version" ]
+            }
+        },
+        "packages": {
+            "type": "array",
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "uri": {
+                        "type": "string"
+                    },
+                    "properties": {
+                        "$ref": "#/$defs/props"
+                    }
+                },
+                "required": ["name", "uri", "type"]
+            }
+        },
+        "artifacts": {
+            "type": "array",
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the artifact."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Name of the artifact, followed by its type (for example LGUCDB01.CICSLOAD)."
+                    },
+                    "hash": {
+                        "type": "string",
+                        "description": "When the manifest is produced by The Wazi Deploy packager command, the hash is the sha256 value of the source file."
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "The artifact type that is indicated in the deployment method."
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": ""
+                    },
+                    "properties": {
+                        "$ref": "#/$defs/props",
+                        "description": "The key and associated value that are listed for each artifact. In a static deployment, the key is the path to the artifact in the package file.ß"
+                    }
+                },
+                "required": ["name", "hash", "type", "state"]
+            }
+        }
+
+    },
+    "required": ["apiVersion", "kind"],
+    "$defs": {
+        "props": {
+            "type": "array",
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "oneOf": [
+                            {"type": "object"},
+                            {"type": "string"},
+                            {"type": "number"},
+                            {"type": "boolean"},
+                            {"type": "array"}
+                        ]
+                    }
+                },
+                "required": ["key", "value"]
+            }
+        }
+    }
+}

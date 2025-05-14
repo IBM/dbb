@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "JSON Schema for Configuration file",
+    "description": "Configuration File",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "artifact_repository": {
+            "type": "object",
+            "description": "The type of the artifact repository. The only supported types are 'artifactory' and 'nexus'",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "enum": ["artifactory", "nexus"]
+                },
+                "url": {
+                    "type": "string",
+                    "description": "The URL to the artifact repository server"
+                },
+                "user": {
+                    "type": "string",
+                    "description": "The credentials of the user that connects to the artifact repository server"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "The password of the user that connects to the artifact repository server"
+                },
+                "verify": {
+                    "oneOf": [
+                            {"type": "string"},
+                            {"type": "boolean"}
+                        ],
+                        "description": "The SSL verification level. The default value is 'True', which enables SSL verification. If set to 'False', SSL verification is disabled"
+                }                
+            }
+        }
+    }
+}
