@@ -1,4 +1,4 @@
-# Gitlab Wazi Deploy query template
+# Gitlab IBM Wazi Deploy query template
 This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to query the evidence file using  [queryTemplate.yml](queryTemplate.yml) template.
 
 ## Overview and capabilities
@@ -19,7 +19,7 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 ## Structure and setup of template
 
 In the current setting, `.gitlab-ci.yml` and `.queryTemplate.yml` are kept in `Wazi-Deploy-Query` under the `Reporting-pipeline` folder of the Gitlab Git repository. 
-To be able to query the evidence file successfully , you should be having the above mentioned files along with `renderer.yml` and evidence file in your Gitlab runner. Please review the definitions thoroughly with your Gitlab administrator.
+This is a standalone pipeline and to be able to query the evidence file successfully , you should be having the above mentioned files along with `renderer.yml` and evidence file in your machine that hosts the  Gitlab runner. Please review the definitions thoroughly with your Gitlab administrator.
 
 
 ### Variables configuration
