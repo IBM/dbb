@@ -2,8 +2,8 @@
 
 ##############################################################################################
 #
-# This script calls the JCLtoDBB.groovy script to parse the JCL and generate DBB groovy
-# scripts representing the JCL.
+# This script calls the JCLtoYAML.groovy script to parse the JCL and generate zBuilder
+# YAML tasks representing the JCL.
 # 
 ##############################################################################################
 scriptDir=$(dirname $0)
