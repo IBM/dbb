@@ -10,8 +10,8 @@ bin/JCLtoYAML.sh [options]
 - `-m, --member <JCL member>`: The JCL member to migrate.
 
 ### Optional Options:
-- `-o,--outputDir <output directory>`: Directory in the HFS where all files will be written.
-- `-c,--configFolder <configFolder>`: Path to the configuration folder ccontaining the JCL migration configuration file and dataset mappings configuration file. The default is `jclMigration/`.
+- `-o,--outputDir <output directory>`: Directory in the HFS where all files will be written. The default is `jclMigration/`.
+- `-c,--configFolder <configFolder>`: Path to the configuration folder ccontaining the JCL migration configuration file and dataset mappings configuration file. The default is `Migration/jcl/jclToZBuilder/conf`.
 
 ### conf/jclmig.conf Properties:
 - `restrictedPgms`: A comma seperated list of restricted programs. Upon encountering one of these programs, the JCL call will be extracted and placed as a JobExec step into the generated yaml. As opposed to a MVSExec step being used as normal.
