@@ -13,6 +13,16 @@ bin/JCLtoYAML.sh [options]
 - `-o,--outputDir <output directory>`: Directory in the HFS where all files will be written.
 - `-c,--configFolder <configFolder>`: Path to the configuration folder ccontaining the JCL migration configuration file and dataset mappings configuration file. The default is `jclMigration/`.
 
+### conf/jclmig.conf Properties:
+- `restrictedPgms`: A comma seperated list of restricted programs. Upon encountering one of these programs, the JCL call will be extracted and placed as a JobExec step into the generated yaml. As opposed to a MVSExec step being used as normal.
+- `tempDatasetOptions`: The BPXWDYN options for temporary allocated datasets, this defaults to `cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new`.
+- `procLibs`: A comma seperated list of libraries that will be scanned to located JCL procs.
+
+### conf/datasetMappings.properties Properties:
+This properties file contains a mapping of LLQs to zBuilder dataset variables. Upon finding an LLQ matching the key in this properties file, the migration utility will replace the entire dataset name with the variable and place a variable definition for the dataset at the top of the file. These definitions normally live in the `Languages.yaml` sample, and may be relocated there if desired.
+
+These definitions are primarily used for common load libraries.
+
 ### Migration Steps:
 - Ensure the JCL file is uploaded to a dataset for migration. It must be executed JCL, a standalone proc cannot be migrated.
 - Execute the `bin/JCLtoYAML.sh` shell script.
