@@ -35,12 +35,9 @@ reportFile | Path to store the output file produced as a result of running the W
 
 ## Pipeline usage
 
-The pipeline template is analyzing the evidence file to list the names of the deployed artifacts that are mentioned in your evidence files. Listing these names is useful because you can then easily copy and paste them as arguments in the analysis command line when you want to base an analysis on a specified name.
-
+The pipeline template is analyzing the evidence file to list details of the deployed artifacts that are mentioned in your evidence files. It is useful because instead of reading through the eveidence file, which is rather complicated you can run the query to get the data in simple HTML, JSON or txt file format.
 
 Please check the pipeline definition to understand the various triggers for which this pipeline is executed.
-
-Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation.
 
 ### Pipeline variables
 
