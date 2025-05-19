@@ -83,7 +83,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 
 # internal veriables
 PGM=$(basename "$0")
-PGMVERS="1.0.0"
+PGMVERS="1.00"
 USER=$USER
 SYS=$(uname -Ia)
 
