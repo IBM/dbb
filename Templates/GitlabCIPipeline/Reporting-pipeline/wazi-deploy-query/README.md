@@ -19,7 +19,7 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 ## Structure and setup of template
 
 In the current setting, `.gitlab-ci.yml` and `.queryTemplate.yml` are kept in `Wazi-Deploy-Query` under the `Reporting-pipeline` folder of the Gitlab Git repository. 
-This is a standalone pipeline and to be able to query the evidence file successfully , you should be having the above mentioned files along with `renderer.yml` and evidence file in your machine that hosts the  Gitlab runner. Please review the definitions thoroughly with your Gitlab administrator.
+This is a standalone pipeline and to be able to query the evidence file successfully , the only things you need to be having are the above mentioned files along with `renderer.yml` and evidence file in your machine that hosts the  Gitlab runner. Please review the definitions thoroughly with your Gitlab administrator.
 
 
 ### Variables configuration
@@ -29,19 +29,19 @@ The following variables need to be updated within the pipeline definition file: 
 Variable | Description
 --- | ---
 templateFile |  Path to the query file that contains the extraction criteria for the analysis
-rendererFile | Path to renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt 
+rendererFile | Path to the renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt 
 reportFile | Path to store the output file produced as a result of running the Wazi deploy query
 
 
 ## Pipeline usage
 
-The pipeline template is analyzing the evidence file to list details of the deployed artifacts that are mentioned in your evidence files. It is useful because instead of reading through the eveidence file, which is rather complicated you can run the query to get the data in simple HTML, JSON or txt file format.
+The pipeline template is analyzing the evidence file to list details of the deployed artifacts that are mentioned in your evidence files. It is useful because instead of reading through the evidence file, which is rather complicated, you can instead run the query to get the data in simple HTML, JSON or txt file format.
 
 Please check the pipeline definition to understand the various triggers for which this pipeline is executed.
 
 ### Pipeline variables
 
-In a default setup, the values of all the below parameters are set to '*'. It allows overriding the values of the below variables when manually requesting the pipeline. 
+Below are the variables when manually requesting the pipeline. 
 
 Parameter | Description
 --- | ---
