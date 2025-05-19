@@ -68,9 +68,9 @@ Help() {
     echo "       -r <releaseType>    - Type of the release              "
     echo "                             to calculate the version.        "
     echo "                             Accepted values:                 "
-    echo "                             - Major                          "
-    echo "                             - Minor (Default)                "
-    echo "                             - Patch                          "
+    echo "                             - major                          "
+    echo "                             - minor (Default)                "
+    echo "                             - patch                          "
     echo "                                                              "
     exit 0
 }
@@ -83,7 +83,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 
 # internal veriables
 PGM=$(basename "$0")
-PGMVERS="1.10"
+PGMVERS="1.0.0"
 USER=$USER
 SYS=$(uname -Ia)
 
