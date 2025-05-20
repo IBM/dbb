@@ -18,7 +18,7 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
 ## Structure and setup of template
 
-This is a standalone pipeline that can be used to query the evidence file . Please review the definitions thoroughly with your Gitlab administrator to define the renderer file in the machine that hosts the GitLab runner. The renderer is optional and can be in various formats like SQL, .csv, html, JSON etc. If the renderer is omitted, the retrieved data is presented in a raw yaml format.
+This is a standalone pipeline that can be used to query the evidence file. Please review the definitions thoroughly with your Gitlab administrator to define the renderer file in the machine that hosts the GitLab runner. The renderer is optional and can be in various formats like SQL, .csv, html, JSON etc. Incase the renderer is not specified, the retrieved data is presented in a raw YAML format.
 
 
 ### CLI Parameter and description
@@ -40,7 +40,7 @@ Please check the below parameters for which this pipeline is executed.
 
 Parameter | Description
 --- | ---
-application | Specify the name of your application( eg: retirementCalculator, Mortgage-SA)
+application | Specify the name of your application (eg: retirementCalculator, Mortgage-SA)
 module | The program name
 type | Specify the type of artifacts (eg: COBOL,JCL)
 environment | Specify the environment (eg: integration, acceptance)
