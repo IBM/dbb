@@ -1,15 +1,15 @@
 # Gitlab IBM Wazi Deploy query template
-This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to query the evidence file using  [queryTemplate.yml](queryTemplate.yml) template.
+This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file, to query the evidence file using the [queryTemplate.yml](queryTemplate.yml) template.
 
 ## Overview and capabilities
-This pipeline template is analyzing the evidence file, to list the names of the deployed artifacts that are stored in it as a result of the deployment. 
+This pipeline template is analyzing the evidence file, to list the names of the deployed artifacts that are created as a result of the deployment. 
 
 
-The pipeline has only one stage called,
+The pipeline has only one stage:
 
 `Query`
-   * To refresh Wazi Deploy index for all applications (index is a pointer to the latest data available)
-   * To query the Wazi Deploy index. 
+   * We first index the evidence files to make them searchable.
+   * This example creates a simple renderer file in yaml format.
 
 The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
@@ -18,30 +18,25 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
 ## Structure and setup of template
 
-In the current setting, `.gitlab-ci.yml` and `.queryTemplate.yml` are kept in `Wazi-Deploy-Query` under the `Reporting-pipeline` folder of the Gitlab Git repository. 
-This is a standalone pipeline and to be able to query the evidence file successfully , the only things you need to be having are the above mentioned files along with `renderer.yml` and evidence file in your machine that hosts the  Gitlab runner. Please review the definitions thoroughly with your Gitlab administrator.
+This is a standalone pipeline that can be used to query the evidence file . Please review the definitions thoroughly with your Gitlab administrator to define the renderer file in the machine that hosts the GitLab runner. The renderer is optional and can be in various formats like SQL, .csv, html, JSON etc. If the renderer is omitted, the retrieved data is presented in a raw yaml format.
 
 
-### Variables configuration
+### CLI Parameter and description
 
 The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yml`.
 
-Variable | Description
+CLI Parameter | Description
 --- | ---
-templateFile |  Path to the query file that contains the extraction criteria for the analysis
-rendererFile | Path to the renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt 
-reportFile | Path to store the output file produced as a result of running the Wazi deploy query
+templateFile |  path to the query file that contains the extraction criteria for the analysis.
+reportFile | path to store the output file produced as a result of running the Wazi deploy query.
+rendererFile | (optional) path to the renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt 
 
 
 ## Pipeline usage
 
-The pipeline template is analyzing the evidence file to list details of the deployed artifacts that are mentioned in your evidence files. It is useful because instead of reading through the evidence file, which is rather complicated, you can instead run the query to get the data in simple HTML, JSON or txt file format.
+This pipleine implements the wazideploy-evidence command for easy use of deployment analysis. I
 
-Please check the pipeline definition to understand the various triggers for which this pipeline is executed.
-
-### Pipeline variables
-
-Below are the variables when manually requesting the pipeline. 
+Please check the below parameters for which this pipeline is executed.
 
 Parameter | Description
 --- | ---
@@ -53,8 +48,4 @@ environment | Specify the environment (eg: integration, acceptance)
 
 ### Implementation of the pipeline
 
-When a developer wants to analyze the Wazi deploy evidence file to get the list of artifacts, the pipeline can be triggered manually.
-
-The only step that it covers is, 
-
-* `Query` - Refreshes Wazi deploy index and query the index using wazideploy-evidence command. It is then published into the location that you specify under the variable `reportFile`
+When a developer wants to analyze the Wazi deploy evidence file to get the list of artifacts that have been deployed, the pipeline can be triggered manually.
