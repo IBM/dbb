@@ -34,7 +34,7 @@ rendererFile | (optional) path to the renderer file that transforms the analysis
 
 ## Pipeline usage
 
-This pipleine implements the wazideploy-evidence command for easy use of deployment analysis. I
+This pipleine implements the wazideploy-evidence command for easy use of deployment analysis. 
 
 Please check the below parameters for which this pipeline is executed.
 
