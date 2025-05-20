@@ -133,7 +133,8 @@ Artifact Name |  Description | Script details
 ---------- | -----| -----------------------------------------------------
 [gitClone.sh](gitClone.sh) | Pipeline Shell Script to perform Git Clone to z/OS UNIX System Services | [script details](README.md#41---gitclonesh)
 [dbbBuild.sh](dbbBuild.sh) | Pipeline Shell Script to invoke the Dependency Based Build framework [zAppBuild](https://github.com/IBM/dbb-zappbuild) | [script details](#dbbbuildsh-for-zappbuild-frameworkh)
-[zBuilder.sh](zBuilder.sh) | Pipeline Shell script to invoke the zBuilder framework [zBuilder](https://www.ibm.com/docs/en/dbb/3.0?topic=building-zos-applications-zbuilder) | [script details](#zbuildersh-for-dbb-zbuilder)
+[zBuilder.sh](zBuilder.sh) | Pipeline Shell Script to invoke the zBuilder framework [zBuilder](https://www.ibm.com/docs/en/dbb/3.0?topic=building-zos-applications-zbuilder) | [script details](#zbuildersh-for-dbb-zbuilder)
+[computeReleaseVersion.sh](computeReleaseVersion.sh) | Pipeline Shell Script to compute the next release version based on the baseline version information stored in the application's [baselineReference.config](samples/baselineReference.config) file. | [script details](#computeReleaseVersionsh)
 [packageBuildOutputs.sh](packageBuildOutputs.sh) | Pipeline Shell Script to create a Package using the [PackageBuildOutputs groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/PackageBuildOutputs) | [script details](#packagebuildoutputssh)
 [ucdPackage.sh](ucdPackaging.sh) | Pipeline Shell Script to publish to UCD Code Station binary repository using the [CreateUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/CreateUCDComponentVersion) | [script details](#ucdpackagingsh)
 [wazideploy-generate.sh](wazideploy-generate.sh) | Pipeline Shell Script to generate a Deployment Plan to be used with Wazi Deploy | [script details](#wazideploy-generatesh)
@@ -492,6 +493,84 @@ The [dbbzBuilderUtils](utilities/dbbzBuilderUtils.sh) script is a core utility s
 
 Depending on the Deployment Manager tool you are using, you can choose from either creating a package with the [PackageBuildOutputs](#packagebuildoutputssh) script that can be used with IBM Wazi Deploy, or the [UCD packaging](#ucdpackagingsh) script that creates the UCD shiplist and UCD component version.
 
+### computeReleaseVersion.sh
+
+This script is to compute the version for the next release based on the information of baseline version stored in the [baseineReference.config](samples/baselineReference.config) file. The computation of the release version follows the versioning described in [IBM recommended Git branching model for mainframe developer](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev). It follows the Systematic Versioning as MAJOR.MINOR.PATCH number. The number of the coresponding part is increased based on the type of release.
+
+The computed release version is used as part of the archive name to be uploaded or downloaded from the artifact repository. The release version is an input for [packageBuildOutputs.sh](#packagebuildoutputssh) and [wazideploy-generate.sh](#wazideploy-generatesh).
+
+#### Invocation
+
+The `computeReleaseVersion.sh` script can be invoked as follows:
+
+```
+computeReleaseVersion.sh -w MortApp/main/build-1 -a MortgageApplication -b main -r minor
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps.
+-a `<application>` | **Application name** to be built.
+-b `<branch>` | **Git branch** that is built.
+-r `<major/minor/patch>` | **Release Type** to indicate the type of changes to be relased.
+
+#### Output
+
+The section below contains the output that is produced by the `computeReleaseVersion.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+
+```
++ computeReleaseVersion.sh -w /var/jenkins/workspace/tgageApplication-Pipelines2_main -a MortgageApplication -b main -r major 
+[Pipeline] echo
+computeReleaseVersion.sh: [INFO] Release Version Wrapper. Version=1.10
+computeReleaseVersion.sh: [INFO] Reading pipeline configuration file: /var/jenkins/dbb/Templates/Common-Backend-Scripts/pipelineBackend.config
+computeReleaseVersion.sh: [INFO] Validating Options
+computeReleaseVersion.sh: [INFO] Application Directory: /var/jenkins/workspace/tgageApplication-Pipelines2_main/MortgageApplication
+computeReleaseVersion.sh: [INFO] Detected the application respository (MortgageApplication) within the git repository layout structure.
+computeReleaseVersion.sh: [INFO]  Assuming this as the new application location.
+computeReleaseVersion.sh: [INFO] **************************************************************
+computeReleaseVersion.sh: [INFO] ** Started Next Release Computation on HOST/USER: z/OS ZT01 05.00 02 8561/
+computeReleaseVersion.sh: [INFO] **                Workspace: /var/jenkins/workspace/tgageApplication-Pipelines2_main/MortgageApplication
+computeReleaseVersion.sh: [INFO] **              Application: MortgageApplication
+computeReleaseVersion.sh: [INFO] **                   Branch: main
+computeReleaseVersion.sh: [INFO] **             Release Type: major
+computeReleaseVersion.sh: [INFO] **   Baselinereference file: /var/jenkins/workspace/tgageApplication-Pipelines2_main/MortgageApplication/application-conf/baselineReference.config
+computeReleaseVersion.sh: [INFO] **************************************************************
+
+computeReleaseVersion.sh: [INFO] Baseline reference: refs/tags/rel-1.6.0
+computeReleaseVersion.sh: [INFO] Compute the next release version complete. The next release version: rel-2.0.0. rc=0
+
+```
+
+</details>
+
+#### Extract the next release version
+
+To obtain the release version from the `computeReleaseVersion.sh` script's output log, utilize string manipulation commands within your pipeline orchestrator to search for the pattern `version: .*rc=0` pattern and extract the version number form the search result.
+
+<details>
+  <summary>Example snippet to extract the version number</summary>
+
+```
+regexPattern = "version: .*rc=0"
+pattern = java.util.regex.Pattern.compile(regexPattern)
+//logContent is the output from invoking the computeReleaseVersion.sh script
+def pMatcher = pattern.matcher(logContent)
+if (pMatcher.find()) {
+	def version = "${pMatcher.group()}"
+  if (version){
+    releaseVersion = version.substring(9,version.length()-6)
+  }
+} else {
+	println("[INFO]: Failed to search for ${regexPattern}")
+}
+
+```
+
+</details>
+
 ### packageBuildOutputs.sh
 
 This script is to execute the `PackageBuildOutputs.groovy` that packages up the build outputs and optionally uploads it to an artifact repository to publish the artifacts created by a DBB build in the pipeline.
@@ -512,7 +591,8 @@ For release builds (that use the `pipelineType=release`), the archive is uploade
 `release/<reference>/<application>-<buildIdentifier>`:
 
 * **release** is defined for release builds. 
-* **reference** is the release name: for instance, `rel-1.2.3` (provided through the mandatory `-r` argument).
+* **reference** is the release name: for instance, `rel-1.2.3` (provided through the mandatory `-r` argument). The release name can be automatically computed using the [computeReleaseVersion.sh](#computereleaseversionsh) script.
+
 The archive's file name is computed using the application's name, the release name (`-r` argument) and a unique build identifier (`-i` argument). This parameter is typically the pipeline build number that is passed by the pipeline orchestrator. If a build identifier is not provided, the current timestamp is used.
 
 
@@ -629,8 +709,6 @@ rc=0
 
 </details>
 
-
-
 ### ucdPackaging.sh
 
 This script is to execute the `dbb-ucd-packaging.groovy` that invokes the Urban Code Deploy (UCD) buztool utility, to publish the artifacts created by the DBB Build from a pipeline.
@@ -727,7 +805,7 @@ CLI parameter | Description
 -- | - when retrieving the tar file from Artifact repo the below options are mandatory -
 -b `<branch>`| Name of the **git branch** turning into a segment of the directory path for the location within the artifact repository.
 -p `<build/release>` | **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules for release candidates).
--R `<releaseIdentifier>` | **Release identifier** to indicate the next planned release name. This is a computed value based on the pipeline templates.
+-R `<releaseIdentifier>` | **Release identifier** to indicate the next planned release name. This is a computed value based on the pipeline templates. It can be automatically computed using the [computeReleaseVersion.sh](#computereleaseversionsh) script.
 -I `<buildIdentifier>` | **Build identifier** a unique value to identify the tar file. This is a computed value provided by the pipeline templates. Typically the build number of the pipeline run.
 -c `<configurationFile>` | Absolute path to the Wazi Deploy **Configuration File** that contains information to connect to the artifact repository. See [IBM Wazi Deploy documentation](https://www.ibm.com/docs/en/developer-for-zos/17.0?topic=files-configuration-file)
 
