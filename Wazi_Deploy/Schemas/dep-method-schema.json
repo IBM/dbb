@@ -1,0 +1,435 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "JSON Schema for Deployment Method",
+    "description": "Deployment Method",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "apiVersion": {
+            "type": "string",
+            "description": "Specifies the version of the custom resource definition (CRD) from the deploy.ibm.com API group. \n Example: 'apiVersion: deploy.ibm.com/v1'"
+        },
+        "kind": {
+            "type":"string",
+            "description": "Indicates the type of custom resource being defined. \n Example: 'kind: DeploymentMethod'"
+        },
+        "metadata": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Deployment configuration metadata for an application. This information includes the application name, version, and a brief overview of its purpose. \n'Example: This deployment method can be used for the deployment of an application.'",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the deployment method, between double quotation marks"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "The deployment method version number, between double quotation marks"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "The optional description of the deployment method."
+                },
+                "annotations": {
+                    "type": "object",
+                    "description": "Annotations that can be associated with the deployment method. You can add any valid YAML properties under annotations"
+                }
+            },
+            "required": ["name", "version"]
+        },
+        "default_tags": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "default_plan_tags": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "default_skip_tags": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "default_plan_skip_tags": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "activities": {
+            "type": "array",
+            "description": "A set of ordered actions. Some standard activities are available but you can create your own activity. If the activity applies to artifacts, you must specify the types of the artifacts",
+            "items": {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "The name of each activity"
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "The optional description of the activity"
+                            },
+                            "short_name": {
+                                "$ref": "#/$defs/s_name",
+                                "description": "The optional short name, whose length cannot exceed 30 characters. Only the following characters are valid: a-z, A-Z, 0-9, and _. You cannot use a white space. The short name is displayed in the console during the deployment process"
+                            },
+                            "plan_tags": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "A string that can be associated with an activity, an action, or a step. It can be used in the The Python deployment command or The Ansible deployment command to include or exclude activities, actions, or steps in the deployment stage.\n You can assign the following values to plan_tags: \n 1. Any string with the following characters: a-z, A-Z, 0-9, and _. \n 2. 'always' : The activities, actions, and steps that include this string are always included in the deployment, except if always is specified in the planSkipTags argument of the deployment command. \n 3. 'never' : The activities, actions, and steps that include this string are never included in the deployment, except if never is specified in the planTags argument of the deployment command."
+                            },
+                            "tags": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "A string that can be associated with an activity, an action, or a step. You can assign the following values to tags: \n 1. Any string with the following characters: a-z, A-Z, 0-9, and _. \n 2. 'always' : The activities, actions, and steps that include this string are always included in the generation, except if always is specified in the --skipTags argument of the Wazi Deploy generation command. \n 3. 'never' : The activities, actions, and steps that include this string are never included in the generation, except if never is specified in the --tags argument of the Wazi Deploy generation command."
+                            },
+                            "isArtifact": {
+                                "type": "string"
+                            },
+                            "is_artifact": {
+                                "type": "boolean",
+                                "description": "A Boolean that specifies whether the activity, action, or step applies to artifacts. Required: yes if the activity, action, or step applies to artifacts. Values: True or False"
+                            },
+                            "types": {
+                                "$ref": "#/$defs/d_types",
+                                "description": "The types of artifacts that the activity applies to, if the activity applies to artifacts. The types field is a list of types that are present in the package file. It corresponds to the extension of the artifacts in the .tar file"
+                            },
+                            "properties": {
+                                "$ref": "#/$defs/props",
+                                "description": "A pair of key and associated value. You can use the following predefined properties to filter the artifacts that you want to use for the activity, action, or step: path_filter, name_filter, and type_filter. You enter the value of such properties with a regular expression. For example, you can specify the path_filter property in the following way:\n properties:\n\t - key: \"path_filter\" \n\t value: \"cmds_files//\\*\"" 
+                            },
+                            "when": {
+                                "$ref": "#/$defs/d_when",
+                                "description": "Used to specify a condition that must return True for the activity, action, or step to run. If this instruction is used on the same activity, action, or step as a loop instruction, then the loop is restricted to the items that meet the condition"
+                            },
+                            "failed_when": {
+                                "$ref": "#/$defs/d_when",
+                                "description": "Used to set the status of the current activity, action, or step result to Failed or Successful if the condition is met."
+                            },
+                            "jumps_when": {
+                                "$ref": "#/$defs/d_jump",
+                                "description": "Used to jump to the specified target location at the end of the current activity, action, or step if the condition is met."
+                            },
+                            "rescue": {
+                                "$ref": "#/$defs/d_rescue",
+                                "description": "Used to jump to a target activity, action, or step if an exception occurs during the current activity, action, or step. No condition is indicated."
+                            },
+                            "loop": {
+                                "$ref": "#/$defs/d_loop"
+                            },
+                            "actions": {
+                                "type": "array",
+                                "items": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "description": "The name of each action. You can type any name."
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "description": "The optional description of the action."
+                                                },
+                                                "short_name": {
+                                                    "$ref": "#/$defs/s_name",
+                                                    "description": "The optional short name, whose length cannot exceed 30 characters. Only the following characters are valid: a-z, A-Z, 0-9, and _. You cannot use a white space. The short name is displayed in the console during the deployment process."
+                                                },
+                                                "isArtifact": {
+                                                    "type": "string"
+                                                },
+                                                "is_artifact": {
+                                                    "type": "boolean",
+                                                    "description": "A Boolean that specifies whether the activity, action, or step applies to artifacts. Required: yes if the activity, action, or step applies to artifacts. Values: True or False"
+                                                },
+                                                "plan_tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": "A string that can be associated with an activity, an action, or a step. It can be used in the The Python deployment command or The Ansible deployment command to include or exclude activities, actions, or steps in the deployment stage.\n You can assign the following values to plan_tags: \n 1. Any string with the following characters: a-z, A-Z, 0-9, and _. \n 2. 'always' : The activities, actions, and steps that include this string are always included in the deployment, except if always is specified in the planSkipTags argument of the deployment command. \n 3. 'never' : The activities, actions, and steps that include this string are never included in the deployment, except if never is specified in the planTags argument of the deployment command."
+                                                },
+                                                "tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": "A string that can be associated with an activity, an action, or a step. You can assign the following values to tags: \n 1. Any string with the following characters: a-z, A-Z, 0-9, and _. \n 2. 'always' : The activities, actions, and steps that include this string are always included in the generation, except if always is specified in the --skipTags argument of the Wazi Deploy generation command. \n 3. 'never' : The activities, actions, and steps that include this string are never included in the generation, except if never is specified in the --tags argument of the Wazi Deploy generation command."
+                                                },
+                                                "states": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": "The states of the artifacts that the action applies to, if the action applies to artifacts. In a static deployment, only the UNDEFINED and DELETED states are managed. If you do not specify any state, the default value is UNDEFINED."
+                                                },
+                                                "types": {
+                                                    "$ref": "#/$defs/d_types",
+                                                    "description": "The types of artifacts that the action applies to, if the action applies to artifacts. The types field is a list of types that are present in the package file. It corresponds to the extension of the artifacts in the .tar file. "
+                                                },
+                                                "properties": {
+                                                    "$ref": "#/$defs/props",
+                                                    "description": "A pair of key and associated value. You can use the following predefined properties to filter the artifacts that you want to use for the activity, action, or step: path_filter, name_filter, and type_filter. You enter the value of such properties with a regular expression. For example, you can specify the path_filter property in the following way:\n properties:\n\t - key: \"path_filter\" \n\t value: \"cmds_files//\\*\"" 
+                                                },
+                                                "when": {
+                                                    "$ref": "#/$defs/d_when",
+                                                    "description": "Used to specify a condition that must return True for the activity, action, or step to run. If this instruction is used on the same activity, action, or step as a loop instruction, then the loop is restricted to the items that meet the condition."
+                                                },
+                                                "failed_when": {
+                                                    "$ref": "#/$defs/d_when",
+                                                    "description": "Used to set the status of the current activity, action, or step result to Failed or Successful if the condition is met."
+                                                },
+                                                "jumps_when": {
+                                                    "$ref": "#/$defs/d_jump",
+                                                    "description": "Used to jump to the specified target location at the end of the current activity, action, or step if the condition is met."
+                                                },
+                                                "rescue": {
+                                                    "$ref": "#/$defs/d_rescue",
+                                                    "description": "Used to jump to a target activity, action, or step if an exception occurs during the current activity, action, or step. No condition is indicated."
+                                                },
+                                                "loop": {
+                                                    "$ref": "#/$defs/d_loop",
+                                                    "description": "Used to iteratively run the activity, action, or step."
+                                                },
+                                                "steps": {
+                                                    "type": "array",
+                                                    "description": "A command that is part of an action. Each step must be implemented by an Ansible or Python building block on the targeted z/OS environment.",
+                                                    "items": {
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "object",
+                                                                "additionalProperties": false,
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "description": "The name of each step. Uppercase and lowercase letters are equivalent. A step is implemented by a building block. One of the ways to call a building block is to enter the exact name of the building block in the step name of the deployment method. See the link to understand how to trigger the execution of a building block to know how else you can call a building block to implement a step processing."
+                                                                    },
+                                                                    "description": {
+                                                                        "type": "string",
+                                                                        "description": "The optional description of the step."
+                                                                    },
+                                                                    "short_name": {
+                                                                        "$ref": "#/$defs/s_name",
+                                                                        "description": "The optional short name, whose length cannot exceed 30 characters. Only the following characters are valid: a-z, A-Z, 0-9, and _. You cannot use a white space. The short name of a step can be used to trigger the execution of the building block that implements the step"
+                                                                    },
+                                                                    "plan_tags": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "description": "A string that can be associated with an activity, an action, or a step. It can be used in the The Python deployment command or The Ansible deployment command to include or exclude activities, actions, or steps in the deployment stage.\n You can assign the following values to plan_tags: \n 1. Any string with the following characters: a-z, A-Z, 0-9, and _. \n 2. 'always' : The activities, actions, and steps that include this string are always included in the deployment, except if always is specified in the planSkipTags argument of the deployment command. \n 3. 'never' : The activities, actions, and steps that include this string are never included in the deployment, except if never is specified in the planTags argument of the deployment command."
+                                                                    },
+                                                                    "tags": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "description": "A string that can be associated with an activity, an action, or a step. You can assign the following values to tags: \n 1. Any string with the following characters: a-z, A-Z, 0-9, and _. \n 2. 'always' : The activities, actions, and steps that include this string are always included in the generation, except if always is specified in the --skipTags argument of the Wazi Deploy generation command. \n 3. 'never' : The activities, actions, and steps that include this string are never included in the generation, except if never is specified in the --tags argument of the Wazi Deploy generation command."
+                                                                    },
+                                                                    "is_artifact": {
+                                                                        "type": "boolean",
+                                                                        "description": "A Boolean that specifies whether the activity, action, or step applies to artifacts. Required: yes if the activity, action, or step applies to artifacts. Values: True or False"
+                                                                    },
+                                                                    "isArtifact": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "types": {
+                                                                        "$ref": "#/$defs/d_types",
+                                                                        "description": "Required if is_artifact is set to True. The types of artifacts that the step applies to, if the step applies to artifacts. The types field is a list of types that are present in the package file. It corresponds to the extension of the artifacts in the .tar file"
+                                                                    },
+                                                                    "when": {
+                                                                        "$ref": "#/$defs/d_when",
+                                                                        "description": "Used to specify a condition that must return True for the activity, action, or step to run. If this instruction is used on the same activity, action, or step as a loop instruction, then the loop is restricted to the items that meet the condition."
+                                                                    },
+                                                                    "failed_when": {
+                                                                        "$ref": "#/$defs/d_when",
+                                                                        "description": "Used to set the status of the current activity, action, or step result to Failed or Successful if the condition is met."
+                                                                    },
+                                                                    "jumps_when": {
+                                                                        "$ref": "#/$defs/d_jump",
+                                                                        "description": "Used to jump to the specified target location at the end of the current activity, action, or step if the condition is met. The activity, action, or step mentioned in the target location must have a short_name attribute."
+                                                                    },
+                                                                    "rescue": {
+                                                                        "$ref": "#/$defs/d_rescue",
+                                                                        "description": "Used to jump to a target activity, action, or step if an exception occurs during the current activity, action, or step. The activity, action, or step mentioned in the target location must have a short_name attribute. No condition is indicated."
+                                                                    },
+                                                                    "loop": {
+                                                                        "$ref": "#/$defs/d_loop",
+                                                                        "description": "Used to iteratively run the activity, action, or step."
+                                                                    },
+                                                                    "properties": {
+                                                                        "$ref": "#/$defs/props",
+                                                                        "description": "A pair of key and associated value. \n The values of some of these properties overwrite the default values of the variables in the environment variables file. The following properties are used by the building blocks: \n 1. A properties element whose key field is set to template and whose value field is the name of the building block, such as cics_cmci_prog_create. \n 2. A properties element whose key field is set to var_template and whose value field is the name of the variable that contains the building block name. \n 3. A properties element that overwrites the default variable from the environment variables file."
+                                                                    }
+                                                                },
+                                                                "required": ["name"]
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": ["name", "steps"]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "required": ["name", "actions"]
+                    }
+                ]
+            }
+        }
+    },
+    "required": ["apiVersion", "kind", "activities"],
+    "$defs": {
+        "props": {
+            "type": "array",
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "oneOf": [
+                            {"type": "object"},
+                            {"type": "string"},
+                            {"type": "number"},
+                            {"type": "boolean"},
+                            {"type": "array"}
+                        ]
+                    }
+                },
+                "required": ["key", "value"]
+            }
+        },
+        "s_name": {
+            "type": "string",
+            "maxLength": 30,
+            "pattern": "^([A-Z]|[a-z]|[0-9]|_)+$"
+        },
+        "d_when": {
+            "oneOf": [
+                {"type": "string"},
+                {"type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            ]
+        },
+        "d_loop": {
+            "additionalProperties": false,
+            "properties": {
+                "loop_query": {
+                    "type": "string"
+                },
+                "loop_var": {
+                    "type": "string"
+                }
+            },
+            "required": ["loop_query", "loop_var"]
+        },
+        "d_jump": {
+            "additionalProperties": false,
+            "type": "array",
+             "items": {
+                "anyOf": [ {
+                    "additionalProperties": false,
+                    "properties": {
+                        "condition": {
+                            "oneOf": [
+                                {"type": "string"},
+                                {"type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            ]
+                        },
+                        "before": {
+                            "type": "boolean"
+                        },
+                        "exit_return_code": {
+                            "type": "integer"
+                        },
+                        "location": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "activity_short_name": {
+                                    "type": "string"
+                                },
+                                "action_short_name": {
+                                    "type": "string"
+                                },
+                                "step_short_name": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["activity_short_name"]
+                        }
+                    },
+                    "required": ["condition", "location"]
+                }
+            ]
+           }
+        },
+        "d_rescue": {
+            "additionalProperties": false,
+            "properties": {
+                "exit_return_code": {
+                    "type": "integer"
+                },
+                "location": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "activity_short_name": {
+                            "type": "string"
+                        },
+                        "action_short_name": {
+                            "type": "string"
+                        },
+                        "step_short_name": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["activity_short_name"]
+                }
+            },
+            "required": ["location"]
+    },
+        "d_types": {
+            "type": "array",
+            "items": {
+                "anyOf": [ {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name"]
+                  }
+                ]
+            }
+        }
+    }
+}
