@@ -1,15 +1,18 @@
 # Gitlab IBM Wazi Deploy query template
-This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file, to query the evidence file using the [queryTemplate.yml](queryTemplate.yml) template.
+
+This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to setup a pipeline for query the deployment information from the Wazi Deploy evidence file and create a deployed artifacts report.
 
 ## Overview and capabilities
-This pipeline template is analyzing the evidence file, to list the names of the deployed artifacts that are created as a result of the deployment. 
+This pipeline template is analyzing the evidence file, to list the names of the deployed artifacts that are created as a result of the deployment and generate a deployment report of the deployed artifacts.
+
+The pipeline leverages the queryTemplate.yml to query deployed artifacts information from the evidence files.
 
 
 The pipeline has only one stage:
 
 `Query`
-   * We first index the evidence files to make them searchable.
-   * This example creates a simple renderer file in yaml format.
+   * index the evidence files to make them searchable
+   * create a simple renderer file in the yaml format.
 
 The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
@@ -19,7 +22,7 @@ The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 ## Structure and setup of template
 
 This is a standalone pipeline that can be used to query the evidence file. Please review the definitions thoroughly with your Gitlab administrator to define the renderer file in the machine that hosts the GitLab runner. The renderer is optional and can be in various formats like SQL, .csv, html, JSON etc. Incase the renderer is not specified, the retrieved data is presented in a raw YAML format.
-
+please find more documentation here [IBM Wazi Deploy documentation](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=deploy-getting-started-analysis-deployment-results))
 
 ### CLI Parameter and description
 
