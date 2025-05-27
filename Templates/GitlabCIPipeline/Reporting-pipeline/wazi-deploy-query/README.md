@@ -54,6 +54,6 @@ environment | Specify the environment (eg: integration, acceptance)
 When a developer wants to analyze the Wazi deploy evidence file to get the list of artifacts that have been deployed, the pipeline can be triggered manually.
 
 ### Sample output 
-
+This can be downloaded and viewed after a successful run of the pipeline.
 <img width="622" alt="image" src="https://github.com/user-attachments/assets/fbc471c0-d83a-404b-93e1-4ca75af207e9" />
 
