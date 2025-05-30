@@ -1,29 +1,50 @@
 # Jenkins Pipeline template
 
-This template provides a [Jenkinsfile](Jenkinsfile) definition to set up a Jenkins Multibranch pipeline compatible with any Git provider.
+There are 2 Jenkins pipeline definition templates provided to set up a Jenkins Multibranch pipeline compatible with any Git provider. 
+* a [Jenkinsfile](Jenkinsfile) definition to set up a Jenkins Multibranch pipeline using IBM UrbanCode Deoloy (renamed as IBM DevOps Deploy) as a deployment framework.
+* a [JenkinsfileWithWaziDeploy](JenkinsfileWithWaziDeploy) definition to set up a Jenkins Multibranch pipeline using IBM Wazi Deploy as a deployment frameowork.
 
 ## Overview and capabilities
 
-This pipeline template is implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) with Jenkins as a the Pipeline Orchestrator.
+These two pipeline templates are implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev) with Jenkins as a the Pipeline Orchestrator.
 
-It leverages the [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) in the Build, Packaging, and Deployment stages.
+They leverage the [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) in the Build, Packaging, and Deployment stages.
 
-The pipeline implements the following stages:
+The [Jenkinsfile](Jenkinsfile) pipeline template implements the following stages:
 
 * `Checkout` stage to clone the Git repository to a workspace directory on z/OS UNIX System Services using the integrated Git Plugin of Jenkins.
 * `Pipeline Setup` to compute the settings for subsequent stages, that are displayed in the `Parameters and Values` stage.
 * `Build` stage 
-  * to invoke zAppBuild via the [dbbBuild.sh](../Common-Backend-Scripts/README.md#42---dbbbuildsh) Common Backend Script,
+  * to invoke zAppBuild via the [dbbBuild.sh](../Common-Backend-Scripts/README.md#135---dbbbuildsh) Common Backend Script,
   * to publish log files to the Jenkins build result.
 * `SonarQube Analysis` stage to request a SonarQube scan of the application repository.
 * `Packaging` stage
-  * to create an UrbanCode Component version via the Common Backend Script [ucdPackaging.sh](../Common-Backend-Scripts/README.md#45---ucdpackagingsh),
+  * to create an UrbanCode Component version via the Common Backend Script [ucdPackaging.sh](../Common-Backend-Scripts/README.md#139---ucdpackagingsh),
   * to publish packaging log files to the Jenkins build result,
   * to add links to the UCD Component version.
 * `Deploy to INT` stage to deploy to the development / integration test environment that includes:
-  * to request the Deployment of the UrbanCode Component version via the Common Backend Script [ucdDeploy.sh](../Common-Backend-Scripts/README.md#46---ucddeploysh) to the shared Development/Integration test environment,
+  * to request the Deployment of the UrbanCode Component version via the Common Backend Script [ucdDeploy.sh](../Common-Backend-Scripts/README.md#143---ucddeploysh) to the shared Development/Integration test environment,
   * to publish deployment log files to the Jenkins build result,
   * to add links to the UCD Deployment request.
+ * `Workspace Cleanup` stage to clean up the workspace.
+
+ The [JenkinsfileWithWaziDeploy](JenkinsfileWithWaziDeploy) pipeline template implements the following stages:
+
+* `Checkout` stage to clone the Git repository to a workspace directory on z/OS UNIX System Services using the integrated Git Plugin of Jenkins.
+* `Pipeline Setup` to compute the settings for subsequent stages, that are displayed in the `Parameters and Values` stage.
+* `Build` stage 
+  * to invoke zAppBuild via the [dbbBuild.sh](../Common-Backend-Scripts/README.md#135---#dbbbuildsh-for-zappbuild-framework) Common Backend Script,
+  * to publish log files to the Jenkins build result.
+* `SonarQube Analysis` stage to request a SonarQube scan of the application repository.
+* `Packaging` stage
+  * to create a .TAR file package based on the [packageBuildOutputs.sh](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#138---packageBuildOutputssh) script,
+  * to automatically compute the version of the next release for a release pipeline via [computeReleaseVersion.sh]((https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#137---computeReleaseVersionsh), 
+  * to automatically compute the artifact repository URL to store the .TAR file package,
+  * to upload the .TAR file package to the artifact repository on the computed URL.
+* `Deploy Integration` stage to deploy to the development / integration test environment that includes:
+  * to run the Wazi Deploy and generate deployment plan [generate command](../Common-Backend-Scripts/README.md#140---wazideploy-generatesh),
+  * to download the .TAR file package from the artifact repository URL that is uploaded during the packaging stage,
+  * to deploy the .TAR file package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#141---wazideploy-deploysh) (Python-based).
  * `Workspace Cleanup` stage to clean up the workspace.
 
 Depending on your selected and software analysis and deployment technology, review the definitions and (de-)/activate the appropriate steps.
@@ -37,8 +58,7 @@ The [Common Backend Scripts](../Common-Backend-Scripts/) need to be configured f
 ## Installation and setup of template
 
 **Note: Please work with your pipeline specialist to review the below section.**
-
-The `Jenkinsfile` can be placed into the root folder of your Git repository and will automatically provide pipelines for the specified triggers defined in the Jenkins Multibranch Pipeline job configuration.
+The `Jenkinsfile` or `JenkinsfileWithWaziDeploy` can be placed into the root folder of your Git repository and will automatically provide pipelines for the specified triggers defined in the Jenkins Multibranch Pipeline job configuration.
 
 Please review the definitions thoroughly with your Jenkins administrator. Ideally, the Jenkinsfile is converted into a [Jenkins Shared Library](https://www.jenkins.io/doc/book/pipeline/shared-libraries/) to provide stronger, central control.
 
@@ -55,9 +75,9 @@ It is supporting the following workflows:
 * [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) triggered when feature branches are merged into the branch `main`
 * [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-release-pipeline-with-build-package-and-deploy-stages) to build, package and deploy a release via UCD
 
-The `Pipeline setup` stage within the [template](Jenkinsfile#L165) configures the subsequent stages, including flags used as conditions when stages and jobs are executed. Please review this stage.
+The `Pipeline setup` stage within the [Jenkinsfile](Jenkinsfile#L167) and [JenkinsfileWithWaziDeploy](JenkinsfileWithWaziDeploy#L200) configure the subsequent stages, including flags used as conditions when stages and jobs are executed. Please review this stage.
 
-This template is implementing the recommended [Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev). If you have not done so yet, we recommend to get familiar with the concepts described in this documentation.
+These templates are implementing the recommended [Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev). If you have not done so yet, we recommend to get familiar with the concepts described in this documentation.
 
 ### Pipeline variables
 
