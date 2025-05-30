@@ -55,7 +55,7 @@ Query:
                 echo " **  Renderer        = $rendererFile"
                 echo " **  WaziDeployIdx   = $wdEvidencesIndex"
                 echo " **  Project is checked out to: $CI_PROJECT_DIR"
-                ls -l "$CI_PROJECT_DIR"
+                ls -l " ** $CI_PROJECT_DIR"
                 echo "*******************************************"
 
 
