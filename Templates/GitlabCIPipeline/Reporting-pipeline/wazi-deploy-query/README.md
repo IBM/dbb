@@ -5,7 +5,7 @@ This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to set
 ## Overview and capabilities
 This pipeline template is analyzing the evidence file, to list the names of the deployed artifacts that are created as a result of the deployment and generate a deployment report of the deployed artifacts.
 
-The pipeline leverages the queryTemplate.yml to query deployed artifacts information from the evidence files.
+The pipeline leverages the [queryTemplate.yml](queryTemplate.yml) to query deployed artifacts information from the evidence files.
 
 
 The pipeline has only one stage:
