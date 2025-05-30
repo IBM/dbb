@@ -1,0 +1,32 @@
+# wazideploy-evidence --indexFolder /var/work/wazi_deploy_evidences_gitlab_index --template /var/work/wazi_deploy_queries_gitlab/queryTemplate.yml --output=/var/work/wazi_deploy_queries_gitlab/reports/inventory-report.html r app='*' env='*' type='*' module='*' renderer=/var/work/wazi_deploy_queries_gitlab/renderer.html
+
+select:
+  name: '{{module}}'
+  ymli_category~: ^ activities:[0-9]* actions:[0-9]* steps:[0-9]* artifacts:[0-9]* $
+#  ymli_parent:
+#    steps: 
+#      name: MEMBER_COPY 
+  ymli_parent:
+    #{% if env is defined %}
+    metadata:
+        annotations:
+            environment_name: '{{env}}' 
+    #{% endif %}
+    #{% if app is defined %}
+    manifests:
+        name: '{{app}}'
+    #{% endif %}  
+  properties:
+    key: type
+    value: '{{type}}'
+output:
+   unique: true
+   fields:
+      name: +1
+      properties:
+        key: true
+        value: true
+#name: true
+#{% if renderer is defined %}
+renderer: {{renderer}}
+#{% endif %}
