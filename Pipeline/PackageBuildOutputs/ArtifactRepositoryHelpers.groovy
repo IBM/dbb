@@ -30,11 +30,12 @@ import java.nio.file.Paths
  */
 
 @Field int MAX_RESEND = 10;
+@Field validStatusCodes = [200, 201] // 200=OK, 201=Created
 
 def <T> CompletableFuture<HttpResponse<T>>
 		tryResend(HttpClient client, HttpRequest request, BodyHandler<T> handler,
 				 int count, HttpResponse<T> resp) {
-	if (resp.statusCode() == 200 || count >= MAX_RESEND) {
+	if (validStatusCodes.contains(resp.statusCode()) || count >= MAX_RESEND) {
 		return CompletableFuture.completedFuture(resp);
 	} else {
 		return client.sendAsync(request, handler)
@@ -174,7 +175,7 @@ def evaluateHttpResponse (HttpResponse response, String action, boolean verbose)
     def statusCode = response.statusCode()
     if (verbose) println "*** HTTP-Status Code: $statusCode"
     def responseString = response.body()
-    if ((statusCode != 201) && (statusCode != 200)) {
+    if (!(validStatusCodes.contains(statusCode))) {
         rc = 1
         println("** Artifactory $action failed with statusCode : $statusCode")
         println("** Response: " + response);
