@@ -152,6 +152,17 @@ validateOptions() {
             ERRMSG=$PGM": [ERROR] Workspace Directory ($(getWorkDirectory)) was not found. rc="$rc
             echo $ERRMSG
         fi
+
+        # Check that workspace directory is a reasonable length (>=12 characters) to
+        # prevent deletion of high-level directories
+        workDirectory="$(getWorkDirectory)"
+        workDirectoryLength=${#workDirectory}
+        if [ $workDirectoryLength -lt 12 ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Working directory path ($(getWorkDirectory)) is too short ($workDirectoryLength characters). \
+            Expected length: 12 or more characters. rc="$rc
+            echo $ERRMSG
+        fi
     fi
 
 }
@@ -173,7 +184,7 @@ fi
 # Delete build directory
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Deleting working directory $(getWorkDirectory): "
-    CMD="rm -Rf $(getWorkDirectory)"
+    CMD="rm -PRf $(getWorkDirectory)"
     echo $PGM": [INFO] ${CMD}"
     ${CMD}
     rc=$?
