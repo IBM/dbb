@@ -187,7 +187,7 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Deleting working directory ${WORK_DIRECTORY}: "
     CMD="rm -PRf ${WORK_DIRECTORY}"
     echo $PGM": [INFO] ${CMD}"
-    ${CMD}
+    ${CMD} 2>&1
     rc=$?
 fi
 
