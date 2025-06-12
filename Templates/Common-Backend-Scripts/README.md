@@ -1158,7 +1158,7 @@ It _greps_ the information and invokes a download action.
 
 ### deleteWorkspace.sh
 
-Script delete the workspace and all empty directories in the working tree. 
+Script to delete the workspace.
 
 #### Invocation
 
@@ -1172,9 +1172,6 @@ CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
 
-
-Note that the script deletes all empty folders in the working tree. It supresses the message `EDC5136I Directory not empty.` and handles that as a INFO message.
-
 #### Script output
 
 The section below contains the output that is produced by the `deleteWorkspace.sh` script.
@@ -1183,89 +1180,15 @@ The section below contains the output that is produced by the `deleteWorkspace.s
   <summary>Script Output</summary>
 
 ```
-deleteWorkspace.sh: [INFO] Delete Workspace script. Version=1.00
+deleteWorkspace.sh: [INFO] Delete Workspace script. Version=1.10
 deleteWorkspace.sh: [INFO] **************************************************************
-deleteWorkspace.sh: [INFO] ** Started - Delete Workspace on HOST/USER: z/OS ZT01 05.00 02 8561/BPXROOT    
-deleteWorkspace.sh: [INFO] **          Working Directory: /var/dbb/pipelineBackend/MortApp/main/build-1
-deleteWorkspace.sh: [INFO] **          Workspace        : MortApp/main/build-1
+deleteWorkspace.sh: [INFO] ** Started - Delete Workspace on HOST/USER: z/OS VS01 01.00 03 8562/BPXROOT    
+deleteWorkspace.sh: [INFO] **          Working Directory: /var/workspace/cics-banking-sample-application/build-187
+deleteWorkspace.sh: [INFO] **          Workspace        : /var/workspace/cics-banking-sample-application/build-187
 deleteWorkspace.sh: [INFO] **************************************************************
-deleteWorkspace.sh: [INFO] Deleting contents in /var/dbb/pipelineBackend/MortApp/main/build-1: 
-deleteWorkspace.sh: [INFO] rm -Rfv /var/dbb/pipelineBackend/MortApp/main/build-1/*
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/info/exclude
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/applypatch-msg.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/commit-msg.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/post-update.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/pre-applypatch.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/pre-commit.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/prepare-commit-msg.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/pre-push.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/pre-rebase.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/update.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/post-checkout.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/description
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/refs/heads/main
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/refs/remotes/origin/HEAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/config
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/HEAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/objects/pack/pack-ab68cc529d7cc1609635c0d093249af2cca3a49d.pack
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/objects/pack/pack-ab68cc529d7cc1609635c0d093249af2cca3a49d.rev
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/objects/pack/pack-ab68cc529d7cc1609635c0d093249af2cca3a49d.idx
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/logs/refs/remotes/origin/HEAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/logs/refs/heads/main
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/logs/HEAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/index
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/packed-refs
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.gitattributes
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.project
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/MultibranchPipeline
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/README.md
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/BMS.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/CRB.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/Cobol.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/LinkEdit.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/README.md
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/application.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/baselineReference.config
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/bind.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/file.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/bms/epsmlis.bms
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/bms/epsmort.bms
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epscmort.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epscsmrd.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epscsmrt.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epsmlist.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epsmpmt.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epsnbrvl.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsmortf.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsmtcom.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsmtinp.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsmtout.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsnbrpm.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epspdata.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/crb/cics-resourcesDef.yaml
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/link/epsmlist.lnk
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/logs/BuildReport.html
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/properties/epsmlist.cbl.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/buildList.txt
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/deletedFilesList.txt
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/EPSNBRVL.cobol.log
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/EPSCMORT.cobol.log
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/BuildReport.json
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/BuildReport.html
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.BLD.LOAD/EPSCMORT.CICSLOAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.BLD.DBRM/EPSCMORT.DBRM
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/buildReportOrder.txt
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/BuildReport.json
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/packageBuildOutputs.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/package.tar
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs.tar
-deleteWorkspace.sh: [INFO] Deleting empty directories in working tree.
-deleteWorkspace.sh: [INFO] rmdir -p /var/dbb/pipelineBackend/MortApp/main/build-1 2>&1
-deleteWorkspace.sh: [INFO] Deleting empty directories stopped at below directory because it is not empty.
-deleteWorkspace.sh: [INFO] rmdir: FSUM6404 directory "/var/dbb/pipelineBackend/MortApp/main": EDC5136I Directory not empty. 
-deleteWorkspace.sh: [INFO] Workspace directory successfully deleted.
+deleteWorkspace.sh: [INFO] Deleting working directory /var/workspace/cics-banking-sample-application/build-187: 
+deleteWorkspace.sh: [INFO] rm -PRf /var/workspace/cics-banking-sample-application/build-187
+deleteWorkspace.sh: [INFO] Workspace directory successfully deleted. rc=0
 ```  
 
 </details>
