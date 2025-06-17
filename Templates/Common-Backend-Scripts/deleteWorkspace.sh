@@ -157,11 +157,11 @@ validateOptions() {
             ERRMSG=$PGM": [ERROR] Workspace Directory (${WORK_DIRECTORY}) was not found. rc="$rc
             echo $ERRMSG
         elif [ ${workDirectoryLength} -lt ${MIN_WORK_DIR_LENGTH} ]; then
-            # Check that workspace directory is a reasonable length (e.g. at least 12 characters) to
+            # Check that workspace directory is a reasonable length (e.g. minimum of 12 characters) to
             # prevent deletion of high-level directories
             rc=8
             ERRMSG=$PGM": [ERROR] Working directory path (${WORK_DIRECTORY}) is too short (${workDirectoryLength} characters). \
-            Minimum expected length: ${MIN_WORK_DIR_LENGTH} or more characters. rc="$rc
+            Expected length: ${MIN_WORK_DIR_LENGTH} or more characters. rc="$rc
             echo $ERRMSG
         fi
     fi
