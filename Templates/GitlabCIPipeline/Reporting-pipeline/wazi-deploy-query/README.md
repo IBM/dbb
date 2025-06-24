@@ -12,7 +12,7 @@ The pipeline has only one stage:
 
 `Query`
    * index the evidence files to make them searchable
-   * create a simple renderer file in the yaml format.
+   * query the index based on the provided search criteria that got passed in via the pipeline request dialogue.
 
 The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
 
