@@ -51,7 +51,7 @@ environment | Specify the environment (eg: integration, acceptance)
 
 ### Implementation of the pipeline
 
-When a developer wants to analyze the Wazi deploy evidence file to get the list of artifacts that have been deployed, the pipeline can be triggered manually.
+To query the Wazi deploy evidence index, the developer triggers the pipeline manually. When requesting the pipeline, multiple filter criteria can be configured to limit the search on element name, element type, application or environment.
 
 ### Sample output 
 This can be downloaded and viewed after a successful run of the pipeline.
