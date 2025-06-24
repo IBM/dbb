@@ -75,6 +75,6 @@ Query:
                     echo "[INFO] - Query Wazi Deploy index completed. Report $reportFile generated."
                 else
 
-                    echo "[WARNING] - Query Wazi Deploy index failed."
+                    echo "[WARNING] - Query Wazi Deploy index failed. RC=${rc}"
                     exit 1
                 fi
