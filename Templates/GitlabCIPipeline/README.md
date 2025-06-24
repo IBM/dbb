@@ -8,7 +8,9 @@ It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/T
 The pipeline implements the following stages
 * `Setup` stage to [clone](../Common-Backend-Scripts/README.md#41---gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
 * `Build` stage 
-  * to invoke the zAppBuild [build](../Common-Backend-Scripts/README.md#42---dbbbuildsh) framework,
+  * to invoke the build framework. Select one of the following frameworks by comment or uncomment the command to perform the build for the build framework you choose.
+    * zBuilder [zBuilder.sh](./Common-Backend-Scripts/README.md#zbuildersh-for-dbb-zbuilder) framework
+    * zAppBuild [dbbBuild.sh](../Common-Backend-Scripts/README.md#dbbbuildsh-for-zappbuild-frameworkh) framework
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them as Gitlab Artifacts.
   * in case of a release pipeline, to create the release candidate tag.
 * `Packaging` stage

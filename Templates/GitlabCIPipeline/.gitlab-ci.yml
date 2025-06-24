@@ -104,7 +104,13 @@ Clone:
         reports:
             junit: "$CI_PROJECT_DIR/BUILD-OUTPUT/*.xml"
     script: |
+        echo [INFO] Start building application.
+        # Depending on the build framework you are using, comment or uncomment the command to invoke the build framework of your choice.
+        # Command to perform build using zBuilder framework.
         zowe rse issue unix-shell ". ~/.bash_profile && dbbBuild.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} ${verbose}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        
+        # Command to perform build using zAppBuild framework
+        # zowe rse issue unix-shell ". ~/.bash_profile && dbbBuild.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} ${verbose}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Build job passed.
