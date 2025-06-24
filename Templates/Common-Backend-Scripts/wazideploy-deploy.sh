@@ -28,6 +28,7 @@
 # ---------- ---- ---- --------------------------------------------------------------
 # 2023/10/19 MDLB 1.00 Initial Release
 # 2023/11/29 DB   1.10 Fixes to relative workspace directory
+# 2025/06/25 DB   1.20 Accept extraVars + pass default variables to WD
 #===================================================================================
 Help() {
     echo $PGM" - Deploy a package with Wazi Deploy                                  "
@@ -113,7 +114,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.10"
+PGMVERS="1.20"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -125,6 +126,9 @@ EnvironmentFile=""
 PackageInputFile=""
 EvidenceFile=""
 Debug=""
+App=""       # provided by argument a
+extraVars="" # Passed via argument x
+planTags=""  # Passed via argument t
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -158,7 +162,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts "hdw:p:e:i:l:" opt; do
+    while getopts "hdw:p:e:a:t:x:i:l:" opt; do
         case $opt in
         h)
             Help
@@ -174,6 +178,17 @@ if [ $rc -eq 0 ]; then
                 break
             fi
             Workspace="$argument"
+            ;;
+        a)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] A value for cli parm a (application) is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            App="$argument"
             ;;
 
         p)
@@ -198,6 +213,30 @@ if [ $rc -eq 0 ]; then
                 break
             fi
             EnvironmentFile="$argument"
+            ;;
+
+        x)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] A value for extraVars is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            extraVars="$argument"
+            ;;
+
+        t)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] A value for planTags is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            planTags="$argument"
             ;;
 
         i)
@@ -366,11 +405,17 @@ fi
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **************************************************************"
     echo $PGM": [INFO] ** Start Wazi Deploy Deployment on HOST/USER: ${SYS}/${USER}"
+    echo $PGM": [INFO] **                Application Name:" ${App}
     echo $PGM": [INFO] **               Working Directory:" ${Workspace}
     echo $PGM": [INFO] **                 Deployment Plan:" ${DeploymentPlan}
     echo $PGM": [INFO] **                Environment File:" ${EnvironmentFile}
     echo $PGM": [INFO] **              Package Input File:" ${PackageInputFile}
-
+    if [ ! -z "${extraVars}" ]; then
+        echo $PGM": [INFO] **         User-provided extraVars:" ${extraVars}
+    fi
+    if [ ! -z "${planTags}" ]; then
+        echo $PGM": [INFO] **                        planTags:" ${planTags}
+    fi
     if [ ! -z "${EvidenceFile}" ]; then
         echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
     fi
@@ -388,7 +433,24 @@ fi
 #
 # Set up to execute the Wazi Deploy deploy command
 if [ $rc -eq 0 ]; then
+
     CommandLine="wazideploy-deploy --workingFolder "${Workspace}" --deploymentPlan "${DeploymentPlan}" --envFile "${EnvironmentFile}
+
+    # Add application and user provided extraVars
+    if [ ! -z "${App}" ]; then
+        CommandLine+=" -e application=${App}"
+    fi
+    if [ ! -z "${extraVars}" ]; then
+        for word in ${extraVars}; do
+            CommandLine+=" -e $word"
+        done
+    fi
+
+    # Add wdDeployCfgHome to extraVars
+    if [ ! -z "${wdDeployCfgHome}" ]; then
+        CommandLine+=" -e deploy_cfg_home=${wdDeployCfgHome}"
+    fi
+
     if [ ! -z "${PackageInputFile}" ]; then
         CommandLine+=" --packageInputFile "${PackageInputFile}
     fi
