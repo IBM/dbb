@@ -10,25 +10,25 @@ It leverages the [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/T
 The pipeline implements the following stages
 * `Setup` stage to clone the Git repository to a workspace directory on z/OS Unix System Services using built-in clone capabilities of the GitLab Runner (still calling the git command on z/OS Unix Systems Services).
 * `Build` stage 
-  * to invoke the zBuilder [build](../../Common-Backend-Scripts/README.md#zbuildersh-for-dbb-zbuilder) framework,
+  * to invoke the zBuilder [build](../Common-Backend-Scripts/README.md#zbuildersh-for-dbb-zbuilder) framework,
   * to upload the log files and publish them as GitLab artifacts.
 * `Packaging` stage
-  * to create a package (TAR file) based on the [PackageBuildOutputs script](../../Common-Backend-Scripts/README.md#packagebuildoutputssh)
+  * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#packagebuildoutputssh)
   * in case of a release pipeline, to create the release candidate tag.
 * `Deploy Integration` stage to deploy to the development / integration test environment that includes:
-  * to run the Wazi Deploy and generate deployment plan [generate command](../../Common-Backend-Scripts/README.md#wazideploy-generatesh)
-  * to deploy the package with the Wazi Deploy [deploy command](../../Common-Backend-Scripts/README.md#wazideploy-deploysh) (Python-based)
-  * to run the Wazi Deploy [evidence command](../../Common-Backend-Scripts/README.md#wazideploy-evidencesh) to generate deployment report and updating the evidence.
+  * to run the Wazi Deploy and generate deployment plan [generate command](../Common-Backend-Scripts/README.md#wazideploy-generatesh)
+  * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#wazideploy-deploysh) (Python-based)
+  * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the GitLab Artifacts.
   * to store the Wazi Deploy evidence files at a shared location to support later reporting scenarios.
 * `Deploy Acceptance` and `Deploy Production` stages to deploy to controlled test environments via the [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) that includes:
-  * to deploy the package with the Wazi Deploy to targeted environment [deploy command](../../Common-Backend-Scripts/README.md#wazideploy-deploysh) (Python-based)
-  * to run the Wazi Deploy [evidence command](../../Common-Backend-Scripts/README.md#wazideploy-evidencesh) to generate deployment report and updating the evidence.
+  * to deploy the package with the Wazi Deploy to targeted environment [deploy command](../Common-Backend-Scripts/README.md#wazideploy-deploysh) (Python-based)
+  * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the GitLab Artifacts.
   * to store the Wazi Deploy evidence files at a shared location to support later reporting scenarios.
-* `Finalize` stage to create a release tag from [baseline reference file](../../Common-Backend-Scripts/samples/baselineReference.config) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#scaling-up).
+* `Finalize` stage to create a release tag from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#scaling-up).
 * `Cleanup` stage:
-  * to [delete the build workspace](../../Common-Backend-Scripts/README.md#deleteworkspacesh) on z/OS Unix System Services.
+  * to [delete the build workspace](../Common-Backend-Scripts/README.md#deleteworkspacesh) on z/OS Unix System Services.
 
 Depending on your selected deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
@@ -41,7 +41,7 @@ The pipeline uses the GitLab concepts: `Stage`and `Jobs`.
 To leverage this template, access to a GitLab CI/CD environment is required, and a z/OS-native GitLab Runner must be configured.
 The pipeline template makes use of the of `GIT_CLONE_PATH` variable to specify the location of the Git repository on z/OS Unix Systems Services. For this to work, the z/OS-native GitLab Runner must have the `custom_dirs` feature enabled.
 
-The [Common Backend scripts](../../Common-Backend-Scripts/) need to be configured for the selected deployment technologies to operate correctly.
+The [Common Backend scripts](../Common-Backend-Scripts/) need to be configured for the selected deployment technologies to operate correctly.
 
 ## Installation and setup of template
 
@@ -60,7 +60,7 @@ The following variables need to be updated within the pipeline definition file: 
 
 Variable | Description
 --- | ---
-application | Specify the name of your application which will be used to invoke the [Common Backend scripts](../../Common-Backend-Scripts/).
+application | Specify the name of your application which will be used to invoke the [Common Backend scripts](../Common-Backend-Scripts/).
 wdEnvironmentFileIntegration | Path to a Wazi Deploy configuration file for integration environment.
 wdEnvironmentFileAcceptance | Path to a Wazi Deploy configuration file for acceptance environment.
 wdEnvironmentFileProduction | Path to a Wazi Deploy configuration file for production environment.
@@ -133,7 +133,7 @@ It covers the followings steps:
 * Finalizing the production release state
 * Cleanup (required to be triggered manually)
 
-The development team manually requests the pipeline and specifies the *pipelineType* variable as `release`. Along with the *release type*, the pipeline will automatically calculate the release tag based on the information in the [baselineReference.config](../../Common-Backend-Scripts/samples/baselineReference.config) file, tag a release candidate and also the final release that is deployed to production.
+The development team manually requests the pipeline and specifies the *pipelineType* variable as `release`. Along with the *release type*, the pipeline will automatically calculate the release tag based on the information in the [baselineReference.config](../Common-Backend-Scripts/samples/baselineReference.config) file, tag a release candidate and also the final release that is deployed to production.
 
 Overview of the release pipeline:
 
