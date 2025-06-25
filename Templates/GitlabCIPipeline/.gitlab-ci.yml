@@ -6,14 +6,13 @@ variables:
     wdEnvironmentFileIntegration: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Integration.yml
     wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
     wdEnvironmentFileProduction: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Production.yml
-    packageName: ${application}.build-${CI_PIPELINE_ID}
     # Directories on the GitLab runner environment to persist Wazi Deploy Evidence files and to create an Wazi Deploy Index
     wdEvidencesRoot: /var/work/wazi_deploy_evidences_gitlab/
     wdEvidencesIndex: /var/work/wazi_deploy_evidences_gitlab_index/
 
- # Working directory on USS 
+    # Working directory on USS 
     uniqueWorkspaceId: $PIPELINE_WORKSPACE/$CI_PROJECT_NAME/build-${CI_PIPELINE_ID}
-# Working directory on Linux machine
+    # Working directory on Linux machine
     buildOutputDirectory: ${CI_PROJECT_DIR}/BUILD-OUTPUT
     deployOutputDirectory: ${CI_PROJECT_DIR}/DEPLOY-OUTPUT
     baselineReferenceFile: $CI_PROJECT_DIR/$CI_PROJECT_NAME/application-conf/baselineReference.config
@@ -179,92 +178,6 @@ Clone:
              exit ${RC}
         fi
 
-3-Create release candidate tag:
-    needs: ["1-Build application", "2-Prepare and publish build logs"]
-    stage: Build
-    tags: [shell]
-    rules:
-        # The job only run if the pipelineType is "release".
-        - if: $pipelineType == "release"
-    variables:
-      # Clone and checkout git repo to get latest baselineReference config file.
-      GIT_STRATEGY: clone
-      GIT_CHECKOUT: "true"
-    dependencies: []
-    script: |
-
-        echo [INFO] Retrieve baseline reference information from ${baselineReferenceFile}.
-        # Retrieve the baseline reference from the baselineReferenceFile        
-        if [ ! -f "${baselineReferenceFile}" ]; then
-            echo [ERROR] Applications baseline reference configuration file ${baselineReferenceFile} was not found.
-            exit 1
-        else
-            
-            # Extract the current branch from GitLab envirnment
-            export mainBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $1 }'`
-            export secondBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $2 }'`
-            export thirdBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $3 }'`
-
-            echo [INFO] Branch: ${CI_COMMIT_BRANCH}
-            # echo [INFO] Branch segments: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}
-
-            # Find base line version of the current branch from the baseLineReferenceFile
-            case ${mainBranchSegment} in
-                "main")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
-              ;;
-                "release")
-                    # echo [INFO] Extract baseline for release branch
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^release/${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
-                    #echo [INFO] Baselinereference = ${baselineRef}
-              ;;
-            esac
-
-            if [ -z "${baselineRef}" ]; then
-                echo [ERROR] No baseline ref was found for branch name ${Branch} in ${baselineReferenceFile}.
-                exit 1
-            else
-                echo [INFO] Baseline Reference: ${baselineRef}
-            fi
-
-            # Compute the name of the next release based on the releaseType
-            if [ "${releaseType}" == "patch" ]; then
-                export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$3 += 1 ; print}'`
-            fi
-            if [ "${releaseType}" == "minor" ]; then
-                export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$2 += 1 ; $3 = 0; print}'`
-            fi
-            if [ "${releaseType}" == "major" ]; then
-                export newVersion=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
-            fi
-            export newVersionTag=$(echo "rel-${newVersion}")
-            echo [INFO] Computed tag for the next release: ${newVersionTag}
-
-            # Compute the name of the next release candidate 
-            export releaseCandidate=$(git tag --list "${newVersionTag}_*rc*" --sort=version:refname | tail -n 1)
-            echo [INFO] Current release candidate tag: ${releaseCandidate}
-
-            if [ -z "${releaseCandidate}" ]; then
-            # initial version tag
-                export newVersionTag="${newVersionTag}_rc00"
-                echo [INFO] Updated release candidate tag: ${newVersionTag}
-            else
-            # bump up release candidate number
-                export newVersionTag=`echo ${releaseCandidate} | sed 's/^["refs\/tags\/rel-]*//g' | awk -F "rc" '{a=++$2; printf("rel-"$1"rc%02d\n",a)}' | tr -d \"`
-                echo [INFO] Updated release candidate tag: ${newVersionTag}
-            fi
-
-        # Creates the git tag using the CLI REST interface and the automation token
-            curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${newVersionTag}&ref=${CI_COMMIT_REF_NAME}"
-            RC=$?
-            if [ ${RC} -eq 0 ]; then
-                echo [INFO] Created release candidate tag: ${newVersionTag}.
-            else
-                echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
-                exit ${RC}
-            fi
-        fi
-
 Packaging:
     needs: ["1-Build application", "2-Prepare and publish build logs"]
     stage: Packaging
@@ -276,15 +189,66 @@ Packaging:
         - if: $CI_COMMIT_BRANCH =~ /epic\/.*/  && $pipelineType != "preview"
     dependencies: []
     script: |
+            echo [INFO] Start packaging job.
+            # Application directory location if using a nested configuration or not
+            if [ "${nestedConfiguration}" = true ]; then
+                applicationDir=${uniqueWorkspaceId}/${application}
+            else
+                applicationDir=${uniqueWorkspaceId}
+            fi
 
-        zowe rse issue unix-shell ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -t ${application}.tar -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -v ${packageName}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
-        RC=$?
-        if [ ${RC} -eq 0 ]; then
-            echo [INFO] Packaging job passed.
-        else
-             echo [ERROR] Packaging job failed. Exit code: ${RC}.
-             exit ${RC}
-        fi
+            if [ ${pipelineType} == "release" ]; then
+                echo [INFO] Start computing the next release version.
+                echo [INFO]          Pipeline Type: ${pipelineType}
+                echo [INFO]           Release Type: ${releaseType}
+                echo [INFO]  Application Directory: ${applicationDir}
+                # Call script to compute the next release version from baselineReference file.
+                stringOut=$(zowe rse issue unix-shell ". ~/.bash_profile && computeReleaseVersion.sh -w ${applicationDir} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY})
+                RC=$?
+
+                if [ ${RC} -eq 0 ]; then
+                    export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}.
+                    releaseVersion="rel-${releaseVersion}"
+
+                    echo [INFO] Start packaging for a release pipeline.
+                    echo [INFO]   Release Version: ${releaseVersion}
+  
+                    zowe rse issue unix-shell ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -r ${releaseVersion} -i ${CI_PIPELINE_ID}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+                    RC=$?
+
+                    # Create release tag if the pakcaging job passed.
+                    if [ ${RC} -eq 0 ]; then
+                        echo [INFO] Packaging job passed and sstarting to create a release tag.
+                        curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${releaseVersion}-${CI_PIPELINE_ID}&ref=${CI_COMMIT_REF_NAME}"
+                        RC=$?
+                        if [ ${RC} -eq 0 ]; then
+                            echo [INFO] Create release candidate job passed.
+                        else
+                            echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
+                        fi
+                    else
+                        echo [ERROR] Failed to package the build output. Exit code: ${RC}.
+                        exit ${RC}
+                    fi
+
+                else
+                    echo [ERROR] Failed to compute release condidate. Exit code: ${RC}.
+                    exit ${RC}
+                fi
+            
+            else
+                echo [INFO] Start packaging for a build pipeline.
+                zowe rse issue unix-shell ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -i ${CI_PIPELINE_ID}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+                RC=$?
+
+                if [ ${RC} -eq 0 ]; then
+                    echo [INFO] Packaging job passed.
+                else
+                    echo [ERROR] Failed to package the build output. Exit code: ${RC}.
+                    exit ${RC}
+                fi
+            fi
 
 1-Generate Deployment Plan:
     needs: ["Packaging"]
@@ -295,15 +259,61 @@ Packaging:
         - if: $CI_COMMIT_BRANCH =~ /release\/.*/  && $pipelineType != "preview"
         - if: $CI_COMMIT_BRANCH =~ /epic\/.*/  && $pipelineType != "preview"
     script: |
+            echo [INFO] Start deployment plan generation job
+            # Application directory location if using a nested configuration or not
+            if [ "${nestedConfiguration}" = true ]; then
+                applicationDir=${uniqueWorkspaceId}/${application}
+            else
+                applicationDir=${uniqueWorkspaceId}
+            fi
 
-        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -i ${application}.tar" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
-        RC=$?
-        if [ ${RC} -eq 0 ]; then
-            echo [INFO] Generate deployment plan job passed.
-        else
-             echo [ERROR] Generate deployment plan job failed. Exit code: ${RC}.
-             exit ${RC}
-        fi
+            if [ ${pipelineType} == "release" ]; then
+                echo [INFO] Start computing the next release version.
+                echo [INFO]          Pipeline Type: ${pipelineType}
+                echo [INFO]           Release Type: ${releaseType}
+                echo [INFO]  Application Directory: ${applicationDir}
+                
+                # Call script to compute the next release version from baselineReference file.
+                stringOut=$(zowe rse issue unix-shell ". ~/.bash_profile && computeReleaseVersion.sh -w ${applicationDir} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY})
+                RC=$?
+
+                if [ ${RC} -eq 0 ]; then
+                    export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                    echo [INFO] Next Release Version: ${releaseVersion}
+                    echo [INFO] Compute release condidate job passed.
+
+                    releaseVersion="rel-${releaseVersion}"
+
+                    echo [INFO] Start generating the deployment plan for a release pipeline.
+                    echo [INFO] Release Version: ${releaseVersion}
+                    zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -R ${releaseVersion} -I ${CI_PIPELINE_ID}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+                    RC=$?
+
+                    if [ ${RC} -eq 0 ]; then
+                        echo [INFO] Generating the deployment plan job passed.
+                    else
+                        echo [ERROR] Generating the deployment plan job failed. Exit code: ${RC}.
+                    exit ${RC}
+                    fi
+
+                else
+                    echo [ERROR] Compute release condidate job failed. Exit code: ${RC}.
+                    exit ${RC}
+                fi
+            
+            else
+                echo [INFO] Start generating the deployment plan for build pipeline.
+               
+                zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -I ${CI_PIPELINE_ID}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+                RC=$?
+
+                if [ ${RC} -eq 0 ]; then
+                    echo [INFO] Generating deployment plan job passed.
+                else
+                    echo [ERROR] Generating deployment plan job failed. Exit code: ${RC}.
+                    exit ${RC}
+                fi
+            fi
 
 2-Deploy to Integration:
     needs: ["1-Generate Deployment Plan"]
@@ -316,13 +326,13 @@ Packaging:
     dependencies: []
     script: |
         
-        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileIntegration} -i ${application}.tar -l deploy/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileIntegration} -l deploy/evidences/evidence.yaml < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Deploy to integration job passed.
         else
-             echo [ERROR] Deploy to integration job failed. Exit code: ${RC}.
-             exit ${RC}
+            echo [ERROR] Deploy to integration job failed. Exit code: ${RC}.
+            exit ${RC}
         fi
 
 3-Generate and publish deployment report for Integration:
@@ -348,7 +358,6 @@ Packaging:
             - "${integrationReportDir}/deployment-report.html"
             - "${integrationReportDir}/evidence.yaml"
     script: |
-        type zowe
         zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
@@ -440,8 +449,8 @@ Packaging:
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Deploy to acceptance job passed.
         else
-             echo [ERROR] Deploy to acceptance job failed. Exit code: ${RC}.
-             exit ${RC}
+            echo [ERROR] Deploy to acceptance job failed. Exit code: ${RC}.
+            exit ${RC}
         fi
 
 2-Generate and publish deployment report for Acceptance:
@@ -556,9 +565,10 @@ Packaging:
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Deploy to production job passed.
         else
-             echo [ERROR] Deploy to production job failed. Exit code: ${RC}.
-             exit ${RC}
+            echo [ERROR] Deploy to production job failed. Exit code: ${RC}.
+            exit ${RC}
         fi
+
 
 2-Generate and publish deployment report for Production:
     needs: ["1-Deploy to Production"]
@@ -666,86 +676,75 @@ Create production version:
 
     script: |    
 
-        echo [INFO] Retrieve baseline reference information from ${baselineReferenceFile}.
-        # Retrieve the baseline reference from the baselineReferenceFile        
-        if [ ! -f "${baselineReferenceFile}" ]; then
-            echo [ERROR] Applications baseline reference configuration file ${baselineReferenceFile} was not found.
-            exit 1
-        else
- 
-            # Extract the current branch from GitLab envirnment
-            export mainBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $1 }'`
-            export secondBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $2 }'`
-            export thirdBranchSegment=`echo ${CI_COMMIT_BRANCH} | awk -F "/" '{ print $3 }'`
-
-            echo [INFO] Branch: ${CI_COMMIT_BRANCH}
-            echo [INFO] Branch segment: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}
-
-            # Find base line version of the current branch from the baseLineReferenceFile
-            case ${mainBranchSegment} in
-                "main")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^${mainBranchSegment}" | awk -F "=" '{ print $2 }'`
-              ;;
-                "release")
-                    export baselineRef=`cat "${baselineReferenceFile}" | grep -m 1 "^release/${secondBranchSegment}" | awk -F "=" '{ print $2 }'`
-              ;;
-            esac
-
-            if [ -z "${baselineRef}" ]; then
-                echo [ERROR] No baseline reference was found for branch name ${Branch} in ${baselineReferenceFile}.
-                exit 1
+        echo [INFO] "Start creating production version job"
+            # Application directory location if using a nested configuration or not
+            if [ "${nestedConfiguration}" = true ]; then
+                applicationDir=${uniqueWorkspaceId}/${application}
             else
-                echo [INFO] Baseline Reference: ${baselineRef}
+                applicationDir=${uniqueWorkspaceId}
             fi
-            
-            #Compute the current version
-            export oldVersionTag=`echo ${baselineRef} | awk -F "-" '{ print $2 }'`
-            echo [INFO] Old version: ${oldVersionTag}
+            # echo [DEBUG] Application Directory: ${applicationDir}
 
-            # Compute the name of the next release based on the releaseType
-            if [ -z "${releaseType}" ]; then
-                export releaseType="patch"
-            fi
-            if [ "${releaseType}" == "patch" ]; then
-                export newVersionTag=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$3 += 1 ; print}'`
-            fi
-            if [ "${releaseType}" == "minor" ]; then
-                export newVersionTag=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$2 += 1 ; $3 = 0; print}'`
-            fi
-            if [ "${releaseType}" == "major" ]; then
-                export newVersionTag=`echo ${baselineRef} | sed 's/^["refs\/tags\/rel-]*//g' | sed 's/-[a-zA-Z0-9]*//g' | awk -F. -v OFS=. '{$1 += 1 ; $2 = 0; $3 = 0; print}'`
-            fi
-            echo [INFO] New version: ${newVersionTag}
-
-            # Update baselineReference
-            export remoteFound=`git remote | grep gitlab_origin | wc -l`
-            if [ $remoteFound -eq 1 ]; then
-                git remote remove gitlab_origin
-            fi
-            git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git
-            sed -i "s/main=refs\/tags\/rel-${oldVersionTag}/main=refs\/tags\/rel-${newVersionTag}/" ${baselineReferenceFile}
-            sed -i "/^release.*rel-${oldVersionTag}/a release\/rel-${newVersionTag}=refs\/tags\/rel-${newVersionTag}" ${baselineReferenceFile}
-            git add ${baselineReferenceFile}
-            git commit -m "Add maintenance release to baselineReference.config file"
-            git push gitlab_origin HEAD:main -o ci.skip
-
-            curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=rel-${newVersionTag}&ref=${CI_COMMIT_REF_NAME}"
+            stringOut=$(zowe rse issue unix-shell ". ~/.bash_profile && computeReleaseVersion.sh -w ${applicationDir} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY})
             RC=$?
+
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Created release candidate tag: ${newVersionTag}.
-                curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/branches?branch=release%2Frel-${newVersionTag}&ref=rel-${newVersionTag}"
-                RC=$?
-                if [ ${RC} -eq 0 ]; then
-                    echo [INFO] Created release maintenance branch: release/rel-${newVersionTag}.
+                # Extract release versions.
+                export oldVersionTag=$(echo "${stringOut}" | grep "Baseline reference:" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+                
+                oldVersionTag="rel-${oldVersionTag}"
+                echo [INFO] Current version tag: ${oldVersionTag}
+                releaseVersion="rel-${releaseVersion}"
+                echo [INFO] Release version tag: ${releaseVersion}
+
+                # Update baselineReference
+                export remoteFound=`git remote | grep gitlab_origin | wc -l`
+                if [ $remoteFound -eq 1 ]; then
+                    git remote remove gitlab_origin
+                fi
+                git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git 
+                
+                if [ ${CI_COMMIT_BRANCH} == "main" ]; then
+                    echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/${releaseVersion}
+                    sed -i "s/main=refs\/tags\/${oldVersionTag}/main=refs\/tags\/${releaseVersion}/" ${baselineReferenceFile}
+                    sed -i "/^release.*${oldVersionTag}/a release\/${releaseVersion}=refs\/tags\/${releaseVersion}" ${baselineReferenceFile}
                 else
-                    echo [ERROR] Failed to create release maintenance branch. Exit code: ${RC}.
+                    echo [INFO] Update baselineReference.config file to set baseline reference for branch release/${releaseVersion}
+                    sed -i "s/^release.*${oldVersionTag}/release\/${oldVersionTag}=refs\/tags\/${releaseVersion}/" ${baselineReferenceFile}
+                    echo $(git status)
+                fi
+
+                git add ${baselineReferenceFile}
+                git commit -m "Updated baselineReference.config file for new release ${releaseVersion}"
+                git push gitlab_origin HEAD:${CI_COMMIT_BRANCH} -o ci.skip
+                echo [INFO] Pushed baselineReference.config file changes to branch: ${CI_COMMIT_BRANCH}.
+
+                curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${releaseVersion}&ref=${CI_COMMIT_REF_NAME}"
+                RC=$?
+
+                if [ ${RC} -eq 0 ]; then
+                    echo [INFO] Created release version tag: ${releaseVersion}.
+                    if [ ${CI_COMMIT_BRANCH} == "main" ]; then
+                        # Create release maintenance branch              
+                        curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/branches?branch=release%2F${releaseVersion}&ref=${releaseVersion}"
+                        RC=$?
+
+                        if [ ${RC} -eq 0 ]; then
+                            echo [INFO] Created release maintenance branch: release/${releaseVersion}.
+                        else
+                            echo [ERROR] Failed to create release maintenance branch. Exit code: ${RC}.
+                            exit ${RC}
+                        fi
+                    fi
+                else
+                    echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
                     exit ${RC}
-                fi  
+                fi
             else
-                echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
+                echo [ERROR] Failed to compute release version. Exit code: ${RC}.
                 exit ${RC}
             fi
-        fi
 
 Cleanup:
     stage: Cleanup

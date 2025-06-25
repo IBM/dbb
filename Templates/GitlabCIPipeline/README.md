@@ -12,11 +12,14 @@ The pipeline implements the following stages
     * zBuilder [zBuilder.sh](./Common-Backend-Scripts/README.md#zbuildersh-for-dbb-zbuilder) framework
     * zAppBuild [dbbBuild.sh](../Common-Backend-Scripts/README.md#dbbbuildsh-for-zappbuild-frameworkh) framework
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them as Gitlab Artifacts.
-  * in case of a release pipeline, to create the release candidate tag.
 * `Packaging` stage
-  * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#44---packagebuildoutputssh)
+  * in case of a release pipeline, to compute a release version from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) using [computeReleaseVersion.sh](../Common-Backend-Scripts/README.md#computeReleaseVersionsh).
+  * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#44---packagebuildoutputssh).
+  * in case of a release pipeline, to create a release candidate tag from the computed release version.
+  * to upload a package to artifact repository.
 * `Deploy Integration` stage to deploy to the development / integration test environment that includes:
   * to run the Wazi Deploy and generate deployment plan [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh)
+  * to download a package from artifact repository.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the Gitlab Artifacts.
