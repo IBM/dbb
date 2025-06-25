@@ -1,6 +1,6 @@
 # z/OS-native GitLab DevOps pipeline template
 This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) pipeline definition file to setup a GitLab CI/CD pipeline using the z/OS-native GitLab Runner for applications managed in an GitLab Git repository.
-The z/OS-native GitLab Runner is now officially available, more information can be found[here](https://about.gitlab.com/blog/gitlab-ultimate-for-ibm-z-modern-devsecops-for-mainframes/).
+The z/OS-native GitLab Runner is now officially available, more information can be found [here](https://about.gitlab.com/blog/gitlab-ultimate-for-ibm-z-modern-devsecops-for-mainframes/).
 
 ## Overview and capabilities
 This pipeline template is implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev/) within an GitLab CI/CD context.
@@ -26,7 +26,7 @@ The pipeline implements the following stages
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the GitLab Artifacts.
   * to store the Wazi Deploy evidence files at a shared location to support later reporting scenarios.
-* `Finalize` stage to create a release tag from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#scaling-up).
+* `Finalize` stage to create a release tag from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev/#scaling-up).
 * `Cleanup` stage:
   * to [delete the build workspace](../Common-Backend-Scripts/README.md#deleteworkspacesh) on z/OS Unix System Services.
 
