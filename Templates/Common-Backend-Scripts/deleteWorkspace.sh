@@ -75,14 +75,14 @@ SYS=$(uname -Ia)
 rc=0
 ERRMSG=""
 WORK_DIRECTORY=""
-MIN_WORK_DIR_LENGTH=12
+MINIMUM_WORKING_DIR_PATH_LENGTH=12
 
 # Initialized option variables passed to this script
 Workspace=""
 
 # Local Variables
 HELP=$1
-workDirectoryLength=0
+workingDirPathLength=0
 
 if [ "$HELP" = "?" ]; then
     Help
@@ -151,17 +151,17 @@ validateOptions() {
         echo $ERRMSG
     else
         WORK_DIRECTORY="$(getWorkDirectory)"
-        workDirectoryLength=${#WORK_DIRECTORY}
+        workingDirPathLength=${#WORK_DIRECTORY}
         if [ ! -d "${WORK_DIRECTORY}" ]; then
             rc=8
             ERRMSG=$PGM": [ERROR] Workspace Directory (${WORK_DIRECTORY}) was not found. rc="$rc
             echo $ERRMSG
-        elif [ ${workDirectoryLength} -lt ${MIN_WORK_DIR_LENGTH} ]; then
+        elif [ ${workingDirPathLength} -lt ${MINIMUM_WORKING_DIR_PATH_LENGTH} ]; then
             # Check that workspace directory is a reasonable length (e.g. minimum of 12 characters) to
             # prevent deletion of high-level directories
             rc=8
-            ERRMSG=$PGM": [ERROR] Working directory path (${WORK_DIRECTORY}) is too short (${workDirectoryLength} characters). \
-            Expected length: ${MIN_WORK_DIR_LENGTH} or more characters. rc="$rc
+            ERRMSG=$PGM": [ERROR] Working directory path (${WORK_DIRECTORY}) is too short (${workingDirPathLength} characters). \
+            Expected length: ${MINIMUM_WORKING_DIR_PATH_LENGTH} or more characters. rc="$rc
             echo $ERRMSG
         fi
     fi
