@@ -265,6 +265,7 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **        GitDir:" ${GitDir}
   fi
   echo $PGM": [INFO] **           Ref:" ${Branch} "->" ${BranchID}
+  echo "testing for git partial clone"
   echo $PGM": [INFO] **************************************************************"
   echo ""
 fi
