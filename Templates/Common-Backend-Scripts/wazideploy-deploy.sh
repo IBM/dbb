@@ -126,9 +126,10 @@ EnvironmentFile=""
 PackageInputFile=""
 EvidenceFile=""
 Debug=""
-App=""       # provided by argument a
-extraVars="" # Passed via argument x
-planTags=""  # Passed via argument t
+App=""            # passed via argument a
+extraVars=""      # passed via argument x
+extraOptions=""   # passed via argument o
+planTags=""       # Passed via argument t
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -162,7 +163,7 @@ fi
 #
 # Get Options
 if [ $rc -eq 0 ]; then
-    while getopts "hdw:p:e:a:t:x:i:l:" opt; do
+    while getopts "hdw:p:e:a:t:x:o:i:l:" opt; do
         case $opt in
         h)
             Help
@@ -220,11 +221,23 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [ERROR] A value for extraVars is required. rc="$rc
+                ERRMSG=$PGM": [ERROR] A value for extraVars (x) is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
             extraVars="$argument"
+            ;;
+
+        o)
+            argument="$OPTARG"
+            nextchar="$(expr substr $argument 1 1)"
+            if [ -z "$argument" ] ; then
+                rc=4
+                ERRMSG=$PGM": [ERROR] A value for extraOptions (o) is required. rc="$rc
+                echo $ERRMSG
+                break
+            fi
+            extraOptions="$argument"
             ;;
 
         t)
@@ -445,6 +458,14 @@ if [ $rc -eq 0 ]; then
             CommandLine+=" -e $word"
         done
     fi
+    
+    if [ ! -z "${extraOptions}" ]; then
+       CommandLine+=" $extraOptions"
+    fi
+
+    if [ ! -z "${planTags}" ]; then
+       CommandLine+=" --planTags $planTags"
+    fi
 
     # Add wdDeployCfgHome to extraVars
     if [ ! -z "${wdDeployCfgHome}" ]; then
@@ -460,8 +481,9 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${Debug}" ]; then
         CommandLine+=" ${Debug}"
     fi
+    #CommandLine+=" --debug"
     echo ${CommandLine} 2>&1
-    ${CommandLine} 2>&1
+    $CommandLine 2>&1
     rc=$?
 
     if [ $rc -ne 0 ]; then
