@@ -13,9 +13,9 @@ variables:
     GIT_CLONE_PATH: ${uniqueWorkspaceId}
 
 # Working directory on Linux machine
-# Update the path based on the repository structure for example if you have nested structure, update to:
-# baselineReferenceFile: ${uniqueWorkspaceId}/$application/$application/application-conf/baselineReference.config
-    baselineReferenceFile: $CI_PROJECT_DIR/$application/application-conf/baselineReference.config
+# Update the path based on the repository structure for example if you do not have nested structure, update to:
+# baselineReferenceFile: ${uniqueWorkspaceId}/$application/application-conf/baselineReference.config
+    baselineReferenceFile: ${uniqueWorkspaceId}/$application/$application/application-conf/baselineReference.config
 
 # Variable options when running a pipeline
     verbose: "-v"
