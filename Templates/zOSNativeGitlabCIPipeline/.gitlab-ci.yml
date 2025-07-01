@@ -10,7 +10,6 @@ variables:
 
 # Working directory on USS 
     uniqueWorkspaceId: ${CI_BUILDS_DIR}/$CI_PROJECT_NAME/build-${CI_PIPELINE_ID}
-    GIT_CLONE_PATH: ${uniqueWorkspaceId}
 
 # Working directory on Linux machine
 # Update the path based on the repository structure for example if you do not have nested structure, update to:
@@ -62,10 +61,6 @@ Clone:
           when: never 
         - when: always
     dependencies: []
-    variables:
-      GIT_STRATEGY: clone
-      GIT_CHECKOUT: "true"
-      GIT_DEPTH: 0
     script: |
         # Environment parameters
         echo Environment parameters
