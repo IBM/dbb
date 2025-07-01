@@ -62,17 +62,23 @@ Clone:
         - when: always
     dependencies: []
     script: |
-        # Environment parameters
-        echo Environment parameters
-        echo [INFO]   Unique workspace: ${uniqueWorkspaceId}
-        echo [INFO] Git repository URL: ${CI_REPOSITORY_URL}
-        echo [INFO]             Branch: ${CI_COMMIT_REF_NAME}
-        echo [INFO]        Application: ${application}
-        echo [INFO]  Project directory: ${CI_PROJECT_DIR}
-        echo [INFO]      Pipeline Type: ${pipelineType}
-        echo [INFO]       Release Type: ${releaseType}
-        echo [INFO]            Verbose: ${verbose}
-        gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME} -a ${application}
+             # Environment parameters
+             echo Environment parameters
+             echo [INFO]   Unique workspace: ${uniqueWorkspaceId}
+             echo [INFO] Git repository URL: ${CI_REPOSITORY_URL}
+             echo [INFO]             Branch: ${CI_COMMIT_REF_NAME}
+             echo [INFO]        Application: ${application}
+             echo [INFO]  Project directory: ${CI_PROJECT_DIR}
+             echo [INFO]      Pipeline Type: ${pipelineType}
+             echo [INFO]       Release Type: ${releaseType}
+             echo [INFO]            Verbose: ${verbose}
+             gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME} -a ${application}
+             if [ ${RC} -eq 0 ]; then
+                  echo [INFO] Clone job passed.
+             else
+                  echo [ERROR] Clone job failed. Exit code: ${RC}.
+                  exit ${RC}
+             fi
 
 Build application:
     needs: ["Clone"]
