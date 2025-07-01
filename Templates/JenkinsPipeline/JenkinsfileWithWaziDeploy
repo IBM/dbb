@@ -51,64 +51,18 @@ def AppHLQ                    = "JENKINS.PIPELINE"
 //
 //     zAppBuildVerbose       - Verbose string passed to the DBB Build script. Set later on based on the
 //                              value of pipeline verbose variable.
-//     dbbDoBuild             - If true, perform the DBB Build. Computed in Branch Contol stage
+//     DbbDoBuild             - If true, perform the DBB Build. Computed in Branch Contol stage
 def zAppBuildVerbose          = ""
-def dbbDoBuild                = true
+def DbbDoBuild                = true
 
 // Software Analysis with SonarQube
 //
 //   Variables that pertain to the software analysis stage
 //
-//     sonarQubeConnection    - Name of the configured sonarQube Connection in Jenkins
-//     sonarQubeDoScan        - If true, perform the Sonar analysis. Computed in Branch Contol stage
-def sonarQubeConnection       = "zsonar1" // Configured SonarQube connection
-def sonarQubeDoScan           = true
-
-// UrbanCode Deploy Packaging
-//
-//   Variables that pertain to the Package stage using UrbanCode Deploy buztool and the Common Backend Script ucdPackaging.sh
-//
-//     ucdDoPackaging         - Internal Package Switch. Controls whether the packaging step should be executed.
-//     ucdApplication         - UCD Application.
-//                              Default - AppName
-//     ucdComponent           - UCD Component.
-//                              Default - AppName
-//
-//     ucdVersionName         - UCD Component Name Prefix. The Version Name will be updated later to contain
-//                              this prefix value, along with the name of the pipeline type and the
-//                              build number in the format of "ucdVersionName-pipelineType-buildnumber"
-//                              Default - AppName
-//     ucdDoPackaging         - If true, perform the Packaging.
-//     ucdDoDeployment        - If true, perform the Deployment.
-
-//     ucdBuzToolLogName      - File Name of the Packaging Log.
-//     ucdBuzToolLog          - Location of the Packaging Log. Path and name will be set later on based on
-//                              the DBB Workspace and Build Number.
-//     ucdDoDeployment        - Deployment Switch. Controls whether the deployment step should be executed.
-// *******************************************************************************************************
-// def ucdDoPackaging            = true                     // If true, perform Package Step.
-// def ucdApplication            = "${AppName}2"            // This is an override to the DAT environment. This should ideally match the AppName property
-// def ucdComponent              = "${AppName}2"            // This is an override to the DAT environment. This should ideally match the AppName property
-// def ucdVersionName            = "${AppName}"             // This is an override to the DAT environment. This should ideally match the AppName property
-// def ucdBuzToolLogName         = "buztool.log"            // Buztool Log Name.
-// def ucdBuzToolLog             = ""                       // Buztool Path and Log Name.
-// def baseLineReferenceFile     = ""
-
-// UrbanCode Deploy Request Deployment
-//
-//   Variables that pertain to the Deploy stage using UrbanCode Deploy and the Common Backend Script ucdDeploy.sh
-//
-//     ucdApplicationProcess  - UCD Application Process name to perform application deployment
-//     ucdEnvironment         - UCD Environment Name for which the pipeline will request a deployment
-//     ucdDeploymentLogName   - File Name of the UCD Deployment Log.
-//     ucdDeploymentLog       - Location of the UCD Deployment Log. Path and name will be set later on based on
-//                              the Jenkins build Workspace name.
-// *******************************************************************************************************
-// def ucdDoDeployment           = false                 // If true, perform Deployment Step.
-// def ucdApplicationProcess     = "appDeployment"
-// def ucdEnvironment            = "Integration-Test"
-// def ucdDeploymentLogName      = "ucd-deploy.log"      // Deployment Log Name.
-// def ucdDeploymentLog          = ""                    // Deployment Path and Log Name.
+//     SonarQubeConnection    - Name of the configured sonarQube Connection in Jenkins
+//     SonarQubeDoScan        - If true, perform the Sonar analysis. Computed in Branch Contol stage
+def SonarQubeConnection       = "zsonar1" // Configured SonarQube connection
+def SonarQubeDoScan           = true
 
 // Jenkins
 //
@@ -152,7 +106,7 @@ def BuildHasFiles             = true       // DBB buildFile.txt indicates change
 // Packaging stage
 def ComputeReleaseVersionCmd  = ""		   // Compute Release Version Command.
 def ComputeReleaseVersionrc   = 0		   // Compute Release Version Return Code.
-def releaseVersion			  = ""		   // Next release version.
+def ReleaseVersion			  = ""		   // Next release version.
 def PackageCmd                = ""         // Packaging Command.
 def Packagerc                 = 0          // Packaging Command Return Code.
 def PackageOutputDir          = ""         // Temporary Directory for Packaging
@@ -279,8 +233,8 @@ pipeline {
 					// Configure the stages for the main branch
 					if  ( (Branch.startsWith('MAIN') == true) ) {
 
-						dbbDoBuild      = true  // Perform DBB Build.
-						sonarQubeDoScan = true  // Perform Sonar scan.
+						DbbDoBuild      = true  // Perform DBB Build.
+						SonarQubeDoScan = true  // Perform Sonar scan.
 
 						WdDoPackaging   = true  // Perform the Packaging.
 						if (PipelineType == "release") { // Perform the Deployment through Wazi Deploy for a release pipeline.
@@ -292,16 +246,14 @@ pipeline {
 							WdDoDeployment  = false 
 						}
 						
-						//PackageName		= "${AppName}.build-${BuildNumber}"
-						
 						BranchOkay = true
 					}
 
 					// Configure the stages for feature and hotfix branches
 					if  (Branch.startsWith('FEATURE') == true || Branch.startsWith('HOTFIX') == true) {
 
-						dbbDoBuild      = true  // Perform DBB Build.
-						sonarQubeDoScan = true  // Perform Sonar scan.
+						DbbDoBuild      = true  // Perform DBB Build.
+						SonarQubeDoScan = true  // Perform Sonar scan.
 
 						WdDoPackaging   = true  // Perform the Packaging.
 						WdDoDeployment  = false  // Do not perform the Deployment through Wazi Deploy. Up to the developer to install it.
@@ -312,8 +264,8 @@ pipeline {
 					// Configure the stages for RELEASE and EPIC branches
 					if  (Branch.startsWith('RELEASE') == true || Branch.startsWith('EPIC') == true) {
 						
-						dbbDoBuild      = true  // Perform DBB Build.
-						sonarQubeDoScan = true  // Perform Sonar scan.
+						DbbDoBuild      = true  // Perform DBB Build.
+						SonarQubeDoScan = true  // Perform Sonar scan.
 
 						WdDoPackaging   = true  // Perform the Packaging.
 						WdDoDeployment  = false  // Do not perform the Deployment through Wazi Deploy. Up to the developer to install it.
@@ -323,9 +275,9 @@ pipeline {
 
 					// Manage preview pipelines
 					if  ( (PipelineTypeUpper.startsWith('PREVIEW') == true) ) {
-						dbbDoBuild          = true
+						DbbDoBuild          = true
 						// Skip any subsequent steps
-						sonarQubeDoScan     = false
+						SonarQubeDoScan     = false
 						WdDoPackaging       = false
 						WdDoDeployment  	= false
 					}
@@ -333,8 +285,8 @@ pipeline {
 					// If Branch Proceesing has not been defined, gracefully terminate the Pipeline.
 					if (BranchOkay == false) {
 						autoCancelled       = true
-						dbbDoBuild          = false
-						sonarQubeDoScan     = false
+						DbbDoBuild          = false
+						SonarQubeDoScan     = false
 						WdDoPackaging       = false
 						WdDoDeployment  	= false
 					}
@@ -375,11 +327,11 @@ pipeline {
 					println("*")
 					println("*   Build/zAppBuild")
 					println("*     zAppBuildVerbose        : ${zAppBuildVerbose}")
-					println("*     dbbDoBuild              : ${dbbDoBuild}")
+					println("*     DbbDoBuild              : ${DbbDoBuild}")
 					println("*")
 					println("*   Anaylsis/SonarQube")
-					println("*     sonarQubeConnection     : ${sonarQubeConnection}")
-					println("*     sonarQubeDoScan         : ${sonarQubeDoScan}")
+					println("*     SonarQubeConnection     : ${SonarQubeConnection}")
+					println("*     SonarQubeDoScan         : ${SonarQubeDoScan}")
 					println("*")										
 					println("*   Packaging")
 					println("*     WdDoPackaging           : ${WdDoPackaging}")
@@ -409,7 +361,7 @@ pipeline {
 	
 		stage('Build') {
 			when {
-				expression { return ((dbbDoBuild == true) && (autoCancelled == false)) }
+				expression { return ((DbbDoBuild == true) && (autoCancelled == false)) }
 			}
 			steps {
 				script {
@@ -473,8 +425,6 @@ pipeline {
 								Msg     = "Build resulted in no updated files."
 								println("${PipelineName}[WARN]: ${Msg}")
 								createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
-								//ucdDoPackaging  = false // Do not package if nothing was built.
-								//ucdDoDeployment = false // Do not deploy is nothing was built.
 								WdDoPackaging  = false // Do not package if nothing was built.
 								WdDoDeployment = false // Do not deploy is nothing was built.
 							}
@@ -488,7 +438,7 @@ pipeline {
 							if (Buildrc == 4) { // Mark Build unstable
 								unstable "DBB Build Warning. No source changes detected."
 							} else { // Mark Stage as Error
-								sonarQubeDoScan = false // Do not scan the repo.
+								SonarQubeDoScan = false // Do not scan the repo.
 								catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
 									sh "echo 'DBB Build Error. Please check log.' && exit ${Buildrc}"
 								}
@@ -538,8 +488,8 @@ pipeline {
 							def version = searchLogOutput("version: .*", outText)
 							if (version){
                                 //println("${PipelineName}[DEBUG]: ${version}")
-                                releaseVersion = version.substring(9,version.length())
-								println("${PipelineName}[INFO]: Compute Release Version successfully, Next Release = ${releaseVersion}")
+                                ReleaseVersion = version.substring(9,version.length())
+								println("${PipelineName}[INFO]: Compute Release Version successfully, Next Release = ${ReleaseVersion}")
                             } else {
                                 Msg = "Computing release version failed. No version specified. Refer to Jenkins Console Output Log."
 								println("${PipelineName}[WARN]: ${Msg}")
@@ -561,13 +511,13 @@ pipeline {
 					if (autoCancelled == false) {
 						// Start packageBuildOutputs.sh command
 						println("${PipelineName}[INFO]: Run packageBuildOutput.sh")
-						if (releaseVersion == "") {
+						if (ReleaseVersion == "") {
 							//println("${PipelineName}[DEBUG]: Building build output without release version option.")
 							PackageCmd = "packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -i ${BuildNumber}"
 						}
 						else {
 							//println("${PipelineName}[DEBUG]: Building build output with release version option.")
-							PackageCmd = "packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -r ${releaseVersion} -i ${BuildNumber}"
+							PackageCmd = "packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -r ${ReleaseVersion} -i ${BuildNumber}"
 						}
 						
 						println("${PipelineName}[INFO]: Package Command = ${PackageCmd}")
@@ -620,7 +570,7 @@ pipeline {
 					// Add -c ${WdConfigFile} option to the WdGenDeployPlanCmd to overwrite.
 					//def WdConfigFile = "/var/WaziDeploy/config/WaziDeploy-ConfigFile.yml"
 
-					WdGenDeployPlanCmd = "wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -P ${PipelineType} -R ${releaseVersion} -I ${BuildNumber}"
+					WdGenDeployPlanCmd = "wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -P ${PipelineType} -R ${ReleaseVersion} -I ${BuildNumber}"
 
                     WdGenDeployPlanrc = sh(script: "${WdGenDeployPlanCmd}" , returnStatus: true)
 
