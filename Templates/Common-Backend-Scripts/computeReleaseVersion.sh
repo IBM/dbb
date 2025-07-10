@@ -27,7 +27,12 @@
 #      when: x increased for a major release
 #            y increased for a minor release
 #            z increased for a patch release
+# Maintenance Log
 #
+# Date       Who Vers  Description
+# ---------- --- ----- --------------------------------------------------------------
+# 2025/05/15 MP  1.0.0 Initial Release
+# 2025/07/10 DB  1.1.0 Fix nested application dirs 
 #===================================================================================
 Help() {
   echo $PGM" - Invoke Release Version Computation ("$PGMVERS")              "
@@ -83,7 +88,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 
 # internal veriables
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$USER
 SYS=$(uname -Ia)
 
