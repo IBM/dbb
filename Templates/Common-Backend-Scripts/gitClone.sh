@@ -137,7 +137,7 @@ fi
 
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "h:r:a:w:b:p:" opt; do
+  while getopts "h:r:a:w:b:" opt; do
     case $opt in
     h)
       Help
@@ -186,17 +186,6 @@ if [ $rc -eq 0 ]; then
       fi
       Branch="$argument"
       ;;
-    p)
-      argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
-      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-        rc=4
-        ERRMSG=$PGM": [WARNING] clone method is required. rc="$rc
-        echo $ERRMSG
-        break
-      fi
-      partial_clone_flag="$argument"
-    ;;
     \?)
       Help
       rc=1
@@ -235,13 +224,7 @@ validateOptions(){
       fi
     fi  
   fi 
-
-  if [ -z "${partial_clone_flag}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] clone method flag is required. rc="$rc
-    echo $ERRMSG
-  fi  
-
+    
   if [ -z "${Branch}" ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] Branch Name is required. rc="$rc
@@ -276,7 +259,6 @@ if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] ** Start Git Clone on HOST/USER: ${SYS}/${USER}"
   echo $PGM": [INFO] **          Repo:" ${Repo}
   echo $PGM": [INFO] **       WorkDir:" $(getWorkDirectory)
-  echo $PGM": [INFO] **       partialCloneflag:" $(partial_clone_flag)
   if [ ! -z "${application}" ]; then
     echo $PGM": [INFO] **        GitDir:" ${application}
   else    
@@ -320,19 +302,11 @@ fi
 # Clone the Repo to z/OS UNIX System Services with a re-Direct of STDERR to STDOUT
 if [ $rc -eq 0 ]; then
 
-  echo $PGM": [INFO] Performing Git Clone of Repo ${Repo}, Ref ${BranchID} to $(getWorkDirectory)"
-  
-  # Use partial clone filter if requested
-  if [ "${partial_clone_flag}" = "true" ]; then
-    CLONE_FILTER="--filter=tree:0"
-  else
-    CLONE_FILTER=""
-  fi
-
+  echo $PGM": [INFO] Preforming Git Clone of Repo ${Repo}, Ref ${BranchID} to $(getWorkDirectory)"
   if [ ! -z "${application}" ]; then
-    CMD="git clone ${CLONE_FILTER} -b ${BranchID} ${Repo} ${application}"
+    CMD="git clone --filter=tree:0 -b ${BranchID} ${Repo} ${application}"
   else   
-    CMD="git clone ${CLONE_FILTER} -b ${BranchID} ${Repo}"
+    CMD="git clone --filter=tree:0 -b ${BranchID} ${Repo}"
   fi
 
   echo $PGM": [INFO] ${CMD}"
