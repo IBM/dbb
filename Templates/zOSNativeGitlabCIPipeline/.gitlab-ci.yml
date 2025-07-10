@@ -1,22 +1,17 @@
 variables:
-     #Git strategy is set to "none" but overwrite later to "clone" in the jobs to create release candidate tag and release tag.
+    #Git strategy is set to "none" as clone is managed by the gitClone.sh script
     GIT_STRATEGY: none
     GIT_CHECKOUT: "false"
 
-    application: ${CI_PROJECT_NAME}
-    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Integration.yml
-    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
-    wdEnvironmentFileProduction: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Production.yml
+    application: "$CI_PROJECT_NAME"
+    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Integration.yml
+    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Acceptance.yml
+    wdEnvironmentFileProduction: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Production.yml
 
 # Working directory on USS 
     uniqueWorkspaceId: ${CI_BUILDS_DIR}/$CI_PROJECT_NAME/build-${CI_PIPELINE_ID}
 
-# Working directory on Linux machine
-# Update the path based on the repository structure for example if you do not have nested structure, update to:
-# baselineReferenceFile: ${uniqueWorkspaceId}/$application/application-conf/baselineReference.config
-    baselineReferenceFile: ${uniqueWorkspaceId}/$application/$application/application-conf/baselineReference.config
-
-# Variable options when running a pipeline
+# Pipeline configuration
     verbose: "-v"
     pipelineType:
         value: "build"
@@ -62,23 +57,17 @@ Clone:
         - when: always
     dependencies: []
     script: |
-             # Environment parameters
-             echo Environment parameters
-             echo [INFO]   Unique workspace: ${uniqueWorkspaceId}
-             echo [INFO] Git repository URL: ${CI_REPOSITORY_URL}
-             echo [INFO]             Branch: ${CI_COMMIT_REF_NAME}
-             echo [INFO]        Application: ${application}
-             echo [INFO]  Project directory: ${CI_PROJECT_DIR}
-             echo [INFO]      Pipeline Type: ${pipelineType}
-             echo [INFO]       Release Type: ${releaseType}
-             echo [INFO]            Verbose: ${verbose}
-             gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME} -a ${application}
-             if [ ${RC} -eq 0 ]; then
-                  echo [INFO] Clone job passed.
-             else
-                  echo [ERROR] Clone job failed. Exit code: ${RC}.
-                  exit ${RC}
-             fi
+        # Environment parameters
+        echo Environment parameters
+        echo [INFO]   Unique workspace: ${uniqueWorkspaceId}
+        echo [INFO] Git repository URL: ${CI_REPOSITORY_URL}
+        echo [INFO]             Branch: ${CI_COMMIT_REF_NAME}
+        echo [INFO]        Application: ${application}
+        echo [INFO]  Project directory: ${CI_PROJECT_DIR}
+        echo [INFO]      Pipeline Type: ${pipelineType}
+        echo [INFO]       Release Type: ${releaseType}
+        echo [INFO]            Verbose: ${verbose}
+        gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME}
 
 Build application:
     needs: ["Clone"]
@@ -129,8 +118,8 @@ Packaging:
 
             if [ ${pipelineType} == "release" ]; then
                 echo [INFO] Start computing the next release version.
-                # Call script to compute the next release version from baselineReference file.
-                stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId}/${application} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
+
+                stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
                 RC=$?
 
                 if [ ${RC} -eq 0 ]; then
@@ -145,7 +134,7 @@ Packaging:
                     packageBuildOutputs.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -r ${releaseVersion} -i ${CI_PIPELINE_ID}
                     RC=$?
 
-                    # Create release tag if the pakcaging job passed.
+                    # Create release candidate tag
                     if [ ${RC} -eq 0 ]; then
                         echo [INFO] Packaging job passed.
                         echo [INFO] Start creating a release tag.
@@ -197,14 +186,15 @@ Packaging:
             - "deployPkgDir/deploymentPlanReport.html"
     script: |
             echo [INFO] Start deployment plan generation job
+
             if [ ${pipelineType} == "release" ]; then
-                echo [INFO] Start computing the next release version for release pipeline.
+                echo [INFO] Start computing the next release version.
                 echo [INFO]          Pipeline Type: ${pipelineType}
                 echo [INFO]           Release Type: ${releaseType}
                 echo [INFO]  Application Directory: ${uniqueWorkspaceId}
                 
                 # Call script to compute the next release version from baselineReference file.
-                stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId}/${application} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
+                stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
                 RC=$?
 
                 if [ ${RC} -eq 0 ]; then
@@ -213,7 +203,7 @@ Packaging:
 
                     releaseVersion="rel-${releaseVersion}"
 
-                    echo [INFO] Start generating the deployment plan for release pipeline.
+                    echo [INFO] Start generating the deployment plan for a release pipeline.
                     echo [INFO] Release Version: ${releaseVersion}
                     wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -R ${releaseVersion} -I ${CI_PIPELINE_ID}
                     RC=$?
@@ -392,7 +382,8 @@ Create production version:
         - if: $CI_COMMIT_BRANCH =~ /release.*/ && $pipelineType == "release"
     script: |
             echo [INFO] "Start creating production version job"
-            stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId}/${application} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
+
+            stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
             RC=$?
 
             if [ ${RC} -eq 0 ]; then
@@ -406,13 +397,15 @@ Create production version:
 
                 cd ${uniqueWorkspaceId}/${application}
 
-                # Update baselineReference
                 export remoteFound=`git remote | grep gitlab_origin | wc -l`
                 if [ $remoteFound -eq 1 ]; then
                     git remote remove gitlab_origin
                 fi
                 git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git
 
+
+                # Update baselineReference
+                baselineReferenceFile=$(find ${uniqueWorkspaceId} -name baselineReference.config)
                 if [ ${CI_COMMIT_BRANCH} == "main" ]; then
                     echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/rel-${releaseVersion}
                     cat ${baselineReferenceFile} | sed "s/main=refs\/tags\/${oldVersionTag}/main=refs\/tags\/${releaseVersion}/" > ${baselineReferenceFile}.new
@@ -426,6 +419,8 @@ Create production version:
                     iconv -f ISO8859-1 -t IBM-1047 ${baselineReferenceFile}.new > ${baselineReferenceFile}
                     chtag -tc IBM-1047 ${baselineReferenceFile}
                     rm ${baselineReferenceFile}.new
+                    
+                    #echo "release/${releaseVersion}=refs/tags/${releaseVersion}" >> ${baselineReferenceFile}
                 fi
 
                 git add ${baselineReferenceFile}
