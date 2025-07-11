@@ -122,7 +122,7 @@ Packaging:
 
                 if [ ${RC} -eq 0 ]; then
                     export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
-                    if [ "${releaseVersion}" != "" ]; then
+                    if [ ! -z "${releaseVersion}" ]; then
                         echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}
                         
                         releaseVersion="rel-${releaseVersion}"
