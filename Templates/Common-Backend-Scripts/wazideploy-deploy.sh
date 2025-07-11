@@ -129,7 +129,6 @@ Debug=""
 App=""            # passed via argument a
 extraVars=""      # passed via argument x
 extraOptions=""   # passed via argument o
-planTags=""       # Passed via argument t
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -238,18 +237,6 @@ if [ $rc -eq 0 ]; then
                 break
             fi
             extraOptions="$argument"
-            ;;
-
-        t)
-            argument="$OPTARG"
-            nextchar="$(expr substr $argument 1 1)"
-            if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
-                rc=4
-                ERRMSG=$PGM": [ERROR] A value for planTags is required. rc="$rc
-                echo $ERRMSG
-                break
-            fi
-            planTags="$argument"
             ;;
 
         i)
@@ -426,8 +413,8 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${extraVars}" ]; then
         echo $PGM": [INFO] **         User-provided extraVars:" ${extraVars}
     fi
-    if [ ! -z "${planTags}" ]; then
-        echo $PGM": [INFO] **                        planTags:" ${planTags}
+    if [ ! -z "${extraOptions}" ]; then
+        echo $PGM": [INFO] **       User-provided cli options:" ${extraOptions}
     fi
     if [ ! -z "${EvidenceFile}" ]; then
         echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
@@ -453,6 +440,7 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${App}" ]; then
         CommandLine+=" -e application=${App}"
     fi
+    
     if [ ! -z "${extraVars}" ]; then
         for word in ${extraVars}; do
             CommandLine+=" -e $word"
@@ -463,11 +451,7 @@ if [ $rc -eq 0 ]; then
        CommandLine+=" $extraOptions"
     fi
 
-    if [ ! -z "${planTags}" ]; then
-       CommandLine+=" --planTags $planTags"
-    fi
-
-    # Add wdDeployCfgHome to extraVars
+    # Add wdDeployCfgHome to extraVars from pipelineBackend.config
     if [ ! -z "${wdDeployCfgHome}" ]; then
         CommandLine+=" -e deploy_cfg_home=${wdDeployCfgHome}"
     fi
