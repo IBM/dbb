@@ -122,7 +122,7 @@ Packaging:
 
                 if [ ${RC} -eq 0 ]; then
                     export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
-                    if [ ! -z "${releaseVersion}" ]; then
+                    if [ "${releaseVersion}" != "" ]; then
                         echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}
                         
                         releaseVersion="rel-${releaseVersion}"
@@ -136,7 +136,7 @@ Packaging:
                         # Create release candidate tag
                         if [ ${RC} -eq 0 ]; then
                             echo [INFO] Packaging job passed.
-                            echo [INFO] Creating Git tag '${releaseVersion}-${CI_PIPELINE_ID}' to identify release candidate. 
+                            echo [INFO] Start creating a Git tag '${releaseVersion}-${CI_PIPELINE_ID}' to identify a release candidate. 
                             curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${releaseVersion}-${CI_PIPELINE_ID}&ref=${CI_COMMIT_REF_NAME}"
                             RC=$?
                             if [ ${RC} -eq 0 ]; then
@@ -156,6 +156,8 @@ Packaging:
 
                 else
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
+                    echo [ERROR] Error message from the computeReleaseVersion script is
+                    echo ${stringOut}
                     exit ${RC}
                 fi
             
@@ -227,8 +229,9 @@ Packaging:
                     fi
 
                 else
-                    echo [ERROR] Compute release condidate failed. Exit code: ${RC}.
-                    exit ${RC}
+                    echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
+                    echo [ERROR] Error message from the computeReleaseVersion script is
+                    echo ${stringOut}
                 fi
             
             else
@@ -384,7 +387,7 @@ Packaging:
                 exit ${RC}
             fi
 
-3-Create release version:
+3-Create next release version:
     needs: ["2-Generate and publish deployment report for Production"]
     stage: Deploy Production
     tags: [zos-native]
@@ -401,7 +404,7 @@ Packaging:
                 export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}' | xargs)
                 export currentBaselineVersion=$(echo "${stringOut}" | grep "Baseline reference:"  | awk -F "refs/tags/rel-" '{print $2}' | xargs)
 
-                if [ ! -z "${releaseVersion}"]; then
+                if [ "${releaseVersion}" != "" ]; then
                     currentBaselineVersion="rel-${currentBaselineVersion}"
                     echo [INFO] Current Baseline Version: ${currentBaselineVersion}
                     releaseVersion="rel-${releaseVersion}"
@@ -443,7 +446,6 @@ Packaging:
                     else
                         RC=8
                         echo [ERROR] Unable to locate the baselineReference.config file. Exit code: ${RC}.
-                        exit ${RC}
                     fi
 
                     if [ ${RC} -eq 0 ]; then
@@ -477,6 +479,8 @@ Packaging:
 
             else
                 echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
+                echo [ERROR] Error message from the computeReleaseVersion script is
+                echo ${stringOut}
                 exit ${RC}
             fi
             
