@@ -93,7 +93,9 @@ jobs:
               inputs:
                 sshEndpoint: $(zosSSHConnection)
                 runOptions: "commands"
-                commands: ". ./.profile && mkdir -p $(uniqueWorkspaceId)/deployPkgDir/deploy-logs-${{ parameters.environmentName }} && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -r deploy-logs-${{ parameters.environmentName }}/deployment-plan-report.html -I $(buildNumber) -R ${{ parameters.packageVersion }} -P $(pipelineType)"
+                commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -r deploy-logs-${{ parameters.environmentName }}/deployment-plan-report.html -I $(buildNumber) -R ${{ parameters.packageVersion }} -P $(pipelineType)"
+                # For reference when creating a local tar file, and skipping the upload. In this case the pipeline needs to provide the reference to the tar file.
+                # commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -i $(application).tar -r deploy-logs/deployment-plan-report.html"
                 readyTimeout: "20000"
               displayName: "Generate Deployment Plan with Wazi Deploy"
 

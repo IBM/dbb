@@ -222,6 +222,8 @@ stages:
               sshEndpoint: $(zosSSHConnection)
               runOptions: "commands"
               commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) -r $(packageVersion) -i $(buildNumber)"
+              # For reference when creating a local tar file, skipping the upload
+              #commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageVersion)"
               readyTimeout: "20000"
             displayName: "Package the build artifacts for Deployment"
         variables:
