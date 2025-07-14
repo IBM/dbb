@@ -465,7 +465,7 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${Debug}" ]; then
         CommandLine+=" ${Debug}"
     fi
-    #CommandLine+=" --debug"
+
     echo ${CommandLine} 2>&1
     $CommandLine 2>&1
     rc=$?
