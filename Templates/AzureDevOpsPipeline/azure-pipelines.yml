@@ -6,6 +6,7 @@ trigger:
   - epic/*
   - main
 
+# Pipeline input parameters to drive build and release pipelines
 parameters:
   - name: pipelineType
     displayName: "Pipeline Type"
@@ -76,12 +77,15 @@ variables:
   lowerApplicatioName: $[ lower(variables['application']) ]
   lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
   azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicatioName).tar
-  packageName: $(application).build-$(buildNumber) # Name of the Package
+  packageName: $(application) # Name of the Package
   pipelineType: ${{ parameters.pipelineType }}
   releaseType: ${{ parameters.releaseType }}
   isMain: $[contains(variables['Build.SourceBranch'], 'main')] # Variable to indicate pipeline for the main branch
-  ${{ if eq(parameters.verboseLogging, true) }}: # Computation DBB verbose logging
+  # Computation DBB verbose logging
+  ${{ if eq(parameters.verboseLogging, true) }}: 
     verbose: "-v"
+  ${{ if eq(parameters.verboseLogging, false) }}:
+    verbose: ""
 
 # Pipeline stages
 stages:
@@ -110,10 +114,10 @@ stages:
               echo "repo                       = $(repo)"
               echo "pipelineType               = $(pipelineType)"
               echo "releaseType                = $(releaseType)"
-              echo "azureArtifactName          = $(azureArtifactName)"
-              echo "azureArtifactFeedID        = $(azureArtifactFeedID)"
-              echo "azureArtifactVersionOption = $(azureArtifactVersionOption)"
-              echo "packageName                = $(packageName)"
+              # Below is comment as a reference for Azure Artifacts
+              #echo "azureArtifactName          = $(azureArtifactName)"
+              #echo "azureArtifactFeedID        = $(azureArtifactFeedID)"
+              #echo "azureArtifactVersionOption = $(azureArtifactVersionOption)"
               echo " "
             displayName: "Display CI-CD pipeline parms"
       - job: Clone # Git clone
@@ -133,6 +137,8 @@ stages:
   # Invoke build and create a release candidate tag
 
   - stage: Build
+    dependsOn:
+      - Setup
     jobs:
       - job: Build
         displayName: "Build"
@@ -159,7 +165,7 @@ stages:
               readyTimeout: "20000"
             displayName: "Prepare build logs"
 
-          # Install private SSH key prior to a subsequent cmdline tasks
+          # Install private SSH key prior to subsequent cmdline tasks
           - task: InstallSSHKey@0
             inputs:
               knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
@@ -190,11 +196,14 @@ stages:
           - template: tagging/createReleaseCandidate.yml@templates
 
   ## Packaging stage
-  # Store build outputs in appropiate artifact repository
+  # Store build outputs in appropriate artifact repository
+  # Uses the CBS PackageBuildOutputs sample
 
   - stage: Package
     displayName: "Packaging"
     condition: and(succeeded(), not(eq(variables['pipelineType'], 'preview')))
+    dependsOn:
+       - Build
     jobs:
       - job: Package
         displayName: "Package Outputs"
@@ -212,107 +221,64 @@ stages:
             inputs:
               sshEndpoint: $(zosSSHConnection)
               runOptions: "commands"
-              commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageVersion)"
+              commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) -r $(packageVersion) -i $(buildNumber)"
               readyTimeout: "20000"
             displayName: "Package the build artifacts for Deployment"
         variables:
             ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
-              packageVersion: $[ stageDependencies.Build.Tag.outputs['tagRelease.nextReleaseName'] ] 
-            ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
+              packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
+            ${{ if not(eq(variables['pipelineType'], 'release')) }}: # Default for all other cases
               packageVersion: $(packageName)
-  
 
-        # Preview - Demonstrate to upload package to Azure DevOps Artifacts
-        ## TODO - Requires more work to distinguish build and release packages
-      - job: PublishPackage
-        displayName: "Publish deployment package"
-        dependsOn: Package
-        steps:
-          # Install private SSH key prior to a subsequent cmdline tasks
-          - task: InstallSSHKey@0
-            inputs:
-              knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
-              sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+        # Alternate upload option to demonstrate to upload package to Azure DevOps Artifacts
+#      - job: PublishPackage
+#        displayName: "Publish deployment package"
+#        dependsOn: Package
+#        steps:
+#          # Install private SSH key prior to a subsequent cmdline tasks
+#          - task: InstallSSHKey@0
+#            inputs:
+#              knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
+#              sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
 
-          - task: CmdLine@2
-            inputs:
-              script: |
-                rm -rf "$(Build.SourcesDirectory)/deploymentPackage" 
-                mkdir "$(Build.SourcesDirectory)/deploymentPackage" 
-                sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
-            displayName: "Stage the deployment package"
-          - task: UniversalPackages@0
-            inputs:
-              command: "publish"
-              publishDirectory: "$(Build.SourcesDirectory)/deploymentPackage"
-              feedsToUsePublish: "internal"
-              vstsFeedPublish: "$(azureArtifactFeedID)"
-              vstsFeedPackagePublish: "$(azureArtifactName)"
-              versionOption: "$(azureArtifactVersionOption)"
-            displayName: "Publish deployment package to Azure artifacts"
+#          - task: CmdLine@2
+#            inputs:
+#              script: |
+#                rm -rf "$(Build.SourcesDirectory)/deploymentPackage" 
+#                mkdir "$(Build.SourcesDirectory)/deploymentPackage" 
+#                sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/logs/$(application).tar "\"$(Build.SourcesDirectory)/deploymentPackage/$(azureArtifactName)\""
+#            displayName: "Stage the deployment package"
+#          - task: UniversalPackages@0
+#            inputs:
+#              command: "publish"
+#              publishDirectory: "$(Build.SourcesDirectory)/deploymentPackage"
+#              feedsToUsePublish: "internal"
+#              vstsFeedPublish: "$(azureArtifactFeedID)"
+#              vstsFeedPackagePublish: "$(azureArtifactName)"
+#              versionOption: "$(azureArtifactVersionOption)"
+#            displayName: "Publish deployment package to Azure artifacts"
 
   ## Deployment to development test environment
   # deployments to these test environment can only happen when the development team requests a build / release pipeline
   # this step is automatically executed for build / release pipelines
 
   - stage: Deploy_DEVINT
+    dependsOn:
+      - Build
+      - Package
     displayName: "Deploy DevInt"
     condition: and(succeeded(), eq(variables.isMain, true), not(eq(variables['pipelineType'], 'preview')))
+    variables:
+      Environment: Integration
+      ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
+         packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
+      ${{ if not(eq(variables['pipelineType'], 'release')) }}: # Default for all other cases
+         packageVersion: $(packageName)
     jobs:
-      - job: DeploymentToIntegration
-        displayName: "Deploy to DevTest"
-        steps:
-          - checkout: none
-          # Install private SSH key prior to a subsequent cmdline tasks
-          - task: InstallSSHKey@0
-            inputs:
-              knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
-              sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
-
-          - task: SSH@0
-            condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-            inputs:
-              sshEndpoint: $(zosSSHConnection)
-              runOptions: "commands"
-              commands: ". ./.profile && mkdir -p $(uniqueWorkspaceId)/deployPkgDir/deploy-logs && wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(application).tar -r deploy-logs/deployment-plan-report.html"
-              readyTimeout: "20000"
-            displayName: "Generate Deployment Plan with Wazi Deploy"
-
-          # Trigger deployment to the development integration stage
-          - task: SSH@0
-            condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-            inputs:
-              sshEndpoint: $(zosSSHConnection)
-              runOptions: "commands"
-              commands: ". ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e EOLEB7-$(application)-Integration.yaml -i $(application).tar -l deploy-logs/evidences/evidence.yaml"
-              readyTimeout: "20000"
-            displayName: "Deploy Package with Wazi Deploy"
-
-          - task: SSH@0
-            condition: and(succeeded(), eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-            inputs:
-              sshEndpoint: $(zosSSHConnection)
-              runOptions: "commands"
-              commands: ". ./.profile && wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l deploy-logs/evidence.yaml -o deploy-logs/deployment-report.html"
-              readyTimeout: "20000"
-            displayName: "Generate deployment report with Wazi Deploy"
-
-          - task: CmdLine@2
-            condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-            inputs:
-              script: |
-                rm -rf "$(Build.SourcesDirectory)/deploy-logs" 
-                mkdir "$(Build.SourcesDirectory)/deploy-logs" 
-                sftp -r $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy-logs/* "\"$(Build.SourcesDirectory)/deploy-logs\""
-            displayName: "Retrieve deployment reports"
-
-          - task: PublishBuildArtifacts@1
-            condition: and(eq(variables.isMain, true),  not(eq(variables['pipelineType'], 'preview')))
-            inputs:
-              PathtoPublish: "$(Build.SourcesDirectory)/deploy-logs/"
-              ArtifactName: "deploy-logs"
-              publishLocation: "Container"
-            displayName: "Publish deployment logs"
+      - template: deployment/deployPackage.yml@templates
+        parameters:
+          environmentName: ${{ variables.Environment }}
+          packageVersion: "$(packageVersion)"
 
   ## Deployment to higher test environments
   # deployments to these test environment can only happen when the development team requests a release pipeline
@@ -320,14 +286,21 @@ stages:
   # Acceptance Test environment
   - stage: Deploy_ACCEPTANCE
     displayName: "Deploy Acceptance"
-    dependsOn: Deploy_DEVINT
+    dependsOn: 
+      - Build
+      - Deploy_DEVINT
     condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
     variables:
       Environment: Acceptance
+      ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
+         packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
+      ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
+         packageVersion: $(packageName)
     jobs:
-      - template: deployment/deployReleasePackage.yml@templates
+      - template: deployment/deployPackage.yml@templates
         parameters:
-          environmentName: "Acceptance"
+          environmentName: ${{ variables.Environment }}
+          packageVersion: "$(packageVersion)"
 
   # Add additional deployment stages as you need.
 
@@ -340,11 +313,16 @@ stages:
     condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
     variables:
       Environment: Production
+      ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
+         packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
+      ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
+         packageVersion: $(packageName)      
     jobs:
-      - template: deployment/deployReleasePackage.yml@templates
+      - template: deployment/deployPackage.yml@templates
         parameters:
-          environmentName: "Production"
-
+          environmentName: ${{ variables.Environment }}
+          packageVersion: "$(packageVersion)"
+          
   # Cleanup
   - stage: Cleanup
     condition: always()

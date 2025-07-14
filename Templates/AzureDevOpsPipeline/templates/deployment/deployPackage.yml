@@ -137,9 +137,3 @@ jobs:
               parameters:
                 evidenceFolder: "deploy-logs-${{ parameters.environmentName }}"
                 environmentName: "${{ parameters.environmentName }}"
-
-            # Create Prod Release (when deploying to production)
-            # Lets as a sample if a customer would like to create a tag for the release candidate that was deployed to production
-            #- template: ../tagging/createProductionReleaseTag.yml
-            #  parameters:
-            #    environmentName: ${{ parameters.environmentName }}
