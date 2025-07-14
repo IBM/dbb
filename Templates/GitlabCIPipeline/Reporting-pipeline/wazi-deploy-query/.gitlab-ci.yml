@@ -82,5 +82,5 @@ Query:
                 else
 
                     echo "[WARNING] - Query Wazi Deploy index failed."
-                    exit 1
+                    exit ${rc} 
                 fi
