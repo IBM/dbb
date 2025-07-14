@@ -149,7 +149,9 @@ stages:
               sshEndpoint: $(zosSSHConnection)
               runOptions: "commands"
               commands: ". ./.profile && dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) ${{variables.verbose}}"
+              #commands: ". ./.profile && zBuilder.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) ${{variables.verbose}}"
               readyTimeout: "20000"
+              failOnStdErr: false
             displayName: "Build application"
       - job: PublishBuildLogs
         displayName: "Publish build logs"
