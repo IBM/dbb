@@ -1,11 +1,11 @@
-# wazideploy-evidence --indexFolder /var/work/wazi_deploy_evidences_gitlab_index --template /var/work/wazi_deploy_queries_gitlab/queryTemplate.yml --output=/var/work/wazi_deploy_queries_gitlab/reports/inventory-report.html r app='*' env='*' type='*' module='*' renderer=/var/work/wazi_deploy_queries_gitlab/renderer.html
+# wazideploy-evidence --indexFolder /var/work/wazi_deploy_evidences_gitlab_index --template /var/work/wazi_deploy_queries_gitlab/queryTemplate.yaml --output=/var/work/wazi_deploy_queries_gitlab/reports/inventory-report.html r app='*' env='*' type='*' module='*' renderer=/var/work/wazi_deploy_queries_gitlab/renderer.html
 
 select:
   name: '{{module}}'
   ymli_category~: ^ activities:[0-9]* actions:[0-9]* steps:[0-9]* artifacts:[0-9]* $
-#  ymli_parent:
-#    steps: 
-#      name: MEMBER_COPY 
+  ymli_parent:
+   steps: 
+     name: MEMBER_COPY 
   ymli_parent:
     #{% if env is defined %}
     metadata:
@@ -20,12 +20,36 @@ select:
     key: type
     value: '{{type}}'
 output:
-   unique: true
-   fields:
-      name: +1
-      properties:
-        key: true
-        value: true
+  #limit: 1
+  format: 
+    sort_keys: true
+  fields:
+    # element name is the third sort criteria
+    name: false
+    properties: false  
+    ymli_parent:
+      name: true
+      artifacts: 
+        name: 3
+        properties: 
+          key: true
+          value: true
+      ymli_parent:
+        ymli_parent:
+          ymli_parent:
+                manifests: 
+                    # application name is the second sort criteria
+                    name: 2
+                    description: true
+                    version: true
+                metadata:
+                    annotations: 
+                        creation_timestamp : true
+                        # environment is the firt sort criteria
+                        environment_name: 1
+                        # last sort criteria. Reverse sort of timestamps
+                        deploy_timestamp: -4
+
 #name: true
 #{% if renderer is defined %}
 renderer: {{renderer}}

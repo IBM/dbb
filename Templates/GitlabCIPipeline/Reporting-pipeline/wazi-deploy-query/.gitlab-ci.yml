@@ -8,12 +8,16 @@ variables:
     reportOutputDirectory: ${CI_PROJECT_DIR}/REPORT-OUTPUT
     application:
         value: "*"
+        options:
+         - "*"     
         description: "Application Name filter"
     module:
         value: "*"
         description: "Module Name filter"
     type:
         value: "*"
+        options:
+          - "*"
         description: "Type filter"
     environment: 
         value: "*"
@@ -23,9 +27,9 @@ variables:
           - "EOLEB7-Acceptance"
           - "EOLEB7-Production"
         description: "Environment name filter"
-    reportFile: ${reportOutputDirectory}/deployment-inventory-report-${CI_PIPELINE_ID}.txt  
-    rendererFile: $CI_PROJECT_DIR/wazi-deploy-query/renderer.yml
-    templateFile: $CI_PROJECT_DIR/wazi-deploy-query/queryTemplate.yml
+    reportFile: ${reportOutputDirectory}/deployment-inventory-report-${CI_PIPELINE_ID}.txt
+    rendererFile: $CI_PROJECT_DIR/wazi-deploy-query/renderer.yaml
+    templateFile: $CI_PROJECT_DIR/wazi-deploy-query/queryTemplate.yaml
     
 # Only run pipeline on manual request
 workflow:
@@ -43,21 +47,22 @@ Query:
         paths:
             - "${reportOutputDirectory}/*.txt"
     script: |
-                echo "*******************************************"
-                echo " **  Refresh Wazi Deploy index for all applications and querying the Wazi Deploy Index"
-                echo " **  Query Parameters: "
-                echo " **  Environment   = $environment"
-                echo " **  Application   = $application"
-                echo " **  Element Name  = $module"
-                echo " **  Element Type  = $type"
-                echo " **  Query Setup: "
-                echo " **  Template        = $templateFile"
-                echo " **  Renderer        = $rendererFile"
-                echo " **  WaziDeployIdx   = $wdEvidencesIndex"
-                echo " **  Project is checked out to: $CI_PROJECT_DIR"
-                ls -l " ** $CI_PROJECT_DIR"
-                echo "*******************************************"
-
+                echo ""
+                echo "*******************************************************************************************"
+                echo " [INFO]  Refresh Wazi Deploy index for all applications and querying the Wazi Deploy Index"
+                echo " [INFO]  Query Parameters: "
+                echo " [INFO]  Environment   = $environment"
+                echo " [INFO]  Application   = $application"
+                echo " [INFO]  Element Name  = $module"
+                echo " [INFO]  Element Type  = $type"
+                echo " [INFO]  Query Setup: "
+                echo " [INFO]  Template        = $templateFile"
+                echo " [INFO]  Renderer        = $rendererFile"
+                echo " [INFO]  WaziDeployIdx   = $wdEvidencesIndex"
+                echo " [INFO]  Project is checked out to: $CI_PROJECT_DIR"
+                echo "*********************************************************************************************"
+                echo ""
+                
 
                 # Variables
                 rc=0
@@ -66,6 +71,7 @@ Query:
                 mkdir ${reportOutputDirectory}
 
                 CMD="wazideploy-evidence  --indexFolder $wdEvidencesIndex --dataFolder $wdEvidencesRoot --template $templateFile --output=$reportFile ir app="$application" env="$environment" type="$type" module="$module" renderer="$rendererFile""
+                #CMD="wazideploy-evidence  --indexFolder $wdEvidencesIndex --dataFolder $wdEvidencesRoot --template $templateFile --output=$reportFile ir app="$application" env="$environment" type="$type" module="$module""
                 echo "[INFO] Executing following command : $CMD"
                 ${CMD}
                 rc=$?
@@ -75,6 +81,6 @@ Query:
                     echo "[INFO] - Query Wazi Deploy index completed. Report $reportFile generated."
                 else
 
-                    echo "[WARNING] - Query Wazi Deploy index failed. RC=${rc}"
+                    echo "[WARNING] - Query Wazi Deploy index failed."
                     exit 1
                 fi
