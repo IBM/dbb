@@ -69,5 +69,8 @@ To query the Wazi deploy evidence index, the developer triggers the pipeline man
 
 ### Sample output 
 This can be downloaded and viewed after a successful run of the pipeline.
-<img width="622" alt="image" src="https://github.com/user-attachments/assets/fbc471c0-d83a-404b-93e1-4ca75af207e9" />
+Eg:
+
+<img width="1097" height="656" alt="image" src="https://github.com/user-attachments/assets/75aac66a-3c34-4c25-90de-1136ceac8b57" />
+
 
