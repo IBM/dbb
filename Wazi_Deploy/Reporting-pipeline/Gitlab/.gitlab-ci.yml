@@ -28,8 +28,8 @@ variables:
           - "EOLEB7-Production"
         description: "Environment name filter"
     reportFile: ${reportOutputDirectory}/deployment-inventory-report-${CI_PIPELINE_ID}.txt
-    rendererFile: $CI_PROJECT_DIR/wazi-deploy-query/renderer.yaml
-    templateFile: $CI_PROJECT_DIR/wazi-deploy-query/queryTemplate.yaml
+    rendererFile: $CI_PROJECT_DIR/renderer.yaml
+    templateFile: $CI_PROJECT_DIR/queryTemplate.yaml
     
 # Only run pipeline on manual request
 workflow:
