@@ -2,48 +2,81 @@ parameters:
   - name: environmentName
     type: string
     default: "." # defaults for any parameters that specified with "." (current directory)
-
+  - name: packageVersion
+    type: string
+    default: "default"
 jobs:
-  - job: RetrievePackage
-    displayName: "Retrieve Deployment Package"
-    steps:
-      - checkout: none
-      - task: InstallSSHKey@0
-        inputs:
-          knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
-          sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+# Left this as a template from a previous version showcasing the ADO package registry
+#  - job: RetrievePackage
+#    displayName: "Retrieve Deployment Package"
+#    steps:
+#      - checkout: none
+#      - task: InstallSSHKey@0
+#        inputs:
+#          knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
+#          sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
 
-      - task: UniversalPackages@0
-        condition: and(succeeded(), eq(variables['pipelineType'], 'release'))
-        inputs:
-          command: "download"
-          downloadDirectory: "$(System.DefaultWorkingDirectory)"
-          feedsToUse: "internal"
-          vstsFeed: "$(azureArtifactFeedID)"
-          vstsFeedPackage: "$(azureArtifactName)"
-          versionOption: "$(azureArtifactVersionOption)"
-          vstsPackageVersion: "*.*.*" # latest package
-        displayName: "Download deployment package to staging area"
+#      - task: UniversalPackages@0
+#        condition: and(succeeded(), eq(variables['pipelineType'], 'release'))
+#        inputs:
+#          command: "download"
+#          downloadDirectory: "$(System.DefaultWorkingDirectory)"
+#          feedsToUse: "internal"
+#          vstsFeed: "$(azureArtifactFeedID)"
+#          vstsFeedPackage: "$(azureArtifactName)"
+#          versionOption: "$(azureArtifactVersionOption)"
+#          vstsPackageVersion: "*.*.*" # latest package
+#        displayName: "Download deployment package to staging area"
 
-      # Copy package to a remote machine over SSH.
-      - task: CopyFilesOverSSH@0
-        inputs:
-          sshEndpoint: $(zosSSHConnection) # string. Required. SSH service connection.
-          sourceFolder: "$(System.DefaultWorkingDirectory)" # string. Source folder.
-          contents: "$(azureArtifactName)" # string. Required. Contents. Default: all
-          targetFolder: "$(uniqueWorkspaceId)/deploy_${{ parameters.environmentName }}" # string. Target folder.
-          cleanTargetFolder: true # boolean. Clean target folder. Default: false.
-          cleanHiddenFilesInTarget: true # boolean. Optional. Use when cleanTargetFolder = true. Remove hidden files in target folder. Default: false.
-          readyTimeout: "20000" # string. Required. SSH handshake timeout. Default: 20000.
-          overwrite: true # boolean. Overwrite. Default: true.
-          failOnEmptySource: true # boolean. Fail if no files found to copy. Default: false.
-        displayName: "Upload Package to Deployment environment"
+#       # Inspect package.
+#      - bash: |
+#
+#               # local variables
+#               rc=0
+#               wdIdx=/var/work/wazi_deploy_edvidences_indexes/index
+#               wdQry=/var/work/wazi_deploy_queries/fetchDependencies.yaml
+#               reportOutput=$(System.DefaultWorkingDirectory)/deployment-inventory-report-$(buildNumber).yml
+
+#               # print env
+#               # echo "[INFO] Print environment variables "
+#               #env
+#               # Source profile
+#               . /home/ado-agent/.bash_profile
+#               #env
+
+#               # Untar package on ADO runner environment
+#               echo "[INFO] Expand Package file. "
+#               mkdir $(System.DefaultWorkingDirectory)/packageContents
+#               tar -C $(System.DefaultWorkingDirectory)/packageContents -xvf $(azureArtifactName)
+#               rc=$?
+#               if [ $rc -eq 0 ]; then
+#                   echo "[INFO] Validate preconditions."
+#                   CMD="groovy /var/work/groovy-scripts/checkPrerequisites.groovy --applicationManifest $(System.DefaultWorkingDirectory)/packageContents/wazideploy_manifest.yml --runtimeEnvironment EOLEB7-${{ parameters.environmentName }} --waziDeployIndex $wdIdx --waziDeployQuery $wdQry --reportOutput $reportOutput"
+#                   echo $CMD
+#                   ${CMD}
+#                   rc=$?
+#               fi
+#               exit $rc
+#        continueOnError: true       
+#        condition: eq(variables['pipelineType'], 'release')
+#        displayName: "Validate Application Package preconditions (External Dependencies)"
+
+#      # Copy package to a remote machine over SSH.
+#      - task: CopyFilesOverSSH@0
+#        inputs:
+#          sshEndpoint: $(zosSSHConnection) # string. Required. SSH service connection.
+#          sourceFolder: "$(System.DefaultWorkingDirectory)" # string. Source folder.
+#          contents: "$(azureArtifactName)" # string. Required. Contents. Default: all
+#          targetFolder: "$(uniqueWorkspaceId)/deploy_${{ parameters.environmentName }}" # string. Target folder.
+#          cleanTargetFolder: true # boolean. Clean target folder. Default: false.
+#          cleanHiddenFilesInTarget: true # boolean. Optional. Use when cleanTargetFolder = true. Remove hidden files in target folder. Default: false.
+#          readyTimeout: "20000" # string. Required. SSH handshake timeout. Default: 20000.
+#          overwrite: true # boolean. Overwrite. Default: true.
+#          failOnEmptySource: true # boolean. Fail if no files found to copy. Default: false.
+#        displayName: "Upload Package to Deployment environment"
 
   - deployment: DEPLOY_${{ parameters.environmentName }}
-    dependsOn: RetrievePackage
     displayName: "Deploy to ${{ parameters.environmentName }}"
-    variables:
-      nextReleaseName: $[ stageDependencies.Build.Tag.outputs['tagRelease.nextReleaseName'] ] 
     environment: "${{ parameters.environmentName }}"
     strategy:
       runOnce:
@@ -57,27 +90,25 @@ jobs:
 
             # Generate Deployment Plan.
             - task: SSH@0
-              condition: and(succeeded(), eq(variables['pipelineType'], 'release'))
               inputs:
                 sshEndpoint: $(zosSSHConnection)
                 runOptions: "commands"
-                commands: ". ./.profile && mkdir -p $(uniqueWorkspaceId)/deployPkgDir/deploy-logs-${{ parameters.environmentName }} && wazideploy-generate.sh -w $(uniqueWorkspaceId) -i $(uniqueWorkspaceId)/deploy_${{ parameters.environmentName }}/$(azureArtifactName) -r deploy-logs-${{ parameters.environmentName }}/deployment-plan-report.html"
+                commands: ". ./.profile && mkdir -p $(uniqueWorkspaceId)/deployPkgDir/deploy-logs-${{ parameters.environmentName }} && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -r deploy-logs-${{ parameters.environmentName }}/deployment-plan-report.html -I $(buildNumber) -R ${{ parameters.packageVersion }} -P $(pipelineType)"
                 readyTimeout: "20000"
               displayName: "Generate Deployment Plan with Wazi Deploy"
 
+
             # Perform Deployment.
             - task: SSH@0
-              condition: and(succeeded(), eq(variables['pipelineType'], 'release'))
               inputs:
                 sshEndpoint: $(zosSSHConnection)
                 runOptions: "commands"
-                commands: ". ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e EOLEB7-$(application)-${{ parameters.environmentName }}.yaml -i $(uniqueWorkspaceId)/deploy_${{ parameters.environmentName }}/$(azureArtifactName) -l deploy-logs-${{ parameters.environmentName }}/evidences/evidence.yaml"
+                commands: ". ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e EOLEB7-$(application)-${{ parameters.environmentName }}.yaml -l deploy-logs-${{ parameters.environmentName }}/evidences/evidence.yaml"
                 readyTimeout: "20000"
               displayName: "Deploy Package with Wazi Deploy"
 
             # Generate Evidence.
             - task: SSH@0
-              condition: and(succeeded(),eq(variables['pipelineType'], 'release'))
               inputs:
                 sshEndpoint: $(zosSSHConnection)
                 runOptions: "commands"
@@ -87,24 +118,28 @@ jobs:
 
             # Pull logs and publish them.
             - task: CmdLine@2
-              condition: eq(variables['pipelineType'], 'release')
               inputs:
                 script: |
-                  rm -rf "$(Build.SourcesDirectory)/deploy-logs-${{ parameters.environmentName }}" 
-                  mkdir "$(Build.SourcesDirectory)/deploy-logs-${{ parameters.environmentName }}" 
-                  sftp -r $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy-logs-${{ parameters.environmentName }}/* "\"$(Build.SourcesDirectory)/deploy-logs-${{ parameters.environmentName }}\""
+                  rm -rf "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}" 
+                  mkdir "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}" 
+                  sftp -r $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy-logs-${{ parameters.environmentName }}/* "\"$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}\""
               displayName: "Retrieve deployment reports"
 
             - task: PublishBuildArtifacts@1
-              condition: eq(variables['pipelineType'], 'release')
               inputs:
-                PathtoPublish: "$(Build.SourcesDirectory)/deploy-logs-${{ parameters.environmentName }}/"
+                PathtoPublish: "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}/"
                 ArtifactName: "deploy-logs-${{ parameters.environmentName }}"
                 publishLocation: "Container"
               displayName: "Publish deployment logs"
 
-            # Create Prod Release (when deploying to production)
-            # Condition within template
-            - template: ../tagging/createProductionReleaseTag.yml
+            # Store logs in evidence inventory
+            - template: createWaziDeployIndex.yml
               parameters:
-                environmentName: ${{ parameters.environmentName }}
+                evidenceFolder: "deploy-logs-${{ parameters.environmentName }}"
+                environmentName: "${{ parameters.environmentName }}"
+
+            # Create Prod Release (when deploying to production)
+            # Lets as a sample if a customer would like to create a tag for the release candidate that was deployed to production
+            #- template: ../tagging/createProductionReleaseTag.yml
+            #  parameters:
+            #    environmentName: ${{ parameters.environmentName }}
