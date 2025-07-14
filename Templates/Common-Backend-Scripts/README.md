@@ -858,7 +858,7 @@ wazideploy-generate.sh: [INFO] *************************************************
 
 This script invokes the Wazi Deploy Deploy (with the Python Translator) command to deploy the content of a provided package with a Deployment Plan.
 
-If the pipelineBackend.config variables `publish=true` is set, the script checks for the package input file was automatically retrieved from wazideploy-generate.sh.
+If the `publish` parameter defined in the pipelineBackend.config file is set to true, the script checks for the package input file that was automatically retrieved from wazideploy-generate.sh.
 
 #### Invocation
 
@@ -873,8 +873,9 @@ or qualified paths
 wazideploy-deploy.sh -w /u/ado/workspace/MorgageApplication/main/build-1 -p /u/ado/workspace/MortApp/main/build-1/deploymentPlan.yaml -e /u/ado/deployment/environment-configs/IntegrationTest.yaml -i /u/ado/builds/MortApp/main/build-1/logs/MortgageApplication.tar -l /u/ado/builds/MortApp/main/build-1/logs/evidences.yaml
 ```
 
-Use `-x` for any [extraVars](https://www.ibm.com/docs/en/developer-for-zos/17.0.x?topic=translators-python-deployment-command) options and any additional Wazi Deploy cli argument via the `-o` option for instance to specify planned tags.
-The below sample shows an override of the hlq as an extraVars, and the `--planTags` CLI option.
+Use the `-x` CLI parameter to specify for any [extraVars](https://www.ibm.com/docs/en/developer-for-zos/17.0.x?topic=translators-python-deployment-command) options. 
+The `-o` CLI parameter can be used to specify any additional Wazi Deploy CLI argument, for instance to specify planned tags.
+The below sample shows a way to override of the HLQ via an extraVars, and showcases the use of the `--planTags` CLI option.
 ```
 # Deploy + Process DBRMs first
 wazideploy-deploy.sh -w $application/$branchName/build_$timestamp -a MorgageApplication -x 'hlq=WDEPLOY.MORTGAGE' -o '--planTags db2' -e EOLEB7-Integration.yml
@@ -886,8 +887,8 @@ CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `environmentFile`, `packageInputFile` and `evidenceFile` are fully referenced. 
 -a `<application>` | **Application name** passed as an extraVars argument.
--x `<user-extraVars>` | **User-provided extraVars** pass to the deploy command as extraVars arguments. Separat multiple extraVars options using a blank.
--o `<user-cli-options>` | **User-provided cli arguments** that are passed to the deploy command, such as --planTags or --planSkipTags.
+-x `<user-extraVars>` | **User-provided extraVars** passed to the Wazi Deploy deploy command as extraVars arguments. Multiple extraVars options can be passed using a blank as separator.
+-o `<user-cli-options>` | **User-provided cli arguments** passed to the Wazi Deploy deploy command, such as --planTags or --planSkipTags.
 -p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified, the location of the deployment plan is obtained from the `pipelineBackend.config`.
 -e `<environmentFile>` | (Optional) Absolute or relative path to **Environment File**, that describes the target z/OS environment. If a relative path is provided, the environment file is located based on the setting `wdEnvironmentConfigurations` in `pipelineBackend.config`.
 -i `<packageInputFile>` | **Package Input File** package that is to be deployed. If a relative file path is provided, the file is assumed to be located in the `<workspace directory>/<logsDir>`.

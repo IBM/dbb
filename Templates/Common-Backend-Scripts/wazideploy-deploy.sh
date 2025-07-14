@@ -184,7 +184,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [ERROR] A value for cli parm a (application) is required. rc="$rc
+                ERRMSG=$PGM": [ERROR] A value for application (-a parameter) is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
@@ -220,7 +220,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                 rc=4
-                ERRMSG=$PGM": [ERROR] A value for extraVars (x) is required. rc="$rc
+                ERRMSG=$PGM": [ERROR] A value for extraVars (-x parameter) is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
@@ -232,7 +232,7 @@ if [ $rc -eq 0 ]; then
             nextchar="$(expr substr $argument 1 1)"
             if [ -z "$argument" ] ; then
                 rc=4
-                ERRMSG=$PGM": [ERROR] A value for extraOptions (o) is required. rc="$rc
+                ERRMSG=$PGM": [ERROR] A value for extraOptions (-o parameter) is required. rc="$rc
                 echo $ERRMSG
                 break
             fi
