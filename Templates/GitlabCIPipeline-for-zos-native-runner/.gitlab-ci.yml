@@ -317,9 +317,9 @@ Packaging:
             wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFileAcceptance} -l deploy-acceptance/evidences/evidence.yaml < /dev/null
             RC=$?
             if [ ${RC} -eq 0 ]; then
-                echo [INFO] Deploy to integration job passed.
+                echo [INFO] Deploy to acceptance job passed.
             else
-                echo [ERROR] Deploy to integration job failed. Exit code: ${RC}.
+                echo [ERROR] Deploy to acceptance job failed. Exit code: ${RC}.
                 exit ${RC}
             fi
 
