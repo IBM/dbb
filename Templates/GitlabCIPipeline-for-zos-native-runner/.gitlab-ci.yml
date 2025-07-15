@@ -163,7 +163,7 @@ Packaging:
 
                 else
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                    echo [ERROR] Error message from the computeReleaseVersion script is
+                    echo [ERROR] Console output of computeReleaseVersion script:
                     echo ${stringOut}
                     exit ${RC}
                 fi
