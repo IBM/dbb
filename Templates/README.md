@@ -22,7 +22,7 @@ The below tables provide an overview of the implemented capabilities of the pipe
 ### Technology in use with CI/CD orchestrators
 
  <br>  | Azure DevOps | GitLab CI with distributed runner | GitLab CI with z/OS-native GitLab runner| GitHub Actions | Jenkins
---- | --- | --- | --- | ---
+--- | --- | --- | --- | --- | ---
 **CI Runner/Agent topology** | ADO runner | gitlab-runner shell executor | z/OS-native gitlab-runner shell executor | GitHub Actions runner | Jenkins node on z/OS
 **Git Provider** | Azure DevOps | GitLab | GitLab | GitHub | Any Git provider
 **Deployment technology** | IBM Wazi Deploy | IBM Wazi Deploy | IBM Wazi Deploy | IBM DevOps Deploy (a.k.a. UCD)
