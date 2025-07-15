@@ -4,9 +4,9 @@ variables:
     GIT_CHECKOUT: "false"
 
     application: ${CI_PROJECT_NAME}
-    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/Integration.yml
-    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
-    wdEnvironmentFileProduction: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/Production.yml
+    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Integration.yml
+    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
+    wdEnvironmentFileProduction: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Production.yml
     
     # Directories on the GitLab runner environment to persist Wazi Deploy Evidence files and to create an Wazi Deploy Index
     wdEvidencesRoot: /var/work/wazi_deploy_evidences_gitlab/
@@ -18,9 +18,6 @@ variables:
     # Working directory on Linux machine
     buildOutputDirectory: ${CI_PROJECT_DIR}/BUILD-OUTPUT
     deployOutputDirectory: ${CI_PROJECT_DIR}/DEPLOY-OUTPUT
-    # Update the path based on the repository structure for example if you do not have nested structure, update to:
-    # baselineReferenceFile: ${uniqueWorkspaceId}/$application/application-conf/baselineReference.config
-    baselineReferenceFile: ${uniqueWorkspaceId}/$application/$application/application-conf/baselineReference.config
     
     # Variable options when running a pipeline
     verbose: "-v"
@@ -66,13 +63,6 @@ Clone:
           when: never 
         - when: always
     dependencies: []
-    variables:
-      # Clone and checkout git repo to get latest update.
-      GIT_STRATEGY: clone
-      GIT_CHECKOUT: "true"
-      # To set the clone depth to 0
-      # This is necessary to calculate the next release tag, which implementation lists the existing tags
-      GIT_DEPTH: 0
     script: |
         # Environment parameters
         echo Environment parameters
@@ -88,7 +78,7 @@ Clone:
         echo [INFO]                 Verbose: ${verbose}
         
         # Git clone
-        zowe rse issue unix-shell ". ~/.bash_profile && gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME} -a ${application}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        zowe rse issue unix-shell ". ~/.bash_profile && gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
         RC=$?
         if [ ${RC} -eq 0 ]; then
             echo [INFO] Clone job passed.
@@ -189,7 +179,7 @@ Packaging:
     needs: ["1-Build application", "2-Prepare and publish build logs"]
     stage: Packaging
     tags: [shell]
-    # Run packaging only on integration branches
+    # Run packaging except for preview pipelines
     rules:
         - if: $pipelineType != "preview"
     dependencies: []
@@ -696,9 +686,9 @@ Packaging:
 
             if [ "${releaseVersion}" != "" ]; then   
                 currentBaselineVersion="rel-${currentBaselineVersion}"
-                echo [INFO] Current baseline version: ${currentBaselineVersion}
+                echo [INFO] Current Baseline Version: ${currentBaselineVersion}
                 releaseVersion="rel-${releaseVersion}"
-                echo [INFO] Next reelease version: ${releaseVersion}
+                echo [INFO] Next Reelease Version: ${releaseVersion}
 
                 # Update baselineReference
                 export remoteFound=`git remote | grep gitlab_origin | wc -l`
@@ -707,7 +697,8 @@ Packaging:
                 fi
                 git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git 
                 
-                if [ -f "${baselineReferenceFile}" ]; then
+                baselineReferenceFile=$(find ${CI_PROJECT_DIR} -name baselineReference.config)
+                if [ "${baselineReferenceFile}" != "" ]; then
             
                     if [ ${CI_COMMIT_BRANCH} == "main" ]; then
                         echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/${releaseVersion}
