@@ -4,9 +4,9 @@ variables:
     GIT_CHECKOUT: "false"
 
     application: "$CI_PROJECT_NAME"
-    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Integration.yml
-    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
-    wdEnvironmentFileProduction: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Production.yml
+    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Integration.yml
+    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Acceptance.yml
+    wdEnvironmentFileProduction: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Production.yml
 
 # Working directory on USS 
     uniqueWorkspaceId: ${CI_BUILDS_DIR}/$CI_PROJECT_NAME/build-${CI_PIPELINE_ID}
@@ -50,10 +50,6 @@ stages:
 Clone:
     stage: Setup
     tags: [zos-native]
-    rules:
-        - if: $CI_COMMIT_TAG
-          when: never 
-        - when: always
     dependencies: []
     script: |
             # Environment parameters
@@ -75,15 +71,10 @@ Clone:
                 exit ${RC}
             fi
 
-
 Build application:
     needs: ["Clone"]
     stage: Build
     tags: [zos-native]
-    rules:
-        - if: $CI_COMMIT_TAG
-          when: never
-        - when: on_success
     dependencies: []
     artifacts:
         name: "buildReport-${CI_PIPELINE_ID}"
@@ -163,7 +154,7 @@ Packaging:
 
                 else
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                    echo [ERROR] Console output of computeReleaseVersion script:
+                    echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
                     exit ${RC}
                 fi
@@ -237,9 +228,8 @@ Packaging:
 
                 else
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                    echo [ERROR] Console output of computeReleaseVersion script:
+                    echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
-                    exit ${RC}
                 fi
             
             else
@@ -429,7 +419,7 @@ Packaging:
 
                     # Update baselineReference
                     baselineReferenceFile=$(find ${uniqueWorkspaceId} -name baselineReference.config)
-                    if [ -f "${baselineReferenceFile}" ]; then
+                    if [ "${baselineReferenceFile}" != "" ]; then
                         if [ ${CI_COMMIT_BRANCH} == "main" ]; then
                             echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/rel-${releaseVersion}
                             cat ${baselineReferenceFile} | sed "s/main=refs\/tags\/${currentBaselineVersion}/main=refs\/tags\/${releaseVersion}/" > ${baselineReferenceFile}.new
@@ -487,7 +477,7 @@ Packaging:
 
             else
                 echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                echo [ERROR] Console output of computeReleaseVersion script:
+                echo [ERROR] Error message from the computeReleaseVersion script is
                 echo ${stringOut}
                 exit ${RC}
             fi
@@ -498,11 +488,11 @@ Cleanup:
     variables:
       FF_ENABLE_JOB_CLEANUP: 1
     script: |
-            deleteWorkspace.sh -w ${uniqueWorkspaceId}
-            RC=$?
-            if [ ${RC} -eq 0 ]; then
-                echo [INFO] Cleanup job passed.
-            else
-                echo [ERROR] Cleanup job failed. Exit code: ${RC}.
-                exit ${RC}
-            fi
+        deleteWorkspace.sh -w ${uniqueWorkspaceId}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Cleanup job passed.
+        else
+             echo [ERROR] Cleanup job failed. Exit code: ${RC}.
+             exit ${RC}
+        fi
