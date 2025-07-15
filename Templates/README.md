@@ -21,14 +21,14 @@ The below tables provide an overview of the implemented capabilities of the pipe
 
 ### Technology in use with CI/CD orchestrators
 
- <br>  | Azure DevOps | GitLab CI | GitHub Actions | Jenkins
+ <br>  | Azure DevOps | GitLab CI with distributed runner | GitLab CI with z/OS-native GitLab runner| GitHub Actions | Jenkins
 --- | --- | --- | --- | ---
-**CI Runner/Agent topology** | ADO runner | gitlab-runner shell executor | GitHub Actions runner | Jenkins node on z/OS
-**Git Provider** | Azure DevOps | GitLab | GitHub | Any Git provider
+**CI Runner/Agent topology** | ADO runner | gitlab-runner shell executor | z/OS-native gitlab-runner shell executor | GitHub Actions runner | Jenkins node on z/OS
+**Git Provider** | Azure DevOps | GitLab | GitLab | GitHub | Any Git provider
 **Deployment technology** | IBM Wazi Deploy | IBM Wazi Deploy | IBM Wazi Deploy | IBM DevOps Deploy (a.k.a. UCD)
-**Communication between CI platform and z/OS** | SSH | IBM RSE API Plug-in for Zowe CLI | SSH | Jenkins-managed
-**Additional integration technologies** | Azure DevOps CLI | GitLab REST interface | GitHub CLI | 
-**Pipeline extensions** |       |       |      | SonarQube sonar-scanner
+**Communication between CI platform and z/OS** | SSH | IBM RSE API Plug-in for Zowe CLI | native GitLab Runner communication | SSH | Jenkins-managed
+**Additional integration technologies** | Azure DevOps CLI | GitLab REST interface | GitLab REST interface | GitHub CLI | 
+**Pipeline extensions** |       |       |       |       | SonarQube sonar-scanner
 
 ### Implemented pipeline tasks
 
