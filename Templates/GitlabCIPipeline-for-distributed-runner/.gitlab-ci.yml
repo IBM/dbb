@@ -234,6 +234,7 @@ Packaging:
                         RC=8
                         echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
                         exit ${RC}
+                    fi
 
                 else
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
