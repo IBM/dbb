@@ -4,13 +4,12 @@ variables:
     GIT_CHECKOUT: "false"
 
     application: "$CI_PROJECT_NAME"
-    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Integration.yml
-    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Acceptance.yml
-    wdEnvironmentFileProduction: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Production.yml
+    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Integration.yml
+    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
+    wdEnvironmentFileProduction: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Production.yml
 
 # Working directory on USS 
     uniqueWorkspaceId: ${CI_BUILDS_DIR}/$CI_PROJECT_NAME/build-${CI_PIPELINE_ID}
-##    baselineReferenceFile: ${uniqueWorkspaceId}/$application/$application/application-conf/baselineReference.config
 
 # Pipeline configuration
     verbose: "-v"
@@ -57,17 +56,25 @@ Clone:
         - when: always
     dependencies: []
     script: |
-        # Environment parameters
-        echo Environment parameters
-        echo [INFO]   Unique workspace: ${uniqueWorkspaceId}
-        echo [INFO] Git repository URL: ${CI_REPOSITORY_URL}
-        echo [INFO]             Branch: ${CI_COMMIT_REF_NAME}
-        echo [INFO]        Application: ${application}
-        echo [INFO]  Project directory: ${CI_PROJECT_DIR}
-        echo [INFO]      Pipeline Type: ${pipelineType}
-        echo [INFO]       Release Type: ${releaseType}
-        echo [INFO]            Verbose: ${verbose}
-        gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME}
+            # Environment parameters
+            echo Environment parameters
+            echo [INFO]   Unique workspace: ${uniqueWorkspaceId}
+            echo [INFO] Git repository URL: ${CI_REPOSITORY_URL}
+            echo [INFO]             Branch: ${CI_COMMIT_REF_NAME}
+            echo [INFO]        Application: ${application}
+            echo [INFO]  Project directory: ${CI_PROJECT_DIR}
+            echo [INFO]      Pipeline Type: ${pipelineType}
+            echo [INFO]       Release Type: ${releaseType}
+            echo [INFO]            Verbose: ${verbose}
+            gitClone.sh -w ${uniqueWorkspaceId} -r ${CI_REPOSITORY_URL} -b ${CI_COMMIT_REF_NAME}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Clone job passed.
+            else
+                echo [ERROR] Clone job failed. Exit code: ${RC}.
+                exit ${RC}
+            fi
+
 
 Build application:
     needs: ["Clone"]
@@ -89,19 +96,19 @@ Build application:
             - "${application}/logs/*.xml"
             - "${application}/logs/*.txt"
     script: |
-        zBuilder.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} ${verbose}
-        RC=$?
-        if [ ${RC} -eq 0 ]; then
-            echo [INFO] Build job passed.
-        else
-             if [ ${RC} -eq 4 ]; then
-                echo [WARNING] Build job failed due to no source code changes. Exit code: ${RC}.
-                exit ${RC}
+            zBuilder.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} ${verbose}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Build job passed.
             else
-                echo [ERROR] Build job failed. Exit code: ${RC}.
-                exit ${RC}
+                if [ ${RC} -eq 4 ]; then
+                    echo [WARNING] Build job failed due to no source code changes. Exit code: ${RC}.
+                    exit ${RC}
+                else
+                    echo [ERROR] Build job failed. Exit code: ${RC}.
+                    exit ${RC}
+                fi
             fi
-        fi
 
 Packaging:
     needs: ["Build application"]
@@ -232,6 +239,7 @@ Packaging:
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
                     echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
+                    exit ${RC}
                 fi
             
             else
@@ -490,11 +498,11 @@ Cleanup:
     variables:
       FF_ENABLE_JOB_CLEANUP: 1
     script: |
-        deleteWorkspace.sh -w ${uniqueWorkspaceId}
-        RC=$?
-        if [ ${RC} -eq 0 ]; then
-            echo [INFO] Cleanup job passed.
-        else
-             echo [ERROR] Cleanup job failed. Exit code: ${RC}.
-             exit ${RC}
-        fi
+            deleteWorkspace.sh -w ${uniqueWorkspaceId}
+            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Cleanup job passed.
+            else
+                echo [ERROR] Cleanup job failed. Exit code: ${RC}.
+                exit ${RC}
+            fi
