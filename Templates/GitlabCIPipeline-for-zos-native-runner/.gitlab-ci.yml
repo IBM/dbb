@@ -230,7 +230,7 @@ Packaging:
 
                 else
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                    echo [ERROR] Error message from the computeReleaseVersion script is
+                    echo [ERROR] Console output of computeReleaseVersion script:
                     echo ${stringOut}
                 fi
             
@@ -421,7 +421,7 @@ Packaging:
 
                     # Update baselineReference
                     baselineReferenceFile=$(find ${uniqueWorkspaceId} -name baselineReference.config)
-                    if [ "${baselineReferenceFile}" != "" ]; then
+                    if [ -f "${baselineReferenceFile}" ]; then
                         if [ ${CI_COMMIT_BRANCH} == "main" ]; then
                             echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/rel-${releaseVersion}
                             cat ${baselineReferenceFile} | sed "s/main=refs\/tags\/${currentBaselineVersion}/main=refs\/tags\/${releaseVersion}/" > ${baselineReferenceFile}.new
