@@ -25,6 +25,7 @@
 # Date       Who Vers Description
 # ---------- --- ---- --------------------------------------------------------------
 # 2024/01/10 DB  1.00 Initial Release
+# 2025/06/12 LL  1.10 Improve workspace directory checks
 #===================================================================================
 Help() {
     echo "deleteWorkspace.sh ("$PGMVERS")                                     "
@@ -67,18 +68,21 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.00"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
 rc=0
 ERRMSG=""
+WORK_DIRECTORY=""
+MINIMUM_WORKING_DIR_PATH_LENGTH=12
 
 # Initialized option variables passed to this script
 Workspace=""
 
 # Local Variables
 HELP=$1
+workingDirPathLength=0
 
 if [ "$HELP" = "?" ]; then
     Help
@@ -146,10 +150,18 @@ validateOptions() {
         ERRMSG=$PGM": [ERROR] Unique Workspace parameter (-w) is required. rc="$rc
         echo $ERRMSG
     else
-
-        if [ ! -d "$(getWorkDirectory)" ]; then
+        WORK_DIRECTORY="$(getWorkDirectory)"
+        workingDirPathLength=${#WORK_DIRECTORY}
+        if [ ! -d "${WORK_DIRECTORY}" ]; then
             rc=8
-            ERRMSG=$PGM": [ERROR] Workspace Directory ($(getWorkDirectory)) was not found. rc="$rc
+            ERRMSG=$PGM": [ERROR] Workspace Directory (${WORK_DIRECTORY}) was not found. rc="$rc
+            echo $ERRMSG
+        elif [ ${workingDirPathLength} -lt ${MINIMUM_WORKING_DIR_PATH_LENGTH} ]; then
+            # Check that workspace directory is a reasonable length (e.g. minimum of 12 characters) to
+            # prevent deletion of high-level directories
+            rc=8
+            ERRMSG=$PGM": [ERROR] Working directory path (${WORK_DIRECTORY}) is too short (${workingDirPathLength} characters). \
+            Expected length: ${MINIMUM_WORKING_DIR_PATH_LENGTH} or more characters. rc="$rc
             echo $ERRMSG
         fi
     fi
@@ -165,24 +177,24 @@ fi
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **************************************************************"
     echo $PGM": [INFO] ** Started - Delete Workspace on HOST/USER: ${SYS}/${USER}    "
-    echo $PGM": [INFO] **          Working Directory:" $(getWorkDirectory)                   
+    echo $PGM": [INFO] **          Working Directory:" $WORK_DIRECTORY                  
     echo $PGM": [INFO] **          Workspace        :" $Workspace                            
     echo $PGM": [INFO] **************************************************************"
 fi
 
 # Delete build directory
 if [ $rc -eq 0 ]; then
-    echo $PGM": [INFO] Deleting working directory $(getWorkDirectory): "
-    CMD="rm -Rf $(getWorkDirectory)"
+    echo $PGM": [INFO] Deleting working directory ${WORK_DIRECTORY}: "
+    CMD="rm -PRf ${WORK_DIRECTORY}"
     echo $PGM": [INFO] ${CMD}"
-    ${CMD}
+    ${CMD} 2>&1
     rc=$?
 fi
 
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] Workspace directory successfully deleted. rc="$rc
 else 
-    echo $PGM": [ERROR] Deleting workspace directory $(getWorkDirectory) failed. rc="$rc
+    echo $PGM": [ERROR] Deleting workspace directory ${WORK_DIRECTORY} failed. rc="$rc
 fi 
 
 exit $rc
