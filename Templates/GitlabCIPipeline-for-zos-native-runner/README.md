@@ -88,7 +88,7 @@ It allows overriding value of the below variables when manually requesting the p
 Parameter | Description
 --- | ---
 pipelineType     | Pipeline type - either build, release or preview. (Default: build)
-releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: patch)
+releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: minor)
 verbose          | Boolean flag to control logging of build framework. (Default: false)
 
 ### Feature Branch pipeline

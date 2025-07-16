@@ -21,7 +21,7 @@ variables:
         - "preview"
         description: "The pipeline type to indicate a build pipeline (build only with test/debug options) or a release pipeline (build for optimized load modules), or if it runs in preview mode. Set to 'build' by default." 
     releaseType:
-        value: "patch"
+        value: "minor"
         options:
         - "major"
         - "minor"
