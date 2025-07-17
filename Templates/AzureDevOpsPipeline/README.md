@@ -19,13 +19,13 @@ The pipeline implements the following stages
   * to publish the package file the configured Artifact repository (Artifactory or Nexus, depending on publish flag in CBS).
   * (Alternative, and commented out) to create a new [UCD component version](../Common-Backend-Scripts/README.md#45---ucdpackagingsh) version
 * `Deployment` stage to deploy to the development test environment
-  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) including the download of the package from configured Artifact repository with Wazi Deploy Generate.
+  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
 * `Deployment` stages to deploy to controlled test environments via a manual pipeline request and specifying the pipelineType `release` to trigger a [release pipeline process](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) that includes:
   * to create the release candidate Git tag using the [computeReleaseVersion script](../Common-Backend-Scripts/README.md#computereleaseversionsh).
-  * to execute the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) including to retrieve the package from configured Artifact repository.
+  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
@@ -52,7 +52,7 @@ To tag important commits in the history of the application's Git repository, the
 
 **Note: Please work with your ADO pipeline specialist to review the below section.**
 
-The `azure-pipeline.yml` can be dropped into the root folder of your Azure Git repository and will automatically provide pipelines for the specified triggers. Please review the definitions thoroughly with your Azure administrator. Further centralization using Templates is preferred.
+The `azure-pipeline.yml` can be dropped into the root folder of your Azure Git repository and will automatically provide pipelines for the specified triggers. Please review the definitions thoroughly with your Azure administrator. The use of Templates is recommended for a centralized control of definitions.
 
 Following requirements need to be met:
 * An [Azure Agent](https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/agents?view=azure-devops) is installed and can connect to the z/OS system where builds are occurring.

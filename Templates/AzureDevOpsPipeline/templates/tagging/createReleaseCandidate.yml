@@ -2,7 +2,7 @@
 # ADO template to compute and create the release tag
 #
 # High-level flow
-#  -1- Runs the CBS to compute the next release name
+#  -1- Runs the computeReleaseVersion.sh from the CBS to compute the next release version
 #  -2- Retrieves the next release name from the logs and sets it as a pipeline variable
 #  -3- Creates a new git tag to indicate the release candidate
 #
@@ -92,7 +92,7 @@ steps:
               if [ $rc -eq 0 ]; then
                 echo "${PGM}: [INFO] - AZ REST command has completed successfully."
               else
-                echo "${PGM}: [WARNING] - AZ REST command has ended with a return code other than 0. rc="$rc
+                echo "${PGM}: [WARNING] - AZ REST command has ended with a return code "$rc
                 exit rc
               fi
 
