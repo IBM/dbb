@@ -7,12 +7,10 @@ Asset | Description | Documentation Link
 --- | --- | ---
 Common-Backend-Scripts | Core asset to simplify defining the pipeline orchestration by providing central services for the various stages of the CI/CD pipeline. Especially useful for pipeline architectures which don't provide a native runner . | [Common-Backend-Scripts/README.md](Common-Backend-Scripts/README.md)
 Azure DevOps Pipeline Template | Template to setup a [AzureDevOps pipeline](https://learn.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops&viewFallbackFrom=azure-pipelines) to build, package and deploy Azure Repos Git. | [AzureDevOpsPipeline/README.md](AzureDevOpsPipeline/README.md)
-Gitlab CI/CD Pipeline Template |  .gitlab-ci.yml template to setup a [Gitlab CI/CD pipeline](https://docs.gitlab.com/ee/ci/pipelines/) to build, package and deploy Gitlab platform. git  | [GitlabCIPipeline/README.md](GitlabCIPipeline/README.md) 
-<br /> | .gitlab-ci.yml template to query the evidence file using the [queryTemplate.yml](GitlabCIPipeline/Reporting-pipeline/wazi-deploy-query/.gitlab-ci.yml) template. | [GitlabCIPipeline/Reporting-pipeline/wazi-deploy-query/README.md](GitlabCIPipeline/Reporting-pipeline/wazi-deploy-query/README.md)
+Gitlab CI/CD Pipeline Template | .gitlab-ci.yml template to setup a [Gitlab CI/CD pipeline](https://docs.gitlab.com/ee/ci/pipelines/) to build, package and deploy with the Gitlab platform. | [GitlabCIPipeline/README.md](GitlabCIPipeline/README.md)
+Gitlab CI/CD Pipeline Template for z/OS-native GitLab Runner | .gitlab-ci.yml template to setup a [Gitlab CI/CD pipeline](https://docs.gitlab.com/ee/ci/pipelines/) to build, package and deploy with the Gitlab platform using a [z/OS-native Gitlab Runner](https://about.gitlab.com/blog/gitlab-ultimate-for-ibm-z-modern-devsecops-for-mainframes/). | [GitlabCIPipeline-for-zos-native-runner/README.md](GitlabCIPipeline-for-zos-native-runner/README.md)
 GitHub Actions Pipeline Template | Template to setup a [GitHub Actions Pipeline](https://docs.github.com/en/actions) to build, package, and deploy a GitHub repository. | [GitHubActionsPipeline/README.md](GitHubActionsPipeline/README.md)
 Jenkins Multibranch Pipeline Template | Multibranch pipeline template to setup a [Jenkins CI/CD pipeline](https://www.jenkins.io/doc/book/pipeline/multibranch/) to build, package and deploy with any Git provider. | [JenkinsPipeline/README.md](JenkinsPipeline/README.md)
-
-
 
 Please use the [Github discussion](https://github.com/IBM/dbb/discussions) board for feedback and comments on these templates.
 
@@ -23,14 +21,14 @@ The below tables provide an overview of the implemented capabilities of the pipe
 
 ### Technology in use with CI/CD orchestrators
 
- <br>  | Azure DevOps | GitLab CI | GitHub Actions | Jenkins
---- | --- | --- | --- | ---
-**CI Runner/Agent topology** | ADO runner | gitlab-runner shell executor | GitHub Actions runner | Jenkins node on z/OS
-**Git Provider** | Azure DevOps | GitLab | GitHub | Any Git provider
+ <br>  | Azure DevOps | GitLab CI with distributed runner | GitLab CI with z/OS-native GitLab runner| GitHub Actions | Jenkins
+--- | --- | --- | --- | --- | ---
+**CI Runner/Agent topology** | ADO runner | gitlab-runner shell executor | z/OS-native gitlab-runner shell executor | GitHub Actions runner | Jenkins node on z/OS
+**Git Provider** | Azure DevOps | GitLab | GitLab | GitHub | Any Git provider
 **Deployment technology** | IBM Wazi Deploy | IBM Wazi Deploy | IBM Wazi Deploy | IBM DevOps Deploy (a.k.a. UCD)
-**Communication between CI platform and z/OS** | SSH | IBM RSE API Plug-in for Zowe CLI | SSH | Jenkins-managed
-**Additional integration technologies** | Azure DevOps CLI | GitLab REST interface | GitHub CLI | 
-**Pipeline extensions** |       |       |      | SonarQube sonar-scanner
+**Communication between CI platform and z/OS** | SSH | IBM RSE API Plug-in for Zowe CLI | native GitLab Runner communication | SSH | Jenkins-managed
+**Additional integration technologies** | Azure DevOps CLI | GitLab REST interface | GitLab REST interface | GitHub CLI | 
+**Pipeline extensions** |       |       |       |       | SonarQube sonar-scanner
 
 ### Implemented pipeline tasks
 
@@ -45,28 +43,28 @@ The below table provides an overview of the capabilities that are implemented in
 :small_orange_diamond: build pipeline for integration branches  
 :small_red_triangle: release pipeline  
 
-Capability | Pipeline types | Azure DevOps | GitLab CI | GitHub Actions | Jenkins
---- | :-: | --- | --- | --- | ---
-**Clone Git repository** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: gitClone.sh | :red_circle: gitClone.sh | :red_circle: gitClone.sh | Jenkins Git Plugin
-**Build** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh
-**Publish Build Logs** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: prepareLogs.sh and sftp to load and attach logs | :red_circle: prepareLogs.sh and sftp to load and attach logs | :red_circle: prepareLogs.sh and zowe CLI rse to load and attach logs | Jenkins artifactPublisher plugin
-**Code Quality and Scans** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | - | - | - | SonarQube Scan
-**Creation of release candidate tag** | :small_red_triangle: | Computation of the release candidate and planned release name <br> Creation of the release candidate Tag in ADO via the ADO CLI | Computation of the release candidate and planned release name <br> Creation of the release candidate Git tag in Gitlab via REST | Computation of the release candidate and planned release name <br> Creation of a pre-release via GH CLI for the release candidate | Computation of the UCD package name. No tagging in Git (independent of the Git provider).
-**Create package** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: packageBuildOutputs.sh | :red_circle: packageBuildOutputs.sh | :red_circle: packageBuildOutputs.sh | :red_circle: ucdPackaging.sh to create UCD component version <br> Create Link to UCD to Pipeline run
-**Publish Package** | :small_orange_diamond::small_red_triangle: | Upload to Azure Artifacts | - | - | Depending on UCD buztool configuration
+Capability | Pipeline types | Azure DevOps | GitLab CI with distributed runner | GitLab CI with z/OS-native GitLab runner | GitHub Actions | Jenkins
+--- | :-: | --- | --- | --- | --- | ---
+**Clone Git repository** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: gitClone.sh | :red_circle: gitClone.sh | :red_circle: gitClone.sh | :red_circle: gitClone.sh | Jenkins Git Plugin
+**Build** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh | :red_circle: zBuilder.sh | :red_circle: dbbBuild.sh | :red_circle: dbbBuild.sh
+**Publish Build Logs** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: prepareLogs.sh and sftp to load and attach logs | :red_circle: prepareLogs.sh and sftp to load and attach logs | :red_circle: native support using the Artifact keyword in GitLab pipeline | :red_circle: prepareLogs.sh and zowe CLI rse to load and attach logs | Jenkins artifactPublisher plugin
+**Code Quality and Scans** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | - | - | - | - | SonarQube Scan
+**Creation of release candidate tag** | :small_red_triangle: | Computation of the release candidate and planned release name <br> Creation of the release candidate Tag in ADO via the ADO CLI | Computation of the release candidate and planned release name <br> Creation of the release candidate Git tag in Gitlab via REST | Computation of the release candidate and planned release name <br> Creation of the release candidate Git tag in Gitlab via REST | Computation of the release candidate and planned release name <br> Creation of a pre-release via GH CLI for the release candidate | Computation of the UCD package name. No tagging in Git (independent of the Git provider).
+**Create package** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: packageBuildOutputs.sh | :red_circle: packageBuildOutputs.sh | :red_circle: packageBuildOutputs.sh | :red_circle: packageBuildOutputs.sh | :red_circle: ucdPackaging.sh to create UCD component version <br> Create Link to UCD to Pipeline run
+**Publish Package** | :small_orange_diamond::small_red_triangle: | Upload to Azure Artifacts | - | Upload to an Artifact repository configured in the Common Backend Scripts | - | Depending on UCD buztool configuration
 *Deployment to Integration Test environment* | | | | | 
-**Deployment Integration Test environment** | :small_orange_diamond::small_red_triangle: | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: ucdDeploy.sh. Create Link to UCD Deployment request to Pipeline run
-**Publish deployment logs** | :small_orange_diamond::small_red_triangle: | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | Create UCD Deployment Link in Pipeline run
+**Deployment Integration Test environment** | :small_orange_diamond::small_red_triangle: | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: ucdDeploy.sh. Create Link to UCD Deployment request to Pipeline run
+**Publish deployment logs** | :small_orange_diamond::small_red_triangle: | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: native support using the Artifact keyword in GitLab pipeline | :red_circle: prepareLogs.sh <br> and sftp upload | Create UCD Deployment Link in Pipeline run
 <br> | <br> | Copy WD Evidence File to Evidence Inventory | Copy WD Evidence File to Evidence Inventory | <br>
 *Deployment to Acceptance Test environment* | | | | | 
-**Retrieve Deployment Package** | :small_red_triangle: | Download from ADO package registry | Package from pipeline working directory is used | Package from pipeline working directory is used | Not part of the pipeline template
-**Deployment Acceptance Test environment** | :small_red_triangle: | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | Not part of the pipeline template
+**Retrieve Deployment Package** | :small_red_triangle: | Download from ADO package registry | Package from pipeline working directory is used | Package from pipeline working directory is used | Package from pipeline working directory is used | Not part of the pipeline template
+**Deployment Acceptance Test environment** | :small_red_triangle: | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br>| :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | Not part of the pipeline template
 <br> | <br> | <br> | Copy WD Evidence File to Evidence Inventory | Copy WD Evidence File to Evidence Inventory | <br>
-**Publish deployment logs** | :small_red_triangle: | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | Not part of the pipeline template
+**Publish deployment logs** | :small_red_triangle: | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: native support using the Artifact keyword in GitLab pipeline | :red_circle: prepareLogs.sh <br> and sftp upload | Not part of the pipeline template
 *Deployment to Production environment* | | | | | 
-**Retrieve Deployment Package** | :small_red_triangle: | Download from ADO package registry | The package from pipeline working directory is used | Package from pipeline working directory is used | Not part of the pipeline template
-**Deployment Production environment** | :small_red_triangle: | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> Register deployment to environment in ADO | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> Register deployment to environment in GitHub | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | Not part of the pipeline template
+**Retrieve Deployment Package** | :small_red_triangle: | Download from ADO package registry | The package from pipeline working directory is used | Package from pipeline working directory is used | Package from pipeline working directory is used | Not part of the pipeline template
+**Deployment Production environment** | :small_red_triangle: | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> Register deployment to environment in ADO | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> | :red_circle: wazideploy-generate.sh <br> :red_circle: wazideploy-deploy.sh <br> :red_circle: wazideploy-evidence.sh <br> Register deployment to environment in GitHub | Not part of the pipeline template
 <br> | <br> | Copy WD Evidence File to Evidence Inventory | Copy WD Evidence File to Evidence Inventory | <br>
-**Publish deployment logs** | :small_red_triangle: | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | Not part of the pipeline template
-**Release Finalisation** | :small_red_triangle: | Creation of a Git tag via ADO CLI | Creation of a Git tag and release via GH CLI | Creation of a Git tag via GitLab via REST <br> Automated update of the `baselineReference.conf` file | No automated tagging
-**Workspace Cleanup** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: deleteWorkspace.sh | :red_circle: deleteWorkspace.sh | :red_circle: deleteWorkspace.sh | Jenkins Plugin
+**Publish deployment logs** | :small_red_triangle: | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: prepareLogs.sh <br> and sftp upload | :red_circle: native support using the Artifact keyword in GitLab pipeline | :red_circle: prepareLogs.sh <br> and sftp upload | Not part of the pipeline template
+**Release Finalisation** | :small_red_triangle: | Creation of a Git tag via ADO CLI | Creation of a Git tag via GitLab via REST <br> Automated update of the `baselineReference.conf` file | Creation of a Git tag via GitLab via REST <br> Automated update of the `baselineReference.conf` file | Creation of a Git tag and release via GH CLI | No automated tagging
+**Workspace Cleanup** | :small_blue_diamond::small_orange_diamond::small_red_triangle: | :red_circle: deleteWorkspace.sh | :red_circle: deleteWorkspace.sh | :red_circle: deleteWorkspace.sh | :red_circle: deleteWorkspace.sh | Jenkins Plugin
