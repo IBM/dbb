@@ -40,68 +40,66 @@ steps:
   - task: CmdLine@2
     inputs:
       script: |
-        # local Variables
-        rc=0
-        PGM="tagging/createReleaseCandidate.yml"
+          # local Variables
+          rc=0
+          PGM="tagging/createReleaseCandidate.yml"
+          localComputeReleaseVersionLog="$(Build.ArtifactStagingDirectory)/computeReleaseVersion/computeReleaseVersion.log"
+          rm -rf "$(Build.ArtifactStagingDirectory)/computeReleaseVersion"
+          mkdir "$(Build.ArtifactStagingDirectory)/computeReleaseVersion"
 
-        rm -rf "$(Build.ArtifactStagingDirectory)/computeReleaseVersion" 
-        mkdir "$(Build.ArtifactStagingDirectory)/computeReleaseVersion" 
-        sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/logs/computeReleaseVersion.log "\"$(Build.ArtifactStagingDirectory)/computeReleaseVersion\""
-        iconv -f IBM-1047 -t UTF-8 "$(Build.ArtifactStagingDirectory)/computeReleaseVersion/computeReleaseVersion.log" > "$(Build.ArtifactStagingDirectory)/computeReleaseVersion/computeReleaseVersion.log.utf8"
-        nextReleaseVersion=$(cat "$(Build.ArtifactStagingDirectory)/computeReleaseVersion/computeReleaseVersion.log.utf8" | sed -n 's/.*The next release version: \(rel-[0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+          echo "${PGM}: [INFO] Downloading $(uniqueWorkspaceId)/logs/computeReleaseVersion.log from $(zosHostname) to runner work directory $(Build.ArtifactStagingDirectory)/computeReleaseVersion"
+          sftp $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/logs/computeReleaseVersion.log "\"$(Build.ArtifactStagingDirectory)/computeReleaseVersion\""
 
-        if [ -z "${nextReleaseVersion}" ]; then
+          if [ -f "${localComputeReleaseVersionLog}" ]; then
+            iconv -f IBM-1047 -t UTF-8 "${localComputeReleaseVersionLog}" >"${localComputeReleaseVersionLog}.utf8"
+            nextReleaseVersion=$(cat "${localComputeReleaseVersionLog}.utf8" | sed -n 's/.*The next release version: \(rel-[0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+          else
             rc=8
-            ERRMSG="[ERROR] The name of the next release could not be parsed. Check stage and $(Build.ArtifactStagingDirectory)/computeReleaseVersion on the ADO runner environment. rc="$rc
+            ERRMSG="[ERROR] The log file '${localComputeReleaseVersionLog}' was not found. Please inspect azure runner environment and log output. rc="$rc
             echo "${PGM}: $ERRMSG"
-            exit $rc
-        else 
-            echo "Retrieved next release version: $nextReleaseVersion"
-            echo "##vso[task.setvariable variable=nextReleaseVersion;isOutput=true]$nextReleaseVersion"
+          fi
 
-            # local Variables
-            PGM="tagging/createReleaseCandidate.yml"
-
+          # Check nextReleaseVersion variable retrieved by sed
+          if [ $rc -eq 0 ]; then
             if [ -z "${nextReleaseVersion}" ]; then
-                          rc=8
-                          ERRMSG="[ERROR] The ADO variable "nextReleaseVersion" cannot be found or is empty. rc="$rc
-                          echo "${PGM}: $ERRMSG"
-                          exit $rc
-            fi
-
-            # Only un if releaseType variable is defined
-            if [ -n "$(releaseType)" ] && [ $rc -eq 0 ]; then
-
-              newVersionTag="${nextReleaseVersion}.$(buildNumber)"
-
-              if [ $rc -eq 0 ]; then
-                echo "${PGM}: [INFO] Creating new release candidate tag with name ${newVersionTag}"
-
-                az rest \
-                  --method post \
-                  --headers "Authorization=Bearer $AZURE_DEVOPS_EXT_PAT" \
-                  --url $(System.CollectionUri)/$(System.TeamProjectId)/_apis/git/repositories/$(application)/annotatedtags\?api-version\=7.1-preview.1 \
-                  --body "{ \"name\": \"${newVersionTag}\",  \"taggedObject\": { \"objectId\": \"$(Build.SourceVersion)\" }, \"message\": \"Release Candidate created by pipeline $(Build.BuildNumber) \"} " \
-                  --resource 499b84ac-1321-427f-aa17-267ca6975798
-
-                # catch RC rest command return code
-                rc=$?
-
-              fi
-
-              if [ $rc -eq 0 ]; then
-                echo "${PGM}: [INFO] - AZ REST command has completed successfully."
-              else
-                echo "${PGM}: [WARNING] - AZ REST command has ended with a return code "$rc
-                exit rc
-              fi
-
+              rc=8
+              ERRMSG="[ERROR] The name of the next release could not be parsed. Check stage and $(Build.ArtifactStagingDirectory)/computeReleaseVersion on the ADO runner environment. rc="$rc
+              echo "${PGM}: $ERRMSG"
             else
-              echo "${PGM}: [WARNING] - No release type has been specified."
-              exit 1
+              echo "${PGM}: [INFO] Retrieved next release version: $nextReleaseVersion"
+              echo "##vso[task.setvariable variable=nextReleaseVersion;isOutput=true]$nextReleaseVersion"
             fi
+          fi
 
-        fi
+          # Set new Git tag
+          if [ $rc -eq 0 ]; then
+
+            newVersionTag="${nextReleaseVersion}.$(buildNumber)"
+            echo "${PGM}: [INFO] Creating new release candidate tag with name ${newVersionTag}"
+
+            az rest \
+              --method post \
+              --headers "Authorization=Bearer $AZURE_DEVOPS_EXT_PAT" \
+              --url $(System.CollectionUri)/$(System.TeamProjectId)/_apis/git/repositories/$(application)/annotatedtags\?api-version\=7.1-preview.1 \
+              --body "{ \"name\": \"${newVersionTag}\",  \"taggedObject\": { \"objectId\": \"$(Build.SourceVersion)\" }, \"message\": \"Release Candidate created by pipeline $(Build.BuildNumber) \"} " \
+              --resource 499b84ac-1321-427f-aa17-267ca6975798
+            # catch RC of rest command
+            rc=$?
+
+            if [ $rc -eq 0 ]; then
+              echo "${PGM}: [INFO] - AZ REST command has completed successfully."
+            else
+              echo "${PGM}: [ERROR] - AZ REST command has ended with a return code "$rc
+            fi
+          fi
+
+          # Eval results
+          if [ $rc -eq 0 ]; then
+            echo "${PGM}: [INFO] - Creation of Git tag completed successfully."
+          else
+            echo "${PGM}: [ERROR] - Creation of Git tag failed. Please check logs. rc="$rc
+            exit $rc
+          fi
     env:
       AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
     displayName: "Create Release Candidate Tag"
