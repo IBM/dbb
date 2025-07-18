@@ -132,7 +132,7 @@ zowe zos-uss issue ssh "dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplicati
 Artifact Name |  Description | Script details   
 ---------- | -----| -----------------------------------------------------
 [gitClone.sh](gitClone.sh) | Pipeline Shell Script to perform Git Clone to z/OS UNIX System Services | [script details](README.md#41---gitclonesh)
-[dbbBuild.sh](dbbBuild.sh) | Pipeline Shell Script to invoke the Dependency Based Build framework [zAppBuild](https://github.com/IBM/dbb-zappbuild) | [script details](#dbbbuildsh-for-zappbuild-frameworkh)
+[dbbBuild.sh](dbbBuild.sh) | Pipeline Shell Script to invoke the Dependency Based Build framework [zAppBuild](https://github.com/IBM/dbb-zappbuild) | [script details](#dbbbuildsh-for-zappbuild-framework)
 [zBuilder.sh](zBuilder.sh) | Pipeline Shell Script to invoke the zBuilder framework [zBuilder](https://www.ibm.com/docs/en/dbb/3.0?topic=building-zos-applications-zbuilder) | [script details](#zbuildersh-for-dbb-zbuilder)
 [computeReleaseVersion.sh](computeReleaseVersion.sh) | Pipeline Shell Script to compute the next release version based on the baseline version information stored in the application's [baselineReference.config](samples/baselineReference.config) file. | [script details](#computeReleaseVersionsh)
 [packageBuildOutputs.sh](packageBuildOutputs.sh) | Pipeline Shell Script to create a Package using the [PackageBuildOutputs groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/PackageBuildOutputs) | [script details](#packagebuildoutputssh)
