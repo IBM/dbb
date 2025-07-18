@@ -75,7 +75,7 @@ steps:
           if [ $rc -eq 0 ]; then
 
             newVersionTag="${nextReleaseVersion}.$(buildNumber)"
-            echo "${PGM}: [INFO] Creating new release candidate tag with name ${newVersionTag}"
+            echo "${PGM}: [INFO] Creating new release candidate tag with name: ${newVersionTag}"
 
             az rest \
               --method post \
