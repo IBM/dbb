@@ -9,4 +9,4 @@ Please work with your Azure DevOps administrators to agree on how and where to m
 Template | Description
 --- | ---
 [deployment/deployPackage.yml](deployment/deployReleasePackage.yml) | Template to deploy a release package into the various controlled test environments, including production.
-[tagging/createReleaseCandidate.yml](tagging/createReleaseCandidate.yml) | Template to compute and create the release tag (following semantic versioning schema `rel-1.1.1.<buildIdentifier>`) to improved traceability and understanding. Leverages the AZ CLI.
+[tagging/createReleaseCandidate.yml](tagging/createReleaseCandidate.yml) | Template to compute and create the release tag (following semantic versioning schema `rel-1.1.1-<buildIdentifier>.tar`) to improved traceability and understanding. Leverages the AZ CLI.
