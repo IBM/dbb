@@ -60,6 +60,15 @@ variables:
   #  Ex: export PIPELINE_SCRIPTS=/var/dbb/Common-Backend-Scripts
   #      export PATH=$PIPELINE_SCRIPTS:$PATH
 
+  ### Input parameter variables:
+  pipelineType: ${{ parameters.pipelineType }}
+  releaseType: ${{ parameters.releaseType }}
+  # Computation DBB verbose logging
+  ${{ if eq(parameters.verboseLogging, true) }}: 
+    verbose: "-v"
+  ${{ if eq(parameters.verboseLogging, false) }}:
+    verbose: ""
+  
   ### Variables generated during run time
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/') }}: # Extract branch name for push
     branch: $[ replace(variables['Build.SourceBranch'], 'refs/heads/', '') ]
@@ -73,19 +82,13 @@ variables:
   repo: "git@ssh.dev.azure.com:v3/$(organization)/$(project)/$(application)" # Git repository path
   uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/$(branch)/build-$(buildNumber) # Calculated worksapce path
   # Azure package name. Package names must contain only lowercase alphanumeric segments separated by a dash, dot or underscore.
-  reformattedBranchName: $[ replace(variables['branch'], '/', '-')]
-  lowerApplicatioName: $[ lower(variables['application']) ]
-  lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
-  azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicatioName).tar
+  # reformattedBranchName: $[ replace(variables['branch'], '/', '-')]
+  # lowerApplicatioName: $[ lower(variables['application']) ]
+  # lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
+  # azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicatioName).tar
   packageName: $(application) # Name of the Package
-  pipelineType: ${{ parameters.pipelineType }}
-  releaseType: ${{ parameters.releaseType }}
   isMain: $[contains(variables['Build.SourceBranch'], 'main')] # Variable to indicate pipeline for the main branch
-  # Computation DBB verbose logging
-  ${{ if eq(parameters.verboseLogging, true) }}: 
-    verbose: "-v"
-  ${{ if eq(parameters.verboseLogging, false) }}:
-    verbose: ""
+
 
 # Pipeline stages
 stages:
