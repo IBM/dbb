@@ -81,13 +81,14 @@ variables:
   application: ${{ variables['Build.Repository.Name'] }} # Application name
   repo: "git@ssh.dev.azure.com:v3/$(organization)/$(project)/$(application)" # Git repository path
   uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/$(branch)/build-$(buildNumber) # Calculated worksapce path
-  # Azure package name. Package names must contain only lowercase alphanumeric segments separated by a dash, dot or underscore.
-  # reformattedBranchName: $[ replace(variables['branch'], '/', '-')]
-  # lowerApplicatioName: $[ lower(variables['application']) ]
-  # lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
-  # azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicatioName).tar
   packageName: $(application) # Name of the Package
   isMain: $[contains(variables['Build.SourceBranch'], 'main')] # Variable to indicate pipeline for the main branch
+
+  # Azure package name. Package names must contain only lowercase alphanumeric segments separated by a dash, dot or underscore.
+  # reformattedBranchName: $[ replace(variables['branch'], '/', '-')]
+  # lowerApplicationName: $[ lower(variables['application']) ]
+  # lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
+  # azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicationName).tar
 
 
 # Pipeline stages
