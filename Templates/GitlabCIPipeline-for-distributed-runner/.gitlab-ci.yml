@@ -281,7 +281,7 @@ Packaging:
                 echo ${stringOut}
             fi
 
-            echo [INFO] Compute the next release verion passed. Next Release Version: ${releaseVersion}
+            echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}
             releaseVersion="rel-${releaseVersion}"
                 
             echo [INFO] Start generating the deployment plan for a release pipeline.
