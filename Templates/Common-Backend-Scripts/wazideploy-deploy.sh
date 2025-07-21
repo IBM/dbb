@@ -414,7 +414,7 @@ if [ $rc -eq 0 ]; then
         echo $PGM": [INFO] **         User-provided extraVars:" ${extraVars}
     fi
     if [ ! -z "${extraOptions}" ]; then
-        echo $PGM": [INFO] **       User-provided cli options:" ${extraOptions}
+        echo $PGM": [INFO] **       User-provided CLI options:" ${extraOptions}
     fi
     if [ ! -z "${EvidenceFile}" ]; then
         echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
