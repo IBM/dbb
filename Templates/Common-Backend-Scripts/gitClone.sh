@@ -304,9 +304,9 @@ if [ $rc -eq 0 ]; then
 
   echo $PGM": [INFO] Preforming Git Clone of Repo ${Repo}, Ref ${BranchID} to $(getWorkDirectory)"
   if [ ! -z "${application}" ]; then
-    CMD="git clone -b ${BranchID} ${Repo} ${application}"
+    CMD="git clone --filter=tree:0 -b ${BranchID} ${Repo} ${application}"
   else   
-    CMD="git clone -b ${BranchID} ${Repo}"
+    CMD="git clone --filter=tree:0 -b ${BranchID} ${Repo}"
   fi
 
   echo $PGM": [INFO] ${CMD}"
