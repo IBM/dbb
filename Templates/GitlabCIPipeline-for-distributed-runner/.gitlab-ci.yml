@@ -29,7 +29,7 @@ variables:
         - "preview"
         description: "The pipeline type to indicate a build pipeline (build only with test/debug options) or a release pipeline (build for optimized load modules), or if it runs in preview mode. Set to 'build' by default." 
     releaseType:
-        value: "patch"
+        value: "minor"
         options:
         - "major"
         - "minor"
@@ -208,14 +208,16 @@ Packaging:
                 echo ${stringOut}
             fi
 
-            echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}.
-            releaseVersion="rel-${releaseVersion}"
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}.
+                releaseVersion="rel-${releaseVersion}"
 
-            echo [INFO] Start packaging for a release pipeline.
-            echo [INFO] Release Version: ${releaseVersion}
-  
-            zowe rse issue unix-shell ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -r ${releaseVersion} -i ${CI_PIPELINE_ID}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
-            RC=$?
+                echo [INFO] Start packaging for a release pipeline.
+                echo [INFO] Release Version: ${releaseVersion}
+    
+                zowe rse issue unix-shell ". ~/.bash_profile && packageBuildOutputs.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -r ${releaseVersion} -i ${CI_PIPELINE_ID}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+                RC=$?
+            fi
 
             if [ ${RC} -ne 0 ]; then
                 echo [ERROR] Failed to package the build output. Exit code: ${RC}.
@@ -281,13 +283,15 @@ Packaging:
                 echo ${stringOut}
             fi
 
-            echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}
-            releaseVersion="rel-${releaseVersion}"
-                
-            echo [INFO] Start generating the deployment plan for a release pipeline.
-            echo [INFO] Release Version: ${releaseVersion}
-            zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -R ${releaseVersion} -I ${CI_PIPELINE_ID}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
-            RC=$?
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}
+                releaseVersion="rel-${releaseVersion}"
+                    
+                echo [INFO] Start generating the deployment plan for a release pipeline.
+                echo [INFO] Release Version: ${releaseVersion}
+                zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -R ${releaseVersion} -I ${CI_PIPELINE_ID}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+                RC=$?
+            fi
 
             if [ ${RC} -eq 0 ]; then
                 echo [INFO] Generating the deployment plan job passed.
@@ -694,38 +698,41 @@ Packaging:
             echo ${stringOut}
         fi
 
-        releaseVersion="rel-${releaseVersion}"
-        echo [INFO]     Next Release Version: ${releaseVersion}
-        currentBaselineVersion="rel-${currentBaselineVersion}"
-        echo [INFO] Current Baseline Version: ${currentBaselineVersion}
+        if [ ${RC} -eq 0 ]; then
+            releaseVersion="rel-${releaseVersion}"
+            echo [INFO]     Next Release Version: ${releaseVersion}
+            currentBaselineVersion="rel-${currentBaselineVersion}"
+            echo [INFO] Current Baseline Version: ${currentBaselineVersion}
 
-        # Update baselineReference
-        export remoteFound=`git remote | grep gitlab_origin | wc -l`
-        if [ $remoteFound -eq 1 ]; then
-            git remote remove gitlab_origin
-        fi
-        git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git 
+            # Update baselineReference
+            export remoteFound=`git remote | grep gitlab_origin | wc -l`
+            if [ $remoteFound -eq 1 ]; then
+                git remote remove gitlab_origin
+            fi
+            git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git
+         
                 
-        baselineReferenceFile=$(find ${CI_PROJECT_DIR} -name baselineReference.config)
-        if [ "${baselineReferenceFile}" == "" ]; then
-            RC=8
-            echo [ERROR] Unable to locate the baselineReference.config file. Exit code: ${RC}.
-        fi
-            
-        if [ ${CI_COMMIT_BRANCH} == "main" ]; then
-            echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/${releaseVersion}
-            sed -i "s/main=refs\/tags\/${currentBaselineVersion}/main=refs\/tags\/${releaseVersion}/" ${baselineReferenceFile}
-            sed -i "/^release.*${currentBaselineVersion}/a release\/${releaseVersion}=refs\/tags\/${releaseVersion}" ${baselineReferenceFile}
-        else
-            echo [INFO] Update baselineReference.config file to set baseline reference for branch release/${releaseVersion}
-            sed -i "s/^release.*${currentBaselineVersion}/release\/${currentBaselineVersion}=refs\/tags\/${releaseVersion}/" ${baselineReferenceFile}
-            echo $(git status)
-        fi
+            baselineReferenceFile=$(find ${CI_PROJECT_DIR} -name baselineReference.config)
+            if [ "${baselineReferenceFile}" == "" ]; then
+                RC=8
+                echo [ERROR] Unable to locate the baselineReference.config file. Exit code: ${RC}.
+            fi
+                
+            if [ ${CI_COMMIT_BRANCH} == "main" ]; then
+                echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/${releaseVersion}
+                sed -i "s/main=refs\/tags\/${currentBaselineVersion}/main=refs\/tags\/${releaseVersion}/" ${baselineReferenceFile}
+                sed -i "/^release.*${currentBaselineVersion}/a release\/${releaseVersion}=refs\/tags\/${releaseVersion}" ${baselineReferenceFile}
+            else
+                echo [INFO] Update baselineReference.config file to set baseline reference for branch release/${releaseVersion}
+                sed -i "s/^release.*${currentBaselineVersion}/release\/${currentBaselineVersion}=refs\/tags\/${releaseVersion}/" ${baselineReferenceFile}
+                echo $(git status)
+            fi
 
-        git add ${baselineReferenceFile}
-        git commit -m "Updated baselineReference.config file for new release ${releaseVersion}"
-        git push gitlab_origin HEAD:${CI_COMMIT_BRANCH} -o ci.skip
-        echo [INFO] Pushed baselineReference.config file changes to branch: ${CI_COMMIT_BRANCH}.
+            git add ${baselineReferenceFile}
+            git commit -m "Updated baselineReference.config file for new release ${releaseVersion}"
+            git push gitlab_origin HEAD:${CI_COMMIT_BRANCH} -o ci.skip
+            echo [INFO] Pushed baselineReference.config file changes to branch: ${CI_COMMIT_BRANCH}.
+        fi
 
         # Create release version tag        
         curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${releaseVersion}&ref=${CI_COMMIT_REF_NAME}"
