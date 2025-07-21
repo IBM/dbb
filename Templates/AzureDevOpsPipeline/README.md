@@ -16,14 +16,14 @@ The pipeline implements the following stages
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them to the Azure build result.
 * `Packaging` stage
   * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#44---packagebuildoutputssh)
-  * to publish the package file the configured Artifact repository (Artifactory or Nexus, depending on publish flag in CBS).
-  * (Alternative, and commented out) to create a new [UCD component version](../Common-Backend-Scripts/README.md#45---ucdpackagingsh) version
+  * to publish the package file to the configured Artifact repository (Artifactory or Nexus, depending on the `publish` flag in CBS).
+  * (Alternatively - commented out) to create a new [UCD component version](../Common-Backend-Scripts/README.md#45---ucdpackagingsh) version
 * `Deployment` stage to deploy to the development test environment
   * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
-* `Deployment` stages to deploy to controlled test environments via a manual pipeline request and specifying the pipelineType `release` to trigger a [release pipeline process](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) that includes:
+* `Deployment` stages to deploy to controlled test environments. Triggered a [release pipeline process](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) via a manual pipeline request with the pipelineType set to release `release`:
   * to create the release candidate Git tag using the [computeReleaseVersion script](../Common-Backend-Scripts/README.md#computereleaseversionsh).
   * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)

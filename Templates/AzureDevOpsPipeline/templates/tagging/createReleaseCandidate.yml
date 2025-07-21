@@ -74,7 +74,7 @@ steps:
           # Set new Git tag
           if [ $rc -eq 0 ]; then
 
-            newVersionTag="${nextReleaseVersion}.$(buildNumber)"
+            newVersionTag="${nextReleaseVersion}-$(buildNumber)"
             echo "${PGM}: [INFO] Creating new release candidate tag with name: ${newVersionTag}"
 
             az rest \
