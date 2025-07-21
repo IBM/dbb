@@ -414,7 +414,7 @@ if [ $rc -eq 0 ]; then
         echo $PGM": [INFO] **         User-provided extraVars:" ${extraVars}
     fi
     if [ ! -z "${extraOptions}" ]; then
-        echo $PGM": [INFO] **       User-provided CLI options:" ${extraOptions}
+        echo $PGM": [INFO] **       User-provided cli options:" ${extraOptions}
     fi
     if [ ! -z "${EvidenceFile}" ]; then
         echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
@@ -451,9 +451,9 @@ if [ $rc -eq 0 ]; then
        CommandLine+=" $extraOptions"
     fi
 
-    # Add wdDeployCfgHome to extraVars from pipelineBackend.config
-    if [ ! -z "${wdDeployCfgHome}" ]; then
-        CommandLine+=" -e deploy_cfg_home=${wdDeployCfgHome}"
+    # Add wdConfigurationDir to extraVars from pipelineBackend.config
+    if [ ! -z "${wdConfigurationDir}" ]; then
+        CommandLine+=" -e deploy_cfg_home=${wdConfigurationDir}"
     fi
 
     if [ ! -z "${PackageInputFile}" ]; then
