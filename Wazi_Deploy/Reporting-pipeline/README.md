@@ -1,4 +1,4 @@
-# Gitlab IBM Wazi Deploy query template
+# IBM Wazi Deploy query and reporting template
 
 This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to setup a pipeline for query the deployment information from the Wazi Deploy evidence file and create a deployed artifacts report.
 
