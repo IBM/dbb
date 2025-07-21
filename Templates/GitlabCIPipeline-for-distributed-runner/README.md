@@ -97,17 +97,15 @@ AutomationToken | [Group access token](https://docs.gitlab.com/ee/api/rest/#pers
 RSEAPI_USER | Username for Zowe RSEAPI server authentication. This username is used when issue shell script command through Zowe.
 RSEAPI_PASSWORD | Password for Zowe RSEAPI server authentication. This password is used when issue shell script command through Zowe.
 PIPELINE_WORKSPACE | Root directory on z/OS Unix System services to perform builds. E.g. /u/gitlab/workspace
-WAZI_DEPLOY_CONFIGDIR | Path to a directory on USS containing Wazi Deploy configuration files. The configuration files can be populated with the [Wazi Deploy samples](https://github.com/jbyibm/cics-genapp/tree/main/wazideploy-samples).
 
 The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yaml`.
 
 Variable | Description
 --- | ---
 application | Specify the name of your application which will be used to invoke the [Common Backend scripts](../Common-Backend-Scripts/).
-wdEnvironmentFileIntegration | Path to a Wazi Deploy configuration file for integration environment.
-wdEnvironmentFileAcceptance | Path to a Wazi Deploy configuration file for acceptance environment.
-wdEnvironmentFileProduction | Path to a Wazi Deploy configuration file for production environment.
-baselineReferenceFile | Path to baselineReference.config file of your application.
+wdEnvironmentFileIntegration | A Wazi Deploy configuration file for integration environment.
+wdEnvironmentFileAcceptance | A Wazi Deploy configuration file for acceptance environment.
+wdEnvironmentFileProduction | A Wazi Deploy configuration file for production environment.
 
 ## Pipeline usage
 
@@ -131,7 +129,7 @@ It allows overriding value of the below variables when manually requesting the p
 Parameter | Description
 --- | ---
 pipelineType     | Pipeline type - either build, release or preview. (Default: build)
-releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: patch)
+releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: minor)
 verbose          | Boolean flag to control logging of build framework. (Default: false)
 
 ### Feature Branch pipeline
@@ -141,6 +139,7 @@ The pipeline for feature branches executes the following steps:
 * Clone
 * Build
 * Package & publish package
+* Cleanup
 
 This pipeline needs to be run manually with the *pipelineType* variable as `preview`.
 
@@ -155,6 +154,7 @@ The basic build pipeline for integration branches contains the following stages:
 * Build
 * Package & publish package
 * Deployment to the integration test environment with cleanup job (required to be triggered manually)
+* Cleanup
 
 This is a default pipeline. It runs automatically when there is a new commit to a repository. You can also run this pipeline manually by setting the *pipelineType* variable as `build`.
 

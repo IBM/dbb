@@ -5,8 +5,8 @@ variables:
 
     application: ${CI_PROJECT_NAME}
     wdEnvironmentFileIntegration: EOLEB7-${application}-Integration.yml
-    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Acceptance.yml
-    wdEnvironmentFileProduction: ${WAZI_DEPLOY_CONFIGDIR}/plum-samples/external-repos/environment-conf/python/Production.yml
+    wdEnvironmentFileAcceptance: EOLEB7-${application}-Acceptance.yml
+    wdEnvironmentFileProduction: EOLEB7-${application}-Production.yml
     
     # Directories on the GitLab runner environment to persist Wazi Deploy Evidence files and to create an Wazi Deploy Index
     wdEvidencesRoot: /var/work/wazi_deploy_evidences_gitlab/
