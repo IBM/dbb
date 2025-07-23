@@ -31,7 +31,7 @@ To use this pipeline:
    3. Review and adapt `.gitlab-ci.yml` to your environment
    4. Trigger the pipeline manually using GitLab UI and provide query parameters like `app`, `module`, `type`, `environment`
 
-See [gitlab/README.md](./gitlab/README.md) for implementation details.
+See [Gitlab/README.md](./Gitlab/README.md) for implementation details.
 
 
 ### Sample output 
