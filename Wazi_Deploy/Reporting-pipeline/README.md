@@ -27,7 +27,7 @@ Use this template when you want to:
 To use this pipeline:
 
    1. Create a new GitLab project
-   2. Copy [queryTemplate.yml](queryTemplate.yml) and [renderer.yml](renderer.yml) along with the contents of the [`gitlab/`](./gitlab/) directory into the root of your new      project 
+   2. Copy [queryTemplate.yml](queryTemplate.yml) and [renderer.yml](renderer.yml) along with the contents of the [`Gitlab/`](./Gitlab/) directory into the root of your new      project 
    3. Review and adapt `.gitlab-ci.yml` to your environment
    4. Trigger the pipeline manually using GitLab UI and provide query parameters like `app`, `module`, `type`, `environment`
 
