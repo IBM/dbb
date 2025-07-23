@@ -24,14 +24,15 @@ Use this template when you want to:
 
 ## Getting Started
 
-To use this pipeline:
+To use this template as a pipeline:
 
    1. Create a new GitLab project
-   2. Copy [queryTemplate.yml](queryTemplate.yml) and [renderer.yml](renderer.yml) along with the contents of the [`Gitlab/`](./Gitlab/) directory into the root of your new      project 
-   3. Review and adapt `.gitlab-ci.yml` to your environment
-   4. Trigger the pipeline manually using GitLab UI and provide query parameters like `app`, `module`, `type`, `environment`
+   2. Copy the following files into the root of your new project:
+      * [queryTemplate.yml](queryTemplate.yml) 
+      * [renderer.yml](renderer.yml) 
+      * [`Gitlab/`](./Gitlab/) directory  
 
-See [Gitlab/README.md](./Gitlab/README.md) for implementation details.
+   3. Follow the detailed instructions in [Gitlab/README.md](./Gitlab/README.md) to configure and run the pipeline.
 
 
 ### Sample output 

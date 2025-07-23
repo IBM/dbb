@@ -26,15 +26,18 @@ The directory of Wazi Deploy evidence files is referenced by within the .gitlab-
 
 
 
-## Setup of template
+## Setup and usage of template
 
-This is a standalone pipeline that can be used to query the evidence file. To get started,
+This pipleine implements the [wazi-deploy-evidence command](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=commands-wazi-deploy-evidence-command) for easy use of deployment analysis. 
 
-   * Create a GitLab project
-   * Copy the queryTemplate.yml and renderer.yml file into the root of the project.
-   * Review the .gitlab-ci.yml file with your Gitlab administrator.
+1. Follow the [initial setup instructions](../README.md)
+2. Review and adapt [.gitlab-ci.yml](.gitlab-ci.yml) to your environment. See [CLI Parameter and description](#cli-parameter-and-description)
+3. Provide query parameters and trigger the pipeline manually. See [Pipeline parameters](#pipeline-parameters)
 
-### CLI Parameter and description
+The job will output a deployment report either in plain text or YAML format (based on the renderer).
+
+
+### CLI Parameters and description
 
 The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yml`.
 
@@ -44,10 +47,7 @@ templateFile |  path to the query file that contains the extraction criteria for
 reportFile | path to store the output file produced as a result of running the Wazi deploy query.
 rendererFile | (optional) path to the renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt 
 
-
-## Pipeline usage
-
-This pipleine implements the [wazi-deploy-evidence command](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=commands-wazi-deploy-evidence-command) for easy use of deployment analysis. 
+## Pipeline parameters
 
 Please check the below parameters for which this pipeline is executed.
 
@@ -57,9 +57,3 @@ application | Specify the name of your application (eg: retirementCalculator, Mo
 module | The program name
 type | Specify the type of artifacts (eg: COBOL,JCL)
 environment | Specify the environment (eg: integration, acceptance)
-
-
-### Implementation of the pipeline
-
-To query the Wazi deploy evidence index, the developer triggers the pipeline manually. When requesting the pipeline, multiple filter criteria can be configured to limit the search on element name, element type, application or environment.
-
