@@ -14,23 +14,21 @@ The pipeline implements the following stages
 * `Build` stage 
   * to invoke the zAppBuild [build](../Common-Backend-Scripts/README.md#42---dbbbuildsh) framework,
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them to the Azure build result.
-  * in case of a release pipeline, to create the release candidate tag.
 * `Packaging` stage
-  * to create a new [UCD component](../Common-Backend-Scripts/README.md#45---ucdpackagingsh) version (commented out)
   * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#44---packagebuildoutputssh)
-  * to load the package file to the Azure Artifacts
-* `Deployment` stage to the development test environment
-  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh)
+  * to publish the package file to the configured Artifact repository (Artifactory or Nexus, depending on the `publish` flag in CBS).
+  * (Alternatively - commented out) to create a new [UCD component version](../Common-Backend-Scripts/README.md#45---ucdpackagingsh) version
+* `Deployment` stage to deploy to the development test environment
+  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
-* `Deployment` to controlled test environments via the [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) that includes:
-  * to create a git tag to flag the release candidate. 
-  * to retrieve the package from the Azure Artifacts binary repository.
+* `Deployment` stages to deploy to controlled test environments. Triggered a [release pipeline process](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) via a manual pipeline request with the pipelineType set to release `release`:
+  * to create the release candidate Git tag using the [computeReleaseVersion script](../Common-Backend-Scripts/README.md#computereleaseversionsh).
+  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
-  * to create a git tag of the commit that was deployed to the production environment.
 * `Cleanup` stage: 
   * to [delete the build workspace](../Common-Backend-Scripts/README.md#411---deleteworkspacesh) on z/OS Unix System Services.
 
@@ -46,7 +44,7 @@ To leverages this template, access to an Azure DevOps environment is required, a
 
 The template leverages the [SSH Task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/ssh-v0?view=azure-pipelines) to invoke the [Common Backend scripts](../Common-Backend-Scripts/) via the configured SSH endpoint. Alternatively, the template can be modified to use the [CmdLine task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/cmd-line-v2?view=azure-pipelines) to leverage an alternative communication technology such as Zowe CLI.
 
-The Common Backend Scripts need to be configured for the selected deployment technologies to operate correctly.
+The Common Backend Scripts need to be configured for the selected deployment technologies to operate correctly. It is assumed that the Common Backend Scripts are configured to publish (upload) the package to the configured Artifact repository server.
 
 To tag important commits in the history of the application's Git repository, the Azure CLI is used and must be available on the Azure runner. Please follow the [documentation](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to install the Azure CLI on all the agents within the agent pool that the pipelines will use.
 
@@ -54,7 +52,7 @@ To tag important commits in the history of the application's Git repository, the
 
 **Note: Please work with your ADO pipeline specialist to review the below section.**
 
-The `azure-pipeline.yaml` can be dropped into the root folder of your Azure Git repository and will automatically provide pipelines for the specified triggers. Please review the definitions thoroughly with your Azure administrator. 
+The `azure-pipeline.yml` can be dropped into the root folder of your Azure Git repository and will automatically provide pipelines for the specified triggers. Please review the definitions thoroughly with your Azure administrator. The use of Templates is recommended for a centralized control of definitions.
 
 Following requirements need to be met:
 * An [Azure Agent](https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/agents?view=azure-devops) is installed and can connect to the z/OS system where builds are occurring.
@@ -69,15 +67,13 @@ Variable | Description
   zosSSHConnection                     | zOS - The name of the Azure SSH connection name for connecting to z/OS Unix System Services of the LPAR where the build actions will be performed.
   zosSSHKnownHost                      | The known host entry for secure shell connections. [See Notes](#obtaining-the-known-host-entry-for-secure-shell-connections).
   zosSSHPrivateKeySecureFile           | Reference to uploaded Private SSH Key in ADO Pipeline/Libary/SecureFile that is installed for sftp processes. [See Notes](#upload-private-ssh-key-as-secure-file)
-  pipelineWorkspace                    | Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`
+  pipelineWorkspace                    | Root directory on z/OS Unix System services to perform builds. E.g. `/u/ado/workspace`. Specifically to pull logs and build outputs.
   zosHostname                          | zOS - Host name (or Host IP address) for SFTP connection
   zosSFTPUser                          | zOS - Host user for SFTP connection
-  azureArtifactFeedID                  | Feed ID of the Azure artifact for publishing the package (when publishing to Azure DevOps Artifacts)
-  azureArtifactVersionOption           | Azure artifact version option (when publishing to Azure DevOps Artifacts)
 
 ### Supplied Azure pipeline templates 
 
-The directory [templates](templates/) contains additional [Azure pipeline templates](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops&pivots=templates-includes#parameters-to-select-a-template-at-runtime) that implement actions used in the main pipeline template. This approach helps to keep central control over the tagging and release deployment process. Please review the templates with your Azure administrator and adjust the reference within the [azure-pipelines.yml](azure-pipelines.yml#L32) file.
+The directory [templates](templates/) contains additional [Azure pipeline templates](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/templates?view=azure-devops&pivots=templates-includes#parameters-to-select-a-template-at-runtime) that implement actions used in the main pipeline template. This approach helps to keep central control over the tagging and release deployment process. Please review the templates with your Azure administrator and adjust the reference within the [azure-pipelines.yml](azure-pipelines.yml#L45) file.
 
 The tagging process implemented in the template leverages the [AZ REST command of the Azure DevOps CLI](templates/tagging/createReleaseCandidate.yml#L33) to connect with the existing permissions of the pipeline build user to the Azure repository to create the release candidate and the final release tag. Azure DevOps CLI needs to be available on the installed Azure agents.  
 
@@ -179,10 +175,10 @@ When the development team agrees to build a release candidate, the release pipel
 
 It covers the followings steps:
 * Clone
-* Build, tagging of the release candidate
+* Build and creation of Git tagging for the release candidate
 * Package & publish package
-* Deployment to the controlled test environments
-* Deployment to the production environment, including tagging the production release state
+* Deployment to the integration test environment
+* Deployment to the controlled test environments including Production
 * Cleanup
 
 The development team manually requests the pipeline and specifies the *pipeline type* `release` as a parameter. Along with the *release type*, the pipeline will tag a release candidate and also the final release that is deployed to production.
