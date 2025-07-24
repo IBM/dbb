@@ -31,13 +31,13 @@ The directory of Wazi Deploy evidence files is referenced by within the .gitlab-
 This pipleine implements the [wazi-deploy-evidence command](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=commands-wazi-deploy-evidence-command) for easy use of deployment analysis. 
 
 1. Follow the [initial setup instructions](../README.md)
-2. Review and adapt [.gitlab-ci.yml](.gitlab-ci.yml) to your environment. See [CLI Parameter and description](#cli-parameter-and-description)
+2. Review and adapt [.gitlab-ci.yml](.gitlab-ci.yml) to your environment. See [CLI Parameter and description](#cli-parameters-and-description)
 3. Provide query parameters and trigger the pipeline manually. See [Pipeline parameters](#pipeline-parameters)
 
 The job will output a deployment report either in plain text or YAML format (based on the renderer).
 
 
-### CLI Parameters and description
+## CLI Parameters and description
 
 The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yml`.
 
