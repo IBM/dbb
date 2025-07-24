@@ -35,7 +35,7 @@ To use this template as a pipeline:
    3. Follow the detailed instructions in [Gitlab/README.md](./Gitlab/README.md) to configure and run the pipeline.
 
 
-### Sample output 
+## Sample output 
 This can be downloaded and viewed after a successful run of the pipeline.
 Eg:
 
