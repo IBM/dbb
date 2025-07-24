@@ -28,6 +28,7 @@
 # ---------- ---- ---- --------------------------------------------------------------
 # 2023/11/20 MDLB 1.00 Initial Release
 # 2023/11/29 DB   1.10 Fixes to relative workspace directory
+# 2025/07/24 DB   1.20 Use default query and report renderer
 #===================================================================================
 Help() {
     echo $PGM" - Generate deployment reports with Wazi Deploy                       "
@@ -277,12 +278,20 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] ** Start Wazi Deploy evidence reporting on HOST/USER: ${SYS}/${USER}"
     echo $PGM": [INFO] **               Working Directory:" ${Workspace}
 
-    if [ ! -z "${OutputFile}" ]; then
-        echo $PGM": [INFO] **                     Output File:" ${OutputFile}
-    fi
-
     if [ ! -z "${EvidenceFile}" ]; then
         echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
+    fi
+
+    if [ ! -z "${wdSearchTemplate}" ]; then
+        echo $PGM": [INFO] **                  Query Template:" ${wdSearchTemplate}
+    fi
+
+    if [ ! -z "${wdReportRenderer}" ]; then
+        echo $PGM": [INFO] **                 Report Renderer:" ${wdReportRenderer}
+    fi
+
+    if [ ! -z "${OutputFile}" ]; then
+        echo $PGM": [INFO] **                     Output File:" ${OutputFile}
     fi
 
     echo $PGM": [INFO] **************************************************************"
@@ -292,26 +301,17 @@ fi
 #
 # Set up to execute the Wazi Deploy evidence command
 if [ $rc -eq 0 ]; then
-    CommandLine="wazideploy-evidence --index "${Workspace}/${wdIndexFolder}" --dataFolder "${EvidenceFolder}" i" 
+    CommandLine="wazideploy-evidence --dataFolder ${EvidenceFolder} --index ${Workspace}/${wdIndexFolder} --query ${wdSearchTemplate} --output=${OutputFile} ir renderer_name=${wdReportRenderer}"     
+     
     echo ${CommandLine} 2>&1
     ${CommandLine} 2>&1
     rc=$?
 
     if [ $rc -ne 0 ]; then
-        ERRMSG=$PGM": [ERROR] Unable to generate index data from evidence file "${EvidenceFile}" with Wazi Deploy. rc="$rc
+        ERRMSG=$PGM": [ERROR] Wazi Deploy Evidence command failed. rc="$rc
         echo $ERRMSG
-        rc=8
-    else
-        CommandLine="wazideploy-evidence --index "${Workspace}/${wdIndexFolder}" --template "${wdSearchTemplate}" --output="${OutputFile}" r renderer="${wdReportRenderer} 
-        echo ${CommandLine} 2>&1
-        ${CommandLine} 2>&1
-        rc=$?
-        if [ $rc -ne 0 ]; then
-            ERRMSG=$PGM": [ERROR] Unable to generate deployment report with Wazi Deploy. rc="$rc
-            echo $ERRMSG
-            rc=8
-        fi
     fi
+
 fi
 
 exit $rc
