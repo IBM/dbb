@@ -24,15 +24,7 @@ Use this template when you want to:
 
 ## Getting Started
 
-To use this template as a pipeline:
-
-   1. Create a new GitLab project
-   2. Copy the following files into the root of your new project:
-      * [queryTemplate.yml](queryTemplate.yml) 
-      * [renderer.yml](renderer.yml) 
-      * [`Gitlab/`](./Gitlab/) directory  
-
-   3. Follow the detailed instructions in [Gitlab/README.md](./Gitlab/README.md) to configure and run the pipeline.
+To use this template as a pipeline follow the detailed instructions in [Gitlab/README.md](./Gitlab/README.md) to configure and run the pipeline.
 
 
 ## Sample output of renderer
