@@ -4,7 +4,7 @@ This template contains  [queryTemplate.yml](queryTemplate.yml), [renderer.yml](r
 
 ## Overview and capabilities
 
-This query template is analyzing the evidence file, to list the details of the deployed artifacts that are created as a result of the deployment and generate a deployment report of the deployed artifacts. The renderer helps in the further customization of the query result.
+This query template is extracting information from the evidence file index to list the details about the deployed artifacts that are created as a result of the deployment. It generates a deployment report of the deployed artifacts, with the renderer helping to format the query results.
 
 ## Features
 
