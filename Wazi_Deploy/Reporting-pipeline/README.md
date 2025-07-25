@@ -24,7 +24,7 @@ Use this template when you want to:
 
 ## Getting Started
 
-To use this template as a pipeline follow the detailed instructions in [Gitlab/README.md](./Gitlab/README.md) to configure and run the pipeline.
+To configure and use this template as a pipeline follow the detailed instructions in [Gitlab/README.md](./Gitlab/README.md).
 
 
 ## Sample output of renderer
