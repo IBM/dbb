@@ -1,0 +1,49 @@
+# Artifacts of type {{ type }} for application {{ app }} in environment {{ env }}:
+
+{%- set entries = [] %}
+{%- for result in results %}
+  {%- set copy = result.ymli_parent %}
+  {%- if copy.name == 'MEMBER_COPY' %}
+    {%- set deploy = copy.ymli_parent.ymli_parent.ymli_parent %}
+    {%- set manifest = deploy.manifests[0] if deploy.manifests else None %}
+    {%- set annotations = deploy.metadata.annotations %}
+
+    {%- for artifact in copy.artifacts %}
+      {%- set artifact_type = artifact.properties
+          | selectattr('key', 'equalto', 'type')
+          | map(attribute='value')
+          | list
+          | first %}
+      {%- if artifact_type == type %}
+        {%- set name = artifact.name ~ '.' ~ artifact_type %}
+        {%- set version = manifest.version if manifest else 'unknown-version' %}
+        {%- set app_name = manifest.name if manifest else 'unknown-app' %}
+        {%- set creation = annotations.creation_timestamp %}
+        {%- set deploy_time = annotations.deploy_timestamp %}
+        {%- set key = name ~ '|' ~ version ~ '|' ~ creation ~ '|' ~ deploy_time %}
+
+        {%- if key not in entries | map(attribute='key') | list %}
+          {%- set _ = entries.append({
+            "key": key,
+            "artifact": name,
+            "app_name": app_name,
+            "version": version,
+            "creation_timestamp": creation,
+            "deploy_timestamp": deploy_time
+          }) %}
+        {%- endif %}
+      {%- endif %}
+    {%- endfor %}
+  {%- endif %}
+{%- endfor %}
+
+{# Optional: sort entries by deploy timestamp or version #}
+
+Environment          Type     Artifact               App Name                 Version                                Packaging Timestamp          Deploy Timestamp
+-------------------  -------  ---------------------  -----------------------  --------------------------------------  ---------------------------  -------------------------
+
+{%- for entry in entries | sort(attribute='deploy_timestamp') %}
+{{ env.ljust(25) }}{{ type.ljust(10) }}{{ entry.artifact.ljust(23) }}{{ entry.app_name.ljust(25) }}{{ entry.version.ljust(40) }}{{ entry.creation_timestamp.ljust(27) }}{{ entry.deploy_timestamp }}
+{%- endfor %}
+
+
