@@ -180,29 +180,34 @@ The section below contains the output that is produced by the `gitClone.sh` scri
   <summary>Script Output</summary>
 
 ```
+bash gitClone.sh -w /u/farhath/git/retirementCalculator  -r git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git -b master -a /u/farhath/git/retirementCalculator
 gitClone.sh: [INFO] Git Clone Wrapper. Version=1.2.0
 gitClone.sh: [INFO] **************************************************************
-gitClone.sh: [INFO] ** Start Git Clone on HOST/USER: z/OS ZT01 05.00 02 8561/***
-gitClone.sh: [INFO] **          Repo: git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator
-gitClone.sh: [INFO] **       WorkDir: /u/ado/workspace/retirementCalculator/main/build-20240301.1
-gitClone.sh: [INFO] **        GitDir: retirementCalculator
-gitClone.sh: [INFO] **           Ref: main -> main
+gitClone.sh: [INFO] ** Start Git Clone on HOST/USER: z/OS ZT01 01.00 03 8561/FARHATH
+gitClone.sh: [INFO] **          Repo: git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git
+gitClone.sh: [INFO] **       WorkDir: /u/farhath/git/retirementCalculator
+gitClone.sh: [INFO] **        GitDir: /u/farhath/git/retirementCalculator
+gitClone.sh: [INFO] **           Ref: master -> master
 gitClone.sh: [INFO] **************************************************************
-gitClone.sh: [INFO] Preforming Git Clone of Repo git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator, Ref main to /u/ado/workspace/retirementCalculator/main/build-20240301.1
-gitClone.sh: [INFO] git clone -b main git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator
-Cloning into 'retirementCalculator'...
+gitClone.sh: [INFO] Preforming Git Clone of Repo git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git, Ref master to /u/farhath/git/retirementCalculator
+gitClone.sh: [INFO] git clone --filter=tree:0 -b master git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git /u/farhath/git/retirementCalculator
+Cloning into '/u/farhath/git/retirementCalculator'...
 gitClone.sh: [INFO] Git Status for retirementCalculator
-On branch main
-Your branch is up to date with 'origin/main'.
+On branch master
+Your branch is up to date with 'origin/master'.
 nothing to commit, working tree clean
 gitClone.sh: [INFO] Git Show-Ref for retirementCalculator
-c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/heads/main
-c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/remotes/origin/HEAD
-ca11720bdffc280fc9ddefdae41943bc5b2008fc refs/remotes/origin/feature/implementUnitTests
-c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/remotes/origin/main
-8ee95ad28813cca2378463a2ef16958c60abcbd9 refs/tags/rel-1.0.0
-f12465b6a9623033b6d4fcc393acbcfd71f8e8d8 refs/tags/rel-1.0.1
-c7e7dcf9c65bebca8e3d0427c9ce82cb4127f7da refs/tags/rel-1.0.1_rc00
+2289cb47daf908d0031fbda76a6e40008c9f5af6 refs/heads/master
+2289cb47daf908d0031fbda76a6e40008c9f5af6 refs/remotes/origin/HEAD
+162cdd73c01188637e6c933de0393f5650d81b18 refs/remotes/origin/dbb20
+d5d0e981eb12550e215d3a1be67e0f1878b8621e refs/remotes/origin/feature/3-update-ebud01
+e89ba928e0cc058b9dd485caacf6f9f357f6eca3 refs/remotes/origin/feature/6-reset-demo
+625d936c90917d28b15e0f36f10998b40e4e11a0 refs/remotes/origin/feature/8-fix-call-to-ebud03
+598e2e766d93603bb62830abb8133423165344d6 refs/remotes/origin/feature/programs_without_acceptverb
+2289cb47daf908d0031fbda76a6e40008c9f5af6 refs/remotes/origin/feature/test-partial-clone
+2289cb47daf908d0031fbda76a6e40008c9f5af6 refs/remotes/origin/master
+4f9557fec7de57e7056d7a495a58d7645f4232df refs/remotes/origin/test
+3a58a3bff588410416b0c010de0a1fc83a4de96b refs/remotes/origin/update-ebud01
 gitClone.sh: [INFO] Clone Repository Complete. rc=0
 ```  
 
@@ -773,7 +778,7 @@ Depending on the selected Deployment tool, select either from the scripts for IB
 
 This script invokes the Wazi Deploy Generate command to generate a Deployment Plan based on the content of a package. The package should be created with the `PackageBuildOutputs.groovy` script or through the `packageBuildOutputs.sh` script.
 
-This script assesses the configuration option `publish` from the `pipelineBackend.config` file. In case the configuration has enabled the upload to the Artifact repository, the script computes the URL where the package is expected to be found, and passes the URL into the wazideploy-generate command. This means that wazideloy-generate will download the package from the Artifact repository and allows to restore the package on a different system. It requires to pass in the additional arguments `-P`, `-R`, `-B`
+This script assesses the configuration option `publish` from the `pipelineBackend.config` file. In case the configuration has enabled the upload to the Artifact repository, the script computes the URL where the package is expected to be found, and passes the URL into the wazideploy-generate command. This means that wazideploy-generate will download the package from the Artifact repository and allows to restore the package on a different system. It requires to pass in the additional arguments `-P`, `-R`, `-B`
 
 #### Invocation
 
@@ -1158,7 +1163,7 @@ It _greps_ the information and invokes a download action.
 
 ### deleteWorkspace.sh
 
-Script delete the workspace and all empty directories in the working tree. 
+Script to delete the workspace.
 
 #### Invocation
 
@@ -1172,9 +1177,6 @@ CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. 
 
-
-Note that the script deletes all empty folders in the working tree. It supresses the message `EDC5136I Directory not empty.` and handles that as a INFO message.
-
 #### Script output
 
 The section below contains the output that is produced by the `deleteWorkspace.sh` script.
@@ -1183,89 +1185,15 @@ The section below contains the output that is produced by the `deleteWorkspace.s
   <summary>Script Output</summary>
 
 ```
-deleteWorkspace.sh: [INFO] Delete Workspace script. Version=1.00
+deleteWorkspace.sh: [INFO] Delete Workspace script. Version=1.10
 deleteWorkspace.sh: [INFO] **************************************************************
-deleteWorkspace.sh: [INFO] ** Started - Delete Workspace on HOST/USER: z/OS ZT01 05.00 02 8561/BPXROOT    
-deleteWorkspace.sh: [INFO] **          Working Directory: /var/dbb/pipelineBackend/MortApp/main/build-1
-deleteWorkspace.sh: [INFO] **          Workspace        : MortApp/main/build-1
+deleteWorkspace.sh: [INFO] ** Started - Delete Workspace on HOST/USER: z/OS VS01 01.00 03 8562/BPXROOT    
+deleteWorkspace.sh: [INFO] **          Working Directory: /var/workspace/cics-banking-sample-application/build-187
+deleteWorkspace.sh: [INFO] **          Workspace        : /var/workspace/cics-banking-sample-application/build-187
 deleteWorkspace.sh: [INFO] **************************************************************
-deleteWorkspace.sh: [INFO] Deleting contents in /var/dbb/pipelineBackend/MortApp/main/build-1: 
-deleteWorkspace.sh: [INFO] rm -Rfv /var/dbb/pipelineBackend/MortApp/main/build-1/*
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/info/exclude
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/applypatch-msg.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/commit-msg.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/post-update.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/pre-applypatch.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/pre-commit.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/prepare-commit-msg.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/pre-push.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/pre-rebase.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/update.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/hooks/post-checkout.sample
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/description
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/refs/heads/main
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/refs/remotes/origin/HEAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/config
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/HEAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/objects/pack/pack-ab68cc529d7cc1609635c0d093249af2cca3a49d.pack
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/objects/pack/pack-ab68cc529d7cc1609635c0d093249af2cca3a49d.rev
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/objects/pack/pack-ab68cc529d7cc1609635c0d093249af2cca3a49d.idx
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/logs/refs/remotes/origin/HEAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/logs/refs/heads/main
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/logs/HEAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/index
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.git/packed-refs
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.gitattributes
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/.project
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/MultibranchPipeline
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/README.md
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/BMS.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/CRB.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/Cobol.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/LinkEdit.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/README.md
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/application.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/baselineReference.config
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/bind.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/application-conf/file.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/bms/epsmlis.bms
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/bms/epsmort.bms
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epscmort.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epscsmrd.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epscsmrt.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epsmlist.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epsmpmt.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/cobol/epsnbrvl.cbl
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsmortf.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsmtcom.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsmtinp.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsmtout.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epsnbrpm.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/copybook/epspdata.cpy
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/crb/cics-resourcesDef.yaml
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/link/epsmlist.lnk
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/logs/BuildReport.html
-/var/dbb/pipelineBackend/MortApp/main/build-1/MortgageApplication/properties/epsmlist.cbl.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/buildList.txt
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/deletedFilesList.txt
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/EPSNBRVL.cobol.log
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/EPSCMORT.cobol.log
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/BuildReport.json
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/BuildReport.html
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.BLD.LOAD/EPSCMORT.CICSLOAD
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.BLD.DBRM/EPSCMORT.DBRM
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/buildReportOrder.txt
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/BuildReport.json
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/tempPackageDir/packageBuildOutputs.properties
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs/package.tar
-/var/dbb/pipelineBackend/MortApp/main/build-1/logs.tar
-deleteWorkspace.sh: [INFO] Deleting empty directories in working tree.
-deleteWorkspace.sh: [INFO] rmdir -p /var/dbb/pipelineBackend/MortApp/main/build-1 2>&1
-deleteWorkspace.sh: [INFO] Deleting empty directories stopped at below directory because it is not empty.
-deleteWorkspace.sh: [INFO] rmdir: FSUM6404 directory "/var/dbb/pipelineBackend/MortApp/main": EDC5136I Directory not empty. 
-deleteWorkspace.sh: [INFO] Workspace directory successfully deleted.
+deleteWorkspace.sh: [INFO] Deleting working directory /var/workspace/cics-banking-sample-application/build-187: 
+deleteWorkspace.sh: [INFO] rm -PRf /var/workspace/cics-banking-sample-application/build-187
+deleteWorkspace.sh: [INFO] Workspace directory successfully deleted. rc=0
 ```  
 
 </details>

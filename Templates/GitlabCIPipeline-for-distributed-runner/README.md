@@ -8,13 +8,18 @@ It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/T
 The pipeline implements the following stages
 * `Setup` stage to [clone](../Common-Backend-Scripts/README.md#41---gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
 * `Build` stage 
-  * to invoke the zAppBuild [build](../Common-Backend-Scripts/README.md#42---dbbbuildsh) framework,
+  * to invoke the build framework. Select one of the following frameworks by comment or uncomment the command to perform the build using the build framework you choose.
+    * zBuilder [zBuilder.sh](./Common-Backend-Scripts/README.md#zbuildersh-for-dbb-zbuilder) framework
+    * zAppBuild [dbbBuild.sh](../Common-Backend-Scripts/README.md#dbbbuildsh-for-zappbuild-frameworkh) framework
   * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them as Gitlab Artifacts.
-  * in case of a release pipeline, to create the release candidate tag.
 * `Packaging` stage
-  * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#44---packagebuildoutputssh)
+  * in case of a release pipeline, to compute a release version from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) using [computeReleaseVersion.sh](../Common-Backend-Scripts/README.md#computeReleaseVersionsh).
+  * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#44---packagebuildoutputssh).
+  * in case of a release pipeline, to create a release candidate tag from the computed release version.
+  * to upload a package to artifact repository.
 * `Deploy Integration` stage to deploy to the development / integration test environment that includes:
   * to run the Wazi Deploy and generate deployment plan [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh)
+  * to download a package from artifact repository.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the Gitlab Artifacts.
@@ -24,7 +29,7 @@ The pipeline implements the following stages
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to publish deployment log files to the Gitlab Artifacts.
   * to store the Wazi Deploy evidence files at a shared location to support later reporting scenarios.
-* `Finalize` stage to create a release tag from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#scaling-up).
+  * to create a release tag from [baseline reference file](../Common-Backend-Scripts/samples/baselineReference.config) and create a release maintenance branch as described in the [scaling up gideline](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#scaling-up).
 * `Cleanup` stage: 
   * to clean up project directory on Gitlab server, and
   * to [delete the build workspace](../Common-Backend-Scripts/README.md#411---deleteworkspacesh) on z/OS Unix System Services.
@@ -92,17 +97,15 @@ AutomationToken | [Group access token](https://docs.gitlab.com/ee/api/rest/#pers
 RSEAPI_USER | Username for Zowe RSEAPI server authentication. This username is used when issue shell script command through Zowe.
 RSEAPI_PASSWORD | Password for Zowe RSEAPI server authentication. This password is used when issue shell script command through Zowe.
 PIPELINE_WORKSPACE | Root directory on z/OS Unix System services to perform builds. E.g. /u/gitlab/workspace
-WAZI_DEPLOY_CONFIGDIR | Path to a directory on USS containing Wazi Deploy configuration files. The configuration files can be populated with the [Wazi Deploy samples](https://github.com/jbyibm/cics-genapp/tree/main/wazideploy-samples).
 
 The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yaml`.
 
 Variable | Description
 --- | ---
 application | Specify the name of your application which will be used to invoke the [Common Backend scripts](../Common-Backend-Scripts/).
-wdEnvironmentFileIntegration | Path to a Wazi Deploy configuration file for integration environment.
-wdEnvironmentFileAcceptance | Path to a Wazi Deploy configuration file for acceptance environment.
-wdEnvironmentFileProduction | Path to a Wazi Deploy configuration file for production environment.
-baselineReferenceFile | Path to baselineReference.config file of your application.
+wdEnvironmentFileIntegration | A Wazi Deploy configuration file for integration environment.
+wdEnvironmentFileAcceptance | A Wazi Deploy configuration file for acceptance environment.
+wdEnvironmentFileProduction | A Wazi Deploy configuration file for production environment.
 
 ## Pipeline usage
 
@@ -126,7 +129,7 @@ It allows overriding value of the below variables when manually requesting the p
 Parameter | Description
 --- | ---
 pipelineType     | Pipeline type - either build, release or preview. (Default: build)
-releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: patch)
+releaseType      | Release type - major, minor, patch as input to compute the release version and to set the release candidate and release git tags. (Default: minor)
 verbose          | Boolean flag to control logging of build framework. (Default: false)
 
 ### Feature Branch pipeline
@@ -136,6 +139,7 @@ The pipeline for feature branches executes the following steps:
 * Clone
 * Build
 * Package & publish package
+* Cleanup
 
 This pipeline needs to be run manually with the *pipelineType* variable as `preview`.
 
@@ -150,6 +154,7 @@ The basic build pipeline for integration branches contains the following stages:
 * Build
 * Package & publish package
 * Deployment to the integration test environment with cleanup job (required to be triggered manually)
+* Cleanup
 
 This is a default pipeline. It runs automatically when there is a new commit to a repository. You can also run this pipeline manually by setting the *pipelineType* variable as `build`.
 

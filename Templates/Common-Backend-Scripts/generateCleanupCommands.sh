@@ -214,7 +214,7 @@ validateOptions() {
         if [ -d "${AppDir}/${App}" ]; then
             echo $PGM": [INFO] Detected the application repository (${application}) within the git repository layout structure."
             echo $PGM": [INFO]  Assuming this as the new application location."
-            AppDir="${AppDir}${App}"
+            AppDir="${AppDir}/${App}"
             nestedApplicationFolder="true"
         fi
 
