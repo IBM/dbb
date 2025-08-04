@@ -180,34 +180,29 @@ The section below contains the output that is produced by the `gitClone.sh` scri
   <summary>Script Output</summary>
 
 ```
-bash gitClone.sh -w /u/farhath/git/retirementCalculator  -r git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git -b master -a /u/farhath/git/retirementCalculator
 gitClone.sh: [INFO] Git Clone Wrapper. Version=1.2.0
 gitClone.sh: [INFO] **************************************************************
-gitClone.sh: [INFO] ** Start Git Clone on HOST/USER: z/OS ZT01 01.00 03 8561/FARHATH
-gitClone.sh: [INFO] **          Repo: git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git
-gitClone.sh: [INFO] **       WorkDir: /u/farhath/git/retirementCalculator
-gitClone.sh: [INFO] **        GitDir: /u/farhath/git/retirementCalculator
-gitClone.sh: [INFO] **           Ref: master -> master
+gitClone.sh: [INFO] ** Start Git Clone on HOST/USER: z/OS ZT01 05.00 02 8561/***
+gitClone.sh: [INFO] **          Repo: git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator
+gitClone.sh: [INFO] **       WorkDir: /u/ado/workspace/retirementCalculator/main/build-20240301.1
+gitClone.sh: [INFO] **        GitDir: retirementCalculator
+gitClone.sh: [INFO] **           Ref: main -> main
 gitClone.sh: [INFO] **************************************************************
-gitClone.sh: [INFO] Preforming Git Clone of Repo git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git, Ref master to /u/farhath/git/retirementCalculator
-gitClone.sh: [INFO] git clone --filter=tree:0 -b master git@github.ibm.com:zDevOps-Acceleration/retirementCalculator.git /u/farhath/git/retirementCalculator
-Cloning into '/u/farhath/git/retirementCalculator'...
+gitClone.sh: [INFO] Preforming Git Clone of Repo git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator, Ref main to /u/ado/workspace/retirementCalculator/main/build-20240301.1
+gitClone.sh: [INFO] git clone -b main git@ssh.dev.azure.com:v3/IBM-DAT/retirementCalculator/retirementCalculator
+Cloning into 'retirementCalculator'...
 gitClone.sh: [INFO] Git Status for retirementCalculator
-On branch master
-Your branch is up to date with 'origin/master'.
+On branch main
+Your branch is up to date with 'origin/main'.
 nothing to commit, working tree clean
 gitClone.sh: [INFO] Git Show-Ref for retirementCalculator
-2289cb47daf908d0031fbda76a6e40008c9f5af6 refs/heads/master
-2289cb47daf908d0031fbda76a6e40008c9f5af6 refs/remotes/origin/HEAD
-162cdd73c01188637e6c933de0393f5650d81b18 refs/remotes/origin/dbb20
-d5d0e981eb12550e215d3a1be67e0f1878b8621e refs/remotes/origin/feature/3-update-ebud01
-e89ba928e0cc058b9dd485caacf6f9f357f6eca3 refs/remotes/origin/feature/6-reset-demo
-625d936c90917d28b15e0f36f10998b40e4e11a0 refs/remotes/origin/feature/8-fix-call-to-ebud03
-598e2e766d93603bb62830abb8133423165344d6 refs/remotes/origin/feature/programs_without_acceptverb
-2289cb47daf908d0031fbda76a6e40008c9f5af6 refs/remotes/origin/feature/test-partial-clone
-2289cb47daf908d0031fbda76a6e40008c9f5af6 refs/remotes/origin/master
-4f9557fec7de57e7056d7a495a58d7645f4232df refs/remotes/origin/test
-3a58a3bff588410416b0c010de0a1fc83a4de96b refs/remotes/origin/update-ebud01
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/heads/main
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/remotes/origin/HEAD
+ca11720bdffc280fc9ddefdae41943bc5b2008fc refs/remotes/origin/feature/implementUnitTests
+c5fe1f8526fa2b20e7b6add8556aa773c9ab1d19 refs/remotes/origin/main
+8ee95ad28813cca2378463a2ef16958c60abcbd9 refs/tags/rel-1.0.0
+f12465b6a9623033b6d4fcc393acbcfd71f8e8d8 refs/tags/rel-1.0.1
+c7e7dcf9c65bebca8e3d0427c9ce82cb4127f7da refs/tags/rel-1.0.1_rc00
 gitClone.sh: [INFO] Clone Repository Complete. rc=0
 ```  
 
