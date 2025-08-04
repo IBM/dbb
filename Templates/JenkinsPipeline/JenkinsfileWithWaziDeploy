@@ -3,7 +3,7 @@
 // Description: A sample Jenkins Declarative Multibranch pipeline job that demonstrates how to
 // implement the IBM recommended Git flow branching model.
 // https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/
-// The pipeline uses Jenkins, IBM Dependency Based Build, SonarQube Scan and UrbanCode Deploy
+// The pipeline uses Jenkins, IBM Dependency Based Build, SonarQube Scan and IBM Wazi Deploy
 // and the Common Backend scripts
 //
 // Refer to README.md for more information.
@@ -89,10 +89,15 @@ def BranchOkay                = false
 // 		WdDoDeployment        - If true, perform the Deployment through Wazi Deploy.
 //
 def WdDoPackaging	           = true
-def ArtifactoryUpload          = false
 def Artifactory                = ""
 
 def WdDoDeployment	           = false
+def WdEnvFileIntegration       = "EOLEB7-MortgageApplication-Integration.yaml"
+
+// Directories on the GitLab runner environment to persist Wazi Deploy Evidence files and to create an Wazi Deploy Index
+def WdEvidencesRoot			   = "/var/work/wazi_deploy_evidences_jenkins/"
+def WdEvidencesIndex           = "/var/work/wazi_deploy_evidences_jenkins_index/"
+def WdEvidencesDir 			   = ""
 
 // Internal Constants and Variables
 // Build stage
@@ -123,11 +128,15 @@ def WdDeployCmd		          = ""		   // Wazi Deploy Deploy Command.
 def WDDeployrc		      	  = 0		   // Wazi Deploy Return Code.
 def DeployOutputDir	      	  = ""         // Wazi Deploy Output Directory.
 def DeployEvidencesDir		  = ""		   // Wazi Deploy Evidences Directory.
+def WdEvidenceCmd			  = ""		   // Wazi Deploy Evidences Command.
+def WdEvidenceRc			  = 0		   // Wazi Deploy Evidences Return Code.
 
 def autoCancelled             = false      // Cancellation Flag.
 def DefaultEncoding           = "IBM-1047" // Default Encoding.
 def Msg                       = ""         // Message String.
 def MsgHdr                    = ""         // HTML Header String ID for Jenkins Build Log.
+def ShCmd					  = ""		   // Shell command.
+def ShCmdRc					  = 0          // Retrun code from shell command.
 def StartDateTime             = ""         // Pipeline Start Date/Time.
 
 // Okay, Let's Begin
@@ -167,7 +176,7 @@ pipeline {
 							choice(
 								choices : ["major", "minor", "patch"],
 								description: 'Please provide the release type for automated computing of tags',
-								defaultValue: 'patch',
+								defaultValue: 'minor',
 								name: 'ReleaseType'
 							),
 							choice(
@@ -188,14 +197,6 @@ pipeline {
 					} else {
 						zAppBuildVerbose = ""
 						pipeverbose = false
-					}
-
-                    if (params.ArtifactoryUpload.equals("yes")){
-						Artifactory = "-u"
-						ArtifactoryUpload = true
-					} else {
-						Artifactory = ""
-						ArtifactoryUpload = false
 					}
 
 					PipelineType = params.PipelineType
@@ -222,8 +223,6 @@ pipeline {
 					
 					//Build directory
 					BuildDir       = "${WORKSPACE}"
-					baselineReferenceFile = "${BuildDir}/${AppName}/application-conf/baselineReference.config"
-
 
 					// Branch Control Setup
 					Branch         = env.BRANCH_NAME.toUpperCase()
@@ -340,7 +339,7 @@ pipeline {
 					println("*     WdDoDeployment      	   : ${WdDoDeployment}")
 					println("*     WdEnvFileIntegration    : ${WdEnvFileIntegration}")
 					println("*     DeployOutputDir    	   : ${DeployOutputDir}")
-                    println("*     Artifactory Upload      : ${ArtifactoryUpload}")
+					println("*     WdEvidenceRoot          : ${WdEvidencesRoot}")
 					println("*")
 					println("*   General")
 					println("*     DefaultEncoding         : ${DefaultEncoding}")
@@ -460,6 +459,25 @@ pipeline {
 			}
 		} // End: stage('Build')
 
+		stage('SonarQube Analysis') {
+			// Application repository is automatically checked out
+			agent { label JenkinsX86Agent }
+
+			when {
+				expression { return ((sonarQubeDoScan == true) && (autoCancelled == false)) }
+			}
+
+			steps {
+				// Pull scanner configuration
+				dir ("${WORKSPACE}/${AppName}") {
+					withSonarQubeEnv(sonarQubeConnection) {
+						sh "sonar-scanner"
+					}
+				}
+
+			}
+  		} // End: stage('SonarQube Analysis')
+
 		stage('Packaging') {
 			when {
 					expression { return ((WdDoPackaging == true) && (autoCancelled == false)) }
@@ -473,9 +491,9 @@ pipeline {
 
                     PackageOutputDir = "${BuildDir}/logs/tempPackageDir"
 
-					// For a release pipeline, compute the version of the next release
+					// Compute the next release verion for a release pipeline.
 					if (PipelineType == "release") {
-						println("${PipelineName}[INFO]: Start compute the next release version.")
+						println("${PipelineName}[INFO]: Start computing the next release version.")
 						ComputeReleaseVersionCmd = "computeReleaseVersion.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -r ${ReleaseType}"
 						
 						println("${PipelineName}[INFO]: Compute Release Version Command = ${ComputeReleaseVersionCmd}")
@@ -510,13 +528,12 @@ pipeline {
 					// Start packaging when compute the next release version successfully or not a release pipeline
 					if (autoCancelled == false) {
 						// Start packageBuildOutputs.sh command
-						println("${PipelineName}[INFO]: Run packageBuildOutput.sh")
 						if (ReleaseVersion == "") {
-							//println("${PipelineName}[DEBUG]: Building build output without release version option.")
+							println("${PipelineName}[INFO]: Start packaging for a build pipeline.")
 							PackageCmd = "packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -i ${BuildNumber}"
 						}
 						else {
-							//println("${PipelineName}[DEBUG]: Building build output with release version option.")
+							println("${PipelineName}[INFO]: Start packaging for a release pipeline. Release version: ${ReleaseVersion}")
 							PackageCmd = "packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -r ${ReleaseVersion} -i ${BuildNumber}"
 						}
 						
@@ -533,7 +550,6 @@ pipeline {
 							createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
 							autoCancelled == true
 						}
-						//autoCancelled == true
 					}
 
 					if (autoCancelled == true) { // Mark Stage as Error		
@@ -564,22 +580,20 @@ pipeline {
 				script {
 					
 					WdGenDeployPlanrc = 0
-					MsgHdr = "<strong>Packaging Step:</strong>"	
+					MsgHdr = "<strong>Generate Deployment Plan Step:</strong>"	
 
-					// To overwrite the wdDeploymentArtifactoryConfig value in the pipelineBackend.config file. 
-					// Add -c ${WdConfigFile} option to the WdGenDeployPlanCmd to overwrite.
-					//def WdConfigFile = "/var/WaziDeploy/config/WaziDeploy-ConfigFile.yml"
-
+					// Generage deployment plan
+					println("${PipelineName}[INFO] Start generating the deployment plan for a release pipeline. Release version: ${ReleaseVersion}")
 					WdGenDeployPlanCmd = "wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -P ${PipelineType} -R ${ReleaseVersion} -I ${BuildNumber}"
 
                     WdGenDeployPlanrc = sh(script: "${WdGenDeployPlanCmd}" , returnStatus: true)
 
 					if (WdGenDeployPlanrc == 0) {
-						println("${PipelineName}[INFO]: Generate deployment plan job passed")
+						println("${PipelineName}[INFO]: Generate the deployment plan job passed.")
 						autoCancelled == false
 					}
 					else {
-						Msg = "Generate deployment plan job failed. Exit code: ${WdGenDeployPlanrc}. Refer to Jenkins Console Output Log."
+						Msg = "Generate the deployment plan job failed. Exit code: ${WdGenDeployPlanrc}. Refer to Jenkins Console Output Log."
 						println("${PipelineName}[WARN]: ${Msg}")
 						createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
 						autoCancelled == true	
@@ -614,14 +628,54 @@ pipeline {
 				script {
 					
 					WdDeployCmd = 0
-					MsgHdr = "<strong>Packaging Step:</strong>"
+					MsgHdr = "<strong>Deploy Integration Step:</strong>"
 
-					WdDeployCmd = "wazideploy-deploy.sh -w ${WORKSPACE} -e ${WdEnvFileIntegration} -i ${AppName}.tar -l deploy/evidences/evidence.yaml"
+					WdDeployCmd = "wazideploy-deploy.sh -w ${WORKSPACE} -e ${WdEnvFileIntegration} -l deploy/evidences/evidence.yaml"
 
 					WdDeployrc = sh(script: "${WdDeployCmd}" , returnStatus: true)
 
 					if (WdDeployrc == 0) {
 						println("${PipelineName}[INFO]: Deploy to integration job passed")
+
+						DeployEvidencesDir = "${WORKSPACE}/deployPkgDir/deploy/evidences"
+						WdEvidencesDir = "${WdEvidencesRoot}/${AppName}/integration"
+						//println("${PipelineName}[DEBUG]: DeployEvidencesDir = ${DeployEvidencesDir}")
+
+						//println("${PipelineName}[DEBUG]: WdEvidencesDir = ${WdEvidencesDir}")
+
+						// Create evidence directory
+						ShCmd = "mkdir -p ${WdEvidencesDir} && mkdir -p ${WdEvidencesIndex}"
+						ShCmdRc = sh(script: "${ShCmd}" , returnStatus: true)
+						//println("${PipelineName}[DEBUG]: cmdRc: ${ShCmdRc}")
+
+						//Copy evidence file
+						if (ShCmdRc == 0) {
+							println("${PipelineName}[INFO]: Created evidence directory successfully: ${WdEvidencesDir}")
+							println("${PipelineName}[INFO]: Created evidence index directory successfully: ${WdEvidencesIndex}")
+							ShCmd = "cp ${DeployEvidencesDir}/evidence.yaml ${WdEvidencesDir}/evidence-${BuildNumber}.yaml"
+							ShCmdRc = sh(script: "${ShCmd}" , returnStatus: true)
+							println("${PipelineName}[DEBUG]: cmdRc: ${ShCmdRc}")
+						}
+						else {
+							println("${PipelineName}[INFO]: Create evidence directories failed")
+						}
+
+						// Refresh index of all applications
+						if (ShCmdRc == 0) {
+							println("${PipelineName}[INFO]: Persisted deployment evidence file successfully at ${WdEvidencesDir}")
+							println("${PipelineName}[INFO]: Refresh index of all applications at ${WdEvidencesIndex}")
+							WdEvidenceCmd = "wazideploy-evidence --index ${WdEvidencesIndex} --dataFolder ${WdEvidencesRoot} i"
+							WdEvidenceRc = sh(script: "${WdEvidenceCmd}" , returnStatus: true)
+						}
+
+						// Error handling
+						if (WdEvidenceRc == 0) {
+							println("${PipelineName}[INFO]: Update Wazi Deploy index completed.")
+						}
+						else {
+							println("${PipelineName}[WARNING]: Update Wazi Deploy index failed.")
+						}	
+
 					}
 					else {
 						Msg = "Deploy to integration job failed. Exit code: ${WdDeployrc}. Refer to Jenkins Console Output Log."
@@ -630,9 +684,7 @@ pipeline {
 						catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
 							sh "echo 'Packaging jab failed. Please check console output log.' && exit ${WdDeployrc}"
 						}
-					}
-					DeployEvidencesDir = "${WORKSPACE}/deployPkgDir/deploy/evidences"
-					println("${PipelineName}[DEBUG]: DeployEvidencesDir = ${DeployEvidencesDir}")			
+					}					
 				}
 			}
 			post {
