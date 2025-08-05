@@ -637,6 +637,18 @@ pipeline {
 					if (WdDeployrc == 0) {
 						println("${PipelineName}[INFO]: Deploy to integration job passed")
 
+						WdEvidenceCmd = "wazideploy-evidence.sh -w ${WORKSPACE} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html"
+						WdEvidenceRc = sh(script: "${WdEvidenceCmd}" , returnStatus: true)
+						println("${PipelineName}[DEBUG]: WdEvidenceRc: ${WdEvidenceRc}")
+
+						// Generate deployment evidence report
+						if (WdEvidenceRc == 0) {
+							println("${PipelineName}[INFO]: Generated deployment evidence report")
+						}
+						else {
+							println("${PipelineName}[ERROR]: Failed to generate deployment evidence report")
+						}
+						
 						DeployEvidencesDir = "${WORKSPACE}/deployPkgDir/deploy/evidences"
 						WdEvidencesDir = "${WdEvidencesRoot}/${AppName}/integration"
 						//println("${PipelineName}[DEBUG]: DeployEvidencesDir = ${DeployEvidencesDir}")
@@ -693,6 +705,12 @@ pipeline {
 					 dir ("${DeployEvidencesDir}") {
 					 	archiveArtifacts allowEmptyArchive: true,
 					 		artifacts: '*.yml,*.yaml',
+					 		excludes: '*clist',
+					 		onlyIfSuccessful: false
+					 }
+					 dir ("${WORKSPACE}/deployPkgDir/deploy") {
+					 	archiveArtifacts allowEmptyArchive: true,
+					 		artifacts: '*.html',
 					 		excludes: '*clist',
 					 		onlyIfSuccessful: false
 					 }
