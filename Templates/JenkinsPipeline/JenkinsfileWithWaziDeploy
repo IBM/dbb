@@ -639,7 +639,7 @@ pipeline {
 
 						WdEvidenceCmd = "wazideploy-evidence.sh -w ${WORKSPACE} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html"
 						WdEvidenceRc = sh(script: "${WdEvidenceCmd}" , returnStatus: true)
-						println("${PipelineName}[DEBUG]: WdEvidenceRc: ${WdEvidenceRc}")
+						//println("${PipelineName}[DEBUG]: WdEvidenceRc: ${WdEvidenceRc}")
 
 						// Generate deployment evidence report
 						if (WdEvidenceRc == 0) {
@@ -658,7 +658,7 @@ pipeline {
 						// Create evidence directory
 						ShCmd = "mkdir -p ${WdEvidencesDir} && mkdir -p ${WdEvidencesIndex}"
 						ShCmdRc = sh(script: "${ShCmd}" , returnStatus: true)
-						//println("${PipelineName}[DEBUG]: cmdRc: ${ShCmdRc}")
+						//println("${PipelineName}[DEBUG]: ShCmdRc: ${ShCmdRc}")
 
 						//Copy evidence file
 						if (ShCmdRc == 0) {
@@ -666,7 +666,7 @@ pipeline {
 							println("${PipelineName}[INFO]: Created evidence index directory successfully: ${WdEvidencesIndex}")
 							ShCmd = "cp ${DeployEvidencesDir}/evidence.yaml ${WdEvidencesDir}/evidence-${BuildNumber}.yaml"
 							ShCmdRc = sh(script: "${ShCmd}" , returnStatus: true)
-							println("${PipelineName}[DEBUG]: cmdRc: ${ShCmdRc}")
+							//println("${PipelineName}[DEBUG]: ShCmdRc: ${ShCmdRc}")
 						}
 						else {
 							println("${PipelineName}[INFO]: Create evidence directories failed")
