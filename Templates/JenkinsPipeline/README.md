@@ -1,6 +1,6 @@
 # Jenkins Pipeline template
 
-There are 2 Jenkins pipeline definition templates provided to set up a Jenkins Multibranch pipeline compatible with any Git provider. 
+Two Jenkins pipeline definition templates are provided to set up a Jenkins Multibranch pipeline compatible with any Git provider: 
 * the [Jenkinsfile](Jenkinsfile) template is a pipeline implementation using IBM DevOps Deploy (formerly IBM UrbanCode Deploy) as a deployment framework.
 * the [JenkinsfileWithWaziDeploy](JenkinsfileWithWaziDeploy) template uses IBM Wazi Deploy as the deployment framework.
 
