@@ -6,7 +6,7 @@ Two Jenkins pipeline definition templates are provided to set up a Jenkins Multi
 
 ## Overview and capabilities
 
-These two pipeline templates are implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev) with Jenkins as a the Pipeline Orchestrator.
+Both pipeline templates are implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev).
 
 They leverage the [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) in the Build, Packaging, and Deployment stages.
 
