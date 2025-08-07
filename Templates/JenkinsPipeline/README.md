@@ -44,7 +44,7 @@ The [Jenkinsfile](Jenkinsfile) pipeline template implements the following stages
 * `Deploy Integration` stage to deploy to the development / integration test environment that includes:
   * to run the [wazideploy-generate.sh script](../Common-Backend-Scripts/README.md#140---wazideploy-generatesh) to download the .TAR file package from the artifact repository URL and the generate deployment plan
   * to deploy the .TAR file package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#141---wazideploy-deploysh) (Python-based).
-  * to use Wazi Deploy evidence command [deploy command](../Common-Backend-Scripts/README.md#142---wazideploy-generatesh) to index deploy invormation for Deployment report from the Wazi Deploy Evidence YAML file.
+  * to execute the [Wazi Deploy evidence script](../Common-Backend-Scripts/README.md#142---wazideploy-generatesh) to generate a deployment report that is attached to the pipeline run and to push evidences into a shared directory structure for further analysis of deployment results.
  * `Workspace Cleanup` stage to clean up the workspace.
 
 Depending on your selected and software analysis and deployment technology, review the definitions and (de-)/activate the appropriate steps.
