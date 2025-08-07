@@ -26,7 +26,7 @@ The [Jenkinsfile](Jenkinsfile) pipeline template implements the following stages
   * to request the Deployment of the UrbanCode Component version via the Common Backend Script [ucdDeploy.sh](../Common-Backend-Scripts/README.md#143---ucddeploysh) to the shared Development/Integration test environment,
   * to publish deployment log files to the Jenkins build result,
   * to add links to the UCD Deployment request.
- * `Workspace Cleanup` stage to clean up the workspace.
+  * `Workspace Cleanup` stage to clean up the workspace.
 
  The [JenkinsfileWithWaziDeploy](JenkinsfileWithWaziDeploy) pipeline template implements the following stages:
 
@@ -37,15 +37,15 @@ The [Jenkinsfile](Jenkinsfile) pipeline template implements the following stages
   * to publish log files to the Jenkins build result.
 * `SonarQube Analysis` stage to request a SonarQube scan of the application repository.
 * `Packaging` stage
+  * to automatically compute the version of the next release for a release pipeline via [computeReleaseVersion.sh](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#137---computeReleaseVersionsh),
   * to create a .TAR file package based on the [packageBuildOutputs.sh](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#138---packageBuildOutputssh) script,
-  * to automatically compute the version of the next release for a release pipeline via [computeReleaseVersion.sh]((https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#137---computeReleaseVersionsh), 
   * to automatically compute the artifact repository URL to store the .TAR file package,
   * to upload the .TAR file package to the artifact repository on the computed URL.
 * `Deploy Integration` stage to deploy to the development / integration test environment that includes:
   * to run the [wazideploy-generate.sh script](../Common-Backend-Scripts/README.md#140---wazideploy-generatesh) to download the .TAR file package from the artifact repository URL and the generate deployment plan
   * to deploy the .TAR file package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#141---wazideploy-deploysh) (Python-based).
   * to execute the [Wazi Deploy evidence script](../Common-Backend-Scripts/README.md#142---wazideploy-generatesh) to generate a deployment report that is attached to the pipeline run and to push evidences into a shared directory structure for further analysis of deployment results.
- * `Workspace Cleanup` stage to clean up the workspace.
+  * `Workspace Cleanup` stage to clean up the workspace.
 
 Depending on your selected and software analysis and deployment technology, review the definitions and (de-)/activate the appropriate steps.
 
@@ -145,7 +145,7 @@ It supports the same steps as the basic build pipeline:
 * Packaging
 * Request deployment to the integration test environment
 
-The user can then use UCD to deploy the release candidate package to the higher test environments. At the time of the production deployment, a release tag and a release can be created in the Git repository of choice. This can be automated as part of the deployment process to create a Git tag for the commit of the release pipeline build. 
+The user can then use UCD to deploy the release candidate package to the higher test environments. At the time of the production deployment, a release tag and a release can be created in the Git repository of choice. This can be automated as part of the deployment process to create a Git tag for the commit of the release pipeline build.
 
 Overview of the release pipeline:
 
