@@ -695,7 +695,7 @@ Packaging:
             export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
             export currentBaselineVersion=$(echo "${stringOut}" | grep "Baseline reference:" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 
-            if [ "${releaseVersion}" == "" || "${currentBaselineVersion}" == "" ]; then
+            if [ -z "${releaseVersion}" ] || [ -z "${currentBaselineVersion}" ]; then
                 RC=8
                 echo [ERROR] Failed to extract the release version or the current baseline version from the output of computeReleaseVersion script. Exit code: ${RC}.
                 echo ${stringOut}
@@ -717,13 +717,13 @@ Packaging:
          
                 
             baselineReferenceFile=$(find ${CI_PROJECT_DIR} -name baselineReference.config)
-            if [ "${baselineReferenceFile}" == "" ]; then
+            if [ -z "${baselineReferenceFile}" ]; then
                 RC=8
                 echo [ERROR] Unable to locate the baselineReference.config file. Exit code: ${RC}.
             fi
                
             if [ ${RC} -eq 0 ]; then
-                if [ ${CI_COMMIT_BRANCH} == "main" && ${RC} ]; then
+                if [ ${CI_COMMIT_BRANCH} == "main" ]; then
                     echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/${releaseVersion}
                     sed -i "s/main=refs\/tags\/${currentBaselineVersion}/main=refs\/tags\/${releaseVersion}/" ${baselineReferenceFile}
                     sed -i "/^release.*${currentBaselineVersion}/a release\/${releaseVersion}=refs\/tags\/${releaseVersion}" ${baselineReferenceFile}
