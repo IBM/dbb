@@ -1,0 +1,7 @@
+config:
+  - name: compileParmsBase
+    value: CICS
+
+
+
+                

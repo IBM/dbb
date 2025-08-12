@@ -1,0 +1,86 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+version: 1.0.0
+
+application:
+  name: MortgageApplication
+  
+    
+  tasks:
+
+    # Variable overrides for the Cobol language task
+    - task: Cobol
+    
+    
+      variables:  
+        # Need to build sub-module epsnbrvl.cbl first during cobol builds
+        - name: fileBuildRank
+          value: 1
+          forFiles: "**/cobol/epsnbrvl.cbl"
+
+        # Skip creating a load module for these programs as they will be 
+        # statically linked to other programs
+        - name: doLinkEdit
+          value: false
+          forFiles: 
+            - "**/cobol/epsnbrvl.cbl"
+            - "**/cobol/epsmlist.cbl"   
+
+   
+        #################################################################
+        # Use language configuration groups
+        #################################################################
+        - name: configSource
+          value: ${APP_DIR}/config/CBL_CICS_SQL.yaml
+          forFiles:
+            - "**/cobol/epscmort.cbl"
+            
+        - name: configSource
+          value: ${APP_DIR}/config/CBL_CICS.yaml
+          forFiles:
+            - "**/cobol/epscsmrd.cbl"
+            - "**/cobol/epscsmrt.cbl"
+            - "**/cobol/epsmlist.cbl"
+            
+        - name: configSource
+          value: ${APP_DIR}/config/CBL.yaml
+          forFiles:
+            - "**/cobol/epsmpmt.cbl"
+            - "**/cobol/epsnbrvl.cbl"  
+        #################################################################
+        # End language configuration groups
+        #################################################################            
+            
+    # Variable overrides for the LinkEdit language task
+    - task: LinkEdit
+      variables: 
+        # Set flag for link cards with CICS load modules
+        - name: hasCICSModules
+          value: true
+          forFiles:
+            - "**/link/epsmlist.lnk"
+            
+    # Variable overrides for the ImpactAnalysis task
+    - task: ImpactAnalysis
+      variables:
+        # Associate dependency files to program types. For more information see 
+        # https://www.ibm.com/docs/en/dbb/3.0?topic=index-task-impactanalysis#defining-impact-query-patterns
+        - name: impactQueryPatterns
+          value:
+            # Cobol program dependency patterns
+            - languageExt: cbl      
+              dependencyPatterns: 
+                - ${APP_DIR_NAME}/copybook/*.cpy   # Copybook source dependency
+                - ${APP_DIR_NAME}/bms/*.bms        # BMS Map source dependency
+                - ${APP_DIR_NAME}/cobol/*.cbl      # Static link dependency  
+            # Link card dependency patterns
+            - languageExt: lnk                    
+              dependencyPatterns: 
+                - ${APP_DIR_NAME}/cobol/*.cbl      # Static link dependency 
+                
