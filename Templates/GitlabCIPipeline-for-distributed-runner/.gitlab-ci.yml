@@ -196,6 +196,7 @@ Packaging:
 
             if [ ${RC} -ne 0 ]; then
                 echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
+                echo [ERROR] Error message from the computeReleaseVersion script is
                 echo ${stringOut}
             fi
 
@@ -203,9 +204,10 @@ Packaging:
                 # Extract the next release version.
                 export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
             
-                if [ "${releaseVersion}" == "" ]; then
+                if [ -z "${releaseVersion}" ]; then
                     RC=8
                     echo [ERROR] Failed to extract the release version from the output of computeReleaseVersion script. Exit code: ${RC}.
+                    echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
                 fi
             fi
@@ -273,6 +275,7 @@ Packaging:
 
             if [ ${RC} -ne 0 ]; then
                 echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
+                echo [ERROR] Error message from the computeReleaseVersion script is
                 echo ${stringOut}
             fi
 
@@ -280,9 +283,10 @@ Packaging:
                 # Extract the next release version.
                 export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
                         
-                if [ "${releaseVersion}" == "" ]; then
+                if [ -z "${releaseVersion}" ]; then
                     RC=8
                     echo [ERROR] Failed to extract the release version from the output of computeReleaseVersion script. Exit code: ${RC}.
+                    echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
                 fi
             fi
@@ -687,6 +691,7 @@ Packaging:
 
         if [ ${RC} -ne 0 ]; then
             echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
+            echo [ERROR] Error message from the computeReleaseVersion script is
             echo ${stringOut}
         fi
 
@@ -698,6 +703,7 @@ Packaging:
             if [ -z "${releaseVersion}" ] || [ -z "${currentBaselineVersion}" ]; then
                 RC=8
                 echo [ERROR] Failed to extract the release version or the current baseline version from the output of computeReleaseVersion script. Exit code: ${RC}.
+                echo [ERROR] Error message from the computeReleaseVersion script is
                 echo ${stringOut}
             fi
         fi
