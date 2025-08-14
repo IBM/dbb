@@ -29,6 +29,7 @@
 # 2023/11/20 MDLB 1.00 Initial Release
 # 2023/11/29 DB   1.10 Fixes to relative workspace directory
 # 2025/07/24 DB   1.20 Use default query and report renderer
+# 2025/08/14 DB   1.21 Fixes - query and report renderer
 #===================================================================================
 Help() {
     echo $PGM" - Generate deployment reports with Wazi Deploy                       "
@@ -247,6 +248,19 @@ validateOptions() {
         fi
     fi
 
+    # Validate configuration
+    if [ -z "${wdQueryTemplate}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Wazi Deploy Query template is required to be defined in pipelineBackend.config (wdQueryTemplate). rc="$rc
+        echo $ERRMSG
+    fi
+
+    if [ -z "${wdReportRenderer}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Wazi Deploy Renderer is required to be defined in pipelineBackend.config (wdReportRenderer). rc="$rc
+        echo $ERRMSG
+    fi
+
     # compute evidence file if not specified
     if [ -z "${EvidenceFile}" ]; then
         # compute default based on configuration
@@ -282,8 +296,8 @@ if [ $rc -eq 0 ]; then
         echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
     fi
 
-    if [ ! -z "${wdSearchTemplate}" ]; then
-        echo $PGM": [INFO] **                  Query Template:" ${wdSearchTemplate}
+    if [ ! -z "${wdQueryTemplate}" ]; then
+        echo $PGM": [INFO] **                  Query Template:" ${wdQueryTemplate}
     fi
 
     if [ ! -z "${wdReportRenderer}" ]; then
@@ -301,7 +315,7 @@ fi
 #
 # Set up to execute the Wazi Deploy evidence command
 if [ $rc -eq 0 ]; then
-    CommandLine="wazideploy-evidence --dataFolder ${EvidenceFolder} --index ${Workspace}/${wdIndexFolder} --query ${wdSearchTemplate} --output=${OutputFile} ir renderer_name=${wdReportRenderer}"     
+    CommandLine="wazideploy-evidence --dataFolder ${EvidenceFolder} --index ${Workspace}/${wdIndexFolder} --query ${wdQueryTemplate} --output=${OutputFile} ir renderer_name=${wdReportRenderer}"     
      
     echo ${CommandLine} 2>&1
     ${CommandLine} 2>&1
