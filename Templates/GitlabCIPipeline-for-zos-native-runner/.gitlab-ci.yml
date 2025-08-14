@@ -69,7 +69,7 @@ Clone:
             else
                 echo [ERROR] Clone job failed. Exit code: ${RC}.
                 exit ${RC}
-            fi
+            fi        
 
 Build application:
     needs: ["Clone"]
@@ -112,53 +112,60 @@ Packaging:
     script: |
             echo [INFO] Start packaging job.
 
+            # Compute the next release verion for a release pipeline.
             if [ ${pipelineType} == "release" ]; then
                 echo [INFO] Start computing the next release version.
 
+                # Call script to compute the next release version from baselineReference file.
                 stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
                 RC=$?
 
-                if [ ${RC} -eq 0 ]; then
-                    export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
-                    if [ "${releaseVersion}" != "" ]; then
-                        echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}
-                        
-                        releaseVersion="rel-${releaseVersion}"
-
-                        echo [INFO] Start packaging for a release pipeline.
-                        echo [INFO] Release Version: ${releaseVersion}
-    
-                        packageBuildOutputs.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -r ${releaseVersion} -i ${CI_PIPELINE_ID}
-                        RC=$?
-
-                        # Create release candidate tag
-                        if [ ${RC} -eq 0 ]; then
-                            echo [INFO] Packaging job passed.
-                            echo [INFO] Start creating a Git tag '${releaseVersion}-${CI_PIPELINE_ID}' to identify a release candidate. 
-                            curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${releaseVersion}-${CI_PIPELINE_ID}&ref=${CI_COMMIT_REF_NAME}"
-                            RC=$?
-                            if [ ${RC} -eq 0 ]; then
-                                echo [INFO] Create release candidate job passed.
-                            else
-                                echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
-                            fi
-                        else
-                            echo [ERROR] Packaging job failed. Exit code: ${RC}.
-                            exit ${RC}
-                        fi
-                    else
-                        RC=8
-                        echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                        exit ${RC}
-                    fi
-
-                else
+                if [ ${RC} -ne 0 ]; then
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
                     echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
-                    exit ${RC}
                 fi
-            
+                if [ ${RC} -eq 0 ]; then
+                    # Extract the next release version.
+                    export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
+
+                    if [ -z "${releaseVersion}" ]; then
+                        RC=8
+                        echo [ERROR] Failed to extract the release version from the output of computeReleaseVersion script. Exit code: ${RC}.
+                        echo [ERROR] Error message from the computeReleaseVersion script is
+                        echo ${stringOut}
+                    fi
+                fi
+
+                if [ ${RC} -eq 0 ]; then
+                    echo [INFO] Compute the next release version passed. Next Release Version: ${releaseVersion}
+                    
+                    releaseVersion="rel-${releaseVersion}"
+
+                    echo [INFO] Start packaging for a release pipeline.
+                    echo [INFO] Release Version: ${releaseVersion}
+    
+                    packageBuildOutputs.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -r ${releaseVersion} -i ${CI_PIPELINE_ID}
+                    RC=$?
+
+                    if [ ${RC} -ne 0 ]; then
+                        echo [ERROR] Failed to package the build output. Exit code: ${RC}.
+                    fi
+                fi    
+
+                # Create release candidate tag
+                if [ ${RC} -eq 0 ]; then
+                    echo [INFO] Packaging job passed.
+                    echo [INFO] Start creating a Git tag '${releaseVersion}-${CI_PIPELINE_ID}' to identify a release candidate. 
+                    curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${releaseVersion}-${CI_PIPELINE_ID}&ref=${CI_COMMIT_REF_NAME}"
+                    RC=$?
+                    if [ ${RC} -eq 0 ]; then
+                        echo [INFO] Create release candidate job passed.
+                    else
+                        echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
+                    fi
+                fi
+
             else
                 echo [INFO] Start packaging for a build pipeline for branch '${CI_COMMIT_REF_NAME}'.
                 packageBuildOutputs.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -p ${pipelineType} -i ${CI_PIPELINE_ID}
@@ -167,11 +174,11 @@ Packaging:
                 if [ ${RC} -eq 0 ]; then
                     echo [INFO] Packaging job passed.
                 else
-                    echo [ERROR] Packaging job failed. Exit code: ${RC}.
+                    echo [ERROR] Failed to package the build output. Exit code: ${RC}.
                     exit ${RC}
                 fi
             fi
-
+            exit ${RC}
 
 1-Generate Deployment Plan:
     needs: ["Packaging"]
@@ -200,37 +207,42 @@ Packaging:
                 # Call script to compute the next release version from baselineReference file.
                 stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
                 RC=$?
-
-                if [ ${RC} -eq 0 ]; then
-                    export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
-                    if [ "${releaseVersion}" != "" ]; then
-
-                        echo [INFO] Compute the next release verion passed. Next Release Version: ${releaseVersion}
-
-                        releaseVersion="rel-${releaseVersion}"
-
-                        echo [INFO] Start generating the deployment plan for a release pipeline.
-                        echo [INFO] Release Version: ${releaseVersion}
-                        wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -R ${releaseVersion} -I ${CI_PIPELINE_ID}
-                        RC=$?
-
-                        if [ ${RC} -eq 0 ]; then
-                            echo [INFO] Generating the deployment plan passed.
-                        else
-                            echo [ERROR] Generating the deployment plan failed. Exit code: ${RC}.
-                            exit ${RC}
-                        fi
-                    else
-                        RC=8
-                        echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                        exit ${RC}
-                    fi
-
-                else
+                
+                if [ ${RC} -ne 0 ]; then
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
                     echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
                 fi
+
+                if [ ${RC} -eq 0 ]; then
+                    # Extract the next release version.
+                    export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
+                    
+                    if [ -z "${releaseVersion}" ]; then
+                        RC=8
+                        echo [ERROR] Failed to extract the release version from the output of computeReleaseVersion script. Exit code: ${RC}.
+                        echo [ERROR] Error message from the computeReleaseVersion script is
+                        echo ${stringOut}
+                    fi
+                fi
+
+                if [ ${RC} -eq 0 ]; then
+
+                    echo [INFO] Compute the next release verion passed. Next Release Version: ${releaseVersion}
+
+                    releaseVersion="rel-${releaseVersion}"
+
+                    echo [INFO] Start generating the deployment plan for a release pipeline.
+                    echo [INFO] Release Version: ${releaseVersion}
+                    wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -R ${releaseVersion} -I ${CI_PIPELINE_ID}
+                    RC=$?
+
+                    if [ ${RC} -eq 0 ]; then
+                        echo [INFO] Generating the deployment plan passed.
+                    else
+                        echo [ERROR] Generating the deployment plan failed. Exit code: ${RC}.
+                    fi
+                fi    
             
             else
                 echo [INFO] Start generating the deployment plan for build pipeline.
@@ -245,6 +257,8 @@ Packaging:
                     exit ${RC}
                 fi
             fi
+
+            exit ${RC}
 
 
 2-Deploy to Integration:
@@ -395,92 +409,104 @@ Packaging:
     script: |
             echo [INFO] "Start creating next release version"
 
+            # Call script to compute the next release version from baselineReference file.
             stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
             RC=$?
 
+            if [ ${RC} -ne 0 ]; then
+                echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
+                echo [ERROR] Error message from the computeReleaseVersion script is
+                echo ${stringOut}
+            fi
+
             if [ ${RC} -eq 0 ]; then
+                # Extract the next release versions and the current baseline version.
                 export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}' | xargs)
                 export currentBaselineVersion=$(echo "${stringOut}" | grep "Baseline reference:"  | awk -F "refs/tags/rel-" '{print $2}' | xargs)
 
-                if [ "${releaseVersion}" != "" ]; then
-                    currentBaselineVersion="rel-${currentBaselineVersion}"
-                    echo [INFO] Current Baseline Version: ${currentBaselineVersion}
-                    releaseVersion="rel-${releaseVersion}"
-                    echo [INFO] Next Release Version: ${releaseVersion}
+                if [ -z "${releaseVersion}" ] || [ -z "${currentBaselineVersion}" ]; then
+                
+                    RC=8
+                    echo [ERROR] Failed to extract the release version or the current baseline version from the output of computeReleaseVersion script. Exit code: ${RC}.
+                    echo [ERROR] Error message from the computeReleaseVersion script is
+                    echo ${stringOut}
+                fi
+            fi  
 
-                    cd ${uniqueWorkspaceId}/${application}
+            if [ ${RC} -eq 0 ]; then
+                releaseVersion="rel-${releaseVersion}"
+                echo [INFO]     Next Release Version: ${releaseVersion}
+                currentBaselineVersion="rel-${currentBaselineVersion}"
+                echo [INFO] Current Baseline Version: ${currentBaselineVersion}
 
-                    export remoteFound=`git remote | grep gitlab_origin | wc -l`
-                    if [ $remoteFound -eq 1 ]; then
-                        git remote remove gitlab_origin
-                    fi
-                    git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git
+                # Update baselineReference
+                cd ${uniqueWorkspaceId}/${application}
+                export remoteFound=`git remote | grep gitlab_origin | wc -l`
+                 if [ $remoteFound -eq 1 ]; then
+                    git remote remove gitlab_origin
+                fi
+                git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git
 
+                baselineReferenceFile=$(find ${uniqueWorkspaceId} -name baselineReference.config)
 
-                    # Update baselineReference
-                    baselineReferenceFile=$(find ${uniqueWorkspaceId} -name baselineReference.config)
-                    if [ "${baselineReferenceFile}" != "" ]; then
-                        if [ ${CI_COMMIT_BRANCH} == "main" ]; then
-                            echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/rel-${releaseVersion}
+                if [ -z "${baselineReferenceFile}" ]; then
+                    RC=8
+                    echo [ERROR] Unable to locate the baselineReference.config file. Exit code: ${RC}.
+                fi
+                if [ ${RC} -eq 0 ]; then
+                    if [ ${CI_COMMIT_BRANCH} == "main" ]; then
+                        echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/rel-${releaseVersion}
                             cat ${baselineReferenceFile} | sed "s/main=refs\/tags\/${currentBaselineVersion}/main=refs\/tags\/${releaseVersion}/" > ${baselineReferenceFile}.new
                             iconv -f ISO8859-1 -t IBM-1047 ${baselineReferenceFile}.new > ${baselineReferenceFile}
                             chtag -tc IBM-1047 ${baselineReferenceFile}
                             rm ${baselineReferenceFile}.new
                             echo "release/${releaseVersion}=refs/tags/${releaseVersion}" >> ${baselineReferenceFile}
-                        else
-                            echo [INFO] Update baselineReference.config file to set baseline reference for branch release/${releaseVersion}
-                            cat ${baselineReferenceFile} | sed "s/^release.*${currentBaselineVersion}/release\/${currentBaselineVersion}=refs\/tags\/${releaseVersion}/" > ${baselineReferenceFile}.new
-                            iconv -f ISO8859-1 -t IBM-1047 ${baselineReferenceFile}.new > ${baselineReferenceFile}
-                            chtag -tc IBM-1047 ${baselineReferenceFile}
-                            rm ${baselineReferenceFile}.new
-                            
-                            #echo "release/${releaseVersion}=refs/tags/${releaseVersion}" >> ${baselineReferenceFile}
-                        fi
-
-                        git add ${baselineReferenceFile}
-                        git commit -m "Updated baselineReference.config file for new release ${releaseVersion}"
-                        git push gitlab_origin HEAD:${CI_COMMIT_BRANCH} -o ci.skip
-                        echo [INFO] Pushed baselineReference.config file changes to branch: ${CI_COMMIT_BRANCH}.
                     else
-                        RC=8
-                        echo [ERROR] Unable to locate the baselineReference.config file. Exit code: ${RC}.
+                        echo [INFO] Update baselineReference.config file to set baseline reference for branch release/${releaseVersion}
+                        cat ${baselineReferenceFile} | sed "s/^release.*${currentBaselineVersion}/release\/${currentBaselineVersion}=refs\/tags\/${releaseVersion}/" > ${baselineReferenceFile}.new
+                        iconv -f ISO8859-1 -t IBM-1047 ${baselineReferenceFile}.new > ${baselineReferenceFile}
+                        chtag -tc IBM-1047 ${baselineReferenceFile}
+                        rm ${baselineReferenceFile}.new
                     fi
 
-                    if [ ${RC} -eq 0 ]; then
-                        # Create release tag
-                        curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${releaseVersion}&ref=${CI_COMMIT_REF_NAME}"
-                        RC=$?
-                    fi
-
-                    if [ ${RC} -eq 0 ]; then
-                        echo [INFO] Created release version tag: ${releaseVersion}.
-                        if [ ${CI_COMMIT_BRANCH} == "main" ]; then
-                            # Create release maintenance branch
-                            curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/branches?branch=release%2F${releaseVersion}&ref=${releaseVersion}"
-                            RC=$?
-                            if [ ${RC} -eq 0 ]; then
-                                echo [INFO] Created release maintenance branch: release/${releaseVersion}.
-                            else
-                                echo [ERROR] Failed to create release maintenance branch. Exit code: ${RC}.
-                                exit ${RC}
-                            fi  
-                        fi
-                    else
-                        echo [ERROR] Failed to create release candidate tag. Exit code: ${RC}.
-                        exit ${RC}
-                    fi
-                else
-                    RC=8
-                    echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                    exit ${RC}
+                    git add ${baselineReferenceFile}
+                    git commit -m "Updated baselineReference.config file for new release ${releaseVersion}"
+                    git push gitlab_origin HEAD:${CI_COMMIT_BRANCH} -o ci.skip
+                    echo [INFO] Pushed baselineReference.config file changes to branch: ${CI_COMMIT_BRANCH}.
                 fi
-
-            else
-                echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                echo [ERROR] Error message from the computeReleaseVersion script is
-                echo ${stringOut}
-                exit ${RC}
             fi
+
+                   
+            if [ ${RC} -eq 0 ]; then
+                # Create release tag
+                curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${releaseVersion}&ref=${CI_COMMIT_REF_NAME}"
+                RC=$?
+            fi
+
+            if [ ${RC} -ne 0 ]; then
+                echo [ERROR] Failed to create release version tag. Exit code: ${RC}.
+                echo ${stringOut}
+            fi
+
+            if [ ${RC} -eq 0 ]; then
+                echo [INFO] Created release version tag: ${releaseVersion}.
+
+                if [ ${CI_COMMIT_BRANCH} == "main" ]; then
+                    # Create release maintenance branch
+                    curl --request POST --header "PRIVATE-TOKEN: ${AutomationToken}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/branches?branch=release%2F${releaseVersion}&ref=${releaseVersion}"
+                    RC=$?
+
+                    if [ ${RC} -eq 0 ]; then
+                        echo [INFO] Created release maintenance branch: release/${releaseVersion}.
+                    else
+                        echo [ERROR] Failed to create release maintenance branch. Exit code: ${RC}.
+                        exit ${RC}
+                    fi  
+                fi
+            fi
+
+            exit ${RC}
+        
             
 Cleanup:
     stage: Cleanup
