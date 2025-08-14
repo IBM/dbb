@@ -800,7 +800,6 @@ CLI parameter | Description
 -p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`.  If not specified, the deployment plan location is obtained from the `pipelineBackend.config`.
 -r `<deploymentPlanReport>` | (Optional) Absolute or relative path to the **Deployment Plan Report**. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. If not specified, the deployment plan report location is obtained from the `pipelineBackend.config`.
 -o `<packageOutputFile>` | (Optional) Absolute or relative path to the **Package Output File** that specifies the location where to store the downloaded tar file. If providing a relative path, the file path is prefixed with Wazi Deploy Packaging directory `<wdDeployPackageDir>` configured in `pipelineBackend.config`. Only required when wazideploy-generate is used to download the package. This is indicated when a URL is specified for the **Package Input File**.
-
 -d | (Optional) Debug tracing flag. Used to produce additional tracing with Wazi Deploy.
 -- | - when retrieving the tar file from Artifact repo the below options are mandatory -
 -b `<branch>`| Name of the **git branch** turning into a segment of the directory path for the location within the artifact repository.
@@ -815,15 +814,15 @@ The section below contains the output that is produced by the `wazideploy-genera
 
 <details>
   <summary>Script Output</summary>
-wazideploy-generate.sh -m /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/deployment-method/deployment-method.yml -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml -r /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+wazideploy-generate.sh -m /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/deployment-method/deployment-method.yml -p /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlan.yaml -r /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlanReport.html -i /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar
 wazideploy-generate.sh: [INFO] Generate Wazi Deploy Deployment Plan. Version=1.00
 
 wazideploy-generate.sh: [INFO] **************************************************************
 wazideploy-generate.sh: [INFO] ** Start Wazi Deploy Generation on HOST/USER: z/OS ZT01 04.00 02 8561/***
 wazideploy-generate.sh: [INFO] **               Deployment Method: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/deployment-method/deployment-method.yml
-wazideploy-generate.sh: [INFO] **       Generated Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml
-wazideploy-generate.sh: [INFO] **          Deployment Plan Report: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html
-wazideploy-generate.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+wazideploy-generate.sh: [INFO] **       Generated Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlan.yaml
+wazideploy-generate.sh: [INFO] **          Deployment Plan Report: /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlanReport.html
+wazideploy-generate.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar
 wazideploy-generate.sh: [INFO] **        Debug output is disabled.
 wazideploy-generate.sh: [INFO] **************************************************************
 
@@ -850,8 +849,8 @@ wazideploy-generate.sh: [INFO] *************************************************
 *** No item found
 ** Collecting items for DELETE_MODULES/DELETE/MEMBER_DELETE
 *** No item found
-* Save the deployment plan to: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml
-* Save the deployment plan report to: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlanReport.html
+* Save the deployment plan to: /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlan.yaml
+* Save the deployment plan report to: /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlanReport.html
 
 </details>
 
@@ -859,22 +858,37 @@ wazideploy-generate.sh: [INFO] *************************************************
 
 This script invokes the Wazi Deploy Deploy (with the Python Translator) command to deploy the content of a provided package with a Deployment Plan.
 
+If the `publish` parameter defined in the pipelineBackend.config file is set to true, the script checks for the package input file that was automatically retrieved from wazideploy-generate.sh.
+
 #### Invocation
 
 The `wazideploy-deploy.sh` script can be invoked as follows:
 
 Only mandatory parameters, and using relative paths:
 ```
-wazideploy-deploy.sh -w  MorgageApplication/main/build-1 -e IntegrationTest.yaml -i MortgageApplication.tar
+wazideploy-deploy.sh -w  MorgageApplication/main/build-1 -e IntegrationTest.yaml -a MortgageApplication
 ```
 or qualified paths
 ```
 wazideploy-deploy.sh -w /u/ado/workspace/MorgageApplication/main/build-1 -p /u/ado/workspace/MortApp/main/build-1/deploymentPlan.yaml -e /u/ado/deployment/environment-configs/IntegrationTest.yaml -i /u/ado/builds/MortApp/main/build-1/logs/MortgageApplication.tar -l /u/ado/builds/MortApp/main/build-1/logs/evidences.yaml
 ```
 
+Use the `-x` CLI parameter to specify for any [extraVars](https://www.ibm.com/docs/en/developer-for-zos/17.0.x?topic=translators-python-deployment-command) options. 
+The `-o` CLI parameter can be used to specify any additional Wazi Deploy CLI argument, for instance to specify plan tags.
+The below sample shows a way to override the HLQ via an extraVar, and showcases the use of the `--planTags` CLI option.
+```
+# Deploy + Process DBRMs first
+wazideploy-deploy.sh -w $application/$branchName/build_$timestamp -a MorgageApplication -x 'hlq=WDEPLOY.MORTGAGE' -o '--planTags db2' -e EOLEB7-Integration.yml
+# Deploy all except DBRMs
+wazideploy-deploy.sh -w $application/$branchName/build_$timestamp -a MorgageApplication -x 'hlq=WDEPLOY.MORTGAGE' -o '--planSkipTags db2' -e EOLEB7-Integration.yml
+```
+
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
 -w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. Optional, if `deploymentPlan`, `environmentFile`, `packageInputFile` and `evidenceFile` are fully referenced. 
+-a `<application>` | **Application name** passed as an extraVars argument.
+-x `<user-extraVars>` | **User-provided extraVars** passed to the Wazi Deploy deploy command as extraVars arguments. Multiple extraVars options can be passed using a blank as separator.
+-o `<user-cli-options>` | **User-provided CLI arguments** passed to the Wazi Deploy deploy command, such as --planTags or --planSkipTags.
 -p `<deploymentPlan>` | (Optional) Absolute or relative path to the **Deployment Plan** file, generated based on the content of the input package. If not specified, the location of the deployment plan is obtained from the `pipelineBackend.config`.
 -e `<environmentFile>` | (Optional) Absolute or relative path to **Environment File**, that describes the target z/OS environment. If a relative path is provided, the environment file is located based on the setting `wdEnvironmentConfigurations` in `pipelineBackend.config`.
 -i `<packageInputFile>` | **Package Input File** package that is to be deployed. If a relative file path is provided, the file is assumed to be located in the `<workspace directory>/<logsDir>`.
@@ -887,60 +901,49 @@ The section below contains the output that is produced by the `wazideploy-deploy
 
 <details>
   <summary>Script Output</summary>
-wazideploy-deploy.sh -w /u/ado/workspace/MortgageApplication/main/build-20231019.13 -p /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml -e /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -i /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -l /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+wazideploy-deploy.sh -w /u/ado/workspace/MortgageApplication/main/build-20259611.13 -p /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlan.yaml -e /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -i /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar -l /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/evidence.yaml
 wazideploy-deploy.sh: [INFO] Deploy Package with Wazi Deploy. Version=1.00
 
 wazideploy-deploy.sh: [INFO] **************************************************************
 wazideploy-deploy.sh: [INFO] ** Start Wazi Deploy Deployment on HOST/USER: z/OS ZT01 04.00 02 8561/***
-wazideploy-deploy.sh: [INFO] **               Working Directory: /u/ado/workspace/MortgageApplication/main/build-20231019.13
-wazideploy-deploy.sh: [INFO] **                 Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml
+wazideploy-deploy.sh: [INFO] **               Working Directory: /u/ado/workspace/MortgageApplication/main/build-20259611.13
+wazideploy-deploy.sh: [INFO] **                 Deployment Plan: /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlan.yaml
 wazideploy-deploy.sh: [INFO] **                Environment File: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml
-wazideploy-deploy.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
-wazideploy-deploy.sh: [INFO] **                   Evidence File: /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+wazideploy-deploy.sh: [INFO] **              Package Input File: /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar
+wazideploy-deploy.sh: [INFO] **         User-provided extraVars: hlq=WDEPLOY.MORTGAGE
+wazideploy-deploy.sh: [INFO] **       User-provided cli options: --planSkipTags db2
+wazideploy-deploy.sh: [INFO] **                   Evidence File: /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/evidence.yaml
 wazideploy-deploy.sh: [INFO] **        Debug output is disabled.
 wazideploy-deploy.sh: [INFO] **************************************************************
-wazideploy-deploy -wf /u/ado/workspace/MortgageApplication/main/build-20231019.13 -dp /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml -ef /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -pif /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar -efn /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+wazideploy-deploy -wf /u/ado/workspace/MortgageApplication/main/build-20259611.13 --deploymentPlan /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlan.yaml --envFile /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml -e hlq=DBEHM.BASETEST --planSkipTags db2 --packageInputFile /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar --evidencesFileName /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/evidence.yaml
 
-** Reading the deployment file from: /u/ado/workspace/MortgageApplication/main/build-20231019.13/deploymentPlan.yaml
+** Reading the deployment file from: /u/ado/workspace/MortgageApplication/main/build-20259611.13/deploymentPlan.yaml
 ** Reading the target environment file from: /var/WaziDeploy/wazi-deploy-samples-0.10.0/wazi-deploy-sample/plum-samples/external-repos/environment-conf/python/EOLEB7-MortgageApplication-Integration.yaml
 *** Validate Deployment Plan before processing it
 *** End of Deployment Plan validation
-*** Validate /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar fingerprint
-*** Checksum is valid for /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
+*** Validate /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar fingerprint
+*** Checksum is valid for /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar
 ** Registering SMF Record
-*! WARNING: The registration of SMF record failed. See full log in evidence file /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+*! WARNING: The registration of SMF record failed. See full log in evidence file /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/evidence.yaml
 ** Processing PACKAGE(s)
 ** Processing PACKAGE/PACKAGE(s)
 ** Processing PACKAGE/PACKAGE/PACKAGE(s) with package
-*** Processing package /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar
-*** Expand the package /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/MortgageApplication.tar to /u/ado/workspace/MortgageApplication/main/build-20231019.13 on system os OS/390
+*** Processing package /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar
+*** Expand the package /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/MortgageApplication.tar to /u/ado/workspace/MortgageApplication/main/build-20259611.13 on system os OS/390
 ** Processing DEPLOY_MODULES(s)
 ** Processing DEPLOY_MODULES/ADD(s)
 ** Processing DEPLOY_MODULES/ADD/MEMBER_COPY(s) with member_copy
-*** Copy /u/ado/workspace/MortgageApplication/main/build-20231019.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSCMORT.CICSLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSCMORT)'
-*** Copy /u/ado/workspace/MortgageApplication/main/build-20231019.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSMORT.MAPLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSMORT)'
-*** Copy /u/ado/workspace/MortgageApplication/main/build-20231019.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSMLIS.MAPLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSMLIS)'
-*** Copy /u/ado/workspace/MortgageApplication/main/build-20231019.13/***.MORTGAGE.MAIN.BLD.DBRM/EPSCMORT.DBRM to 'WDEPLOY.MORTGAGE.INT.DBRM(EPSCMORT)'
-** Processing DB2(s)
-** Processing DB2/UPDATE(s)
-** Processing DB2/UPDATE/DB2_BIND_PACKAGE(s) with db2_bind_package
-*** Perform BIND PACKAGE on subsys 'DBC1' for package 'MORTGAGE' and qualifier 'MORTGAGE' with template 'db2_bind_package.j2'
-**** Perform BIND PACKAGE on 'EPSCMORT.DBRM'
-*** Submit jcl /u/ado/workspace/MortgageApplication/main/build-20231019.13/bind_package_1.jcl
-** Job JOB03104 submitted with ZOAU Python API.
-**** Job JOB03104 finished CC=0000
-** Processing DB2/UPDATE/DB2_BIND_PLAN(s) with db2_bind_plan
-*** Perform BIND PLAN on subsys 'DBC1' for pklist '*.MORTGAGE.*' and qualifier 'MORTGAGE' with template 'db2_bind_plan.j2'
-*** Submit jcl /u/ado/workspace/MortgageApplication/main/build-20231019.13/bind_plan_1.jcl
-** Job JOB03105 submitted with ZOAU Python API.
-**** Job JOB03105 finished CC=0000
+*** Copy /u/ado/workspace/MortgageApplication/main/build-20259611.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSCMORT.CICSLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSCMORT)'
+*** Copy /u/ado/workspace/MortgageApplication/main/build-20259611.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSMORT.MAPLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSMORT)'
+*** Copy /u/ado/workspace/MortgageApplication/main/build-20259611.13/***.MORTGAGE.MAIN.BLD.LOAD/EPSMLIS.MAPLOAD to 'WDEPLOY.MORTGAGE.INT.LOAD(EPSMLIS)'
+*** Copy /u/ado/workspace/MortgageApplication/main/build-20259611.13/***.MORTGAGE.MAIN.BLD.DBRM/EPSCMORT.DBRM to 'WDEPLOY.MORTGAGE.INT.DBRM(EPSCMORT)'
 ** Processing CICS(s)
 ** Processing CICS/UPDATE(s)
 ** Processing CICS/UPDATE/PROG_UPDATE(s) with cics_cmci_prog_update
 *** Perform CICS NEWCOPY on WDEPLOY.MORTGAGE.INT.LOAD(EPSCMORT) on sysplex 'CICS01'
 *** Perform CICS NEWCOPY on WDEPLOY.MORTGAGE.INT.LOAD(EPSMORT) on sysplex 'CICS01'
 *** Perform CICS NEWCOPY on WDEPLOY.MORTGAGE.INT.LOAD(EPSMLIS) on sysplex 'CICS01'
-** Evidences saved in /u/ado/workspace/MortgageApplication/main/build-20231019.13/logs/evidence.yaml
+** Evidences saved in /u/ado/workspace/MortgageApplication/main/build-20259611.13/logs/evidence.yaml
 
 </details>
 
