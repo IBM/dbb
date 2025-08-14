@@ -4,9 +4,9 @@ variables:
     GIT_CHECKOUT: "false"
 
     application: "$CI_PROJECT_NAME"
-    wdEnvironmentFileIntegration: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Integration.yml
-    wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Acceptance.yml
-    wdEnvironmentFileProduction: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-CBSA-Production.yml
+    wdEnvironmentFileIntegration: EOLEB7-${application}-Integration.yml
+    wdEnvironmentFileAcceptance: EOLEB7-${application}-Acceptance.yml
+    wdEnvironmentFileProduction: EOLEB7-${application}-Production.yml
 
 # Working directory on USS 
     uniqueWorkspaceId: ${CI_BUILDS_DIR}/$CI_PROJECT_NAME/build-${CI_PIPELINE_ID}
@@ -416,7 +416,7 @@ Packaging:
                 export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}' | xargs)
                 export currentBaselineVersion=$(echo "${stringOut}" | grep "Baseline reference:"  | awk -F "refs/tags/rel-" '{print $2}' | xargs)
 
-                if [ "${releaseVersion}" == "" ] ||  [ "${currentBaselineVersion}" == "" ]; then
+                if [ -z "${releaseVersion}" ] || [ -z "${currentBaselineVersion}" ]; then
                 
                     RC=8
                     echo [ERROR] Failed to extract the release version or the current baseline version from the output of computeReleaseVersion script. Exit code: ${RC}.
@@ -441,7 +441,7 @@ Packaging:
 
                 baselineReferenceFile=$(find ${uniqueWorkspaceId} -name baselineReference.config)
 
-                if [ "${baselineReferenceFile}" == "" ]; then
+                if [ -z "${baselineReferenceFile}" ]; then
                     RC=8
                     echo [ERROR] Unable to locate the baselineReference.config file. Exit code: ${RC}.
                 fi
