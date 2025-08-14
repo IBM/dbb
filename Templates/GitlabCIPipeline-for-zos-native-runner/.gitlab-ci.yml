@@ -122,9 +122,9 @@ Packaging:
 
                 if [ ${RC} -ne 0 ]; then
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                    echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
-                else
+                fi
+                if [ ${RC} -eq 0 ]; then
                     # Extract the next release version.
                     export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
 
@@ -177,7 +177,7 @@ Packaging:
                     exit ${RC}
                 fi
             fi
-
+            exit ${RC}
 
 1-Generate Deployment Plan:
     needs: ["Packaging"]
@@ -206,37 +206,40 @@ Packaging:
                 # Call script to compute the next release version from baselineReference file.
                 stringOut=$(computeReleaseVersion.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -r ${releaseType})
                 RC=$?
-
-                if [ ${RC} -eq 0 ]; then
-                    export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
-                    if [ "${releaseVersion}" != "" ]; then
-
-                        echo [INFO] Compute the next release verion passed. Next Release Version: ${releaseVersion}
-
-                        releaseVersion="rel-${releaseVersion}"
-
-                        echo [INFO] Start generating the deployment plan for a release pipeline.
-                        echo [INFO] Release Version: ${releaseVersion}
-                        wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -R ${releaseVersion} -I ${CI_PIPELINE_ID}
-                        RC=$?
-
-                        if [ ${RC} -eq 0 ]; then
-                            echo [INFO] Generating the deployment plan passed.
-                        else
-                            echo [ERROR] Generating the deployment plan failed. Exit code: ${RC}.
-                            exit ${RC}
-                        fi
-                    else
-                        RC=8
-                        echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                        exit ${RC}
-                    fi
-
-                else
+                
+                if [ ${RC} -ne 0 ]; then
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
-                    echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
                 fi
+
+                if [ ${RC} -eq 0 ]; then
+                    # Extract the next release version.
+                    export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
+                    
+                    if [ "${releaseVersion}" == "" ]; then
+                        RC=8
+                        echo [ERROR] Failed to extract the release version from the output of computeReleaseVersion script. Exit code: ${RC}.
+                        echo ${stringOut}
+                    fi
+                fi
+
+                if [ ${RC} -eq 0 ]; then
+
+                    echo [INFO] Compute the next release verion passed. Next Release Version: ${releaseVersion}
+
+                    releaseVersion="rel-${releaseVersion}"
+
+                    echo [INFO] Start generating the deployment plan for a release pipeline.
+                    echo [INFO] Release Version: ${releaseVersion}
+                    wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${CI_COMMIT_REF_NAME} -P ${pipelineType} -R ${releaseVersion} -I ${CI_PIPELINE_ID}
+                    RC=$?
+
+                    if [ ${RC} -eq 0 ]; then
+                        echo [INFO] Generating the deployment plan passed.
+                    else
+                        echo [ERROR] Generating the deployment plan failed. Exit code: ${RC}.
+                    fi
+                fi    
             
             else
                 echo [INFO] Start generating the deployment plan for build pipeline.
@@ -251,6 +254,8 @@ Packaging:
                     exit ${RC}
                 fi
             fi
+
+            exit ${RC}
 
 
 2-Deploy to Integration:
