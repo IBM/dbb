@@ -122,13 +122,14 @@ Packaging:
 
                 if [ ${RC} -ne 0 ]; then
                     echo [ERROR] Failed to compute the next release version. Exit code: ${RC}.
+                    echo [ERROR] Error message from the computeReleaseVersion script is
                     echo ${stringOut}
                 fi
                 if [ ${RC} -eq 0 ]; then
                     # Extract the next release version.
                     export releaseVersion=$(echo "${stringOut}" | grep "The next release version:" | awk -F "rel-" '{print $2}' | awk -F ". rc=" '{print $1}')
 
-                    if [ "${releaseVersion}" == "" ]; then
+                    if [ -z "${releaseVersion}" ]; then
                         RC=8
                         echo [ERROR] Failed to extract the release version from the output of computeReleaseVersion script. Exit code: ${RC}.
                         echo [ERROR] Error message from the computeReleaseVersion script is
