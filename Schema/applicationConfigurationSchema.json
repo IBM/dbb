@@ -73,6 +73,7 @@
                   "type": "object",
                   "description": "Properties provided to the current context",
                   "required": ["name"],
+                  "additionalProperties": false,
                   "properties": {
                     "name": { "$ref": "#/$defs/variableName" },
                     "value": { "$ref": "#/$defs/variableValue" },
