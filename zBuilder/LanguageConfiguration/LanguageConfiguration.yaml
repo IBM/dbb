@@ -1,0 +1,44 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2025
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+######################################################################################
+# 
+# Required Language configuration elements that can be added to any language YAML file.
+#
+# Setup Instructions: 
+# - Copy the required variables to the <language>.yaml file you wish to add language
+#   configuration support.
+# - Copy the required steps to the <language>.yaml file you wish to add language
+#   configuration support.
+#
+#######################################################################################
+
+version: 1.0.2
+tasks:
+   
+    # Required language variables for the language configuration extension.
+    variables:
+    
+      # Location of the language configuration YAML file for the build file being 
+      # built.  Can be overridden by file associated varaibles. 
+      # See language configuration group YAML file for additional configuration options.  
+      - name: languageConfigurationSource
+        value: ${APP_DIR}/config/${FILE_NAME}.yaml
+       
+   
+    # Required step definitions for the language configuration extension.
+    steps:
+    
+      # Load language configuration overrides from YAML files.
+      # This step MUST be the first step defined.
+      # LanguageConfiguration.groovy requires that variable 'languageConfigurationSource' 
+      # must be set above.
+      - step: LanguageConfiguration
+        type: task
+        script: groovy/LanguageConfiguration.groovy
+      
