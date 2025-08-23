@@ -1,0 +1,32 @@
+name: Generated ZAPP document
+version: 5.0.0
+author:
+  name: IBM CORPORATION
+description: >-
+  For IBM Z Open Editor 5.0.0 or newer and IDz 17 and newer. Wazi's code samples with COBOL, PL/I, and HLASM applications
+  Note that this default file will search all your local folders in all your
+  open VS Code workspaces and can be highly inefficient. Modify the "locations"
+  entries to be as specific as possible. Add a new entry of type "MVS" to
+  specify remote locations. See the user documentation for more details:
+  https://ibm.github.io/zopeneditor-about/Docs/setting_propertygroup.html
+
+propertyGroups:
+  - name: search-all
+    libraries:
+      - name: syslib
+        type: local
+        locations:
+          - '**'
+
+profiles:
+  - name: zBuilder-userbuild
+    type: dbb
+    settings:
+      command: "$DBB_HOME/bin/dbb build"
+      lifecycle: user
+      lifecycleArgs:
+        - "--hlq ${dbbHlq}"
+      additionalDependencies:
+        - "dbb-app.yaml"
+      logFilePatterns:
+        - "*"

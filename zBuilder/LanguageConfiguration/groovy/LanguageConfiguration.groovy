@@ -19,9 +19,9 @@ println "> Running LanguageConfig.groovy step task"
 String buildFile = config.getVariable("FILE")
 
 // get the configSource as a file variable to support file configuration group files
-String configSource = config.getFileVariable("configSource", buildFile)
+String configSource = config.getFileVariable("languageConfigurationSource", buildFile)
 if (configSource == null) {
-   println ">> ERROR: configSource variable for ${buildFile} is not set"
+   println ">> ERROR: languageConfigurationSource variable for ${buildFile} is not set"
    return -1
 }
 
