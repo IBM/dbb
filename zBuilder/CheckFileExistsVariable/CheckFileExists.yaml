@@ -1,0 +1,35 @@
+---
+######################################################################################
+# 
+# Required Language configuration elements that can be added to any language YAML file.
+#
+# Setup Instructions: 
+# - Copy the required variables and steps to the <language>.yaml file you wish to add 
+#   check file exists support.
+#
+#######################################################################################
+
+version: 1.0.2
+tasks:
+   
+    # Required variables for the check file exits extension.
+    variables:
+    
+      # The absolute path of the file to check existence.
+      # NOTE: The ${FILE_NAME_BASE} variable requires the FileNameBaseVariable extension.
+      - name: checkFileExistsPath
+        value: ${APP_DIR}/jcl/${FILE_NAME_BASE}.jcl
+        
+      # The name of the boolean variable to create and set.
+      - name: checkFileExistsVariableName
+        value: JCLFileExists
+
+
+    # Required step definitions for the check file exists extension.
+    steps:
+    
+      # Check if a file exists         
+      - step: checkFileExists
+        type: task
+        script: groovy/CheckFileExists.groovy
+      

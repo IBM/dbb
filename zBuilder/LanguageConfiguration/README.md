@@ -15,16 +15,19 @@ This language step task extension allows users to provide simple YAML configurat
 NOTE: The following installation instructions assume that that the `$DBB_BUILD` directory that was setup on z/OS Unix has been [converted into a Git repository](https://www.ibm.com/docs/en/adffz/dbb/3.0.0?topic=customization-setting-up-integrated-zbuilder-framework#convert-the-configuration-directory-to-a-git-repository-optional) and resides in a internal or cloud Git provider.
 
 1. Clone this [DBB Community Repository](https://github.com/IBM/dbb) to your workstation.
-2. Clone your zBuilder build configuration repository to your workstation.
-3. Copy the `groovy/LanguageConfiguration.groovy` script to the build configuration `groovy` folder.
-4. Edit the language YAML file you want to enable language configuration files.
-    * Copy the varialbes and steps defined in the `LanguageConfiguration.yaml` file to the corresponding language YAML file sections.
+1. Clone your zBuilder build configuration repository to your workstation.
+1. Copy the `groovy/LanguageConfiguration.groovy` script to the build configuration `groovy` folder.
+1. Edit the language YAML file you want to enable language configuration files.
+    * Copy the variables and steps defined in the `LanguageConfiguration.yaml` file to the corresponding language YAML file sections.
     * NOTE that the LanguageConfiguration step needs to be the first step in the step list.
-5. Clone your application repository on your workstation. 
-6. Create a `config` directory in the application root directory.
-7. Create language configuration YAML files following the YAML format shown in the sample `application/config/*.yaml` files.
+1. Clone your application repository on your workstation. 
+1. Create a `config` directory in the application root directory.
+1. Create language configuration YAML files following the YAML format shown in the sample `application/config/*.yaml` files.
     * For individual YAML file use the source file naming conventions.
     * For Language group YAML files create YAML files with descriptive names.
+1. See Additional Configuration section below.
+1. Commit and push your changes to your build configuration repository.
+1. Pull your changes to your z/OS Unix local build configuration directory.
 
 ## Additional Configuration
 The main configuration for this extension is the `languageConfiguratonSource` variable that was added to the language YAML file in the steps above:

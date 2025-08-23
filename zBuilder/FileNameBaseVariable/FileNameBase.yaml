@@ -4,8 +4,8 @@
 # Required Language configuration elements that can be added to any language YAML file.
 #
 # Setup Instructions: 
-# - Copy the required steps to the <language>.yaml file you wish to add language
-#   configuration support.
+# - Copy the required variables to the <language>.yaml file you wish to add check file
+#   exists support.
 #
 #######################################################################################
 

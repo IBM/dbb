@@ -26,8 +26,10 @@ This step task will create a new file variable that will be available to all ste
 NOTE: The following installation instructions assume that that the `$DBB_BUILD` directory that was setup on z/OS Unix has been [converted into a Git repository](https://www.ibm.com/docs/en/adffz/dbb/3.0.0?topic=customization-setting-up-integrated-zbuilder-framework#convert-the-configuration-directory-to-a-git-repository-optional) and resides in an internal or cloud Git provider.
 
 1. Clone this [DBB Community Repository](https://github.com/IBM/dbb) to your workstation.
-2. Clone your zBuilder build configuration repository to your workstation.
-3. Copy the `groovy/CreateFileNameBase.groovy` script to the build configuration `groovy` folder.
-4. Edit the language YAML file you want to enable the `${FILE_NAME_BASE}` variable.
+1. Clone your zBuilder build configuration repository to your workstation.
+1. Copy the `groovy/CreateFileNameBase.groovy` script to the build configuration `groovy` folder.
+1. Edit the language YAML file you want to enable the `${FILE_NAME_BASE}` variable.
     * Copy the required step defined in the `FileNameBase.yaml` file to the corresponding language YAML file steps section.
-    * NOTE that the `createFileNameBase` step needs to be defined in the `steps:` list before the `${FILE_NAME_BASE}` variable can be used in later steps.
+    * NOTE that the `createFileNameBase` step needs to be defined in the `steps:` list before the `${FILE_NAME_BASE}` variable can be used in later steps..
+1. Commit and push your changes to your build configuration repository.
+1. Pull your changes to your z/OS Unix local build configuration directory.
