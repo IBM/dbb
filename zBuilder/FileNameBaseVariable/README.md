@@ -1,5 +1,5 @@
 # File Name Base Variable
-zBuilder provides several dynamically created [language step variables](https://www.ibm.com/docs/en/adffz/dbb/3.0.0?topic=reference-predefined-variables#language-configuration-step-variables) that can be used in language YAML configuration files.  This list includes several variables containing file name elements of the current file that is being processed that are useful in language step configuration.
+zBuilder provides many dynamically created [language step variables](https://www.ibm.com/docs/en/adffz/dbb/3.0.0?topic=reference-predefined-variables#language-configuration-step-variables) that can be used in language YAML configuration files.  This list includes several variables containing file name elements of the current file that is being processed that are useful in language step configuration.
 
 | File Variable | Description
 --- | ---
