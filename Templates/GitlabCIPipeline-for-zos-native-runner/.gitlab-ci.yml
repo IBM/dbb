@@ -384,7 +384,7 @@ Packaging:
 
     dependencies: []
     artifacts:
-        name: “productionDeploymentReport-${CI_PIPELINE_ID}"
+        name: "productionDeploymentReport-${CI_PIPELINE_ID}"
         when: always
         paths:
             - "deployPkgDir/deploy-production/evidences/evidence.yaml"
