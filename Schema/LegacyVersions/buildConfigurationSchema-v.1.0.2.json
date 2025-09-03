@@ -343,21 +343,14 @@
           "type": "array",
           "description": "Datasets to be created during build process",
           "items": {
-            "if": { "type": "string" },
-            "then": {
-              "type": "string",
-              "description": "Reference to a variable containing Dataset object."
-            },
-            "else": {
-              "type": "object",
-              "description": "Dataset definition",
-              "additionalProperties": false,
-              "properties": {
-                "name": { "type": "string" },
-                "options": {
-                  "type": "string",
-                  "description": "Space delimited BPXWDYN options"
-                }
+            "type": "object",
+            "description": "Dataset definition",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "options": {
+                "type": "string",
+                "description": "Space delimited BPXWDYN options"
               }
             }
           }
