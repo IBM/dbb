@@ -180,7 +180,7 @@ props.buildReportOrder.each { buildReportFile ->
 		// An Idea is currently opened to have an official USS_RECORD: https://ideas.ibm.com/ideas/DBB-I-43
 		def ussBuildRecords = buildReport.getRecords().findAll{
 			try {
-				it.getType()=="USS_RECORD" && !it.getAttribute("outputs").isEmpty()
+				it.getType()=="UNIX" && !it.getOutputs().isEmpty()
 			} catch (Exception e){}
 		}
 
@@ -243,17 +243,14 @@ props.buildReportOrder.each { buildReportFile ->
 
 		// adding files and executes with outputs to Hashmap to remove redundant data
 		buildRecords.each{ buildRecord ->
-			if (buildRecord.getType()=="USS_RECORD") {
-				if (!buildRecord.getAttribute("outputs").isEmpty()) {
-					ArrayList<ArrayList> outputs = []
-					buildRecord.getAttribute("outputs").split(';').collectEntries { entry ->
-						outputs += entry.replaceAll('\\[|\\]', '').split(',')
-					}
+			if (buildRecord.getType()=="UNIX") {
+				if (!buildRecord.getOutputs().isEmpty()) {
+					ArrayList<ArrayList> outputs = buildRecord.getOutputs()
 					zFSFilesCount += outputs.size()
 					outputs.each{ output ->
-						rootDir = output[0].trim()
-						file = output[1].trim()
-						deployType = output[2].trim()
+						rootDir = output.rootDir
+						file = output.file
+						deployType = output.deployType
 						def dependencySetRecord = buildReport.getRecords().find {
 							it.getType()==DefaultRecordFactory.TYPE_DEPENDENCY_SET && it.getFile().equals(file)
 						}
@@ -865,7 +862,13 @@ def copyArtifactsToUSS(Map<DeployableArtifact, Map> buildOutputsMap, String tarS
 			def originalFile = new File(container + "/" + deployableArtifact.file)
 			println "\tCopy '${originalFile.toPath()}' to '${file.toPath()}'"
 			try {
-				copyFiles(originalFile.getAbsoluteName(), file.getAbsoluteName())
+				copyFiles(originalFile.toString(), file.toString())
+				
+				// Append record to Wazi Deploy Application Manifest
+				if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+					wdManifestGeneratorUtilities.appendArtifactToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, dependencySetRecord, propertiesRecord)
+				}
+				
 			} catch (IOException exception) {
 				println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
 				rc = Math.max(rc, 1)
