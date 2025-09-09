@@ -1,0 +1,46 @@
+---
+##############################################################################
+#
+# Example for varaibles required in dbb-app.yaml to create language 
+# configuration groups for the MortgageApplication sample.
+#
+# Setup Instructions: 
+# - Copy the three languageConfigurationSource varaibles below to the 
+# MortgageApplication dbb-app.yaml file in the Cobol task.
+#
+##############################################################################
+
+version: 1.0.0
+
+application:
+    
+  tasks:
+
+    # Variable overrides for the Cobol language task
+    - task: Cobol
+    
+      variables:  
+        # The following variables can be used to create three language
+        # configration groups for the MortgageApplication sample.
+        # This is done by overriding the languageConfigurationSource 
+        # variable with group configuration YAML file associated
+        # to specific MortgageApplication COBOL source files.
+
+        - name: languageConfigurationSource
+          value: ${APP_DIR}/config/CBL_CICS_SQL.yaml
+          forFiles:
+            - "**/cobol/epscmort.cbl"
+            
+        - name: languageConfigurationSource
+          value: ${APP_DIR}/config/CBL_CICS.yaml
+          forFiles:
+            - "**/cobol/epscsmrd.cbl"
+            - "**/cobol/epscsmrt.cbl"
+            - "**/cobol/epsmlist.cbl"
+            
+        - name: languageConfigurationSource
+          value: ${APP_DIR}/config/CBL.yaml
+          forFiles:
+            - "**/cobol/epsmpmt.cbl"
+            - "**/cobol/epsnbrvl.cbl"          
+            

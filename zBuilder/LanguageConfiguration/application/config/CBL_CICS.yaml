@@ -1,0 +1,8 @@
+config:
+  - name: compileParms
+    value: CICS
+
+
+
+
+                
