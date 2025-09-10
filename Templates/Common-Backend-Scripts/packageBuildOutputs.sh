@@ -25,6 +25,11 @@
 #
 #
 #===================================================================================
+# Maintenance Log
+# Date       Who  Vers Description
+# ---------- ---- ---- --------------------------------------------------------------
+# 2025/09/10 DB   1.20 Passing wdPackageBuildIdentifier to packaging script
+#===================================================================================
 Help() {
     echo $PGM" - Invoke Package Build Outputs ("$PGMVERS")              "
     echo "                                                              "
@@ -131,7 +136,7 @@ packagingUtilities="${SCRIPT_HOME}/utilities/packagingUtilities.sh"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.10"
+PGMVERS="1.20"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
