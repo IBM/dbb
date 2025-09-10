@@ -50,11 +50,12 @@ getPreliminaryPackageConfiguration() {
     wdPackageBuildIdentifier="${buildIdentifier}"
 }
 
+
 getArtifactRepositoryName() {
 
-        # configuration variable defining the Artifactory repository name pattern
-        artifactRepositoryRepoPattern="${App}-${artifactRepositoryNameSuffix}"
-        artifactRepositoryName=$(echo "${artifactRepositoryRepoPattern}")
+    # configuration variable defining the Artifactory repository name pattern
+    artifactRepositoryRepoPattern="${App}-${artifactRepositoryNameSuffix}"
+    artifactRepositoryName=$(echo "${artifactRepositoryRepoPattern}")
 }
 
 computePackageUrl() {
@@ -66,7 +67,7 @@ computePackageUrl() {
         ERRMSG=$PGM": [ERROR] Unable to locate ${artifactRepositoryHelpersScript}. rc="$rc
         echo $ERRMSG
     fi
-    
+
     # configuration variable defining the Artifactory repository name pattern
     getArtifactRepositoryName
 
@@ -126,7 +127,7 @@ computeArchiveInformation() {
     wdPackageBuildIdentifier=""    # Identifier for the version attribute in Wazi Deploy Application Manifest file
     #############################################
 
-    # call 
+    # call
     getArtifactRepositoryName
 
     # evaluate conventions based on branch name
