@@ -29,6 +29,7 @@
 # 2023/10/19 MDLB 1.00 Initial Release
 # 2025/03/13 DB   1.10 Allow pipelines to compute the artifact location to download
 #                      packages via wazideploy-generate
+# 2025/09/10 DB   1.20 Streamline arguments. Deprecate -b branch argument.
 #===================================================================================
 Help() {
   echo $PGM" - Generate Wazi Deploy Deployment Plan                               "
@@ -109,11 +110,6 @@ Help() {
   echo "                                         executables for production env   "
   echo "                                        (optional)                        "
   echo "                                                                          "
-  echo "       -b <gitBranch>                    - Name of the git branch.        "
-  echo "                                           (optional)                     "
-  echo "                                                                          "
-  echo "                             Ex: main                                     "
-  echo "                                                                          "
   echo "                                                                          "
   echo "       -I <buildIdentifier>              - A unique build identifier      "
   echo "                                           typically the buildID of the   "
@@ -144,7 +140,7 @@ packagingUtilities="${SCRIPT_HOME}/utilities/packagingUtilities.sh"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.10"
+PGMVERS="1.20"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -162,11 +158,11 @@ ConfigFile=""
 Workspace=""
 App=""          # Application name - takes cli option a
 PipelineType="" # takes cli option P
-Branch=""       # takes cli option b
 
 # Package identifier variables
 buildIdentifier=""   # takes cli option I
 releaseIdentifier="" # takes cli option R
+Branch="" # takes cli option b (DEPRECATED)
 
 # 
 computeArchiveUrl="true"            # enables the computation of the url
@@ -334,6 +330,7 @@ if [ $rc -eq 0 ]; then
         echo $ERRMSG
         break
       fi
+      echo $PGM": [INFO] The argument -b branch is deprecated. Please switch to '-R' as the package identifier."
       Branch="$argument"
       ;;
     P)
@@ -495,8 +492,8 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
 
   if [ $rc -eq 0 ]; then
 
-    # Call utilities method
-    computeArchiveInformation
+    # Call utilities method to compute the Url based on defined conventions shared with packaging step
+    getArchiveLocation
 
     # Set Input and output files for Wazi Deploy
     PackageInputFile="${artifactRepositoryAbsoluteUrl}"

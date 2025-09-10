@@ -25,6 +25,11 @@
 #
 #
 #===================================================================================
+# Maintenance Log
+# Date       Who  Vers Description
+# ---------- ---- ---- --------------------------------------------------------------
+# 2025/09/10 DB   1.20 Passing wdPackageBuildIdentifier to packaging script
+#===================================================================================
 Help() {
     echo $PGM" - Invoke Package Build Outputs ("$PGMVERS")              "
     echo "                                                              "
@@ -131,7 +136,7 @@ packagingUtilities="${SCRIPT_HOME}/utilities/packagingUtilities.sh"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.10"
+PGMVERS="1.20"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -458,6 +463,12 @@ validatePublishingOptions() {
             ERRMSG=$PGM": [ERROR] URL to artifact repository (artifactRepositoryUrl) is required. rc="$rc
             echo $ERRMSG
         fi
+        
+        if [ -z "${artifactRepositoryNameSuffix}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Artifact repository name suffix (artifactRepositoryNameSuffix) is required. Check pipelineBackend.config. rc="$rc
+            echo $ERRMSG
+        fi 
 
         if [ -z "${artifactRepositoryUser}" ]; then
             rc=8
@@ -563,8 +574,8 @@ if [ $rc -eq 0 ]; then
         echo $PGM": [INFO] **       Packaging properties:" ${PkgPropFile}
     fi
 
-    if [ ! -z "${packageBuildIdentifier}" ]; then
-        echo $PGM": [INFO] **   Package Build Identifier:" ${packageBuildIdentifier}
+    if [ ! -z "${wdPackageBuildIdentifier}" ]; then
+        echo $PGM": [INFO] **   Package Build Identifier:" ${wdPackageBuildIdentifier}
     fi
     echo $PGM": [INFO] **              Generate SBOM:" ${generateSBOM}
     if [ ! -z "${sbomAuthor}" ]; then
@@ -651,8 +662,8 @@ if [ $rc -eq 0 ]; then
     fi
 
     # Wazi Deploy build identifier
-    if [ ! -z "${packageBuildIdentifier}" ]; then
-        CMD="${CMD} --buildIdentifier ${packageBuildIdentifier}"
+    if [ ! -z "${wdPackageBuildIdentifier}" ]; then
+        CMD="${CMD} --buildIdentifier ${wdPackageBuildIdentifier}"
     fi
 
     # Pass information about externally fetched modules to packaging to document them
