@@ -50,6 +50,13 @@ getPreliminaryPackageConfiguration() {
     wdPackageBuildIdentifier="${buildIdentifier}"
 }
 
+getArtifactRepositoryName() {
+
+        # configuration variable defining the Artifactory repository name pattern
+        artifactRepositoryRepoPattern="${App}-${artifactRepositoryNameSuffix}"
+        artifactRepositoryName=$(echo "${artifactRepositoryRepoPattern}")
+}
+
 computePackageUrl() {
     artifactRepositoryHelpersScript="${SCRIPT_HOME}/../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy"
 
@@ -59,6 +66,9 @@ computePackageUrl() {
         ERRMSG=$PGM": [ERROR] Unable to locate ${artifactRepositoryHelpersScript}. rc="$rc
         echo $ERRMSG
     fi
+    
+    # configuration variable defining the Artifactory repository name pattern
+    getArtifactRepositoryName
 
     #
     # Invoke the Package Build Outputs script
@@ -116,9 +126,10 @@ computeArchiveInformation() {
     wdPackageBuildIdentifier=""    # Identifier for the version attribute in Wazi Deploy Application Manifest file
     #############################################
 
-    # configuration variable defining the Artifactory repository name pattern
-    artifactRepositoryRepoPattern="${App}-${artifactRepositoryNameSuffix}"
+    # call 
+    getArtifactRepositoryName
 
+    # evaluate conventions based on branch name
     branchConvention=(${Branch//// })
 
     if [ $rc -eq 0 ]; then
@@ -138,8 +149,6 @@ computeArchiveInformation() {
 
         # remove chars (. -) from the name
         mainBranchSegmentTrimmed=$(echo ${mainBranchSegment} | tr -d '.-' | tr '[:lower:]' '[:upper:]')
-
-        artifactRepositoryName=$(echo "${artifactRepositoryRepoPattern}")
 
         # evaluate main segment
         case $mainBranchSegmentTrimmed in

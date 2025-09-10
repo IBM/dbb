@@ -458,6 +458,12 @@ validatePublishingOptions() {
             ERRMSG=$PGM": [ERROR] URL to artifact repository (artifactRepositoryUrl) is required. rc="$rc
             echo $ERRMSG
         fi
+        
+        if [ -z "${artifactRepositoryNameSuffix}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Artifact repository name suffix (artifactRepositoryNameSuffix) is required. Check pipelineBackend.config. rc="$rc
+            echo $ERRMSG
+        fi 
 
         if [ -z "${artifactRepositoryUser}" ]; then
             rc=8
@@ -563,8 +569,8 @@ if [ $rc -eq 0 ]; then
         echo $PGM": [INFO] **       Packaging properties:" ${PkgPropFile}
     fi
 
-    if [ ! -z "${packageBuildIdentifier}" ]; then
-        echo $PGM": [INFO] **   Package Build Identifier:" ${packageBuildIdentifier}
+    if [ ! -z "${wdPackageBuildIdentifier}" ]; then
+        echo $PGM": [INFO] **   Package Build Identifier:" ${wdPackageBuildIdentifier}
     fi
     echo $PGM": [INFO] **              Generate SBOM:" ${generateSBOM}
     if [ ! -z "${sbomAuthor}" ]; then
@@ -651,8 +657,8 @@ if [ $rc -eq 0 ]; then
     fi
 
     # Wazi Deploy build identifier
-    if [ ! -z "${packageBuildIdentifier}" ]; then
-        CMD="${CMD} --buildIdentifier ${packageBuildIdentifier}"
+    if [ ! -z "${wdPackageBuildIdentifier}" ]; then
+        CMD="${CMD} --buildIdentifier ${wdPackageBuildIdentifier}"
     fi
 
     # Pass information about externally fetched modules to packaging to document them
