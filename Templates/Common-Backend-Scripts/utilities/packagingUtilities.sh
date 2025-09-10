@@ -3,7 +3,108 @@ mainBranchSegment=""
 secondBranchSegment=""
 rc=0
 
-# Method implementing the conventions in the CBS for packaging using the PackageBuildOutputs.groovy script
+# Internal method to define release packaging conventions for publishing
+getReleasePackageConfiguration() {
+    #############################################
+    # Conventions for release builds:
+    # <artifactRepositoryName>/<artifactRepositoryDirectory>/<releaseIdentifier>/<application>-<releaseIdentifier>-<buildIdentifier>.tar
+    # MortgageApplication-repo-local/release/1.2.3/MortgageApplication-1.2.3-1234567890.tar
+    #############################################
+
+    # Release builds are captured in the release directory of the artifact repo
+    artifactRepositoryDirectory="release"
+
+    # artifactVersionName is second identifier in the folder structure and represents the
+    artifactVersionName=${releaseIdentifier}
+
+    # building up the tarFileName
+    tarFileName="${App}-${releaseIdentifier}-${buildIdentifier}.tar"
+
+    # Identifier for the version attribute in Wazi Deploy Application Manifest file
+    wdPackageBuildIdentifier="${releaseIdentifier}-${buildIdentifier}"
+}
+
+# Internal method to define preliminary/snapshot packaging conventions for publishing
+
+getPreliminaryPackageConfiguration() {
+    #############################################
+    # Conventions for snapshot builds:
+    # <artifactRepositoryName>/<artifactRepositoryDirectory>/<branch>/<application>-<buildIdentifier>.tar
+    # Mortgage-repo-local/build/feature/123-enhance-something/Mortgage-123456.tar
+    #############################################
+
+    # Preliminary builds are captured in the release directory of the artifact repo
+    artifactRepositoryDirectory="build"
+
+    # In packaging phase the branch names defines the artifactVersion
+    if [ ! -z "${Branch}" ]; then
+        artifactVersionName=${Branch}
+    elif [ ! -z "${releaseIdentifier}" ]; then
+        artifactVersionName=${releaseIdentifier}
+    fi
+
+    # building up the tarFileName
+    tarFileName="${App}-${buildIdentifier}.tar"
+
+    # Identifier for the version attribute in Wazi Deploy Application Manifest file
+    wdPackageBuildIdentifier="${buildIdentifier}"
+}
+
+computePackageUrl() {
+    artifactRepositoryHelpersScript="${SCRIPT_HOME}/../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy"
+
+    # validate options
+    if [ ! -f "${artifactRepositoryHelpersScript}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] Unable to locate ${artifactRepositoryHelpersScript}. rc="$rc
+        echo $ERRMSG
+    fi
+
+    #
+    # Invoke the Package Build Outputs script
+    if [ $rc -eq 0 ]; then
+        echo $PGM": [INFO] Invoking the ArtifactRepositoryHelper groovy script to compute Package Url."
+
+        CMD="$DBB_HOME/bin/groovyz ${log4j2} ${artifactRepositoryHelpersScript} --computeArchiveUrl"
+
+        # add tarfile name
+        if [ ! -z "${tarFileName}" ]; then
+            CMD="${CMD} --tarFileName ${tarFileName}"
+        fi
+
+        # artifactVersionName
+        if [ ! -z "${artifactVersionName}" ]; then
+            CMD="${CMD} --versionName ${artifactVersionName}"
+        fi
+
+        # Artifact repo options
+        if [ ! -z "${artifactRepositoryUrl}" ]; then
+            CMD="${CMD} --artifactRepositoryUrl \"${artifactRepositoryUrl}\""
+        fi
+
+        if [ ! -z "${artifactRepositoryName}" ]; then
+            CMD="${CMD} --artifactRepositoryName ${artifactRepositoryName}"
+        fi
+        if [ ! -z "${artifactRepositoryDirectory}" ]; then
+            CMD="${CMD} --artifactRepositoryDirectory ${artifactRepositoryDirectory}"
+        fi
+
+        echo $PGM": [INFO] ${CMD}"
+        artifactRepositoryAbsoluteUrl=$(${CMD} | grep "url=" | awk -F "=" ' { print $2 }')
+
+        if [ ! -z "${artifactRepositoryAbsoluteUrl}" ]; then
+            ERRMSG=$PGM": [INFO] Computation of Archive Url completed. rc="$rc
+            echo $ERRMSG
+        else
+            rc=12
+            ERRMSG=$PGM": [ERR] Computation of Archive Url failed. Check Console for details. rc="$rc
+            echo $ERRMSG
+
+        fi
+    fi
+}
+
+# Method implementing the conventions in the CBS  the PACKAGING step using the PackageBuildOutputs.groovy script
 computeArchiveInformation() {
     #############################################
     # output environment variables
@@ -12,7 +113,7 @@ computeArchiveInformation() {
     artifactRepositoryDirectory="" # root directory folder in repo
     artifactVersionName=""         # subfolder in repo path identifying version / origin branch
     tarFileName=""                 # computed tarFileName how it is stored in the artifact repository
-    archiveIdentifier=""      # Identifier for Wazi Deploy Application Manifest file
+    wdPackageBuildIdentifier=""    # Identifier for the version attribute in Wazi Deploy Application Manifest file
     #############################################
 
     # configuration variable defining the Artifactory repository name pattern
@@ -44,109 +145,41 @@ computeArchiveInformation() {
         case $mainBranchSegmentTrimmed in
         "MASTER" | "MAIN" | REL*)
             if [ "${PipelineType}" == "release" ]; then
-                #############################################
-                # Conventions for release builds:
-                # <artifactRepositoryName>/<artifactRepositoryDirectory>/<releaseIdentifier>/<application>-<releaseIdentifier>-<buildIdentifier>.tar
-                # MortgageApplication-repo-local/release/1.2.3/MortgageApplication-1.2.3-1234567890.tar
-                #############################################
-
-                # Release builds are captured in the release directory of the artifact repo
-                artifactRepositoryDirectory="release"
-
-                # artifactVersionName is second identifier in the folder structure and represents the
-                artifactVersionName=${releaseIdentifier}
-
-                # building up the tarFileName
-                tarFileName="${App}-${releaseIdentifier}-${buildIdentifier}.tar"
-                archiveIdentifier="${releaseIdentifier}-${buildIdentifier}"
+                getReleasePackageConfiguration
             else
-                #############################################
-                # Conventions for snapshot builds:
-                # <artifactRepositoryName>/<artifactRepositoryDirectory>/<branch>/<application>-<buildIdentifier>.tar
-                # Mortgage-repo-local/build/feature/123-enhance-something/Mortgage-123456.tar
-                #############################################
-
-                artifactRepositoryDirectory="build"
-                artifactVersionName=${Branch}
-                tarFileName="${App}-${buildIdentifier}.tar"
-                archiveIdentifier="${buildIdentifier}"
+                getPreliminaryPackageConfiguration
             fi
             ;;
         *)
             #############################################
             ### similar to snapshot builds
             #############################################
-            artifactRepositoryDirectory="build"
-            artifactVersionName=${Branch}
-            tarFileName="${App}-${buildIdentifier}.tar"
-            archiveIdentifier="${buildIdentifier}"
+            getPreliminaryPackageConfiguration
             ;;
         esac
-
-        #############################################
-        ### Construct the absolute repository URL (required when downloading the package)
-        #############################################
-
-        if [ "${computeArchiveUrl}" == "true" ]; then
-
-            artifactRepositoryHelpersScript="${SCRIPT_HOME}/../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy"
-
-            # validate options
-            if [ ! -f "${artifactRepositoryHelpersScript}" ]; then
-                rc=8
-                ERRMSG=$PGM": [ERROR] Unable to locate ${artifactRepositoryHelpersScript}. rc="$rc
-                echo $ERRMSG
-            fi
-
-            #
-            # Invoke the Package Build Outputs script
-            if [ $rc -eq 0 ]; then
-                echo $PGM": [INFO] Invoking the ArtifactRepositoryHelper groovy script to compute Package Url."
-
-                CMD="$DBB_HOME/bin/groovyz ${log4j2} ${artifactRepositoryHelpersScript} --computeArchiveUrl"
-
-                # add tarfile name
-                if [ ! -z "${tarFileName}" ]; then
-                    CMD="${CMD} --tarFileName ${tarFileName}"
-                fi
-
-                # artifactVersionName
-                if [ ! -z "${artifactVersionName}" ]; then
-                    CMD="${CMD} --versionName ${artifactVersionName}"
-                fi
-
-                # Artifact repo options
-                if [ ! -z "${artifactRepositoryUrl}" ]; then
-                    CMD="${CMD} --artifactRepositoryUrl \"${artifactRepositoryUrl}\""
-                fi
-
-                if [ ! -z "${artifactRepositoryName}" ]; then
-                    CMD="${CMD} --artifactRepositoryName ${artifactRepositoryName}"
-                fi
-                if [ ! -z "${artifactRepositoryDirectory}" ]; then
-                    CMD="${CMD} --artifactRepositoryDirectory ${artifactRepositoryDirectory}"
-                fi
-
-                echo $PGM": [INFO] ${CMD}"
-                artifactRepositoryAbsoluteUrl=$(${CMD} | grep "url=" |  awk -F "=" ' { print $2 }')
-
-                if [ ! -z "${artifactRepositoryAbsoluteUrl}" ]; then
-                    ERRMSG=$PGM": [INFO] Computation of Archive Url completed. rc="$rc
-                    echo $ERRMSG
-                else
-                    rc=12
-                    ERRMSG=$PGM": [ERR] Computation of Archive Url failed. Check Console for details. rc="$rc
-                    echo $ERRMSG
-
-                fi
-            fi
-
-        fi
 
         # unset internal variables
         mainBranchSegment=""
         secondBranchSegment=""
         thirdBranchSegment=""
 
+    fi
+}
+
+# Method pulling the conventions for the Wazi Deploy generate command to determine the absolute URL of the package
+
+getArchiveLocation() {
+    if [ "${PipelineType}" == "release" ]; then
+        getReleasePackageConfiguration
+    else
+        getPreliminaryPackageConfiguration
+    fi
+
+    #############################################
+    ### Construct the absolute repository URL (required when downloading the package)
+    #############################################
+
+    if [ "${computeArchiveUrl}" == "true" ]; then
+        computePackageUrl
     fi
 }

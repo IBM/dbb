@@ -109,11 +109,6 @@ Help() {
   echo "                                         executables for production env   "
   echo "                                        (optional)                        "
   echo "                                                                          "
-  echo "       -b <gitBranch>                    - Name of the git branch.        "
-  echo "                                           (optional)                     "
-  echo "                                                                          "
-  echo "                             Ex: main                                     "
-  echo "                                                                          "
   echo "                                                                          "
   echo "       -I <buildIdentifier>              - A unique build identifier      "
   echo "                                           typically the buildID of the   "
@@ -162,7 +157,6 @@ ConfigFile=""
 Workspace=""
 App=""          # Application name - takes cli option a
 PipelineType="" # takes cli option P
-Branch=""       # takes cli option b
 
 # Package identifier variables
 buildIdentifier=""   # takes cli option I
@@ -495,8 +489,8 @@ if [ $rc -eq 0 ] && [ "$publish" == "true" ] && [ ! -z "${buildIdentifier}" ]; t
 
   if [ $rc -eq 0 ]; then
 
-    # Call utilities method
-    computeArchiveInformation
+    # Call utilities method to compute the Url based on defined conventions shared with packaging step
+    getArchiveLocation
 
     # Set Input and output files for Wazi Deploy
     PackageInputFile="${artifactRepositoryAbsoluteUrl}"
