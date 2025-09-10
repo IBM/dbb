@@ -29,7 +29,6 @@
 # 2023/10/19 MDLB 1.00 Initial Release
 # 2025/03/13 DB   1.10 Allow pipelines to compute the artifact location to download
 #                      packages via wazideploy-generate
-# 2025/09/10 DB   1.20 Streamline arguments. Deprecate -b branch argument.
 #===================================================================================
 Help() {
   echo $PGM" - Generate Wazi Deploy Deployment Plan                               "
@@ -140,7 +139,7 @@ packagingUtilities="${SCRIPT_HOME}/utilities/packagingUtilities.sh"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.20"
+PGMVERS="1.10"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -162,7 +161,6 @@ PipelineType="" # takes cli option P
 # Package identifier variables
 buildIdentifier=""   # takes cli option I
 releaseIdentifier="" # takes cli option R
-Branch=""       # takes cli option b (DEPRECATED)
 
 # 
 computeArchiveUrl="true"            # enables the computation of the url
