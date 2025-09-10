@@ -37,10 +37,10 @@ getPreliminaryPackageConfiguration() {
     artifactRepositoryDirectory="build"
 
     # In packaging phase the branch names defines the artifactVersion
-    if [ ! -z "${Branch}" ]; then
-        artifactVersionName=${Branch}
-    elif [ ! -z "${releaseIdentifier}" ]; then
+    if [ ! -z "${releaseIdentifier}" ]; then
         artifactVersionName=${releaseIdentifier}
+    elif [ ! -z "${Branch}" ]; then
+        artifactVersionName=${Branch}
     fi
 
     # building up the tarFileName
