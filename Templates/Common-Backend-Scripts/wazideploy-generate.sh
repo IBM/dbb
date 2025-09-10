@@ -330,7 +330,7 @@ if [ $rc -eq 0 ]; then
         echo $ERRMSG
         break
       fi
-      echo $PGM": [INFO] The argument -b branch is no longer used. Please remove it from your pipeline definition."
+      echo $PGM": [INFO] The argument -b branch is deprecated. Please switch to '-R' as the package identifier."
       Branch="$argument"
       ;;
     P)
