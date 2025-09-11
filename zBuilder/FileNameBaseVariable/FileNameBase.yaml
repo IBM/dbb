@@ -1,0 +1,23 @@
+---
+######################################################################################
+# 
+# Required Language configuration elements that can be added to any language YAML file.
+#
+# Setup Instructions: 
+# - Copy the required variables to the <language>.yaml file you wish to add check file
+#   exists support.
+#
+#######################################################################################
+
+version: 1.0.2
+tasks:
+   
+    # Required step definitions for the language configuration extension.
+    steps:
+    
+      # Create the ${FILE_NAME_BASE} variable
+      # This step MUST be defined before ${FILE_NAME_BASE} is used.
+      - step: createFileNameBase
+        type: task
+        script: groovy/CreateFileNameBase.groovy
+      
