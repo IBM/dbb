@@ -15,7 +15,7 @@ tasks:
     # Required step definitions for the language configuration extension.
     steps:
     
-      # Create ${FILE_NAME_BASE} variable
+      # Create the ${FILE_NAME_BASE} variable
       # This step MUST be defined before ${FILE_NAME_BASE} is used.
       - step: createFileNameBase
         type: task

@@ -3,21 +3,22 @@
 /*
 * This step task Groovy script checks for existence of a given absolute
 * file path on z/OS Unix provided by config variable 'checkFileExistsPath'.
-* The output is a new variable 'checkFileExists' provided by config variable
-* defined by the 'checkFileExistsVariableName'.  If  set to true or false.
+* The output is a new boolean variable provided by config variable
+* defined by the 'checkFileExistsVariableName'.
 */
 
 // get checkFileExistsPath variable from pre-defined language config object
 String filePath = config.getVariable("checkFileExistsPath")
 if (filePath == null) {
-    println ">> ERROR: checkFileExistsPath variable for is not set"
+   println ">> ERROR: checkFileExistsPath variable for is not set"
    return -1
 }
 
-// get file exists variable name to set. Default is 'checkFileExists'
+// get file exists variable name to set. 
 String variableName = config.getVariable("checkFileExistsVariableName")
-if (variableName == null)
-   variableName = 'checkFileExists'
+if (variableName == null) {
+   println ">> ERROR: checkFileExistsVariableName variable for is not set"
+   return -1
 
 // Create new File object 
 def file = new File(filePath)

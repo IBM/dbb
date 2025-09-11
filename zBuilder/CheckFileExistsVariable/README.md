@@ -16,7 +16,7 @@ Example:
   target: //'${HLQ}.JCL(${MEMBER})'
 ```
 ## Installation Instructions
-NOTE: The following installation instructions assume that that the `$DBB_BUILD` directory that was setup on z/OS Unix has been [converted into a Git repository](https://www.ibm.com/docs/en/adffz/dbb/3.0.0?topic=customization-setting-up-integrated-zbuilder-framework#convert-the-configuration-directory-to-a-git-repository-optional) and resides in an internal or cloud Git provider.
+NOTE: The following installation instructions assume that that the `$DBB_BUILD` directory that was setup on z/OS Unix System Services has been [converted into a Git repository](https://www.ibm.com/docs/en/adffz/dbb/3.0.0?topic=customization-setting-up-integrated-zbuilder-framework#convert-the-configuration-directory-to-a-git-repository-optional) and resides in your Git provider of choice.
 
 1. Clone this [DBB Community Repository](https://github.com/IBM/dbb) to your workstation.
 1. Clone your zBuilder build configuration repository to your workstation.
