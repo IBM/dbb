@@ -9,7 +9,7 @@ Welcome to the IBM Dependency Based Build (DBB) community repository. The helpfu
 * [IBM DBB Documentation](https://www.ibm.com/docs/en/dbb)
 * [IBM DBB zBuilder Build Framework](https://www.ibm.com/docs/en/adffz/dbb/3.0.0?topic=zbuilder-getting-started) - DBB zBuilder is an integrated configuration-based build framework for building z/OS applications. Build configuration is defined in YAML files.
 * [IBM DBB zAppBuild](https://github.com/IBM/dbb-zappbuild) - The zAppBuild project is a community-driven build framework implemented in Groovy.
-* [IBM DBB Git Migration Modeler](https://github.com/IBM/dbb-git-migration-modeler/) - A asset to provide a guided approach to plan and migrate source codebase, and help to identify and document the boundaries of mainframe applications.
+* [IBM DBB Git Migration Modeler](https://github.com/IBM/dbb-git-migration-modeler/) - An asset to provide a guided approach to plan and migrate source codebase, and help to identify and document the boundaries of mainframe applications.
 * [IBM Development and Pipeline Community](https://community.ibm.com/community/user/ibmz-and-linuxone/groups/topic-home?CommunityKey=f461c55d-159c-4a94-b708-9f7fe11d972b)
 * [IBM DevOps Acceleration Program Solution Page](https://ibm.github.io/z-devops-acceleration-program/)
 
@@ -49,5 +49,5 @@ Sample | Description
 [Utilities/ReadSMFRecords](Utilities/ReadSMFRecords) | Groovy scripts to read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities.
 [Utilities/Validation](Utilities/Validation) | Groovy scripts that can aid in the validation of product installs.
 [Utilities/PermissionCheck](Utilities/PermissionCheck) | Groovy script to check the DBB role for a provided user.
-[zBuilder extensions](zBuilder/) | IBM zBuilder extensions show casing advanced scenarios. 
-[zBuilder/MortgageApplication](zBuilder/MortgageApplication/) | Mortgage Application sample application prepared to be build with IBM DBB zBuilder.
+[zBuilder extensions](zBuilder/) | IBM zBuilder extensions showcasing advanced scenarios. 
+[zBuilder/MortgageApplication](zBuilder/MortgageApplication/) | Mortgage Application sample application prepared to be built with IBM DBB zBuilder.
