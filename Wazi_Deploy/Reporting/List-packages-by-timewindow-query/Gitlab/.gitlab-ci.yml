@@ -62,7 +62,7 @@ Query:
                 echo " [INFO]  Query Setup: "
                 echo " [INFO]  Template        = $templateFile"
                 echo " [INFO]  Renderer        = $rendererFile"
-                echo " [INFO]  WaziDeployIdx   = $wdEvidencesIndex"
+                echo " [INFO]    WaziDeployIdx     = $wdEvidencesIndex"
                 echo " [INFO]    deployed_after    = $deployed_after"
                 echo " [INFO]    deployed_before   = $deployed_before"
                 echo " [INFO]  Project is checked out to: $CI_PROJECT_DIR"
