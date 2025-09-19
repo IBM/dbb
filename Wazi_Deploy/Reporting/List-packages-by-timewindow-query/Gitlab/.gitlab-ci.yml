@@ -60,7 +60,7 @@ Query:
                 echo " [INFO]  Environment   = $environment"
                 echo " [INFO]  Application   = $application"
                 echo " [INFO]  Query Setup: "
-                echo " [INFO]  Template        = $templateFile"
+                echo " [INFO]    Template          = $templateFile"
                 echo " [INFO]    Renderer          = $rendererFile"
                 echo " [INFO]    WaziDeployIdx     = $wdEvidencesIndex"
                 echo " [INFO]    deployed_after    = $deployed_after"
