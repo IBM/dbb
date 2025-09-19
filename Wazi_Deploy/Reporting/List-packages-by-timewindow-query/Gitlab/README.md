@@ -40,7 +40,7 @@ This pipeline uses the [wazi-deploy-evidence command](https://www.ibm.com/docs/e
 The job will output a deployment report either in plain text, YAML or html format (based on the renderer).
 
 
-## CLI Parameters and description
+## Pipeline variables
 
 The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yml`.
 
