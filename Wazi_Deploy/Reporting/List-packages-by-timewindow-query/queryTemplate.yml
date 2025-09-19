@@ -1,0 +1,47 @@
+select:
+  ymli_category~: ^ activities:[0-9]* actions:[0-9]* steps:[0-9]* artifacts:[0-9]* $
+  ymli_parent:
+    name: MEMBER_COPY   
+    ymli_parent:
+      ymli_parent:
+        #{% if env is defined %}
+        metadata:
+            annotations:
+                environment_name: '{{ env }}' 
+                deploy_timestamp>: '{{ deployed_after }}'
+                deploy_timestamp<: '{{ deployed_before }}'
+        #{% endif %}
+        #{% if app is defined %}
+        manifests:
+            name: '{{app}}'
+        #{% endif %}  
+#  properties:
+#    key: type
+#    value: '{{type}}'
+
+output:
+  fields:
+    ymli_parent:
+      name: true
+      ymli_parent:
+        ymli_parent:
+          ymli_parent:
+            manifests:
+              name: true
+              description: true
+              version: true
+              annotations:
+                scmInfo:
+                  uri: true
+                  shortCommit: true
+                  branch: true
+                packageInfo:
+                  uri: true
+                  type: true
+            metadata:
+              annotations:
+                creation_timestamp: true
+                environment_name: true
+                deploy_timestamp: true
+
+renderer: {{renderer}}

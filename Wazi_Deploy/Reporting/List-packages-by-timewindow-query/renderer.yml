@@ -1,0 +1,22 @@
+results:
+{%- set seen = namespace(keys=[]) %}
+{%- for component in results %}
+  {%- set data = component.ymli_parent.ymli_parent.ymli_parent.ymli_parent -%}
+  {%- set manifest = data.manifests[0] -%}
+  {%- set annotations = manifest.annotations -%}
+  {%- set meta = data.metadata.annotations -%}
+  {%- set url = annotations.packageInfo.uri if annotations.packageInfo is defined else "" -%}
+  {%- set filename = url.split('/')[-1] if url else "N/A" -%}
+  {%- set key = meta.environment_name ~ "-" ~ meta.deploy_timestamp ~ "-" ~ manifest.version -%}
+  {%- if key not in seen.keys %}
+    {%- set _ = seen.keys.append(key) %}
+
+  - environment: {{ meta.environment_name or "N/A" }}
+    deploy_timestamp: {{ meta.deploy_timestamp or "N/A" }}
+    version: {{ manifest.version or "N/A" }}
+    package_name: {{ filename }}
+    package_url: {{ url or "N/A" }}
+    git_commit: {{ annotations.scmInfo.shortCommit or "N/A" }}
+    git_repo_url: {{ annotations.scmInfo.uri or "N/A" }}
+  {%- endif %}
+{%- endfor %}
