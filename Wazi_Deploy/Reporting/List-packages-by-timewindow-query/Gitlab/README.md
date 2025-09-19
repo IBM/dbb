@@ -27,7 +27,7 @@ The directory containing Wazi Deploy evidence files is referenced by the wdEvide
 
 ## Setup and usage of template
 
-This pipleine implements the [wazi-deploy-evidence command](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=commands-wazi-deploy-evidence-command) for easy use of deployment analysis. 
+This pipeline uses the [wazi-deploy-evidence command](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=commands-wazi-deploy-evidence-command) to perform queries and analysis on previous deployments. 
 
 1. Create a new GitLab project
 2. Copy the following files into the root of your new project:
