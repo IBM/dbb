@@ -13,7 +13,7 @@ The pipeline consists of a single stage:
    * Index the evidence files to enable searchability
    * Query the indexed evidence based on the specified time window parameters passed via the pipeline request dialog
 
-The pipeline uses the Gitlab concepts: `Stage`and `Jobs`.
+The pipeline uses the GitLab concepts: `Stage`and `Jobs`.
 
 
 
@@ -34,7 +34,7 @@ This pipeline uses the [wazi-deploy-evidence command](https://www.ibm.com/docs/e
       * [queryTemplate.yml](queryTemplate.yml) 
       * [renderer.yml](renderer.yml) or [renderer.html](renderer.html) 
       * [`Gitlab/`](./Gitlab/) directory  
-3. Review the [.gitlab-ci.yml](.gitlab-ci.yml) with your Gitlab administrator. See [CLI Parameters and description](#cli-parameters-and-description)
+3. Review the [.gitlab-ci.yml](.gitlab-ci.yml) with your GitLab administrator. See [CLI Parameters and description](#cli-parameters-and-description)
 3. Provide query parameters and trigger the pipeline manually. See [Pipeline parameters](#pipeline-parameters)
 
 The job will output a deployment report either in plain text, YAML or html format (based on the renderer).
@@ -44,11 +44,14 @@ The job will output a deployment report either in plain text, YAML or html forma
 
 The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yml`.
 
-CLI Parameter | Description
+Pipeline variables | Description
 --- | ---
 templateFile |  Path to the query file that contains the extraction criteria for the analysis.
 reportFile | Path to the output file produced as a result of running the Wazi deploy query.
 rendererFile | (optional) path to the renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt 
+wdEvidencesRoot | Directory on the GitLab runner environment to persist Wazi Deploy evidences
+wdEvidencesIndex |  Directory on the GitLab runner environment to persist Wazi Deploy indexes
+reportOutputDirectory | Directory on the GitLab runner environment to store the output reports.
 
 ## Pipeline parameters
 
