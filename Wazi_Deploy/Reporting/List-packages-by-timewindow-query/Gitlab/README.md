@@ -47,7 +47,7 @@ The following variables need to be updated within the pipeline definition file: 
 CLI Parameter | Description
 --- | ---
 templateFile |  Path to the query file that contains the extraction criteria for the analysis.
-reportFile | path to store the output file produced as a result of running the Wazi deploy query.
+reportFile | Path to the output file produced as a result of running the Wazi deploy query.
 rendererFile | (optional) path to the renderer file that transforms the analysis results into a specified output format such as HTML, JSON or txt 
 
 ## Pipeline parameters
