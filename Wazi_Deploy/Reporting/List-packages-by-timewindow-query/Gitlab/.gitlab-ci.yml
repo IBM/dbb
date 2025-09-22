@@ -58,7 +58,7 @@ Query:
                 echo " [INFO]  Refresh Wazi Deploy index for all applications and querying the Wazi Deploy Index"
                 echo " [INFO]  Query Parameters: "
                 echo " [INFO]    Environment = $environment"
-                echo " [INFO]  Application   = $application"
+                echo " [INFO]    Application = $application"
                 echo " [INFO]  Query Setup: "
                 echo " [INFO]    Template          = $templateFile"
                 echo " [INFO]    Renderer          = $rendererFile"
