@@ -49,7 +49,7 @@ Pipeline variables | Description
 templateFile |  Path to the query file that contains the extraction criteria for the analysis.
 reportFile | Path to the output file produced as a result of running the Wazi deploy query.
 rendererFile | (Optional) Path to the renderer file that transforms the analysis results into a specified output format such as HTML, JSON or TXT
-wdEvidencesRoot | Directory on the GitLab runner environment to persist Wazi Deploy evidences
+wdEvidencesRoot | Directory on the GitLab runner environment where the Wazi Deploy evidences from deployments got persisted.
 wdEvidencesIndex |  Directory on the GitLab runner environment to persist Wazi Deploy indexes
 reportOutputDirectory | Directory on the GitLab runner environment to store the output reports.
 
