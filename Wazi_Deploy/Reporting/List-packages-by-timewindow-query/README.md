@@ -31,7 +31,7 @@ To configure and use this template from a CI/CD pipeline coordinator interface, 
 This can be downloaded and viewed after a successful run of the pipeline.
 Eg:
 
-![alt text](image.png)
+![alt text](images/image.png)
 
 
 
