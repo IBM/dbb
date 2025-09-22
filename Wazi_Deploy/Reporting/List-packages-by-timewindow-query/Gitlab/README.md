@@ -60,6 +60,6 @@ Please check the below parameters for which this pipeline is executed.
 Parameter | Description
 --- | ---
 application | Name of the application (eg: retirementCalculator, Mortgage-SA) used for reporting. Use `*` to query on all applications.
-environment | Specify the environment (eg: integration, acceptance)
+environment | Environment (eg: integration, acceptance) used for reporting. Use `*` to query on all environments.
 deployed_after | Start timestamp (inclusive) used for reporting on the deployment package listing
 deployed_before | End timestamp (inclusive) for the deployment package listing
