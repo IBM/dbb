@@ -1,4 +1,4 @@
-# IBM Wazi Deploy - Reporting Pipeline Template
+# IBM Wazi Deploy Reporting - List deployed packages by date
 
 This template contains  [queryTemplate.yml](queryTemplate.yml), [renderer.yml](renderer.yml), [renderer.html](renderer.html) and a GitLab pipeline definition file for querying IBM Wazi Deploy evidence files to list the deployed packages within a specified time window.
 
