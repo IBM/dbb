@@ -61,5 +61,5 @@ Parameter | Description
 --- | ---
 application | Specify the name of your application (eg: retirementCalculator, Mortgage-SA)
 environment | Specify the environment (eg: integration, acceptance)
-deployed_after | Start timestamp (inclusive) for the deployment package listing
+deployed_after | Start timestamp (inclusive) used for reporting on the deployment package listing
 deployed_before | End timestamp (inclusive) for the deployment package listing
