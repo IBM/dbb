@@ -30,7 +30,7 @@ The directory containing Wazi Deploy evidence files is referenced by the wdEvide
 This pipeline uses the [wazi-deploy-evidence command](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=commands-wazi-deploy-evidence-command) to perform queries and analysis on previous deployments. 
 
 1. Create a new GitLab project
-2. Copy the following files into the root of your new project:
+2. Copy the following files from the parent directory into the root of your new project:
       * [queryTemplate.yml](queryTemplate.yml) 
       * [renderer.yml](renderer.yml) or [renderer.html](renderer.html) 
       * [`Gitlab/`](./Gitlab/) directory  
