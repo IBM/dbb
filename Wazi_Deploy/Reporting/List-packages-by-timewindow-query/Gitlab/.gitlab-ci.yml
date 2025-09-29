@@ -2,7 +2,7 @@ variables:
     GIT_STRATEGY: clone
     GIT_CHECKOUT: "true"
     # Directories on the GitLab runner environment to persist Wazi Deploy Evidences and Index
-    wdEvidencesRoot: /var/work/wazi_deploy_evidences_tf/
+    wdEvidencesRoot: /var/work/wazi_deploy_evidences/
     wdEvidencesIndex: /var/work/wazi_deploy_evidences_index_tf/
     # Working directory on Linux machine
     reportOutputDirectory: ${CI_PROJECT_DIR}/REPORT-OUTPUT
