@@ -29,7 +29,7 @@ variables:
         value: "*"
         options:
             - "*"    
-        description: "ending timestamp of the specified time range. eg:20250912.02"       
+        description: "Ending timestamp of the specified time range. eg: 20250912"       
 
     reportFile: ${reportOutputDirectory}/deployment-inventory-report-${CI_PIPELINE_ID}.html
     #reportFile: ${reportOutputDirectory}/deployment-inventory-report-${CI_PIPELINE_ID}.txt
