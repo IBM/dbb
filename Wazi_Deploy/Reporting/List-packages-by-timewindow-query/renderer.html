@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Deployed Packages</title>
+    <style>
+        body {
+            font: 13px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f9fc;
+            color: #333;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #004080;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background-color: #fff;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #a9a9a9;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #a9a9a9;
+        }
+
+        thead {
+            background: linear-gradient(90deg, #004080, #007acc);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #e9f0fb;
+        }
+
+        tbody tr:hover {
+            background-color: #d0e4fc;
+            cursor: pointer;
+        }
+
+        a {
+            color: #007acc;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Deployed Packages</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Environment</th>
+                <th>Deploy Timestamp</th>
+                <th>Version</th>
+                <th>Package Name</th>
+                <th>Package URL</th>
+                <th>Git Commit</th>
+                <th>Git Repo URL</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% set seen = namespace(keys=[]) %}
+        {% for component in results %}
+            {% set data = component.ymli_parent.ymli_parent.ymli_parent.ymli_parent %}
+            {% set manifest = data.manifests[0] %}
+            {% set annotations = manifest.annotations %}
+            {% set meta = data.metadata.annotations %}
+            {% set url = annotations.packageInfo.uri if annotations.packageInfo is defined else "" %}
+            {% set filename = url.split('/')[-1] if url else "N/A" %}
+
+            {% set key = meta.environment_name ~ "-" ~ meta.deploy_timestamp ~ "-" ~ manifest.version %}
+
+            {% if key not in seen.keys %}
+                {% set _ = seen.keys.append(key) %}
+                <tr>
+                    <td>{{ meta.environment_name or "N/A" }}</td>
+                    <td>{{ meta.deploy_timestamp or "N/A" }}</td>
+                    <td>{{ manifest.version or "N/A" }}</td>
+                    <td>{{ filename }}</td>
+                    <td>
+                        {% if url %}
+                            <a href="{{ url }}" target="_blank" rel="noopener noreferrer">Download</a>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>{{ annotations.scmInfo.shortCommit or "N/A" }}</td>
+                    <td>
+                        {% if annotations.scmInfo.uri %}
+                            <a href="{{ annotations.scmInfo.uri }}" target="_blank" rel="noopener noreferrer">
+                                Repo Link
+                            </a>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

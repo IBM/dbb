@@ -1,0 +1,90 @@
+variables:
+    GIT_STRATEGY: clone
+    GIT_CHECKOUT: "true"
+    # Directories on the GitLab runner environment to persist Wazi Deploy Evidences and Index
+    wdEvidencesRoot: /var/work/wazi_deploy_evidences/
+    wdEvidencesIndex: /var/work/wazi_deploy_evidences_index/
+    # Working directory on Linux machine
+    reportOutputDirectory: ${CI_PROJECT_DIR}/REPORT-OUTPUT
+    application:
+        value: "*"
+        options:
+        - "*"
+        - "retirementCalculator"       
+        description: "Application name filter"
+    environment: 
+        value: "*"
+        options:
+          - "*"
+          - "EOLEB7-Integration"
+          - "EOLEB7-Acceptance"
+          - "EOLEB7-Production"
+        description: "Environment name filter"
+    deployed_after:
+        value: "*"
+        options:
+            - "*"    
+        description: "Starting timestamp of the specified time range. eg: 20250911"
+    deployed_before:
+        value: "*"
+        options:
+            - "*"    
+        description: "Ending timestamp of the specified time range. eg: 20250912"       
+
+    reportFile: ${reportOutputDirectory}/deployment-inventory-report-${CI_PIPELINE_ID}.html
+    #reportFile: ${reportOutputDirectory}/deployment-inventory-report-${CI_PIPELINE_ID}.txt
+    rendererFile: $CI_PROJECT_DIR/wazi-deploy-query/renderer.html
+    templateFile: $CI_PROJECT_DIR/wazi-deploy-query/queryTemplate.yaml
+    
+# Only run pipeline on manual request
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+stages:
+    - Query
+
+Query:
+    stage: Query
+    tags: [shell]
+    artifacts:
+        name: "WD-Report-${CI_PIPELINE_ID}"
+        paths:
+            - "${reportOutputDirectory}/*.html"
+            #- "${reportOutputDirectory}/*.txt"
+    script: |
+                echo ""
+                echo "*******************************************************************************************"
+                echo " [INFO]  Querying the Wazi Deploy Index"
+                echo " [INFO]  Query Parameters: "
+                echo " [INFO]    Environment = $environment"
+                echo " [INFO]    Application = $application"
+                echo " [INFO]  Query Setup: "
+                echo " [INFO]    Template          = $templateFile"
+                echo " [INFO]    Renderer          = $rendererFile"
+                echo " [INFO]    WaziDeployIdx     = $wdEvidencesIndex"
+                echo " [INFO]    deployed_after    = $deployed_after"
+                echo " [INFO]    deployed_before   = $deployed_before"
+                echo " [INFO]  Project is checked out to: $CI_PROJECT_DIR"
+                echo "*********************************************************************************************"
+                
+
+                # Variables
+                rc=0
+
+                # Init Output directory
+                mkdir ${reportOutputDirectory}
+
+                CMD="wazideploy-evidence --indexFolder $wdEvidencesIndex --dataFolder $wdEvidencesRoot -t $templateFile --output=$reportFile r app=$application env=$environment deployed_after=$deployed_after deployed_before=$deployed_before renderer=$rendererFile"
+                echo "[INFO] Executing following command : $CMD"
+                ${CMD}
+                rc=$?
+
+                # Error Handling
+                if [ $rc -eq 0 ]; then
+                    echo "[INFO] - Query Wazi Deploy index completed. Report $reportFile generated."
+                else
+
+                    echo "[WARNING] - Query Wazi Deploy index failed."
+                    exit 1
+                fi
