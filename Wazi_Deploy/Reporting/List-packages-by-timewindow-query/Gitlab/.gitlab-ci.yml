@@ -11,7 +11,7 @@ variables:
         options:
         - "*"
         - "retirementCalculator"       
-        description: "Application Name filter"
+        description: "Application name filter"
     environment: 
         value: "*"
         options:
