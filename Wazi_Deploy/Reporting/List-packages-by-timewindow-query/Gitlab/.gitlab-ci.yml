@@ -24,7 +24,7 @@ variables:
         value: "*"
         options:
             - "*"    
-        description: "starting timestamp of the specified time range. eg:20250911.09"    
+        description: "Starting timestamp of the specified time range. eg: 20250911"
     deployed_before:
         value: "*"
         options:
