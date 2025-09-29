@@ -33,7 +33,7 @@ This pipeline uses the [wazi-deploy-evidence command](https://www.ibm.com/docs/e
 2. Copy the following files from the parent directory into the root of your new project:
       * [queryTemplate.yml](../queryTemplate.yml) 
       * [renderer.yml](../renderer.yml) or [renderer.html](../renderer.html) 
-      * [`Gitlab/`](./Gitlab/) directory  
+      * [`Gitlab/.gitlab-ci.yaml`](.gitlab-ci.yaml) file
 3. Review the [.gitlab-ci.yml](.gitlab-ci.yml) with your GitLab administrator. See [CLI Parameters and description](#cli-parameters-and-description)
 3. Provide query parameters and trigger the pipeline manually. See [Pipeline parameters](#pipeline-parameters)
 
