@@ -55,7 +55,7 @@ Query:
     script: |
                 echo ""
                 echo "*******************************************************************************************"
-                echo " [INFO]  Refresh Wazi Deploy index for all applications and querying the Wazi Deploy Index"
+                echo " [INFO]  Querying the Wazi Deploy Index"
                 echo " [INFO]  Query Parameters: "
                 echo " [INFO]    Environment = $environment"
                 echo " [INFO]    Application = $application"
@@ -74,10 +74,8 @@ Query:
 
                 # Init Output directory
                 mkdir ${reportOutputDirectory}
-                wazideploy-evidence -v
 
                 CMD="wazideploy-evidence --indexFolder $wdEvidencesIndex --dataFolder $wdEvidencesRoot -t $templateFile --output=$reportFile r app=$application env=$environment deployed_after=$deployed_after deployed_before=$deployed_before renderer=$rendererFile"
-                #CMD="wazideploy-evidence  --indexFolder $wdEvidencesIndex --dataFolder $wdEvidencesRoot --template $templateFile --output=$reportFile ir app="$application" env="$environment" type="$type" module="$module""
                 echo "[INFO] Executing following command : $CMD"
                 ${CMD}
                 rc=$?

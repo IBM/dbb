@@ -10,8 +10,7 @@ The pipeline leverages a custom query template to filter deployment information 
 The pipeline consists of a single stage:
 
 `Query`
-   * Index the evidence files to enable searchability
-   * Query the indexed evidence based on the specified time window parameters passed via the pipeline request dialog
+   * Query the indexed evidence based on the specified time window parameters passed via the pipeline request dialog.
 
 The pipeline uses the GitLab concepts: `Stage`and `Jobs`.
 
