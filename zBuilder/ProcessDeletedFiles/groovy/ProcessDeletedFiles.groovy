@@ -25,17 +25,19 @@ if (outputLibMappings == null || outputLibMappings.isEmpty()) {
 
 // process each deleted file
 deletedFiles.each { String deletedFile ->
-    // Create a new AnyTypeRecord for the deleted file
+    // create a new AnyTypeRecord for the deleted file
     AnyTypeRecord deleteRecord = new AnyTypeRecord("DELETE_RECORD")
     deleteRecord.setAttribute("file", deletedFile)
 
+    // gather deleted outputs
     List<String> deletedOutputsList = new ArrayList<String>() 
-
     String member = CopyToPDS.createMemberName(deletedFile)
-
+    
     libMappings.keySet().each { PathMatcher matcher ->
+        // find source match for deleted file 
         if (matcher.matches(Paths.get(deletedFile))) {
             List<String> outputLibs = libMappings.get(matcher)
+            // document applicable output libraries for deleted file
             if (outputLibs != null && !outputLibs.isEmpty()) {
                 outputLibs.each { String outputLib ->
                     // add fully qualified dsn to deleted outputs list
@@ -50,7 +52,7 @@ deletedFiles.each { String deletedFile ->
                     }
                 }
             } else {
-                println "> No outputLibs configured for file ${deletedFile}. No record created."
+                println "> No output library configured for file ${deletedFile}. No record created."
             }
         }
     }
