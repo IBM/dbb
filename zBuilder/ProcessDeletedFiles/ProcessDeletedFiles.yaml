@@ -14,18 +14,24 @@ tasks:
    
     # Required variables for the check file exits extension.
     variables:
-    
-      # List of output datasets to check for deleted members.
-      - name: outputLibs
+
+      - name: outputLibMappings
         value: 
-          - "${HLQ}.LOAD"
-      
-      # The outputLibs variable can be defined multiple times with different forFiles patterns.
-      # - name: outputLibs
-      #   forFiles: "**/cobol/*.cbl"
-      #   value: 
-      #     - "${HLQ}.COBOL.LOAD"
-      #     - "${HLQ}.COBOL.OBJ"
+          - source: "**.cbl"
+            outputLibs: 
+              - "${HLQ}.LOAD"
+          - source: "**.bms"
+            outputLibs:
+              - "${HLQ}.LOAD"
+          - source: "**.lnk"
+            outputLibs:
+              - "${HLQ}.LOAD"
+          - source: "**.jcl"
+            outputLibs:
+              - "${HLQ}.JCL"
+          - source: "**.proc"
+            outputLibs:
+              - "${HLQ}.PROC"
 
     # Required step definitions for the check file exists extension.
     steps:
@@ -34,4 +40,3 @@ tasks:
       - step: createDeleteRecords
         type: task
         script: groovy/ProcessDeletedFiles.groovy
-      
