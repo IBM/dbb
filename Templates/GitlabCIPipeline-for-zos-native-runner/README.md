@@ -53,9 +53,10 @@ The `.gitlab-ci.yaml` can be dropped into the root folder of your GitLab Git rep
 ### Variables configuration
 The following variables need to be defined and configured as the environment variables in the GitLab group or project setting:
 
-Variable | Description
---- | ---
-AutomationToken | [Group access token](https://docs.gitlab.com/ee/api/rest/#personalprojectgroup-access-tokens) to be used for authentication when invoke GitLab CLI REST interfaces.
+Variable | Description | Value
+--- | --- | ---
+AutomationToken | [Group access token](https://docs.gitlab.com/ee/api/rest/#personalprojectgroup-access-tokens) to be used for authentication when invoke GitLab CLI REST interfaces. | No default value
+CI_CLONE_PATH | Even if not used in the cloning process, it defines the absolute location where artifacts are meant to be found during the artifact upload. | $CI_BUILDS_DIR/$CI_PROJECT_NAME/build-$CI_PIPELINE_ID
 
 The following variables need to be updated within the pipeline definition file: `.gitlab-ci.yaml`.
 
