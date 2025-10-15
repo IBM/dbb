@@ -7,6 +7,8 @@
 * The output PDSs are determined from task configuration in the YAML file. In addition
 * record generation, the script will also delete the corresponding members from the 
 * build output datasets.
+*
+* See ProcessDeletedFiles.yaml for a sample of the required task configuration.
 */
 
 // check there are deleted files to process

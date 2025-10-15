@@ -1,20 +1,34 @@
 ---
-######################################################################################
+########################################################################################
 # 
-# Required Language configuration elements that can be added to any language YAML file.
+# Required configuration for the associated "ProcessDeletedFiles" custom groovy task. 
+#
+# This YAML file defines the ProcessDeletedFiles task and the 'outputLibs' variable
+# required to execute the task. The groovy script "ProcessDeletedFiles.groovy" will be 
+# automatically discovered as long as it is placed in the $DBB_BUILD/groovy directory.
+#
+# By default, the 'outputLibs' variable is configured for the output libraries for each
+# sample language shipped with DBB. Adjust as needed for your environment. Variable 
+# definitions can be moved into dbb-app.yaml if necessary. 
+#
 #
 # Setup Instructions: 
-# - Copy the required variables and steps to the <language>.yaml file you wish to add 
-#   check file exists support.
+# - Copy this configuration YAML file and the associated groovy script to your $DBB_BUILD
+#   directory. Important: Ensure the Groovy script is in the groovy sub-directory so it 
+#   will be discovered automatically. 
+# - Review and adjust the outputLibs variable definitions as needed for your environment.
+# - Include this YAML file in dbb-build.yaml to source the task and variable configuration. 
+# - Add the ProcessDeletedFiles task to the 'impacts' lifecycle in dbb-build.yaml. 
 #
-#######################################################################################
+########################################################################################
 
 version: 1.0.0
-tasks:
+tasks: 
+  - name: ProcessDeletedFiles
    
-    # Required variables for the check file exits extension.
     variables:
-
+      
+      # Define the list of output PDS libraries that should be added to the DELETE_RECORD. 
       - name: outputLibs
         forFiles: "**/cobol/*.cbl"
         value: 
@@ -22,6 +36,8 @@ tasks:
           - "${HLQ}.DBRM"
           - "${HLQ}.LOAD"
 
+      # Override the variable multiple times using forFiles to map different file patterns
+      # to different output libraries.
       - name: outputLibs
         forFiles: "**.bms"
         value:
@@ -83,12 +99,3 @@ tasks:
         forFiles: "**.rexx"
         value:
           - "${HLQ}.REXX"
-      
-
-    # Required step definitions for the check file exists extension.
-    steps:
-    
-      # Check if a file exists         
-      - step: createDeleteRecords
-        type: task
-        script: groovy/ProcessDeletedFiles.groovy
