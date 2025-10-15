@@ -1,4 +1,9 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.TaskScript baseScript
+import com.ibm.dbb.build.CopyToPDS
+import com.ibm.dbb.build.report.BuildReportFactory
+import com.ibm.dbb.build.report.records.AnyTypeRecord
+import com.ibm.dbb.task.TaskConstants
+import com.ibm.jzos.ZFile
 
 /*
 * This step task Groovy script provides compatibility with Wazi Deploy for deleted
@@ -38,7 +43,7 @@ deletedFiles.each { String deletedFile ->
             
             // delete member from build datasets
             if (ZFile.dsExists("//'$pdsMember'")) {
-                if (props.verbose) println ">> Deleting ${pdsMember}"
+                println ">> Deleting ${pdsMember}"
                 ZFile.remove("//'$pdsMember'")
             }
         }
@@ -52,3 +57,6 @@ deletedFiles.each { String deletedFile ->
         BuildReportFactory.getBuildReport().addRecord(deleteRecord)
     }
 }
+
+// orchestrator expects a return code of 0 for success
+return 0
