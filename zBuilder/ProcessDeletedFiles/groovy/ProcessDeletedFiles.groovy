@@ -6,7 +6,7 @@ import com.ibm.dbb.task.TaskConstants
 import com.ibm.jzos.ZFile
 
 /*
-* This step task Groovy script provides compatibility with Wazi Deploy for deleted
+* This custom task Groovy script provides compatibility with Wazi Deploy for deleted
 * files. It processes deleted files from incremental builds by creating "DELETE_RECORD"
 * AnyTypeRecords for each deleted file added to the context by the ImpactAnalysis task. 
 * The output PDSs are determined from task configuration in the YAML file. In addition
