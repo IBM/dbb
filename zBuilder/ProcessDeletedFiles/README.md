@@ -1,7 +1,7 @@
 # ProcessDeletedFiles Custom Task
 
 ## Overview
-The ProcessDeletedFiles custom Groovy task provides zBuilder support for Wazi Deploy by handling file deletions during incremental builds. It adds deletion records to the DBB build report and removes associated build artifacts from the build datasets.
+The ProcessDeletedFiles custom Groovy task provides zBuilder support for Wazi Deploy by handling file deletions during incremental builds. For each deleted file, it adds deletion records to the DBB build report and removes associated members from the build datasets.
 
 ## Contents
 | Folder/File | Description |
