@@ -1,7 +1,7 @@
 # ProcessDeletedFiles Custom Task
 
 ## Overview
-The ProcessDeletedFiles custom Groovy task manages deleted files in zBuilder incremental builds by adding deletion records to the build report and removing leftover build artifacts. It relies on context provided by the `ImpactAnalysis` task and is designed to run during incremental build lifecycles. Deletion records in the build report can be used by deployment tools to remove deployed artifacts in later stages of the pipeline.
+The ProcessDeletedFiles custom Groovy task manages deleted files in zBuilder incremental builds by adding deletion records to the build report and removing leftover build artifacts. It relies on context provided by the `ImpactAnalysis` task and is designed to run during incremental build lifecycles. Deletion records in the build report are consumed by the [PackageBuildOutputs](/Pipeline/PackageBuildOutputs/) packaging script and provides zBuilder compatibility with Wazi Deploy.
 
 ## Contents
 | Folder/File | Description |
