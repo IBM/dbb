@@ -2,7 +2,7 @@
 
 ## Summary
 
-This sample shows how to create a TAR file with the build outputs based on the DBB Build Report after a successful build.
+This sample shows how to create a TAR file with the build outputs based on the DBB Build Report after a successful build. **Note**: For zBuilder compatbility, the [ProcessDeletedFiles](/zBuilder/ProcessDeletedFiles/) custom task should be used in incremental build lifecycles. 
 
 The package can be uploaded to an artifact repository and used in a scripted deployment. Another area, where this script is beneficial as a sample, is to adapt this script in publishing shared copybooks to an artifact repository and to pull them into the build process. The `ArtifactRepositoryHelpers.groovy` allow you to upload and download packages from Artifactory. 
 The `ArtifactRepositoryHelpers` script is a simple implementation to support download and upload from/to an Artifact Repository server.
