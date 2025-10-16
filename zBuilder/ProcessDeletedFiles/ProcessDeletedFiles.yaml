@@ -18,7 +18,8 @@
 #   will be discovered automatically. 
 # - Review and adjust the outputLibs variable definitions as needed for your environment.
 # - Include this YAML file in dbb-build.yaml to source the task and variable configuration. 
-# - Add the ProcessDeletedFiles task to the 'impacts' lifecycle in dbb-build.yaml. 
+# - Add the ProcessDeletedFiles task to the 'impact' lifecycle in dbb-build.yaml ordered 
+#   after the ImpactAnalysis task. 
 #
 ########################################################################################
 
