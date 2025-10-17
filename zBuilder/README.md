@@ -11,4 +11,5 @@ Sample/Extension | Type | Description
 | [File Name Base Variable](FileNameBaseVariable)  | Language Step | This language step task extension creates and sets a new language variable called `FILE_NAME_BASE` that contains just the current build file's name without file extension.<br>Example: 'MortgageApplication/cobol/epsnbrvl.cbl' --> 'epsnbrvl'  |
 | [Language Configuration](LanguageConfiguration) | Language Step |  This language step task extension allows users to provide simple YAML configuration files that can be used to override default language task configuration variables. |
 | [Mortgage Application](MortgageApplication) | Sample | A copy of the MortgageApplication sample that ships with DBB v3.0.x provided to be easily consumable by IDz for Eclipse and IDz for VSCode IDEs to demonstate the User Build feature. |
+| [Process Deleted Files](ProcessDeletedFiles) | Groovy Task | This custom groovy task manages deleted files in incremental builds by adding deletion records to the DBB Build Report for packaging compatibility and deleting build artifacts. |
 
