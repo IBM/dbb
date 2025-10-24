@@ -53,4 +53,3 @@ Sample | Description
 [Wazi_Deploy/Schemas](Wazi_Deploy/Schemas) | Wazi Deploy schemas used to configure Yaml validation for the config file, the deployment method file and the manifest file.
 [zBuilder extensions](zBuilder/) | IBM zBuilder extensions showcasing advanced scenarios. 
 [zBuilder/MortgageApplication](zBuilder/MortgageApplication/) | Mortgage Application sample application prepared to be built with IBM DBB zBuilder.
-[ZCodeScan/Schemas](ZCodeScan/Schemas) | ZCodeScan schemas used to configure Yaml validation for the ruls file.
