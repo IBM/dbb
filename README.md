@@ -49,5 +49,8 @@ Sample | Description
 [Utilities/ReadSMFRecords](Utilities/ReadSMFRecords) | Groovy scripts to read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities.
 [Utilities/Validation](Utilities/Validation) | Groovy scripts that can aid in the validation of product installs.
 [Utilities/PermissionCheck](Utilities/PermissionCheck) | Groovy script to check the DBB role for a provided user.
+[Wazi_Deploy/Reporting](Wazi_Deploy/Reporting) | This category provides templates for querying IBM Wazi Deploy evidence files and generating detailed reports.
+[Wazi_Deploy/Schemas](Wazi_Deploy/Schemas) | Wazi Deploy schemas used to configure Yaml validation for the config file, the deployment method file and the manifest file.
 [zBuilder extensions](zBuilder/) | IBM zBuilder extensions showcasing advanced scenarios. 
 [zBuilder/MortgageApplication](zBuilder/MortgageApplication/) | Mortgage Application sample application prepared to be built with IBM DBB zBuilder.
+[ZCodeScan/Schemas](ZCodeScan/Schemas) | ZCodeScan schemas used to configure Yaml validation for the ruls file.
