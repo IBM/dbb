@@ -68,9 +68,9 @@ pipeline {
                     echo "[INFO] Cleaning up invalid characters in report file..."
                     // Clean invalid or binary bytes while keeping UTF-8
                     sh """
-                        iconv -f UTF-8 -t UTF-8 -c '${env.reportFile}' > '${env.reportFile}.clean' || cp '${env.reportFile}' '${env.reportFile}.clean'
-                        mv '${env.reportFile}.clean' '${env.reportFile}'
-                    """
+                    # Change file tag to UTF-8 (text, codepage 1208)
+                    chtag -tc UTF-8 '${env.reportFile}'
+                     """
 
                     echo "[INFO] - Query Wazi Deploy index completed. Report ${env.reportFile} generated and cleaned."
                 }
