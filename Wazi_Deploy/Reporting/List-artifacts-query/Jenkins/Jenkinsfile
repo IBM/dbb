@@ -65,8 +65,6 @@ pipeline {
                         error("[WARNING] - Query Wazi Deploy index failed with return code ${rc}.")
                     }
 
-                    echo "[INFO] Cleaning up invalid characters in report file..."
-                    // Clean invalid or binary bytes while keeping UTF-8
                     sh """
                     # Change file tag to UTF-8 (text, codepage 1208)
                     chtag -tc UTF-8 '${env.reportFile}'
