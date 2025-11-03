@@ -5,7 +5,7 @@ This template provides a [Jenkinsfile](Jenkinsfile) to setup a pipeline for quer
 ## Overview and capabilities
 This pipeline template is analyzing the evidence file, to list the details of the deployed artifacts that are created as a result of the deployment and generate a deployment report of the deployed artifacts.
 
-The pipeline leverages the [queryTemplate.yml](queryTemplate.yml) to query deployed artifacts information from the evidence files.
+The pipeline leverages the [queryTemplate.yml](../queryTemplate.yml) to query deployed artifacts information from the evidence files.
 
 
 The pipeline has three stages:
