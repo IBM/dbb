@@ -1,0 +1,85 @@
+
+def JenkinsAgent              = "ztec-201-STC"
+def git_url                   = ""
+def ssh_key                   = ""
+
+pipeline {
+    agent { label 'JenkinsAgent' }
+
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: '', description: 'Feature branch to checkout')
+        string(name: 'application', defaultValue: 'MortgageApplication', description: 'Application Name filter')
+        string(name: 'module', defaultValue: '*', description: 'Module Name filter')
+        string(name: 'type', defaultValue: '*', description: 'Type filter')
+        choice(name: 'environmentFilter', choices: ['*', 'EOLEB7-Integration', 'EOLEB7-Acceptance', 'EOLEB7-Production'], description: 'Environment name filter')
+    }
+
+    environment {
+        wdEvidencesRoot = '/var/work/wazi_deploy_evidences_jenkins'
+        wdEvidencesIndex = '/var/work/wazi_deploy_evidences_jenkins_index/'
+        reportOutputDirectory = "${env.WORKSPACE}/REPORT-OUTPUT"
+        reportFile = "${env.reportOutputDirectory}/deployment-inventory-report-${env.BUILD_ID}.txt"
+        rendererFile = "${env.WORKSPACE}/Wazi_Deploy/Reporting/List-artifacts-query/renderer.yml"
+        templateFile = "${env.WORKSPACE}/Wazi_Deploy/Reporting/List-artifacts-query/queryTemplate.yml"
+    }
+
+    stages {
+        stage('Clone') {
+        steps {
+            git(
+                branch: "${params.BRANCH_NAME}",
+                url: 'git_url',
+                credentialsId: 'ssh_key' 
+            )
+        }
+    }
+
+        stage('Prepare Directories') {
+            steps {
+                sh "mkdir -p ${env.reportOutputDirectory}"
+            }
+        }
+        stage('Query') {
+            steps {
+                script {
+                    echo "[INFO] wdEvidencesRoot   = ${env.wdEvidencesRoot}"
+                    echo "[INFO] wdEvidencesIndex  = ${env.wdEvidencesIndex}"
+
+
+                    def CMD = """
+                        wazideploy-evidence --indexFolder '${env.wdEvidencesIndex}' \
+                        --dataFolder '${env.wdEvidencesRoot}' \
+                        --template '${env.templateFile}' \
+                        --output='${env.reportFile}' ir \
+                        app='${params.application}' \
+                        env='${params.environmentFilter}' \
+                        type='${params.type}' \
+                        module='${params.module}' \
+                        renderer='${env.rendererFile}'
+                    """.trim().replaceAll("\n+", " ").replaceAll("\\s{2,}", " ")
+
+                    echo "[INFO] Executing command : ${CMD}"
+                    int rc = sh(script: CMD, returnStatus: true)
+
+                    if (rc != 0) {
+                        error("[WARNING] - Query Wazi Deploy index failed with return code ${rc}.")
+                    }
+
+                    echo "[INFO] Cleaning up invalid characters in report file..."
+                    // Clean invalid or binary bytes while keeping UTF-8
+                    sh """
+                        iconv -f UTF-8 -t UTF-8 -c '${env.reportFile}' > '${env.reportFile}.clean' || cp '${env.reportFile}' '${env.reportFile}.clean'
+                        mv '${env.reportFile}.clean' '${env.reportFile}'
+                    """
+
+                    echo "[INFO] - Query Wazi Deploy index completed. Report ${env.reportFile} generated and cleaned."
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'REPORT-OUTPUT/*.txt', onlyIfSuccessful: true
+                }
+            }
+        }
+    }
+}    
