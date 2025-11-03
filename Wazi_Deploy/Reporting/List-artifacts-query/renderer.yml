@@ -1,49 +1,59 @@
 # Artifacts of type {{ type }} for application {{ app }} in environment {{ env }}:
 
 {%- set entries = [] %}
-{%- for result in results %}
-  {%- set copy = result.ymli_parent %}
-  {%- if copy.name == 'MEMBER_COPY' %}
-    {%- set deploy = copy.ymli_parent.ymli_parent.ymli_parent %}
-    {%- set manifest = deploy.manifests[0] if deploy.manifests else None %}
-    {%- set annotations = deploy.metadata.annotations %}
 
-    {%- for artifact in copy.artifacts %}
+{%- for result in results %}
+  {%- set member = result.get('ymli_parent') %}
+  {%- if member and member.name == 'MEMBER_COPY' %}
+    {%- set deploy = member.get('ymli_parent', {}).get('ymli_parent', {}).get('ymli_parent', {}) %}
+    {%- set manifest = (deploy.manifests[0]) if deploy and deploy.manifests else None %}
+    {%- set annotations = deploy.metadata.annotations if deploy and deploy.metadata and deploy.metadata.annotations else {} %}
+
+    {%- set raw_env = annotations.get('environment_name', 'unknown') %}
+    {%- set env_name = raw_env | trim %}
+    {%- set creation = annotations.get('creation_timestamp', 'unknown') %}
+    {%- set deploy_time = annotations.get('deploy_timestamp', 'unknown') %}
+    {%- set version = manifest.version if manifest else 'unknown-version' %}
+    {%- set app_name = manifest.name if manifest else 'unknown-app' %}
+
+    {%- for artifact in member.get('artifacts', []) %}
       {%- set artifact_type = artifact.properties
           | selectattr('key', 'equalto', 'type')
           | map(attribute='value')
           | list
           | first %}
-      {%- if artifact_type == type %}
-        {%- set name = artifact.name ~ '.' ~ artifact_type %}
-        {%- set version = manifest.version if manifest else 'unknown-version' %}
-        {%- set app_name = manifest.name if manifest else 'unknown-app' %}
-        {%- set creation = annotations.creation_timestamp %}
-        {%- set deploy_time = annotations.deploy_timestamp %}
-        {%- set key = name ~ '|' ~ version ~ '|' ~ creation ~ '|' ~ deploy_time %}
-
-        {%- if key not in entries | map(attribute='key') | list %}
-          {%- set _ = entries.append({
-            "key": key,
-            "artifact": name,
-            "app_name": app_name,
-            "version": version,
-            "creation_timestamp": creation,
-            "deploy_timestamp": deploy_time
-          }) %}
+      {%- if (type == '*' or artifact_type == type)
+            and (env == '*' or env_name == env)
+            and (app == '*' or app_name == app) %}
+        {%- set artifact_name = artifact.name %}
+        {%- set entry = {
+          "environment": env_name,
+          "type": artifact_type,
+          "artifact": artifact_name,
+          "app_name": app_name,
+          "version": version,
+          "creation_timestamp": creation,
+          "deploy_timestamp": deploy_time
+        } %}
+        {%- if entry not in entries %}
+          {%- set _ = entries.append(entry) %}
         {%- endif %}
       {%- endif %}
     {%- endfor %}
   {%- endif %}
 {%- endfor %}
 
-{# Optional: sort entries by deploy timestamp or version #}
 
-Environment          Type     Artifact               App Name                 Version                                Packaging Timestamp          Deploy Timestamp
--------------------  -------  ---------------------  -----------------------  --------------------------------------  ---------------------------  -------------------------
+Environment                Type       Artifact                 App Name                 Version                                Packaging Timestamp          Deploy Timestamp
+------------------------   ---------  -----------------------  -----------------------  --------------------------------------  ---------------------------  -------------------------
 
-{%- for entry in entries | sort(attribute='deploy_timestamp') %}
-{{ env.ljust(25) }}{{ type.ljust(10) }}{{ entry.artifact.ljust(23) }}{{ entry.app_name.ljust(25) }}{{ entry.version.ljust(40) }}{{ entry.creation_timestamp.ljust(27) }}{{ entry.deploy_timestamp }}
-{%- endfor %}
-
-
+{%- if entries | length == 0 %}
+(no MEMBER_COPY artifacts found
+  {{ ' for type ' ~ type if type != '*' else '' }}
+  {{ ' in environment ' ~ env if env != '*' else '' }}
+  {{ ' for application ' ~ app if app != '*' else '' }})
+{%- else %}
+  {%- for entry in entries | sort(attribute='deploy_timestamp') %}
+{{ entry.environment.ljust(25) }}{{ entry.type.ljust(11) }}{{ entry.artifact.ljust(25) }}{{ entry.app_name.ljust(25) }}{{ entry.version.ljust(40) }}{{ entry.creation_timestamp.ljust(27) }}{{ entry.deploy_timestamp }}
+  {%- endfor %}
+{%- endif %}
