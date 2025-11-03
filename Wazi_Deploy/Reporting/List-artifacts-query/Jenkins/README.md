@@ -31,7 +31,7 @@ The directory of Wazi Deploy evidence files is referenced by within the Jenkinsf
 
 ## Setup and usage of template
 
-This pipleine implements the [wazi-deploy-evidence command](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=commands-wazi-deploy-evidence-command) for easy use of deployment analysis. 
+This pipeline implements the [wazi-deploy-evidence command](https://www.ibm.com/docs/en/developer-for-zos/17.0.0?topic=commands-wazi-deploy-evidence-command) for easy use of deployment analysis. 
 
 1. Create a new Jenkins project
 2. Copy the following files from the parent directory into the root of your new project:
