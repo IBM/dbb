@@ -21,7 +21,6 @@ select:
 
 output:
   fields:
-    ymli_parent:
       name: true
       ymli_parent:
         ymli_parent:
