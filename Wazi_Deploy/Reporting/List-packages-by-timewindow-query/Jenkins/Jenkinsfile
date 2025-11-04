@@ -1,0 +1,87 @@
+def JenkinsAgent              = "ztec-201-STC"
+def git_url                   = ""
+def ssh_key                   = ""
+
+pipeline {
+    agent { label 'JenkinsAgent' }
+
+
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: '', description: 'Feature branch to checkout')
+        string(name: 'application', defaultValue: 'MortgageApplication', description: 'Application Name filter')
+        string(name: 'deployed_after', defaultValue: '*', description: 'starting time e.g. 20250911')
+        string(name: 'deployed_before', defaultValue: '*', description: 'ending time e.g. 20250913')
+        choice(name: 'environmentFilter', choices: ['*', 'EOLEB7-Integration', 'EOLEB7-Acceptance', 'EOLEB7-Production'], description: 'Environment name filter')
+    }
+
+    environment {
+        wdEvidencesRoot = '/var/work/wazi_deploy_evidences_jenkins'
+        wdEvidencesIndex = '/var/work/wazi_deploy_evidences_jenkins_index/'
+        reportOutputDirectory = "${env.WORKSPACE}/REPORT-OUTPUT"
+        reportFile = "${env.reportOutputDirectory}/deployment-inventory-report-${env.BUILD_ID}.html"
+        // reportFile = "${env.reportOutputDirectory}/deployment-inventory-report-${env.BUILD_ID}.txt"
+        // rendererFile = "${env.WORKSPACE}/azi_Deploy/Reporting/List-packages-by-timewindow-query/renderer.yml"
+        rendererFile = "${env.WORKSPACE}/azi_Deploy/Reporting/List-packages-by-timewindow-query/renderer.html"
+        templateFile = "${env.WORKSPACE}/Wazi_Deploy/Reporting/List-packages-by-timewindow-query/queryTemplate.yml"
+    }
+
+    stages {
+        stage('Clone Repo') {
+        steps {
+            git(
+                branch: "${params.BRANCH_NAME}",
+                url: 'git_url',
+                credentialsId: 'ssh_key' 
+            )
+        }
+    }
+
+        stage('Prepare Directories') {
+            steps {
+                sh "mkdir -p ${env.reportOutputDirectory}"
+            }
+        }
+        stage('Query') {
+            steps {
+                script {
+                    echo "[INFO] wdEvidencesRoot   = ${env.wdEvidencesRoot}"
+                    echo "[INFO] wdEvidencesIndex  = ${env.wdEvidencesIndex}"
+
+                    sh 'pwd'
+                    sh "ls -ld /var/work/wazi_deploy_evidences_jenkins_index/"
+
+                    def CMD = """
+                        wazideploy-evidence --indexFolder '${env.wdEvidencesIndex}' \
+                        --dataFolder '${env.wdEvidencesRoot}' \
+                        --template '${env.templateFile}' \
+                        --output='${env.reportFile}' \
+                        r env='${params.environmentFilter}' \
+                        deployed_after='${params.deployed_after}' \
+                        deployed_before='${params.deployed_before}' \
+                        renderer='${env.rendererFile}'
+                    """.trim().replaceAll("\n+", " ").replaceAll("\\s{2,}", " ")
+
+                    echo "[INFO] Executing command : ${CMD}"
+                    int rc = sh(script: CMD, returnStatus: true)
+
+                    if (rc != 0) {
+                        error("[WARNING] - Query Wazi Deploy index failed with return code ${rc}.")
+                    }
+
+                    echo "[INFO] Cleaning up invalid characters in report file..."
+                    sh """
+                    # Change file tag to UTF-8 (text, codepage 1208)
+                    chtag -tc UTF-8 '${env.reportFile}'
+                     """
+
+                    echo "[INFO] - Query Wazi Deploy index completed. Report ${env.reportFile} generated and cleaned."
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'REPORT-OUTPUT/*', onlyIfSuccessful: true
+                }
+            }
+        }
+    }
+}    
