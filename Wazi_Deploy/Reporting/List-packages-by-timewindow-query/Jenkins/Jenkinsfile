@@ -21,7 +21,7 @@ pipeline {
         reportFile = "${env.reportOutputDirectory}/deployment-inventory-report-${env.BUILD_ID}.html"
         // reportFile = "${env.reportOutputDirectory}/deployment-inventory-report-${env.BUILD_ID}.txt"
         // rendererFile = "${env.WORKSPACE}/azi_Deploy/Reporting/List-packages-by-timewindow-query/renderer.yml"
-        rendererFile = "${env.WORKSPACE}/azi_Deploy/Reporting/List-packages-by-timewindow-query/renderer.html"
+        rendererFile = "${env.WORKSPACE}/Wazi_Deploy/Reporting/List-packages-by-timewindow-query/renderer.html"
         templateFile = "${env.WORKSPACE}/Wazi_Deploy/Reporting/List-packages-by-timewindow-query/queryTemplate.yml"
     }
 
