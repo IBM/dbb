@@ -174,44 +174,6 @@ curl --request POST \
 
 ---
 
-## Evidence and Reporting
-
-During the **Report** stage, the pipeline:
-
-* Generates a deployment report (`deployment-report.html`) and evidence file (`evidence.yaml`).
-* Stores them under:
-
-  ```
-  DEPLOY-OUTPUT/deploy-${targetEnvironment}/
-  ```
-* Persists long-term evidence to:
-
-  ```
-  /var/work/wazi_deploy_evidences_gitlab/<application>/<targetEnvironment>/
-  ```
-* Updates the Wazi Deploy index at:
-
-  ```
-  /var/work/wazi_deploy_evidences_gitlab_index/
-  ```
-
-
----
-
-## Cleanup
-
-The final stage deletes the USS workspace:
-
-* Executes [`deleteWorkspace.sh`](../Common-Backend-Scripts/README.md#411---deleteworkspacesh)
-* Removes temporary USS directories:
-
-  ```
-  ${PIPELINE_WORKSPACE}/${CI_PROJECT_NAME}/deploy-${buildId}
-  ```
-* Cleans up deployment outputs in the GitLab workspace.
-
----
-
 ## Summary
 
 This template provides a **deployment-only GitLab CD pipeline** to promote application builds across environments using IBM Wazi Deploy and Zowe CLI.
