@@ -195,7 +195,6 @@ During the **Report** stage, the pipeline:
   /var/work/wazi_deploy_evidences_gitlab_index/
   ```
 
-Artifacts are retained in GitLab for **30 days** by default.
 
 ---
 
