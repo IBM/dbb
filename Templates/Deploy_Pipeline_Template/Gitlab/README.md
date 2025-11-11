@@ -111,10 +111,7 @@ The [Common Backend Scripts](../Common-Backend-Scripts/) and Wazi Deploy must be
 | `RSEAPI_USER`                               | Username for RSE API server authentication (Zowe).                  |
 | `RSEAPI_PASSWORD`                           | Password for RSE API user.                                          |
 | `RSEAPI_WORKING_DIRECTORY`                  | Working directory path on USS for Zowe commands.                    |
-| `PIPELINE_WORKSPACE`                        | Root workspace directory on z/OS USS (e.g., `/u/gitlab/workspace`). |
 | `WAZI_DEPLOY_SAMPLES`                       | Base path for environment configuration YAML files.                 |
-| `ARTIFACTORY_URL`                           | Base URL of your Artifactory instance.                              |
-| `ARTIFACTORY_USER` / `ARTIFACTORY_PASSWORD` | Artifactory credentials for artifact download.                      |
 
 ---
 
