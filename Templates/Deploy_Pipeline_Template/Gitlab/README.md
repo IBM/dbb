@@ -10,13 +10,13 @@ It leverages the [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/T
 
 The pipeline supports **manual and API triggers** and implements the following stages:
 
-* `Validate` stage
+* `Validate` 
 
   * Validates the pipeline input parameters passed during manual or API trigger.
   * Determines the appropriate environment configuration file based on the selected target environment.
   * Ensures all required parameters (e.g., `application`, `buildId`, `artifactoryRepo`) are defined.
 
-* `Generate Plan` stage
+* `Generate Plan` 
 
   * Uses the Wazi Deploy script [`wazideploy-generate.sh`](../../Common-Backend-Scripts/wazideploy-generate.sh) to create the deployment plan on USS.
   * Supports both build-based and release-based deployments depending on the `pipelineType` value.
@@ -27,13 +27,13 @@ The pipeline supports **manual and API triggers** and implements the following s
   * Executes the deployment against the selected target environment (integration, acceptance, or production).
   * Produces initial evidence files and deployment logs.
 
-* `Report` stage
+* `Report` 
 
   * Invokes [`wazideploy-evidence.sh`](../../Common-Backend-Scripts/wazideploy-evidence.sh) to generate a deployment report and evidence summary.
   * Downloads the report and evidence from USS to GitLab artifacts.
   * Updates the centralized Wazi Deploy evidence index for traceability.
 
-* `Cleanup` stage
+* `Cleanup` 
 
   * Removes the temporary USS workspace using [`deleteWorkspace.sh`](../../Common-Backend-Scripts/deleteWorkspace.sh).
   * Cleans up intermediate files and temporary deployment directories.
