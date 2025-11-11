@@ -144,8 +144,8 @@ It automatically performs validation, plan generation, deployment, evidence gene
 2. Choose the appropriate branch (e.g., `main`)
 3. Enter pipeline variables:
 
-   ```
    Eg:
+   ```
    artifactoryRepo: retirementCalculator-gitlab-repo-local
    application: retirementCalculator
    buildId: 12247
