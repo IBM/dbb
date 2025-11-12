@@ -1,1 +1,1 @@
-This repository contains templates for standalone deployment pipelines.
+This folder contains templates for standalone deployment pipelines.
