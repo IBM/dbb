@@ -42,8 +42,7 @@ The pipeline supports **manual and API triggers** and implements the following s
 
 Depending on the target environment and pipeline type, you can trigger this CD pipeline for:
 
-* Continuous deployment to **integration** (automated verification)
-* Controlled deployments to **acceptance** or **production** (manual approval flow)
+Controlled deployments to **integration**, **acceptance** or **production** 
 
 The pipeline uses the GitLab concepts of `stages` and `jobs`.
 
@@ -111,7 +110,6 @@ The [Common Backend Scripts](../Common-Backend-Scripts/) and Wazi Deploy must be
 | `RSEAPI_USER`                               | Username for RSE API server authentication (Zowe).                  |
 | `RSEAPI_PASSWORD`                           | Password for RSE API user.                                          |
 | `RSEAPI_WORKING_DIRECTORY`                  | Working directory path on USS for Zowe commands.                    |
-| `WAZI_DEPLOY_SAMPLES`                       | Base path for environment configuration YAML files.                 |
 
 ---
 
@@ -125,7 +123,6 @@ It automatically performs validation, plan generation, deployment, evidence gene
 
 | Parameter           | Required                      | Description                                                               |
 | ------------------- | ----------------------------- | ------------------------------------------------------------------------- |
-| `artifactoryRepo`   |                              | Artifactory repository name containing the build artifact.                 |
 | `application`       |                              | Application name to deploy.                                                |
 | `buildId`           |                              | Build identifier corresponding to the artifact.                            |
 | `releaseVersion`    |  Only for release pipelines  | Release version to deploy (e.g., `rel-2.6.0`).                             |
@@ -135,7 +132,7 @@ It automatically performs validation, plan generation, deployment, evidence gene
 
 ---
 
-### Example 1 — Manual Trigger (from GitLab UI)
+### Running the  Pipeline via Manual Trigger (from GitLab UI)
 
 1. Navigate to **CI/CD → Pipelines → Run Pipeline**
 2. Choose the appropriate branch (e.g., `main`)
@@ -143,7 +140,6 @@ It automatically performs validation, plan generation, deployment, evidence gene
 
    Eg:
    ```
-   artifactoryRepo: retirementCalculator-gitlab-repo-local
    application: retirementCalculator
    buildId: 12247
    targetEnvironment: integration
@@ -151,24 +147,6 @@ It automatically performs validation, plan generation, deployment, evidence gene
    pipelineType: build
    ```
 4. Click **Run pipeline**
-
----
-
-### Example 2 — API Trigger
-
-```bash
-curl --request POST \
-  --form "token=<YOUR_TRIGGER_TOKEN>" \
-  --form "ref=main" \
-  --form "variables[artifactoryRepo]=retirementCalculator-gitlab-repo-local" \
-  --form "variables[application]=retirementCalculator" \
-  --form "variables[buildId]=12247" \
-  --form "variables[targetEnvironment]=acceptance" \
-  --form "variables[branchName]=main" \
-  --form "variables[pipelineType]=release" \
-  --form "variables[releaseVersion]=rel-2.6.0" \
-  "https://gitlab.example.com/api/v4/projects/<PROJECT_ID>/trigger/pipeline"
-```
 
 ---
 

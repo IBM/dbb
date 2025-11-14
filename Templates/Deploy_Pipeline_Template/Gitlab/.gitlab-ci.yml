@@ -1,12 +1,12 @@
 variables:
   GIT_STRATEGY: none
   GIT_CHECKOUT: "false"
-  
+
   # Environment configuration files
-  wdEnvironmentFileIntegration: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-retirementCalculator-Integration.yaml
-  wdEnvironmentFileAcceptance: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-retirementCalculator-Acceptance.yaml
-  wdEnvironmentFileProduction: ${WAZI_DEPLOY_SAMPLES}/plum-samples/external-repos/environment-conf/python/EOLEB7-retirementCalculator-Production.yaml
-  
+  wdEnvironmentFileIntegration: EOLEB7-${application}-Integration.yaml
+  wdEnvironmentFileAcceptance: EOLEB7-${application}-Acceptance.yaml
+  wdEnvironmentFileProduction: EOLEB7-${application}-Production.yaml
+
   # Evidence directories
   wdEvidencesRoot: /var/work/wazi_deploy_evidences_gitlab/
   wdEvidencesIndex: /var/work/wazi_deploy_evidences_gitlab_index/
@@ -20,9 +20,6 @@ variables:
   verbose: "-v"
   
   # Pipeline variables to be passed when triggering
-  artifactoryRepo:
-    value: ""
-    description: "Artifactory repository name (e.g., retirementCalculator-gitlab-repo-local)"
   
   application:
     value: ""
@@ -78,7 +75,6 @@ Validate Parameters:
     echo "========================================="
     echo "Deployment Pipeline Parameters"
     echo "========================================="
-    echo "[INFO] Artifactory Repo: ${artifactoryRepo}"
     echo "[INFO] Application: ${application}"
     echo "[INFO] Build ID: ${buildId}"
     echo "[INFO] Release Version: ${releaseVersion}"
@@ -90,11 +86,6 @@ Validate Parameters:
     
     VALIDATION_FAILED=0
     
-    # Validate required parameters
-    if [ -z "${artifactoryRepo}" ]; then
-      echo "[ERROR] artifactoryRepo is required"
-      VALIDATION_FAILED=1
-    fi
     
     if [ -z "${application}" ]; then
       echo "[ERROR] application is required"
@@ -106,20 +97,10 @@ Validate Parameters:
       VALIDATION_FAILED=1
     fi
     
-    if [ -z "${targetEnvironment}" ]; then
-      echo "[ERROR] targetEnvironment is required"
-      VALIDATION_FAILED=1
-    fi
-    
     if [ -z "${branchName}" ]; then
       echo "[ERROR] branchName is required"
       VALIDATION_FAILED=1
-    fi
-    
-    if [ -z "${pipelineType}" ]; then
-      echo "[ERROR] pipelineType is required"
-      VALIDATION_FAILED=1
-    fi
+    fi 
     
     # Validate pipelineType value
     if [ "${pipelineType}" != "build" ] && [ "${pipelineType}" != "release" ]; then
@@ -139,18 +120,6 @@ Validate Parameters:
       echo "[INFO] Build pipeline - releaseVersion not required"
     fi
     
-    # Validate targetEnvironment value
-    case ${targetEnvironment} in
-      integration|acceptance|production)
-        echo "[INFO] Valid targetEnvironment: ${targetEnvironment}"
-        ;;
-      *)
-        echo "[ERROR] Invalid targetEnvironment: ${targetEnvironment}"
-        echo "[ERROR] Must be one of: integration, acceptance, production"
-        VALIDATION_FAILED=1
-        ;;
-    esac
-    
     # Check if any validation failed
     if [ ${VALIDATION_FAILED} -eq 1 ]; then
       echo "========================================="
@@ -158,21 +127,6 @@ Validate Parameters:
       echo "========================================="
       exit 1
     fi
-    
-    # Set environment file based on targetEnvironment variable
-    case ${targetEnvironment} in
-      integration)
-        export WD_ENV_FILE=${wdEnvironmentFileIntegration}
-        ;;
-      acceptance)
-        export WD_ENV_FILE=${wdEnvironmentFileAcceptance}
-        ;;
-      production)
-        export WD_ENV_FILE=${wdEnvironmentFileProduction}
-        ;;
-    esac
-    
-    echo "[INFO] Environment file: ${WD_ENV_FILE}"
     echo "========================================="
     echo "[SUCCESS] All validations passed"
     echo "========================================="
@@ -216,34 +170,25 @@ Deploy Application:
   stage: Deploy
   tags: [shell]
   needs: ["Generate Deployment Plan"]
-      
   script: |
     echo "[INFO] Deploying to ${targetEnvironment} environment"
-    
-    # Set environment file and evidence path based on targetEnvironment
-    case ${targetEnvironment} in
-      integration)
-        WD_ENV_FILE=${wdEnvironmentFileIntegration}
-        EVIDENCE_PATH="deploy/evidences/evidence.yaml"
-        ;;
-      acceptance)
-        WD_ENV_FILE=${wdEnvironmentFileAcceptance}
-        EVIDENCE_PATH="deploy-acceptance/evidences/evidence.yaml"
-        ;;
-      production)
-        WD_ENV_FILE=${wdEnvironmentFileProduction}
-        EVIDENCE_PATH="deploy-production/evidences/evidence.yaml"
-        ;;
-    esac
-    
-    echo "[INFO] Using environment file: ${WD_ENV_FILE}"
-    echo "[INFO] Evidence path: ${EVIDENCE_PATH}"
+
+    EnvCaps="$(tr '[:lower:]' '[:upper:]' <<< ${targetEnvironment:0:1})${targetEnvironment:1}"
+    varname="wdEnvironmentFile${EnvCaps}"
+    wdEnvironmentFile="${!varname}"
+
+    wdEvidencePath="deploy/evidences/evidence.yaml"
+
+    if [ -z "${wdEnvironmentFile}" ]; then
+    echo "[ERROR] No environment file found for ${targetEnvironment}"
+    exit 1
+    fi
+
+    echo "[INFO] Using environment file: ${wdEnvironmentFile}"
+    echo "[INFO] Evidence path: ${wdEvidencePath}"
     
     # Execute deployment
-    zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${WD_ENV_FILE} -i ${application}.tar -l ${EVIDENCE_PATH} < /dev/null" \
-      --user ${RSEAPI_USER} \
-      --password ${RSEAPI_PASSWORD} \
-      --cwd ${RSEAPI_WORKING_DIRECTORY}
+    zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFile} -i ${application}.tar -l ${wdEvidencePath} < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
     
     RC=$?
     if [ ${RC} -eq 0 ]; then
@@ -268,35 +213,15 @@ Generate Deployment Report:
     paths:
       - "${deployOutputDirectory}/deploy-${targetEnvironment}/deployment-report.html"
       - "${deployOutputDirectory}/deploy-${targetEnvironment}/evidence.yaml"
-    expire_in: 30 days
   script: |
     echo "[INFO] Generating deployment report for ${targetEnvironment}"
     
-    # Set paths based on environment
-    case ${targetEnvironment} in
-      integration)
-        EVIDENCE_PATH="deploy/evidences/evidence.yaml"
-        REPORT_PATH="deploy/deployment-report.html"
-        ;;
-      acceptance)
-        EVIDENCE_PATH="deploy-acceptance/evidences/evidence.yaml"
-        REPORT_PATH="deploy-acceptance/deployment-report.html"
-        ;;
-      production)
-        EVIDENCE_PATH="deploy-production/evidences/evidence.yaml"
-        REPORT_PATH="deploy-production/deployment-report.html"
-        ;;
-    esac
-    
-    sourceOutputFile="${uniqueWorkspaceId}/deployPkgDir/${REPORT_PATH}"
-    sourceEvidenceFile="${uniqueWorkspaceId}/deployPkgDir/${EVIDENCE_PATH}"
+    sourceOutputFile="${uniqueWorkspaceId}/deployPkgDir/deploy/deployment-report.html"
+    sourceEvidenceFile="${uniqueWorkspaceId}/deployPkgDir/deploy/evidences/evidence.yaml"
     wdEvidencesDir="${wdEvidencesRoot}/${application}/${targetEnvironment}"
     
     # Generate evidence
-    zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l ${EVIDENCE_PATH} -o ${REPORT_PATH}" \
-      --user ${RSEAPI_USER} \
-      --password ${RSEAPI_PASSWORD} \
-      --cwd ${RSEAPI_WORKING_DIRECTORY}
+    zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}  --cwd ${RSEAPI_WORKING_DIRECTORY}
     
     RC=$?
     if [ ${RC} -ne 0 ]; then
@@ -311,36 +236,31 @@ Generate Deployment Report:
       mkdir ${deployOutputDirectory}
     fi
     
-    if [ -d "${reportDir}/" ]; then
-      rm -R ${reportDir}
-      echo "[INFO] Removed existing report directory: ${reportDir}"
-    fi
-    
-    mkdir ${reportDir}
-    echo "[INFO] Created report directory: ${reportDir}"
+    mkdir -p "${reportDir}"
+    echo "[INFO] Using report directory: ${reportDir}"
     
     # Download deployment report
     echo "[INFO] Downloading deployment report from ${sourceOutputFile}"
-    zowe rse dl uf "${sourceOutputFile}" -f "${reportDir}/deployment-report.html" -b \
-      --user ${RSEAPI_USER} \
-      --password ${RSEAPI_PASSWORD}
+    zowe rse dl uf "${sourceOutputFile}" -f "${reportDir}/deployment-report.html" -b  --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
     
     RC=$?
-    if [ ${RC} -ne 0 ]; then
-      echo "[ERROR] Failed to download deployment report. Exit code: ${RC}"
-      exit ${RC}
+    if [ ${RC} -eq 0 ]; then
+        echo [INFO] Loaded deployment report file.
+    else
+        echo [ERROR] Failed to load deployment report. Exit code: ${RC}.
+        exit ${RC}
     fi
     
     # Download evidence file
     echo "[INFO] Downloading evidence report from ${sourceEvidenceFile}"
-    zowe rse dl uf "${sourceEvidenceFile}" -f "${reportDir}/evidence.yaml" -b \
-      --user ${RSEAPI_USER} \
-      --password ${RSEAPI_PASSWORD}
+    zowe rse dl uf "${sourceEvidenceFile}" -f "${reportDir}/evidence.yaml" -b  --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
     
     RC=$?
-    if [ ${RC} -ne 0 ]; then
-      echo "[ERROR] Failed to download evidence file. Exit code: ${RC}"
-      exit ${RC}
+    if [ ${RC} -eq 0 ]; then
+        echo [INFO] Loaded deployment evidence file.
+    else
+        echo [ERROR] Failed to load deployment evidence file. Exit code: ${RC}.
+        exit ${RC}
     fi
     
     echo "[INFO] Published deployment report"
