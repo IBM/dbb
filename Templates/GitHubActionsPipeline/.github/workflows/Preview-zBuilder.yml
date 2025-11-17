@@ -1,4 +1,4 @@
-name: Preview
+name: Preview-zBuilder
 on:
     workflow_call:
         secrets:
@@ -12,7 +12,7 @@ on:
                 required: false
 
 env:
-    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_p${{github.run_number }} # adding a p to before the number,
+    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_pz${{github.run_number }} # adding a pz to before the number,
     # to avoid an error caused by repeated build numbers 
     pipelineType: ${{ inputs.pipelineType }}
     branch : ${{ github.ref_name }} 
@@ -47,7 +47,7 @@ jobs:
         runs-on: self-hosted
         steps: 
         - name: Build git repo
-          run: ssh ${{env.zosSFTPUser}} ". ./.profile && dbbBuild.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -b ${{ env.branch }} -p ${{env.pipelineType}}"
+          run: ssh ${{env.zosSFTPUser}} ". ./.profile && zBuilder.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -b ${{ env.branch }} -p ${{env.pipelineType}}"
         
         - name: Prepare logs
           if: ${{ always() }}
