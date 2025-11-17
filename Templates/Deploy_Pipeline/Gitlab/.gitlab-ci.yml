@@ -180,7 +180,7 @@ Deploy Application:
     wdEvidencePath="deploy/evidences/evidence.yaml"
 
     if [ -z "${wdEnvironmentFile}" ]; then
-    echo "[ERROR] No environment file found for ${targetEnvironment}"
+        echo "[ERROR] No environment file found for ${targetEnvironment}"
     exit 1
     fi
 
