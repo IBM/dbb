@@ -181,7 +181,7 @@ Deploy Application:
 
     if [ -z "${wdEnvironmentFile}" ]; then
         echo "[ERROR] No environment file found for ${targetEnvironment}"
-    exit 1
+        exit 1
     fi
 
     echo "[INFO] Using environment file: ${wdEnvironmentFile}"
