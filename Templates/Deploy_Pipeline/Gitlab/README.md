@@ -35,7 +35,7 @@ The pipeline supports **manual and API triggers** and implements the following s
 
 * `Cleanup` 
 
-  * Removes the temporary USS workspace using [`deleteWorkspace.sh`](../../Common-Backend-Scripts/deleteWorkspace.sh).
+  * Removes the temporary z/OS Unix System Services workspace using [`deleteWorkspace.sh`](../../Common-Backend-Scripts/deleteWorkspace.sh).
   * Cleans up intermediate files and temporary deployment directories.
 
 ---
