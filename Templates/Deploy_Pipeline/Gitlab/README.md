@@ -18,7 +18,7 @@ The pipeline supports **manual and API triggers** and implements the following s
 
 * `Generate Plan` 
 
-  * Uses the Wazi Deploy script [`wazideploy-generate.sh`](../../Common-Backend-Scripts/wazideploy-generate.sh) to create the deployment plan on USS.
+  * Uses the Wazi Deploy script [`wazideploy-generate.sh`](../../Common-Backend-Scripts/wazideploy-generate.sh) to create the deployment plan on z/OS Unix System Services.
   * Supports both build-based and release-based deployments depending on the `pipelineType` value.
 
 * `Deploy` 
