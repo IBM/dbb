@@ -280,7 +280,7 @@ Generate Deployment Report:
       echo "[INFO] Updated Wazi Deploy index"
     else
       echo "[WARNING] Failed to update Wazi Deploy index"
-      exit ${RC}
+        exit ${RC}
     fi
 
 # Cleanup workspace
