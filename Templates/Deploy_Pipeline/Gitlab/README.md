@@ -30,7 +30,7 @@ The pipeline supports **manual and API triggers** and implements the following s
 * `Report` 
 
   * Invokes [`wazideploy-evidence.sh`](../../Common-Backend-Scripts/wazideploy-evidence.sh) to generate a deployment report and evidence summary.
-  * Downloads the report and evidence from USS to GitLab artifacts.
+  * Downloads the report and evidence from z/OS Unix System Services to GitLab artifacts.
   * Updates the centralized Wazi Deploy evidence index for traceability.
 
 * `Cleanup` 
