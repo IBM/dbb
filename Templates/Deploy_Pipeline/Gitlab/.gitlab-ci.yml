@@ -194,7 +194,7 @@ Deploy Application:
     if [ ${RC} -eq 0 ]; then
         echo "[INFO] Deployment to ${targetEnvironment} passed"
     else
-      echo "[ERROR] Deployment to ${targetEnvironment} failed. Exit code: ${RC}"
+        echo "[ERROR] Deployment to ${targetEnvironment} failed. Exit code: ${RC}"
       exit ${RC}
     fi
 
