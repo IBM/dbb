@@ -2,10 +2,8 @@ variables:
   GIT_STRATEGY: none
   GIT_CHECKOUT: "false"
 
-  # Environment configuration files
-  wdEnvironmentFileIntegration: EOLEB7-${application}-Integration.yaml
-  wdEnvironmentFileAcceptance: EOLEB7-${application}-Acceptance.yaml
-  wdEnvironmentFileProduction: EOLEB7-${application}-Production.yaml
+  # Environment configuration
+  wdEnvironmentFile: EOLEB7-${application}-${targetEnvironment}.yaml #Make sure the referenced file matches the required naming convention
 
   # Evidence directories
   wdEvidencesRoot: /var/work/wazi_deploy_evidences_gitlab/
@@ -172,18 +170,7 @@ Deploy Application:
   needs: ["Generate Deployment Plan"]
   script: |
     echo "[INFO] Deploying to ${targetEnvironment} environment"
-
-    EnvCaps="$(tr '[:lower:]' '[:upper:]' <<< ${targetEnvironment:0:1})${targetEnvironment:1}"
-    varname="wdEnvironmentFile${EnvCaps}"
-    wdEnvironmentFile="${!varname}"
-
-    wdEvidencePath="deploy/evidences/evidence.yaml"
-
-    if [ -z "${wdEnvironmentFile}" ]; then
-        echo "[ERROR] No environment file found for ${targetEnvironment}"
-        exit 1
-    fi
-
+ 
     echo "[INFO] Using environment file: ${wdEnvironmentFile}"
     echo "[INFO] Evidence path: ${wdEvidencePath}"
     
