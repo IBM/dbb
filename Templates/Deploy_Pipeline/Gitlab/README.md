@@ -6,7 +6,7 @@ This template provides a [.gitlab-ci.yml](.gitlab-ci.yml) definition file to set
 
 This pipeline template implements the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) within a **GitLab CI/CD deployment-only context**.
 
-It leverages the [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) and **IBM Wazi Deploy** to perform automated deployments of pre-built application packages from **Artifactory** into integration, acceptance, and production environments on z/OS.
+It leverages the [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) and **IBM Wazi Deploy** to perform automated deployments of pre-built application packages from an Artifact Repository into integration, acceptance, and production environments on z/OS.
 
 The pipeline supports **manual and API triggers** and implements the following stages:
 
