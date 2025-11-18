@@ -220,7 +220,7 @@ Generate Deployment Report:
     
     # Create report directory
     if [ ! -d "${deployOutputDirectory}/" ]; then
-      mkdir ${deployOutputDirectory}
+        mkdir ${deployOutputDirectory}
     fi
     
     mkdir -p "${reportDir}"
@@ -269,9 +269,9 @@ Generate Deployment Report:
     RC=$?
     
     if [ ${RC} -eq 0 ]; then
-      echo "[INFO] Updated Wazi Deploy index"
+        echo "[INFO] Updated Wazi Deploy index"
     else
-      echo "[WARNING] Failed to update Wazi Deploy index"
+        echo "[WARNING] Failed to update Wazi Deploy index"
         exit ${RC}
     fi
 
