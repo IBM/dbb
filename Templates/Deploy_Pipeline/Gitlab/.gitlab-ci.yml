@@ -1,0 +1,282 @@
+variables:
+    GIT_STRATEGY: none
+    GIT_CHECKOUT: "false"
+
+    # Environment configuration
+    wdEnvironmentFile: EOLEB7-${application}-${targetEnvironment}.yaml #Make sure the referenced file matches the required naming convention
+
+    # Evidence directories
+    wdEvidencesRoot: /var/work/wazi_deploy_evidences_gitlab/
+    wdEvidencesIndex: /var/work/wazi_deploy_evidences_gitlab_index/
+    
+    # Working directory on USS (using buildId from pipeline vars)
+    uniqueWorkspaceId: $PIPELINE_WORKSPACE/$CI_PROJECT_NAME/deploy-${buildId}
+    
+    # Working directory on Linux
+    deployOutputDirectory: ${CI_PROJECT_DIR}/DEPLOY-OUTPUT
+    
+    verbose: "-v"
+    
+    # Pipeline variables to be passed when triggering
+    
+    application:
+        value: ""
+        description: "Application name (e.g., retirementCalculator)"
+    
+    releaseVersion:
+        value: ""
+        description: "Release version to deploy (e.g., rel-2.6.0) - Required only for release pipeline type"
+      
+    buildId:
+        value: ""
+        description: "Build ID from the original build pipeline (e.g., 12247)"
+      
+    targetEnvironment:
+        value: "integration"
+        options:
+          - "integration"
+          - "acceptance"
+          - "production"
+        description: "Target environment for deployment"
+    
+    branchName:
+        value: "main"
+        description: "Branch name used in build (e.g., main, feature/test-utility-script)"
+    
+    pipelineType:
+        value: "build"
+        options:
+          - "build"
+          - "release"
+        description: "Type of pipeline - build or release"
+
+  # Only run on manual/web triggers
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "api"
+
+stages:
+    - Validate
+    - Generate Plan
+    - Deploy
+    - Report
+    - Cleanup
+
+# Validate input parameters
+Validate Parameters:
+    stage: Validate
+    tags: [shell]
+    script: |
+        echo "========================================="
+        echo "Deployment Pipeline Parameters"
+        echo "========================================="
+        echo "[INFO] Application: ${application}"
+        echo "[INFO] Build ID: ${buildId}"
+        echo "[INFO] Release Version: ${releaseVersion}"
+        echo "[INFO] Target Environment: ${targetEnvironment}"
+        echo "[INFO] Branch: ${branchName}"
+        echo "[INFO] Pipeline Type: ${pipelineType}"
+        echo "[INFO] Workspace: ${uniqueWorkspaceId}"
+        echo "========================================="
+        
+        VALIDATION_FAILED=0
+        
+        
+        if [ -z "${application}" ]; then
+            echo "[ERROR] application is required"
+            VALIDATION_FAILED=1
+        fi
+        
+        if [ -z "${buildId}" ]; then
+            echo "[ERROR] buildId is required"
+            VALIDATION_FAILED=1
+        fi
+        
+        if [ -z "${branchName}" ]; then
+            echo "[ERROR] branchName is required"
+            VALIDATION_FAILED=1
+        fi 
+        
+        # Validate pipelineType value
+        if [ "${pipelineType}" != "build" ] && [ "${pipelineType}" != "release" ]; then
+            echo "[ERROR] pipelineType must be either 'build' or 'release', got: ${pipelineType}"
+            VALIDATION_FAILED=1
+        fi
+        
+        # For release pipeline, releaseVersion is required
+        if [ "${pipelineType}" == "release" ]; then
+            if [ -z "${releaseVersion}" ]; then
+                echo "[ERROR] releaseVersion is required for release pipeline type"
+                VALIDATION_FAILED=1
+            else
+                echo "[INFO] Release pipeline - releaseVersion: ${releaseVersion}"
+            fi
+        else
+            echo "[INFO] Build pipeline - releaseVersion not required"
+        fi
+        
+        # Check if any validation failed
+        if [ ${VALIDATION_FAILED} -eq 1 ]; then
+            echo "========================================="
+            echo "[ERROR] Validation failed. Please fix the errors above."
+            echo "========================================="
+            exit 1
+        fi
+        echo "========================================="
+        echo "[SUCCESS] All validations passed"
+        echo "========================================="
+
+Generate Deployment Plan:
+    stage: Generate Plan
+    tags: [shell]
+    needs: ["Validate Parameters"]
+    script: |
+        echo "[INFO] Generating deployment plan for ${targetEnvironment} environment"
+        echo "[INFO] Pipeline Type: ${pipelineType}"
+        echo "[INFO] Build ID: ${buildId}"
+        
+        # Generate deployment plan based on pipeline type
+        if [ "${pipelineType}" == "release" ]; then
+            echo "[INFO] Generating deployment plan for release: ${releaseVersion}"
+            zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${branchName} -P release -R ${releaseVersion} -I ${buildId}"  --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        else
+            echo "[INFO] Generating deployment plan for build pipeline"
+            zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -b ${branchName} -P build -I ${buildId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        fi
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo "[INFO] Deployment plan generation passed"
+        else
+            echo "[ERROR] Deployment plan generation failed. Exit code: ${RC}"
+            exit ${RC}
+        fi
+
+# Deploy to target environment
+Deploy Application:
+    stage: Deploy
+    tags: [shell]
+    needs: ["Generate Deployment Plan"]
+    script: |
+        echo "[INFO] Deploying to ${targetEnvironment} environment"
+        echo "[INFO] Using environment file: ${wdEnvironmentFile}"
+        echo "[INFO] Evidence path: ${wdEvidencePath}"
+        
+        # Execute deployment
+        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFile} -i ${application}.tar -l ${wdEvidencePath} < /dev/null" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo "[INFO] Deployment to ${targetEnvironment} passed"
+        else
+            echo "[ERROR] Deployment to ${targetEnvironment} failed. Exit code: ${RC}"
+            exit ${RC}
+        fi
+
+# Generate and publish deployment report
+Generate Deployment Report:
+    stage: Report
+    tags: [shell]
+    needs: ["Deploy Application"]  
+    rules:
+        - when: always
+    variables:
+        eportDir: ${deployOutputDirectory}/deploy-${targetEnvironment}
+    artifacts:
+        name: "${targetEnvironment}-deployment-report-${buildId}"
+        when: always
+        paths:
+            - "${deployOutputDirectory}/deploy-${targetEnvironment}/deployment-report.html"
+            - "${deployOutputDirectory}/deploy-${targetEnvironment}/evidence.yaml"
+    script: |
+        echo "[INFO] Generating deployment report for ${targetEnvironment}"
+        sourceOutputFile="${uniqueWorkspaceId}/deployPkgDir/deploy/deployment-report.html"
+        sourceEvidenceFile="${uniqueWorkspaceId}/deployPkgDir/deploy/evidences/evidence.yaml"
+        wdEvidencesDir="${wdEvidencesRoot}/${application}/${targetEnvironment}"
+        
+        # Generate evidence
+        zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}  --cwd ${RSEAPI_WORKING_DIRECTORY}
+        
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Generated deployment evidence.
+        else
+              echo "[ERROR] Failed to generate deployment evidence. Exit code: ${RC}"
+              exit ${RC}
+        fi
+        
+        # Create report directory
+        if [ ! -d "${deployOutputDirectory}/" ]; then
+            mkdir ${deployOutputDirectory}
+        fi
+        
+        mkdir -p "${reportDir}"
+        echo "[INFO] Using report directory: ${reportDir}"
+        
+        # Download deployment report
+        echo "[INFO] Downloading deployment report from ${sourceOutputFile}"
+        zowe rse dl uf "${sourceOutputFile}" -f "${reportDir}/deployment-report.html" -b  --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+        
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Loaded deployment report file.
+        else
+            echo [ERROR] Failed to load deployment report. Exit code: ${RC}.
+            exit ${RC}
+        fi
+        
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo "[INFO] Downloading evidence report from ${sourceEvidenceFile}"
+            zowe rse dl uf "${sourceEvidenceFile}" -f "${reportDir}/evidence.yaml" -b  --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+        else
+            echo [ERROR] Failed to download evidence report. Exit code: ${RC}.
+            exit ${RC}
+        fi  
+        
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Loaded deployment evidence file.
+        else
+            echo [ERROR] Failed to load deployment evidence file. Exit code: ${RC}.
+            exit ${RC}
+        fi
+        
+        echo "[INFO] Published deployment report"
+        
+        # Persist evidence for Wazi Deploy indexing
+        mkdir -p $wdEvidencesDir
+        mkdir -p $wdEvidencesIndex
+        
+        cp ${reportDir}/evidence.yaml $wdEvidencesDir/evidence-${buildId}.yaml
+        echo "[INFO] Persisted evidence file at $wdEvidencesDir"
+        
+        # Update Wazi Deploy index
+        wazideploy-evidence --index $wdEvidencesIndex --dataFolder $wdEvidencesRoot i
+        RC=$?
+        
+        if [ ${RC} -eq 0 ]; then
+            echo "[INFO] Updated Wazi Deploy index"
+        else
+            echo "[WARNING] Failed to update Wazi Deploy index"
+            exit ${RC}
+        fi
+
+# Cleanup workspace
+Cleanup:
+    stage: Cleanup
+    tags: [shell]
+    variables:
+      FF_ENABLE_JOB_CLEANUP: 1
+    script: |
+        zowe rse issue unix-shell ". ~/.bash_profile && deleteWorkspace.sh -w ${uniqueWorkspaceId}" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD} --cwd ${RSEAPI_WORKING_DIRECTORY}
+        RC=$?
+        if [ ${RC} -eq 0 ]; then
+            echo [INFO] Cleanup job passed.
+        else
+            echo [ERROR] Cleanup job failed. Exit code: ${RC}.
+            exit ${RC}
+        fi
+
