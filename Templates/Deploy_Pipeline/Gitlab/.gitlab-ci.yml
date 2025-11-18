@@ -211,12 +211,12 @@ Generate Deployment Report:
     zowe rse issue unix-shell ". ~/.bash_profile && wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html" --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}  --cwd ${RSEAPI_WORKING_DIRECTORY}
     
     RC=$?
-    if [ ${RC} -ne 0 ]; then
+    if [ ${RC} -eq 0 ]; then
+      echo [INFO] Generated deployment evidence.
+      else
       echo "[ERROR] Failed to generate deployment evidence. Exit code: ${RC}"
       exit ${RC}
     fi
-    
-    echo "[INFO] Generated deployment evidence"
     
     # Create report directory
     if [ ! -d "${deployOutputDirectory}/" ]; then
@@ -238,9 +238,14 @@ Generate Deployment Report:
         exit ${RC}
     fi
     
-    # Download evidence file
-    echo "[INFO] Downloading evidence report from ${sourceEvidenceFile}"
-    zowe rse dl uf "${sourceEvidenceFile}" -f "${reportDir}/evidence.yaml" -b  --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+    RC=$?
+    if [ ${RC} -eq 0 ]; then
+      echo "[INFO] Downloading evidence report from ${sourceEvidenceFile}"
+      zowe rse dl uf "${sourceEvidenceFile}" -f "${reportDir}/evidence.yaml" -b  --user ${RSEAPI_USER} --password ${RSEAPI_PASSWORD}
+    else
+      echo [ERROR] Failed to download evidence report. Exit code: ${RC}.
+      exit ${RC}
+    fi  
     
     RC=$?
     if [ ${RC} -eq 0 ]; then
