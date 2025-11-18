@@ -214,7 +214,7 @@ Generate Deployment Report:
     if [ ${RC} -eq 0 ]; then
       echo [INFO] Generated deployment evidence.
       else
-      echo "[ERROR] Failed to generate deployment evidence. Exit code: ${RC}"
+        echo "[ERROR] Failed to generate deployment evidence. Exit code: ${RC}"
       exit ${RC}
     fi
     
