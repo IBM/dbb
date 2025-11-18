@@ -182,7 +182,7 @@ Deploy Application:
         echo "[INFO] Deployment to ${targetEnvironment} passed"
     else
         echo "[ERROR] Deployment to ${targetEnvironment} failed. Exit code: ${RC}"
-      exit ${RC}
+        exit ${RC}
     fi
 
 # Generate and publish deployment report
