@@ -215,7 +215,7 @@ Generate Deployment Report:
       echo [INFO] Generated deployment evidence.
       else
         echo "[ERROR] Failed to generate deployment evidence. Exit code: ${RC}"
-      exit ${RC}
+        exit ${RC}
     fi
     
     # Create report directory
