@@ -20,7 +20,7 @@ on:
                   - release
                 required: true
             packageReference: 
-                description: Package reference value, release or preliminary 
+                description: Package reference value - either the release reference such as (rel-1.0.0) for release packages or referencing a preliminary package indicated by the branch of the build.
                 default: "main" # rel-#.#.# for release, branch for build 
                 type: string
                 required: true
