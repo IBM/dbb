@@ -1,1 +1,0 @@
-This repository contains templates for standalone deployment pipelines.
