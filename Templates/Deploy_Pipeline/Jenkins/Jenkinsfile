@@ -1,0 +1,222 @@
+def JenkinsAgent              = "ztec-201-STC"
+def pipeverbose               = true
+
+pipeline {
+    agent { label JenkinsAgent }
+
+    environment {
+        GIT_STRATEGY = "none"
+        GIT_CHECKOUT = "false"
+        wdEnvironmentFile = "EOLEB7-${params.application}-${params.targetEnvironment.capitalize()}.yaml" //Make sure the referenced file matches the required naming convention
+        wdEvidencePath = "deploy/evidences"
+        wdEvidencesRoot = "/var/work/wazi_deploy_evidences_jenkins/"
+        wdEvidencesIndex = "/var/work/wazi_deploy_evidences_jenkins_index/"
+        uniqueWorkspaceId = "${env.WORKSPACE}/${params.application}/deploy-${params.buildId}"
+        deployOutputDirectory = "${env.WORKSPACE}/${params.application}/DEPLOY-OUTPUT"
+    }
+
+    parameters {
+        string(name: 'application', defaultValue: '', description: 'Application name (e.g., retirementCalculator, MortgageApplication)')
+        string(name: 'releaseVersion', defaultValue: '', description: 'Release version to deploy (only for release eg: rel-1.6.1 )')
+        string(name: 'buildId', defaultValue: '', description: 'Build pipeline ID (e.g., 00000018)')
+        choice(name: 'targetEnvironment', choices: ['integration', 'acceptance', 'production'], description: 'Deployment target environment')
+        string(name: 'branchName', defaultValue: 'main', description: 'Branch name (e.g., main, feature/test-utility-script)')
+        choice(name: 'pipelineType', choices: ['build', 'release'], description: 'Pipeline type: build or release')
+    }
+    
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    stages {
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    echo "==============================="
+                    echo "Deployment Pipeline Parameters"
+                    echo "==============================="
+                    echo "[INFO] Application: ${params.application}"
+                    echo "[INFO] Build ID: ${params.buildId}"
+                    echo "[INFO] Release Version: ${params.releaseVersion}"
+                    echo "[INFO] Target Environment: ${params.targetEnvironment}"
+                    echo "[INFO] Branch: ${params.branchName}"
+                    echo "[INFO] Pipeline Type: ${params.pipelineType}"
+                    echo "[INFO] Workspace: ${env.uniqueWorkspaceId}"
+                    echo "==============================="
+                    
+                    def errors = []
+                    if (!params.application) errors << "application is required"
+                    if (!params.buildId) errors << "buildId is required"
+                    if (!params.branchName) errors << "branchName is required"
+                    if (!['build', 'release'].contains(params.pipelineType)) errors << "pipelineType must be 'build' or 'release'"
+                    if (params.pipelineType == 'release' && !params.releaseVersion)
+                        errors << "releaseVersion is required for release pipeline type"
+                    if (errors) {
+                        errors.each { echo "[ERROR] ${it}" }
+                        error("[ERROR] Validation failed. Please fix input errors.")
+                    }
+                    echo "[SUCCESS] All validations passed"
+                }
+            }
+        }
+
+        stage('Generate Plan') {
+            steps {
+                script {
+
+                    echo "[INFO] Generating deployment plan for ${params.targetEnvironment}"
+                    echo "[INFO] Pipeline type: ${params.pipelineType}"
+
+                    def CMD = ""
+
+                    if (params.pipelineType == "release") {
+
+                        CMD = "wazideploy-generate.sh -w ${env.uniqueWorkspaceId} -a ${params.application} -b ${params.branchName} -P release -R ${releaseVersion} -I ${params.buildId}"
+
+                    } else {
+
+                        CMD = "wazideploy-generate.sh -w ${env.uniqueWorkspaceId} -a ${params.application} -b ${params.branchName} -P build -I ${params.buildId}"
+                    }
+
+                    echo "[INFO] Executing command: ${CMD}"
+
+                    def rc = sh(script: CMD, returnStatus: true)
+
+                    if (rc == 0) {
+                        echo "[INFO]: Plan generation passed (RC=0)"
+                    } else {
+                        echo "[ERROR]: Plan generation failed (RC=${rc})"
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo "[ERROR] Deployment plan generation failed."
+                }
+                success {
+                    echo "[INFO] Deployment plan generation passed."
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    echo "[INFO] Deploying to ${params.targetEnvironment} environment"
+                    echo "[INFO] Using environment file: ${env.wdEnvironmentFile}"
+                    echo "[INFO] Evidence path: ${env.wdEvidencePath}"
+                    def CMD = ""
+                    CMD = "wazideploy-deploy.sh -w ${env.uniqueWorkspaceId} -e ${env.wdEnvironmentFile} -i ${params.application}.tar -l ${env.wdEvidencePath}/evidence.yaml < /dev/null" 
+                    echo "[INFO] Executing command: ${CMD}"   
+
+                    def rc = sh(script: CMD, returnStatus: true)
+
+                    if (rc == 0) {
+                        echo "[INFO]: Deployment passed. (RC=0)"
+                    } else {
+                        echo "[ERROR]: Deployment failed. (RC=${rc})"
+                    }
+                }
+            }
+        }
+
+        stage('Report') {
+            steps {
+                script {
+
+                    def reportDir = "${env.deployOutputDirectory}/deploy-${params.targetEnvironment}"
+                    def sourceOutputFile = "${env.uniqueWorkspaceId}/deployPkgDir/deploy/deployment-report.html"
+                    def sourceEvidenceFile = "${env.uniqueWorkspaceId}/deployPkgDir/deploy/evidences/evidence.yaml"
+                    def wdEvidencesDir = "${env.wdEvidencesRoot}/${params.application}/${params.targetEnvironment}"
+                    def wdEvidencesIndex = "${env.wdEvidencesIndex}"
+
+                    echo "[INFO] Generating deployment report for ${params.targetEnvironment}"
+
+                     def evidenceCmd = ""
+
+                        evidenceCmd = "wazideploy-evidence.sh -w ${env.uniqueWorkspaceId} -l ${env.wdEvidencePath}/evidence.yaml -o deploy/deployment-report.html" 
+
+                    echo "[INFO] Executing command: ${evidenceCmd}" 
+                    
+                    
+                    sh "mkdir -p ${env.deployOutputDirectory}"
+                    sh "mkdir -p ${reportDir}"
+                    echo "[INFO] Using report directory: ${reportDir}"
+
+                    // Persist evidence
+                    sh "mkdir -p ${wdEvidencesDir} && mkdir -p ${wdEvidencesIndex}"
+                    sh "cp ${sourceEvidenceFile} ${wdEvidencesDir}/evidence-${params.buildId}.yaml"
+                    echo "[INFO] Persisted evidence file at ${wdEvidencesDir}"
+
+                    // Update Wazi Deploy index
+
+                    def indexCmd = ""
+
+                    indexCmd = "wazideploy-evidence --index ${wdEvidencesIndex} --dataFolder ${env.wdEvidencesRoot} i"
+                    
+                    echo "[INFO] Executing command: ${indexCmd}" 
+
+                    def rc = sh(script: indexCmd, returnStatus: true)
+
+                    if (rc == 0) {
+                        echo "[INFO]: Deployment report generated. (RC=0)"
+                    } else {
+                        echo "[ERROR]: Deployment report generation failed. (RC=${rc})"
+                    }
+                sourceEvidenceFilePath = "${env.uniqueWorkspaceId}/deployPkgDir/deploy/evidences"
+
+                }
+            }
+            post {
+				always {
+					// Pick up files created by the deployment.
+					 dir ("${sourceEvidenceFilePath}") {
+					 	archiveArtifacts allowEmptyArchive: true,
+					 		artifacts: '*.yml,*.yaml',
+					 		excludes: '*clist',
+					 		onlyIfSuccessful: false
+					 }
+					 dir ("${env.WORKSPACE}/deployPkgDir/deploy") {
+					 	archiveArtifacts allowEmptyArchive: true,
+					 		artifacts: '*.html',
+					 		excludes: '*clist',
+					 		onlyIfSuccessful: false
+					 }
+				}
+			}
+        }
+
+		stage ('Workspace Cleanup') {
+			steps {
+				script {
+					if (pipeverbose) {
+						println("[DEBUG]: Final Cleanup before deletes.")
+
+						dir("${env.WORKSPACE}") {
+							sh "pwd ; ls -al"
+						}
+					}
+					
+					if (pipeverbose) {
+						println("[DEBUG]: Final Cleanup after deletes.")
+
+						dir("${env.WORKSPACE}") {
+							sh "pwd ; ls -al"
+						}
+					}
+				}
+			}
+			post {
+			// Clean after build
+				always {
+					cleanWs(cleanWhenNotBuilt: false,
+							deleteDirs: true,
+							disableDeferredWipeout: true,
+							notFailBuild: true)
+				}
+			}
+
+		} 
+    }
+}
