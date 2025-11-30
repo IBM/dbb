@@ -1,6 +1,6 @@
 # Jenkins Deployment Pipeline Template
 
-This template provides a [Jenkinsfile](Jenkinsfile) to set up a **Continuous Deployment (CD) pipeline** for applications managed in a Git repository.
+This template provides a [Jenkinsfile](Jenkinsfile) to set up a **Deployment pipeline** for applications managed in a Git repository.
 
 ## Overview and Capabilities
 
@@ -15,7 +15,7 @@ The pipeline supports **manual or automated triggers** and implements the follow
 
 * **Generate Plan**  
   - Uses [`wazideploy-generate.sh`](../../Common-Backend-Scripts/wazideploy-generate.sh) to create the deployment plan in z/OS Unix System Services (USS).  
-  - Supports both **build-based** and **release-based** deployments depending on `pipelineType`.
+  - Supports both the deployment of preliminary **build** and **release** packages.
 
 * **Deploy**  
   - Executes [`wazideploy-deploy.sh`](../../Common-Backend-Scripts/wazideploy-deploy.sh) to deploy the application to the selected target environment.  

@@ -72,7 +72,7 @@ pipeline {
 
                     if (params.pipelineType == "release") {
 
-                        CMD = "wazideploy-generate.sh -w ${env.uniqueWorkspaceId} -a ${params.application} -b ${params.branchName} -P release -R ${releaseVersion} -I ${params.buildId}"
+                        CMD = "wazideploy-generate.sh -w ${env.uniqueWorkspaceId} -a ${params.application} -P ${params. packageTypeType} -R ${releaseVersion} -I ${params.buildId}"
 
                     } else {
 
@@ -107,7 +107,7 @@ pipeline {
                     echo "[INFO] Using environment file: ${env.wdEnvironmentFile}"
                     echo "[INFO] Evidence path: ${env.wdEvidencePath}"
                     def CMD = ""
-                    CMD = "wazideploy-deploy.sh -w ${env.uniqueWorkspaceId} -e ${env.wdEnvironmentFile} -i ${params.application}.tar -l ${env.wdEvidencePath}/evidence.yaml < /dev/null" 
+                    CMD = "wazideploy-deploy.sh -w ${env.uniqueWorkspaceId} -e ${env.wdEnvironmentFile} -l ${env.wdEvidencePath}/evidence.yaml < /dev/null" 
                     echo "[INFO] Executing command: ${CMD}"   
 
                     def rc = sh(script: CMD, returnStatus: true)
@@ -146,7 +146,7 @@ pipeline {
 
                     // Persist evidence
                     sh "mkdir -p ${wdEvidencesDir} && mkdir -p ${wdEvidencesIndex}"
-                    sh "cp ${sourceEvidenceFile} ${wdEvidencesDir}/evidence-${params.buildId}.yaml"
+                    sh "cp ${sourceEvidenceFile} ${wdEvidencesDir}/${params.targetEnvironment}/evidence-${params.buildId}.yaml"
                     echo "[INFO] Persisted evidence file at ${wdEvidencesDir}"
 
                     // Update Wazi Deploy index
