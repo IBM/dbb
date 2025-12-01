@@ -118,7 +118,7 @@ Importantly, the application developer persona is not intended to have access to
 
 #### Workflow Diagram
 
-![workflow-diagram](workflow-diagram.PNG)
+![workflow-diagram](workflow-diagram.png)
 
 ## Development Pipeline for Application Developer Persona 
 
