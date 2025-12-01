@@ -69,7 +69,7 @@ jobs:
         steps:
 
           - name: Create deployment plan with Wazi Deploy
-            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && mkdir -p ${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs-${{ env.environmentName }}/ && wazideploy-generate.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -P ${{ env.packageType }} -R ${{ env.packageReference }} -I ${{ env.packageBuildIdentifier}} -b main"
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && mkdir -p ${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs-${{ env.environmentName }}/ && wazideploy-generate.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -P ${{ env.packageType }} -R ${{ env.packageReference }} -I ${{ env.packageBuildIdentifier}}"
           
           - name: Deploy package with Wazi Deploy
             run: ssh ${{ env.zosSFTPUser}} ". ./.profile && wazideploy-deploy.sh -w ${{ env.uniqueWorkspaceId }} -e EOLEB7-${{ env.application }}-${{ env.environmentName}}.yaml -l deploy-logs-${{ env.environmentName }}/evidences/evidence.yaml"
