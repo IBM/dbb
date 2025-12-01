@@ -2,9 +2,6 @@ parameters:
   - name: environmentName
     type: string
     default: "." # defaults for any parameters that specified with "." (current directory)
-  - name: packageVersion
-    type: string
-    default: "default"
   - name: packageReference
     type: string
   - name: packageIdentifier
