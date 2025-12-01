@@ -163,7 +163,7 @@ stages:
               readyTimeout: "20000"
             displayName: "Prepare build logs"
 
-          # Install private SSH key prior to a subsequent cmdline tasks
+          # Install private SSH key prior to subsequent cmdline tasks
           - task: InstallSSHKey@0
             inputs:
               knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
@@ -218,9 +218,9 @@ stages:
             inputs:
               sshEndpoint: $(zosSSHConnection)
               runOptions: "commands"
-              commands: ". ./.profile && export DBB_JAVA_HOME=/usr/lpp/java/J11.0_64/ && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) -r $(packageVersion) -i $(buildNumber)"
+              commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) -r $(packageVersion) -i $(buildNumber)"
               readyTimeout: "20000"
-            displayName: "Package the build artifacts for Deployment"
+            displayName: "Package the build artifacts"
         variables:
             ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
               packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
@@ -277,7 +277,6 @@ stages:
       - template: deployment/deployPackage.yml@templates
         parameters:
           environmentName: ${{ variables.Environment }}
-          packageVersion: $(packageVersion)
           packageReference: $(packageVersion)
           packageIdentifier: $(buildNumber)
           packageType: $(pipelineType)
@@ -302,7 +301,6 @@ stages:
       - template: deployment/deployPackage.yml@templates
         parameters:
           environmentName: ${{ variables.Environment }}
-          packageVersion: $(packageVersion)
           packageReference: $(packageVersion)
           packageIdentifier: $(buildNumber)
           packageType: $(pipelineType)
