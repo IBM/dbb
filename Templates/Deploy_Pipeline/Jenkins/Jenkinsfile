@@ -19,7 +19,7 @@ pipeline {
         string(name: 'application', defaultValue: '', description: 'Application name (e.g., retirementCalculator, MortgageApplication)')
         choice(name: 'PackageType', choices: ['build', 'release'], description: 'Package type: a preliminary build or release candidate')
         string(name: 'buildId', defaultValue: '', description: 'Build pipeline ID (e.g., 00000018)')
-        string(name: 'releaseVersion', defaultValue: '', description: 'Release version to deploy (only for release eg: rel-1.6.1 )')
+        string(name: 'packageReference', defaultValue: '', description: 'Release version( release pipeline, eg:release eg: rel-1.6.1 ) or branch name( for build pipeline, eg: main, feature) ')
         choice(name: 'targetEnvironment', choices: ['integration', 'acceptance', 'production'], description: 'Deployment target environment')
         
     }
@@ -39,7 +39,7 @@ pipeline {
                     echo "[INFO] Application: ${application}"
                     echo "[INFO] Package Type: ${PackageType}"
                     echo "[INFO] Build ID: ${buildId}"
-                    echo "[INFO] Release Version: ${releaseVersion}"
+                    echo "[INFO] Release Version: ${packageReference}"
                     echo "[INFO] Target Environment: ${targetEnvironment}"
                     echo "[INFO] Workspace: ${uniqueWorkspaceId}"
                     echo "==============================="
@@ -47,8 +47,6 @@ pipeline {
                     def errors = []
                     if (!application) errors << "application is required"
                     if (!buildId) errors << "buildId is required"
-                    if (PackageType == 'release' && !releaseVersion)
-                        errors << "releaseVersion is required for release pipeline type"
                     if (errors) {
                         errors.each { echo "[ERROR] ${it}" }
                         error("[ERROR] Validation failed. Please fix input errors.")
@@ -63,18 +61,11 @@ pipeline {
                 script {
 
                     echo "[INFO] Generating deployment plan for ${targetEnvironment}"
-                    echo "[INFO] Pipeline type: ${PackageType}"
+                    echo "[INFO] Package type: ${PackageType}"
 
                     def CMD = ""
 
-                    if (PackageType == "release") {
-
-                        CMD = "wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -P release -R ${releaseVersion} -I ${buildId}"
-
-                    } else {
-
-                        CMD = "wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -P build -b main -I ${buildId}"
-                    }
+                    CMD = "wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -P ${packageType} -R ${packageReference} -I ${buildId}"
 
                     echo "[INFO] Executing command: ${CMD}"
 
@@ -87,14 +78,6 @@ pipeline {
                     }
                 }
             }
-            // post {
-            //     failure {
-            //         echo "[ERROR] Deployment plan generation failed."
-            //     }
-            //     success {
-            //         echo "[INFO] Deployment plan generation passed."
-            //     }
-            // }
         }
 
         stage('Deploy') {
