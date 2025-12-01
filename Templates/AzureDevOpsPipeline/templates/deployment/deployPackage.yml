@@ -5,6 +5,13 @@ parameters:
   - name: packageVersion
     type: string
     default: "default"
+  - name: packageReference
+    type: string
+  - name: packageIdentifier
+    type: string
+  - name: packageType
+    type: string
+
 jobs:
 # Left this as a template from a previous version showcasing the ADO package registry
 #  - job: RetrievePackage
@@ -93,7 +100,7 @@ jobs:
               inputs:
                 sshEndpoint: $(zosSSHConnection)
                 runOptions: "commands"
-                commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -r deploy-logs-${{ parameters.environmentName }}/deployment-plan-report.html -I $(buildNumber) -R ${{ parameters.packageVersion }} -P $(pipelineType)"
+                commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -r deploy-logs-${{ parameters.environmentName }}/deployment-plan-report.html -I ${{ parameters.packageIdentifier }} -R ${{ parameters.packageReference }} -P ${{ parameters.packageType }}"
                 # For reference when creating a local tar file, and skipping the upload. In this case the pipeline needs to provide the reference to the tar file.
                 # commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -i $(application).tar -r deploy-logs/deployment-plan-report.html"
                 readyTimeout: "20000"
