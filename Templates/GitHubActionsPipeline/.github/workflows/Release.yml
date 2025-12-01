@@ -17,7 +17,6 @@ on:
                 required: false
 
 env:
-    #GH_TOKEN: ${{ secrets.githubAccessToken }} #I'm not sure why this is here, it doesn't look like it's used? 
     uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_r${{github.run_number }} # adding an r to before the number,
     # to avoid an error caused by repeated build numbers 
     buildIdentifier: build_r${{github.run_number}} 
@@ -59,6 +58,7 @@ jobs:
             run: ssh ${{ env.zosSFTPUser}} ". ./.profile && dbbBuild.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -b ${{ env.branch }} -p ${{env.pipelineType}}"
           
           - name: Prepare Logs
+            if: ${{ always() }}
             run: |
                 ssh ${{ env.zosSFTPUser}} ". ./.profile && prepareLogs.sh -w ${{ env.uniqueWorkspaceId }}"  
                 rm -rf "${{ runner.temp }}/build-logs" 

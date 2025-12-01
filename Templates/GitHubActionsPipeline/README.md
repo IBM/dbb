@@ -88,9 +88,7 @@ Unlike other pipeline orchestrators, GitHub Actions encourages the use of multip
  - [Release.yml](./workflows/Release.yml)
     - Pipeline for release branch.
  - [Preview.yml](./workflows/Preview.yml)
-    - The preview pipeline, making use of dbbBuild.sh in the build stage.
- - [Preview-zBuilder.yml](./workflows/Preview-zBuilder.yml)
-    - The zBuilder preview pipeline, making use of zBuilder.sh in the build stage.
+    - The preview pipeline, making use of either dbbBuild.sh or zBuilder.sh in the build stage.
  - [Deploy.yml](./workflows/Deploy.yml)
     - Pipeline for deploying to a specified environment.
  - [actions/createwazideployindex/action.yml](./actions/createwazideployindex/action.yml)
@@ -109,9 +107,9 @@ Please make yourself familiar with the [Git branching for mainframe development]
 
 This pipeline template is intended to be used by two distinct personas, an application developer and a release manager. 
 
-The application developer is intended to make use of the [pipeline controller](./workflows/pipelineController.yml), and has access to the [preview](./workflows/Preview.yml), [preview-zBuilder](./workflows/Preview-zBuilder.yml), [feature](./workflows/Feature.yml), [build](./workflows/Build.yml), and [release](./workflows/Release.yml) pipelines.
+The application developer is intended to make use of the [pipeline controller](./workflows/pipelineController.yml), and has access to the [preview](./workflows/Preview.yml), [feature](./workflows/Feature.yml), [build](./workflows/Build.yml), and [release](./workflows/Release.yml) pipelines.
 
-Excluding the preview and preview-zBuilder pipelines, all pipelines triggered by the pipeline controller will upload binaries to an artifact manager. Additionally, the only environment that the application developer can deploy to with the pipeline controller is the integration environment. 
+Excluding the preview pipeline, all pipelines triggered by the pipeline controller will upload binaries to an artifact manager. Additionally, the only environment that the application developer can deploy to with the pipeline controller is the integration environment. 
 
 
 The release manager is intended to make use of the [deploy](./workflows/Deploy.yml) pipeline, which will retrieve binaries from the artifact manager and deploy to a chosen environment. This includes any testing environment such as an acceptance environment, or production. 
@@ -122,9 +120,11 @@ Importantly, the application developer persona is not intended to have access to
 
 ![workflow-diagram](workflow-diagram.PNG)
 
-### Pipeline variables 
+## Development Pipeline for Application Developer Persona 
 
-In a default setup, the mainline pipeline is triggered for each new commit. 
+The development pipeline refers to pipelines controlled by the [pipeline controller](./workflows/pipelineController.yml), and is intended to be used by the application developer persona. This persona is not supposed to have access to the [Deploy Pipeline](./workflows/Deploy.yml).
+
+### Pipeline variables 
 
 When manually requesting a pipeline through the pipeline controller, the following variables can be overwritten:
 
@@ -134,37 +134,17 @@ pipelineType | Which type of pipeline is being run, either preview, build, or re
 releaseType | Used for the release pipeline and deploy pipeline, which type of release is being released, either patch, minor, or major. Defaults to n/a.
 verbose (wip) | Boolean flag to control logging of build framework. Defaults to false. (Note, this currently isn't an option that the developer can set) 
 
-Additionally, when manually requesting a deploy pipeline, the following variables will need to be specified: 
-
-Parameter | Description
---- | ---
-environmentName |Specifies which environment should be used. Defaults to Integration. 
-packageType | Specifies if the pipeline is deploying to a build environment or a release environment. 
-packageReference | Specifies the package reference value. When deploying to release, a release version formatted as rel-#.#.# (ie rel-1.3.2) is expected. When not deploying to release, the branch name is expected.
-packageBuildIdentifer | Helps to specify which artifact should be used when creating a deployment plan. Defaults to n/a. 
-
 ### Preview pipeline
 
 The preview pipeline peforms the following: 
  - Clone
  - Build 
 
-This pipeline can be manually triggered from any branch.
+This pipeline can be manually triggered from any branch. 
+The `Build git repo` step in the `Build` stage has an example of how to use zAppBuild with `dbbBuild.sh`, and how to use zBuilder with `zBuilder.sh`. 
 
 #### Overview of the pipeline:
 ![Preview Pipeline Diagram](preview-pipeline.png)
-
-### Preview zBuilder pipeline
-
-The preview zBuilder pipeline peforms the following: 
- - Clone
- - Build 
-
-This pipeline can be manually triggered from any branch.
-
-#### Overview of the pipeline:
-![Preview zBuilder Pipeline Diagram](preview-zbuilder-pipeline.png)
-
 
 ### Feature branch pipeline
 
@@ -213,6 +193,21 @@ It will also upload an artifact to your artifact manager of choice, allowing the
 ![Release Pipeline Diagram](release-pipeline.png)
 
 
+## Deploy Pipeline for Release Manager Persona 
+
+This section discusses the [Deploy pipeline](./workflows/Deploy.yml), which is intended to be used by the Release Manager persona. This pipeline should not be accessable by the Application Developer persona. 
+
+### Pipeline variables 
+
+When manually requesting a deploy pipeline, the following variables will need to be specified: 
+
+Parameter | Description
+--- | ---
+environmentName |Specifies which environment should be used. Defaults to Integration. 
+packageType | Specifies if the pipeline is deploying to a build environment or a release environment. 
+packageReference | Specifies the package reference value. When deploying to release, a release version formatted as rel-#.#.# (ie rel-1.3.2) is expected. When not deploying to release, the branch name is expected.
+packageBuildIdentifier | Helps to specify which artifact should be used when creating a deployment plan. 
+
 ### Deploy pipeline 
 
 The deploy pipeline is used to deploy a build package to a given environment. It is intended to be used by a deployment manager persona. 
@@ -220,10 +215,11 @@ The deploy pipeline is used to deploy a build package to a given environment. It
 The deploy pipeline performs the following:
  - Setup
  - Deploy
-   - When the pipeline is ran with a package type of `build`, only `wazideploy-generate.sh`, `wazideploy-deploy.sh`, and `wazideploy-evidence.sh` are ran. 
+   - When the pipeline is ran with a package type of `release`, all steps in the deploy job are ran. 
+   - When the pipeline is ran with a package type of `build`, only the `Create deployment plan with Wazi Deploy`, `Deploy package with Wazi Deploy`, and `Generate deployment report with Wazi Deploy` steps are ran. 
  - Cleanup
 
-This pipeline can be run manually via a workflow_dispatch trigger. 
+This pipeline can be run manually via a `workflow_dispatch` trigger. 
 You will  need to specify a release type, build identifier, environment name, package type, and release version. 
 
 #### Overview of the pipeline: 

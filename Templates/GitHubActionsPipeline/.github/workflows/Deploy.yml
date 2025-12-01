@@ -26,7 +26,6 @@ on:
                 required: true
             packageBuildIdentifier:
                 description: the buildIdentifier for the package stored in the artifact repository. 
-                default: n/a
                 type: string
                 required: true
         

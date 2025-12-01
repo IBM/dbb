@@ -26,7 +26,6 @@ runs:
       rc=0
       PGM="tagging/createProductionReleaseTag.yml"
 
-      #versionTag="PH"
       versionTag=`cat releaseTag.txt `
 
       # If release type is defined

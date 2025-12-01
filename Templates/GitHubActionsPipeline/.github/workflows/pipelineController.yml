@@ -9,7 +9,6 @@ on:
                 options:
                     - build
                     - preview
-                    - previewzBuilder
                     - release
                     - deploy
                     - retrieve
@@ -88,17 +87,6 @@ jobs:
             - controller
         if: ${{ inputs.pipelineType == 'preview' }}
         uses: ./.github/workflows/Preview.yml
-        # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
-        with:
-            pipelineType: preview
-        secrets:
-            githubAccessToken: ${{ secrets.GH_ACTIONS_PAT }} 
-
-    preview-zBuilder:
-        needs:
-            - controller
-        if: ${{ inputs.pipelineType == 'previewzBuilder' }}
-        uses: ./.github/workflows/Preview-zBuilder.yml
         # the "Unable to find reusable workflow" error is something that should be resovled when copying the .github folder into your repository
         with:
             pipelineType: preview
