@@ -71,7 +71,7 @@ jobs:
         runs-on: self-hosted
         steps:
           - name: Package build outputs
-            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && packageBuildOutputs.sh -w ${{ env.uniqueWorkspaceId }} -t ${{ env.application }}.tar -a ${{ env.application }} -b ${{ env.branch }} -p ${{env.pipelineType}} -i ${{ env.buildIdentifier}}"
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && packageBuildOutputs.sh -w ${{ env.uniqueWorkspaceId }} -t ${{ env.application }} -a ${{ env.application }} -b ${{ env.branch }} -p ${{env.pipelineType}} -i ${{ env.buildIdentifier}}"
 
     Deploy-Integration:
         needs: Package

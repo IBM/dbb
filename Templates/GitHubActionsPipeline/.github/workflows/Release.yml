@@ -123,7 +123,7 @@ jobs:
                     echo "$ERRMSG"
                   else
                     echo "[INFO] Retrieved next release version: $nextReleaseVersion"
-                    ssh ${{ env.zosSFTPUser}} ". ./.profile && packageBuildOutputs.sh -w ${{ env.uniqueWorkspaceId }} -t ${{ env.application }}.tar -a ${{ env.application }} -b release -p ${{env.pipelineType}} -r ${nextReleaseVersion} -i ${{ env.buildIdentifier}}"
+                    ssh ${{ env.zosSFTPUser}} ". ./.profile && packageBuildOutputs.sh -w ${{ env.uniqueWorkspaceId }} -t ${{ env.application }} -a ${{ env.application }} -b release -p ${{env.pipelineType}} -r ${nextReleaseVersion} -i ${{ env.buildIdentifier}}"
                   fi
                 fi
 
