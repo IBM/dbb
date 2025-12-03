@@ -4,7 +4,7 @@ This template provides a [Jenkinsfile](Jenkinsfile) to set up a **Deployment pip
 
 ## Overview and Capabilities
 
-This Jenkins pipeline implements the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) and leverages [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) along with **IBM Wazi Deploy** to automate deployments of pre-built application packages from an artifact repository into integration, acceptance, and production environments on z/OS.
+This Jenkins pipeline implements the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev) and leverages [Common Backend Scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) along with **IBM Wazi Deploy** to automate deployments of pre-built application packages from an artifact repository into integration, acceptance, and production environments on z/OS.
 
 The pipeline supports **manual triggers** and implements the following stages:
 
@@ -55,13 +55,13 @@ To leverage this Jenkinsfile:
 
 ### Required Parameters
 
-| Parameter           | Required                      | Description                                                                |
-| ------------------- | ----------------------------- | -------------------------------------------------------------------------  |
-| `application`       | Yes                           | Application name to deploy.                                                |
-| `buildId`           | Yes                           | Build pipeline ID corresponding to the artifact.                           |
-| `releaseVersion`    | Only for release pipelines    | Release version (e.g., `rel-2.6.0`).                                       |
-| `targetEnvironment` | Yes                           | Deployment target (`integration`, `acceptance`, `production`).             |
-| `PackageType`       | Yes                           | Package type: `build` or `release`.                                        |
+| Parameter           |  Description                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------- | 
+| `application`       | Application name to deploy.                                                         |
+| `buildId`           | Build pipeline ID corresponding to the artifact.                                    |
+| `packageReference`  | Release version (e.g., `rel-2.6.0`) or branch name(e.g., `main`, `feature`).        |
+| `targetEnvironment` | Deployment target (`integration`, `acceptance`, `production`).                      |
+| `PackageType`       | Package type: `build` or `release`.                                                 |
 
 ---
 
@@ -71,7 +71,7 @@ This Jenkinsfile can be executed:
 
 * **Manually** via Jenkins → Build with Parameters
 
-### Example Manual Trigger
+### Example
 
 1. Open Jenkins → select the job → **Build with Parameters**
 2. Enter values:
@@ -79,7 +79,7 @@ This Jenkinsfile can be executed:
    ```
     application: retirementCalculator
     buildId: 12247
-    releaseVersion: rel-1.6.1
+    packageReference: rel-1.6.1
     targetEnvironment: integration
     PackageType: release
     
