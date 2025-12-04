@@ -231,6 +231,7 @@ You will  need to specify a release type, build identifier, environment name, pa
 This is a non-comprehensive list of items that are either a known issue, a work in progress, or something that still needs to be implemented. 
 
 ### High Importance 
+- migration from personal access tokens to the GITHUB_TOKEN
 
 ### Medium Importance 
 - the baseline reference file is not automatically updated when a new version is released
