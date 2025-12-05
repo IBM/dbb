@@ -34,7 +34,7 @@ runs:
       # Create new tag
       echo "[INFO] Creating Tag ${versionTag} as latest production state."
       
-      gh release create ${versionTag}
+      gh release create ${versionTag} 
       
       # catch RC rest command return code
       rc=$?

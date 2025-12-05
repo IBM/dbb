@@ -4,9 +4,9 @@ This template provides multiple .yml files to setup a GitHub Actions pipeline fo
 
 ## Overview & capabilities 
 
-This pipeline template is implementing the [Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev/) within a GitHub Actions context.
+This pipeline template is implementing the [Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev) within a GitHub Actions context.
 
-It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) to implement the Setup, Build, Packaging, and Deployment stages.
+It leverages the [Common Backend scripts](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md) to implement the Setup, Build, Packaging, Deployment, and Cleanup stages.
 
 The pipeline implements the following stages:
 
@@ -18,21 +18,16 @@ The pipeline implements the following stages:
    - In the case of a release pipeline, to create the release candidate tag.
  - `Packaging` stage:
    - Create a .TAR file package based on the [PackageBuildOutput](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#44---packagebuildoutputssh) script.
- - `Deploy Integration` stage to deploy to the development / integration test environment:
+ - `Deploy Integration` stage:
    - Generate the deployment command with the Wazi Deploy [generate](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#47---wazideploy-generatesh) command.
    - Deploy the package with the Wazi Deploy [deploy](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#48---wazideploy-deploysh) command.
    - Generate the deployment report and update evidence with the Wazi Deploy [evidence](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) command.
    - Publish deployment logs as a GitHub Artifact.
- - `Deploy Acceptance` and `Deploy Production` stages: 
-   - Deploy to controlled test environments via the [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-release-pipeline-with-build-packaging-and-deploy-stages).
-   - Generate the deployment command with the Wazi Deploy [generate](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#47---wazideploy-generatesh) command.
+ - `Retrieve` stage:
+   - Download the deployment plan with the Wazi Deploy [generate](https://github.com/IBM/dbb/tree/main/Templates/Common-Backend-Scripts#wazideploy-generatesh) script.
    - Deploy the package with the Wazi Deploy [deploy](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#48---wazideploy-deploysh) command.
    - Generate the deployment report and update evidence with the Wazi Deploy [evidence](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) command.
-   - Retrieve Deployment Reports (`Deploy Production` only).
-   - Publish deployment logs as a GitHub Artifact (`Deploy Production` only).
-   - Create the Wazi Deploy index using the [createwazideployindex](./actions/createwazideployindex/action.yml) composite action. 
-   - Create the production release tag using the [tagging_createproductionreleasetag](./actions/tagging_createproductionreleasetag/action.yml) composite action. (`Deploy Production` only).
- - `Cleanup` Stage:
+ - `Cleanup` stage:
    - [Delete the build workspace](https://github.com/IBM/dbb/blob/main/Templates/Common-Backend-Scripts/README.md#411---deleteworkspacesh) on z/OS Unix System Services.
 
 
@@ -68,8 +63,8 @@ The following variables will need to be defined and configured in the pipeline d
 
 Variable | Description | File(s)
 --- | --- | ---
-zosHostname | zOS - Host name / IP address for SFTP connection | Feature.yml, Build.yml, Release.yml, Preview.yml, deployToEnv.yml 
-zosSFTPUser | zOS - Host user for SFPT connection | Feature.yml, Build.yml, Release.yml, Preview.yml, deployToEnv.yml 
+zosHostname | zOS - Host name / IP address for SFTP connection | Feature.yml, Build.yml, Release.yml, Preview.yml, Deploy.yml
+zosSFTPUser | zOS - Host user for SFPT connection | Feature.yml, Build.yml, Release.yml, Preview.yml, Deploy.yml
 githubAccessToken | A GitHub Personal Access Token used for authentication, matching the Personal Access Token Secret. In the template, this is secrets.SAMPLE_PAT | pipelineController.yml 
 
 ## Pipeline usage 
@@ -79,56 +74,74 @@ It is a combination of GitHub Actions pipeline definitions supporting various wo
 When used as intented, the combination of pipeline definitions supports:
  - Automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#pipeline-build-of-feature-branches) with a clone and build stage.
  - A [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the main branch.
- - A [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-release-pipeline-with-build-packaging-and-deploy-stages) to build and package the release candidate, including installation to predefined environments such as the production environment. 
+ - A [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-release-pipeline-with-build-packaging-and-deploy-stages) to build and package the release candidate, including installation to predefined environments such as the integration environment. 
+ - A [deploy pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#deployment-to-production) to deploy to a specified environment, such as an acceptance or production environment. 
 
 Unlike other pipeline orchestrators, GitHub Actions encourages the use of multiple workflow files that will interact with each other. This template makes use of the following workflow files:
 
- - [pipelineController.yml](./.github/workflows/pipelineController.yml)
-    - This pipeline is used to trigger other pipelines, as it is the only pipeline with a `workflow_dispatch` trigger. 
- - [Feature.yml](./.github/workflows/Feature.yml)
+ - [pipelineController.yml](./workflows/pipelineController.yml) 
+    - This pipeline is used to trigger the Feature, Build, Release, and Preview pipelines. 
+ - [Feature.yml](./workflows/Feature.yml)
     - Pipeline for feature branch.
- - [Build.yml](./.github/workflows/Build.yml)
+ - [Build.yml](./workflows/Build.yml)
     - The build pipeline.
- - [Release.yml](./.github/workflows/Release.yml)
+ - [Release.yml](./workflows/Release.yml)
     - Pipeline for release branch.
- - [Preview.yml](./.github/workflows/Preview.yml)
-    - The preview pipeline.
- - [deployToEnv.yml](./.github/workflows/deployToEnv.yml)
-    - Reusable pipeline for deploying to a given environment.
- - [actions/createwazideployindex/action.yml](./.github/actions/createwazideployindex/action.yml)
+ - [Preview.yml](./workflows/Preview.yml)
+    - The preview pipeline, making use of either dbbBuild.sh or zBuilder.sh in the build stage.
+ - [Deploy.yml](./workflows/Deploy.yml)
+    - Pipeline for deploying to a specified environment.
+ - [actions/createwazideployindex/action.yml](./actions/createwazideployindex/action.yml)
     - A composite action, used to copy the evidence file into the evidence inventory.
- - [actions/tagging_createreleasecandidate/action.yml](./.github/actions/tagging_createreleasecandidate/action.yml)
-    - A composite action, used to create the release candidate, and calculate the release version.
- - [actions/tagging_createproductionreleasetag/action.yml](./.github/actions/tagging_createproductionreleasetag/action.yml)
+ - [actions/tagging_createproductionreleasetag/action.yml](./actions/tagging_createproductionreleasetag/action.yml)
     - A composite action, used to create the production release. 
 
-![pipelineDiagram](pipelineDiagram.png)
+![pipeline-diagram](pipeline-diagram.png)
 
 
 Please review the pipeline definitions to understand the various triggers for which these pipelines may be executed, and also the conditions when stages, jobs, or steps are executed. 
 
-Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation. 
+Please make yourself familiar with the [Git branching for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/#characteristics-of-mainline-based-development-with-feature-branches) documentation. 
+
+### Intended Personas and Seperation of Responsibility 
+
+This pipeline template is intended to be used by two distinct personas, an application developer and a release manager. 
+
+The application developer is intended to make use of the [pipeline controller](./workflows/pipelineController.yml), and has access to the [preview](./workflows/Preview.yml), [feature](./workflows/Feature.yml), [build](./workflows/Build.yml), and [release](./workflows/Release.yml) pipelines.
+
+Excluding the preview pipeline, all pipelines triggered by the pipeline controller will upload binaries to an artifact manager. Additionally, the only environment that the application developer can deploy to with the pipeline controller is the integration environment. 
+
+
+The release manager is intended to make use of the [deploy](./workflows/Deploy.yml) pipeline, which will retrieve binaries from the artifact manager and deploy to a chosen environment. This includes any testing environment such as an acceptance environment, or production. 
+
+Importantly, the application developer persona is not intended to have access to the [deploy](./workflows/Deploy.yml) pipeline. The release manager may or may not have access to the [pipeline controller](./workflows/pipelineController.yml). 
+
+#### Workflow Diagram
+
+![workflow-diagram](workflow-diagram.png)
+
+## Development Pipeline for Application Developer Persona 
+
+The development pipeline refers to pipelines controlled by the [pipeline controller](./workflows/pipelineController.yml), and is intended to be used by the application developer persona. This persona is not supposed to have access to the [Deploy Pipeline](./workflows/Deploy.yml).
 
 ### Pipeline variables 
 
-In a default setup, the mainline pipeline is triggered for each new commit. 
-
 When manually requesting a pipeline through the pipeline controller, the following variables can be overwritten:
-This is especially useful when the application team want to create a release candidate package for higher test environments and production.
 
 Parameter | Description
 --- | ---
 pipelineType | Which type of pipeline is being run, either preview, build, or release. Defaults to testing. 
-releaseType | Used only for the release pipeline, which type of release is being released, either patch, minor, or major. Defaults to n/a.
-verbose (wip) | Boolean flag to control logging of build framework. Defaults to false.
+releaseType | Used for the release pipeline and deploy pipeline, which type of release is being released, either patch, minor, or major. Defaults to n/a.
+verbose (wip) | Boolean flag to control logging of build framework. Defaults to false. (Note, this currently isn't an option that the developer can set) 
 
 ### Preview pipeline
 
-The preview branch pipeline peforms the following: 
+The preview pipeline peforms the following: 
  - Clone
  - Build 
 
-This pipeline can be manually triggered from any branch.
+This pipeline can be manually triggered from any branch. 
+The `Build git repo` step in the `Build` stage has an example of how to use zAppBuild with `dbbBuild.sh`, and how to use zBuilder with `zBuilder.sh`. 
 
 #### Overview of the pipeline:
 ![Preview Pipeline Diagram](preview-pipeline.png)
@@ -136,11 +149,11 @@ This pipeline can be manually triggered from any branch.
 ### Feature branch pipeline
 
 The feature branch pipeline peforms the following: 
- - Clone
+ - Setup
  - Build 
  - Package & publish package 
 
-This pipeline runs automatically when pushing to a feature branch.
+This pipeline runs automatically when pushing to a feature branch. It will also upload an artifact to your artifact manager of choice, allowing the binaries to be accessed by the Deploy.yml pipeline. 
 
 #### Overview of the pipeline:
 ![Feature Pipeline Diagram](feature-pipeline.png)
@@ -148,7 +161,7 @@ This pipeline runs automatically when pushing to a feature branch.
 ### Basic build pipeline for Integration branches 
 
 The basic build pipeline for integration branches performs the following:
- - Clone
+ - Setup
  - Build
  - Package & publish package 
  - Deploy to the integration test environment
@@ -156,55 +169,80 @@ The basic build pipeline for integration branches performs the following:
 
 This is the default pipeline, and runs automatically whenever there is a new commit to the main branch. 
 Additionally, this pipleine can be run by manually running the pipelineController, with *pipelineType* as `build`.
+It will also upload an artifact to your artifact manager of choice, allowing the binaries to be accessed by the Deploy.yml pipeline. 
 
 #### Overview of the pipeline:
-![Build Pipeline Diagram](build-pipeline.png)
+![Build Pipeline Diagram](mainline-pipeline.png)
 
 ### Release pipeline
 
 When the development team agrees to build a release candidate, the release pipeline is triggered manually. 
 
 The release pipeline performs the following:
- - Clone
+ - Setup
  - Build 
  - Tag the release candidate 
  - Package & publish package 
  - Deploy to the integration test environment 
- - Deploy to the acceptance test environment
-   - This needs to be triggered manually 
- - Deploy to the production environment and tag the production release 
-   - This needs to be triggered manually 
  - Cleanup
-   - This needs to be triggered manually 
 
 This pipeline can be run by manually running the pipelineController, with *pipelineType* as `release`.
-Additionally, this pipeline will automatically calculate the release tag based on the information provided in the Baseline Reference file, store the calculated tag in an artifactVersion artifact, tag a release candidate, and the final release deployed to production. 
+It will also upload an artifact to your artifact manager of choice, allowing the binaries to be accessed by the Deploy.yml pipeline. 
 
 #### Overview of the pipeline:
 ![Release Pipeline Diagram](release-pipeline.png)
 
-Note: both the basic build pipeline for Integration branches, and the release pipeline deploy to the integration test environment, but go about it in different ways. 
-The release pipeline does this via invoking the deployToEnv.yml workflow, while the build pipeline does it in a single workflow file. 
-This is done to highlight how the same task can be completed in 2 different ways. 
 
+## Deploy Pipeline for Release Manager Persona 
+
+This section discusses the [Deploy pipeline](./workflows/Deploy.yml), which is intended to be used by the Release Manager persona. This pipeline should not be accessable by the Application Developer persona. 
+
+### Pipeline variables 
+
+When manually requesting a deploy pipeline, the following variables will need to be specified: 
+
+Parameter | Description
+--- | ---
+environmentName |Specifies which environment should be used. Defaults to Integration. 
+packageType | Specifies if the pipeline is deploying to a build environment or a release environment. 
+packageReference | Specifies the package reference value. When deploying to release, a release version formatted as rel-#.#.# (ie rel-1.3.2) is expected. When not deploying to release, the branch name is expected.
+packageBuildIdentifier | Helps to specify which artifact should be used when creating a deployment plan. 
+
+### Deploy pipeline 
+
+The deploy pipeline is used to deploy a build package to a given environment. It is intended to be used by a deployment manager persona. 
+
+The deploy pipeline performs the following:
+ - Setup
+ - Deploy
+   - When the pipeline is ran with a package type of `release`, all steps in the deploy job are ran. 
+   - When the pipeline is ran with a package type of `build`, only the `Create deployment plan with Wazi Deploy`, `Deploy package with Wazi Deploy`, and `Generate deployment report with Wazi Deploy` steps are ran. 
+ - Cleanup
+
+This pipeline can be run manually via a `workflow_dispatch` trigger. 
+You will  need to specify a release type, build identifier, environment name, package type, and release version. 
+
+#### Overview of the pipeline: 
+
+![Deploy Pipeline Diagram](deploy-pipeline.png)
 
 ## Known issues / WIP / Missing features
 
 This is a non-comprehensive list of items that are either a known issue, a work in progress, or something that still needs to be implemented. 
 
 ### High Importance 
-- In the release pipeline, deploy-acceptance, deploy-production, and cleanup need manual triggers
-  - This will require configuration specific to your environment. You can find the relevant documentation [here.](https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments)
+- migration from personal access tokens to the GITHUB_TOKEN
 
 ### Medium Importance 
 - the baseline reference file is not automatically updated when a new version is released
 - the `verbose` flag is not implemented on the pipeline controller 
 
 ### Low Importance 
-- N/A
+- the computeReleaseVersion.sh common backend script is used 3 times in Release.yml, when it should only be used once. 
+
 
 ## Reference & additional resources 
 
-This was made by using the [Azure DevOps template](https://github.com/IBM/dbb/blob/main/Templates/AzureDevOpsPipeline/README.md) alongside the GitHub [Actions importer](https://docs.github.com/en/actions/migrating-to-github-actions/automated-migrations/automating-migration-with-github-actions-importer) and the [GitLab DevOps template](https://github.com/IBM/dbb/blob/main/Templates/GitlabCIPipeline/README.md) as reference.
+This was made by using the [Azure DevOps template](https://github.com/IBM/dbb/blob/main/Templates/AzureDevOpsPipeline/README.md) alongside the GitHub [Actions importer](https://docs.github.com/en/actions/migrating-to-github-actions/automated-migrations/automating-migration-with-github-actions-importer) and the [GitLab DevOps template](https://github.com/IBM/dbb/blob/main/Templates/GitlabCIPipeline/README.md) as a reference.
 
 Additionally, this video on [Creating a DevOps Pipeline with GitHub Actions](https://mediacenter.ibm.com/media/CICD+-+Creating+a+DevOps+Pipeline+with+Github+Actions/1_1qhqzg3l) provides an introduction to GitHub Actions. 
