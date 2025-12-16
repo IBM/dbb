@@ -89,7 +89,7 @@ pipeline {
                         echo msg
 
                        addSummary icon: "success.gif",
-                                text: "Validation passed",
+                                text: "Deployment plan generation passed",
                                 style: "color: var(--success-color)"
                     } else {
                         def msg = "Deployment plan generation FAILED (RC=${rc})"
@@ -124,7 +124,7 @@ pipeline {
                         echo "[INFO] ${msg}"
 
                         addSummary icon: "success.gif",
-                                text: "Validation passed",
+                                text: "Deployment passed",
                                 style: "color: var(--success-color)"
                     } else {
                         def msg = "Deployment FAILED (RC=${rc})"
@@ -167,7 +167,7 @@ pipeline {
                         echo "[INFO] ${msg}"
 
                         addSummary icon: "success.gif",
-                                text: "Validation passed",
+                                text: "	Deployment report generation passed",
                                 style: "color: var(--success-color)"
                     } else {
                         def msg = "Deployment report generation FAILED (RC=${rc})"
