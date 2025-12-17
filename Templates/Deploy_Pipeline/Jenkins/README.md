@@ -61,7 +61,7 @@ To leverage this Jenkinsfile:
 | `buildId`           | Build pipeline ID corresponding to the artifact.                                    |
 | `packageReference`  | Release version (e.g., `rel-2.6.0`) or branch name(e.g., `main`, `feature`).        |
 | `targetEnvironment` | Deployment target (`integration`, `acceptance`, `production`).                      |
-| `PackageType`       | Package type: `build` or `release`.                                                 |
+| `packageType`       | Package type: `build` or `release`.                                                 |
 
 ---
 
@@ -81,7 +81,7 @@ This Jenkinsfile can be executed:
     buildId: 12247
     packageReference: rel-1.6.1
     targetEnvironment: integration
-    PackageType: release
+    packageType: release
     
    ```
 

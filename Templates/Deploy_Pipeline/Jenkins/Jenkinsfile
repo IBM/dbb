@@ -17,11 +17,12 @@ pipeline {
     }
 
     parameters {
-        string(name: 'application',       defaultValue: '', description: 'Application name')
-        choice(name: 'PackageType',       choices: ['build', 'release'], description: 'Package type')
-        string(name: 'buildId',           defaultValue: '', description: 'Build pipeline ID')
-        string(name: 'packageReference',  defaultValue: '', description: 'Release version / branch name')
-        choice(name: 'targetEnvironment', choices: ['integration','acceptance','production'], description: 'Target environment')
+        string(name: 'application', defaultValue: '', description: 'Application name (e.g., retirementCalculator, MortgageApplication)')
+        choice(name: 'packageType', choices: ['build', 'release'], description: 'Package type: a preliminary build or release candidate')
+        string(name: 'packageReference', defaultValue: '', description: 'Release version(release pipeline) /branch name(build pipeline) (release eg: rel-1.6.1 )')
+        string(name: 'buildId', defaultValue: '', description: 'Build pipeline ID (e.g., 00000018)')
+        choice(name: 'targetEnvironment', choices: ['integration', 'acceptance', 'production'], description: 'Deployment target environment')
+        
     }
 
     options {
@@ -39,9 +40,9 @@ pipeline {
                     echo "Deployment Pipeline Parameters"
                     echo "==============================="
                     echo "[INFO] Application:        ${application}"
-                    echo "[INFO] Package Type:       ${PackageType}"
-                    echo "[INFO] Build ID:           ${buildId}"
+                    echo "[INFO] Package Type:       ${packageType}"
                     echo "[INFO] Package Reference:  ${packageReference}"
+                    echo "[INFO] Build ID:           ${buildId}"
                     echo "[INFO] Target Environment: ${targetEnvironment}"
                     echo "[INFO] Workspace:          ${uniqueWorkspaceId}"
                     echo "===============================\n"
