@@ -75,6 +75,7 @@ pipeline {
 
         
         stage('Generate Plan') {
+            when { expression { currentBuild.result == null || currentBuild.result == "SUCCESS" } }
             steps {
                 script {
                     echo "[INFO] Generating deployment plan for ${targetEnvironment}"
