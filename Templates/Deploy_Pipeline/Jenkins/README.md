@@ -11,7 +11,7 @@ The pipeline supports **manual triggers** and implements the following stages:
 * **Validate Parameters**  
   - Validates pipeline input parameters passed during manual trigger or via API.  
   - Determines the appropriate environment configuration file based on the selected target environment.  
-  - Ensures required parameters (e.g., `application`, `buildId`, `PackageType`) are defined.
+  - Ensures required parameters (e.g., `application`, `packageType`, `buildId`) are defined.
 
 * **Generate Plan**  
   - Uses [`wazideploy-generate.sh`](../../Common-Backend-Scripts/wazideploy-generate.sh) to create the deployment plan in z/OS Unix System Services (USS).  
