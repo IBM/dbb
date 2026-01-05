@@ -107,7 +107,7 @@ cobolDir.eachFile { file ->
     compileStep.dd(new DDStatement().name("SYSUT6").options("cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new"))
     compileStep.dd(new DDStatement().name("SYSUT7").options("cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new"))
     compileStep.dd(new DDStatement().name("SYSMDECK").options("cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new"))
-    compileStep.dd(new DDStatement().name("TASKLIB").dsn("$compilerDS").options("shr"))
+    compileStep.dd(new DDStatement().name("TASKLIB").dsn(compilerDS).options("shr"))
     compileStep.dd(new DDStatement().name("SYSPRINT").options('cyl space(5,5) unit(vio) blksize(80) lrecl(80) recfm(f,b) new'))
     compileStep.copy(new CopyToHFS().ddName("SYSPRINT").file(logFile))
 
