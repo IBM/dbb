@@ -143,33 +143,24 @@ pipeline {
             }
         }
 
-        stage('Report') {
+        stage('Generate Deployment Report') {
             when { expression { currentBuild.result == null || currentBuild.result == "SUCCESS" } }
             steps {
                 script {
                     echo "[INFO] Generating deployment report"
 
                     def evidenceCmd = "wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l ${wdEvidencePath}/evidence.yaml -o deploy/deployment-report.html"
-                    sh evidenceCmd
-
-                    sh "mkdir -p ${deployOutputDirectory}"
-                    sh "mkdir -p ${deployOutputDirectory}/deploy-${targetEnvironment}"
-
-                    def sourceEvidenceFile = "${uniqueWorkspaceId}/deployPkgDir/deploy/evidences/evidence.yaml"
-                    def wdEvidencesDir = "${wdEvidencesRoot}/${application}/${targetEnvironment}"
-
-                    sh "mkdir -p ${wdEvidencesDir} && mkdir -p ${wdEvidencesIndex}"
-                    sh "cp ${sourceEvidenceFile} ${wdEvidencesDir}/evidence-${buildId}.yaml"
-
-                    def indexCmd = "wazideploy-evidence --index ${wdEvidencesIndex} --dataFolder ${wdEvidencesRoot} i"
-                    def rc = sh(script: indexCmd, returnStatus: true)
+                    def rc = sh(script: evidenceCmd, returnStatus: true)
 
                     if (rc == 0) {
                         def msg = "Deployment report generation passed (RC=0)"
                         echo "[INFO] ${msg}"
 
+                        // Tag the HTML file with UTF-8 encoding
+                        sh "chtag -tc UTF-8 ${uniqueWorkspaceId}/deployPkgDir/deploy/deployment-report.html"
+
                         addSummary icon: "success.gif",
-                                text: "	Deployment report generation passed",
+                                text: "Deployment report generation passed",
                                 style: "color: var(--success-color)"
                     } else {
                         def msg = "Deployment report generation FAILED (RC=${rc})"
@@ -183,8 +174,58 @@ pipeline {
                                       text: msg
                         error msg
                     }
-                 sourceEvidenceFilePath = "${uniqueWorkspaceId}/deployPkgDir/deploy/evidences"
+                }
+            }
 
+            post {
+                always {
+                    dir("${uniqueWorkspaceId}/deployPkgDir/deploy") {
+                        archiveArtifacts allowEmptyArchive: true, artifacts: '*.html'
+                    }
+                }
+            }
+        }
+
+        stage('Store Evidence') {
+            when { expression { currentBuild.result == null || currentBuild.result == "SUCCESS" } }
+            steps {
+                script {
+                    echo "[INFO] Storing deployment evidence to shared folder"
+
+                    sh "mkdir -p ${deployOutputDirectory}"
+                    sh "mkdir -p ${deployOutputDirectory}/deploy-${targetEnvironment}"
+
+                    def sourceEvidenceFile = "${uniqueWorkspaceId}/deployPkgDir/deploy/evidences/evidence.yaml"
+                    def wdEvidencesDir = "${wdEvidencesRoot}/${application}/${targetEnvironment}"
+
+                    sh "mkdir -p ${wdEvidencesDir} && mkdir -p ${wdEvidencesIndex}"
+                    sh "cp ${sourceEvidenceFile} ${wdEvidencesDir}/evidence-${buildId}.yaml"
+
+                    // Tag the YAML files with UTF-8 encoding
+                    sh "chtag -tc UTF-8 ${sourceEvidenceFile} ${wdEvidencesDir}/evidence-${buildId}.yaml"
+
+                    def indexCmd = "wazideploy-evidence --index ${wdEvidencesIndex} --dataFolder ${wdEvidencesRoot} i"
+                    def rc = sh(script: indexCmd, returnStatus: true)
+
+                    if (rc == 0) {
+                        def msg = "Evidence storage and indexing passed (RC=0)"
+                        echo "[INFO] ${msg}"
+
+                        addSummary icon: "success.gif",
+                                text: "Evidence storage and indexing passed",
+                                style: "color: var(--success-color)"
+                    } else {
+                        def msg = "Evidence storage and indexing FAILED (RC=${rc})"
+                        echo "[ERROR] ${msg}"
+
+                        addSummary icon: "error",
+                                   text: "${MsgHdr} ${msg}",
+                                   style: "color: var(--danger-color)"
+
+                        addErrorBadge icon: "error",
+                                      text: msg
+                        error msg
+                    }
                 }
             }
 
@@ -192,9 +233,6 @@ pipeline {
                 always {
                     dir("${uniqueWorkspaceId}/deployPkgDir/deploy/evidences") {
                         archiveArtifacts allowEmptyArchive: true, artifacts: '*.yaml'
-                    }
-                    dir("${WORKSPACE}/deployPkgDir/deploy") {
-                        archiveArtifacts allowEmptyArchive: true, artifacts: '*.html'
                     }
                 }
             }
