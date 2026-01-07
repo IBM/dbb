@@ -50,6 +50,7 @@ pipeline {
                     def errors = []
                     if (!application) errors << "application is required"
                     if (!buildId) errors << "buildId is required"
+                    if (!packageReference) errors << "packageReference is required"
 
                     if (errors) {
                         def msg = "Validation failed: ${errors.join(', ')}"
