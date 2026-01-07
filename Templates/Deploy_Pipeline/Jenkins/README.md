@@ -40,7 +40,7 @@ It uses Jenkins **stages**, **steps**, and **post conditions** for robust execut
 
 ## Prerequisites
 
-To leverage this Jenkinsfile:
+To leverage this Jenkinsfile, the following items are required:
 
 * A **Jenkins environment** with agents capable of running shell scripts and connecting to the z/OS UNIX System Services (USS) environment.
 * Access to **IBM Wazi Deploy** scripts and **Common Backend Scripts** installed on the deployment agent.
@@ -59,7 +59,7 @@ To leverage this Jenkinsfile:
 | ------------------- | ----------------------------------------------------------------------------------- | 
 | `application`       | Application name to deploy.                                                         |
 | `buildId`           | Build pipeline ID corresponding to the artifact.                                    |
-| `packageReference`  | Release version (e.g., `rel-2.6.0`) or branch name(e.g., `main`, `feature`).        |
+| `packageReference`  | Release version (e.g., `rel-2.6.0`) or branch name (e.g., `main`, `feature`).        |
 | `targetEnvironment` | Deployment target (`integration`, `acceptance`, `production`).                      |
 | `packageType`       | Package type: `build` or `release`.                                                 |
 
@@ -75,7 +75,7 @@ This Jenkinsfile can be executed:
 
 1. Open Jenkins → select the job → **Build with Parameters**
 2. Enter values:
-   Eg:
+   Depending on your application and environment:
    ```
     application: retirementCalculator
     buildId: 12247
