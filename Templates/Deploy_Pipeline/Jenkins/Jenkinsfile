@@ -6,8 +6,6 @@ pipeline {
     agent { label JenkinsAgent }
 
     environment {
-        GIT_STRATEGY          = "none"
-        GIT_CHECKOUT          = "false"
         wdEnvironmentFile     = "EOLEB7-${application}-${targetEnvironment.capitalize()}.yaml"
         wdEvidencePath        = "deploy/evidences"
         wdEvidencesRoot       = "/var/work/wazi_deploy_evidences_jenkins/"
