@@ -1,0 +1,246 @@
+def JenkinsAgent = "ztec-201-STC"
+def pipeverbose  = true
+def MsgHdr       = ""   // Prefix label for Jenkins summaries
+
+pipeline {
+    agent { label JenkinsAgent }
+
+    environment {
+        wdEnvironmentFile     = "EOLEB7-${application}-${targetEnvironment.capitalize()}.yaml"
+        wdEvidencePath        = "deploy/evidences"
+        wdEvidencesRoot       = "/var/work/wazi_deploy_evidences_jenkins/"
+        wdEvidencesIndex      = "/var/work/wazi_deploy_evidences_jenkins_index/"
+        uniqueWorkspaceId     = "${WORKSPACE}/${application}/deploy-${buildId}"
+        deployOutputDirectory = "${WORKSPACE}/${application}/DEPLOY-OUTPUT"
+    }
+
+    parameters {
+        string(name: 'application', defaultValue: '', description: 'Application name (e.g., retirementCalculator, MortgageApplication)')
+        choice(name: 'packageType', choices: ['build', 'release'], description: 'Package type: a preliminary build or release candidate')
+        string(name: 'packageReference', defaultValue: '', description: 'Release version (created from release pipelines, e.g., rel-1.6.1) / branch name (created from build pipelines, e.g., main)
+        string(name: 'buildId', defaultValue: '', description: 'Build pipeline ID (e.g., 00000018)')
+        choice(name: 'targetEnvironment', choices: ['integration', 'acceptance', 'production'], description: 'Deployment target environment')
+        
+    }
+
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    stages {
+
+       
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    echo "\n==============================="
+                    echo "Deployment Pipeline Parameters"
+                    echo "==============================="
+                    echo "[INFO] Application:        ${application}"
+                    echo "[INFO] Package Type:       ${packageType}"
+                    echo "[INFO] Package Reference:  ${packageReference}"
+                    echo "[INFO] Build ID:           ${buildId}"
+                    echo "[INFO] Target Environment: ${targetEnvironment}"
+                    echo "[INFO] Workspace:          ${uniqueWorkspaceId}"
+                    echo "===============================\n"
+
+                    def errors = []
+                    if (!application) errors << "application is required"
+                    if (!buildId) errors << "buildId is required"
+                    if (!packageReference) errors << "packageReference is required"
+
+                    if (errors) {
+                        def msg = "Validation failed: ${errors.join(', ')}"
+                        echo "[ERROR] ${msg}"
+
+                        addSummary icon: "error",
+                                   text: "${MsgHdr} ${msg}",
+                                   style: "color: var(--danger-color)"
+
+                        addErrorBadge icon: "error",
+                                      text: msg
+                        error msg
+                    }
+                   
+                    def msg = "Validation passed"
+                    echo "[INFO] ${msg}"
+
+                    addSummary icon: "success.gif",
+                                text: "Validation passed",
+                                style: "color: var(--success-color)"
+                }
+            }
+        }
+
+        
+        stage('Generate Plan') {
+            when { expression { currentBuild.result == null || currentBuild.result == "SUCCESS" } }
+            steps {
+                script {
+                    echo "[INFO] Generating deployment plan for ${targetEnvironment}"
+
+                    def CMD = "wazideploy-generate.sh -w ${uniqueWorkspaceId} -a ${application} -P ${packageType} -R ${packageReference} -I ${buildId}"
+                    echo "[INFO] Executing: ${CMD}"
+
+                    def rc = sh(script: CMD, returnStatus: true)
+
+                    if (rc == 0) {
+                        def msg = "Deployment plan generation passed (RC=0)"
+                        echo msg
+
+                       addSummary icon: "success.gif",
+                                text: "Deployment plan generation passed",
+                                style: "color: var(--success-color)"
+                    } else {
+                        def msg = "Deployment plan generation FAILED (RC=${rc})"
+                        echo "[ERROR] ${msg}"
+
+                        addSummary icon: "error",
+                                   text: "${MsgHdr} ${msg}",
+                                   style: "color: var(--danger-color)"
+
+                        addErrorBadge icon: "error",
+                                      text: msg
+                        error msg
+                    }
+                }
+            }
+        }
+
+       
+        stage('Deploy') {
+            when { expression { currentBuild.result == null || currentBuild.result == "SUCCESS" } }
+            steps {
+                script {
+                    echo "[INFO] Deploying to ${targetEnvironment}"
+
+                    def CMD = "wazideploy-deploy.sh -w ${uniqueWorkspaceId} -e ${wdEnvironmentFile} -l ${wdEvidencePath}/evidence.yaml < /dev/null"
+                    echo "[INFO] Executing: ${CMD}"
+
+                    def rc = sh(script: CMD, returnStatus: true)
+
+                    if (rc == 0) {
+                        def msg = "Deployment passed (RC=0)"
+                        echo "[INFO] ${msg}"
+
+                        addSummary icon: "success.gif",
+                                text: "Deployment passed",
+                                style: "color: var(--success-color)"
+                    } else {
+                        def msg = "Deployment FAILED (RC=${rc})"
+                        echo "[ERROR] ${msg}"
+                        addSummary icon: "error",
+                                   text: "${MsgHdr} ${msg}",
+                                   style: "color: var(--danger-color)"
+
+                        addErrorBadge icon: "error",
+                                      text: msg
+                        error msg
+                    }
+                }
+            }
+        }
+
+        stage('Generate Deployment Report') {
+            when { expression { currentBuild.result == null || currentBuild.result == "SUCCESS" } }
+            steps {
+                script {
+                    echo "[INFO] Generating deployment report"
+
+                    def evidenceCmd = "wazideploy-evidence.sh -w ${uniqueWorkspaceId} -l ${wdEvidencePath}/evidence.yaml -o deploy/deployment-report.html"
+                    def rc = sh(script: evidenceCmd, returnStatus: true)
+
+                    if (rc == 0) {
+                        def msg = "Deployment report generation passed (RC=0)"
+                        echo "[INFO] ${msg}"
+
+                        // Tag the HTML file with UTF-8 encoding
+                        sh "chtag -tc UTF-8 ${uniqueWorkspaceId}/deployPkgDir/deploy/deployment-report.html"
+
+                        addSummary icon: "success.gif",
+                                text: "Deployment report generation passed",
+                                style: "color: var(--success-color)"
+                    } else {
+                        def msg = "Deployment report generation FAILED (RC=${rc})"
+                        echo "[ERROR] ${msg}"
+
+                        addSummary icon: "error",
+                                   text: "${MsgHdr} ${msg}",
+                                   style: "color: var(--danger-color)"
+
+                        addErrorBadge icon: "error",
+                                      text: msg
+                        error msg
+                    }
+                }
+            }
+
+            post {
+                always {
+                    dir("${uniqueWorkspaceId}/deployPkgDir/deploy") {
+                        archiveArtifacts allowEmptyArchive: true, artifacts: '*.html'
+                    }
+                }
+            }
+        }
+
+        stage('Store Evidence') {
+            when { expression { currentBuild.result == null || currentBuild.result == "SUCCESS" } }
+            steps {
+                script {
+                    echo "[INFO] Storing deployment evidence to shared folder"
+
+                    sh "mkdir -p ${deployOutputDirectory}"
+                    sh "mkdir -p ${deployOutputDirectory}/deploy-${targetEnvironment}"
+
+                    def sourceEvidenceFile = "${uniqueWorkspaceId}/deployPkgDir/deploy/evidences/evidence.yaml"
+                    def wdEvidencesDir = "${wdEvidencesRoot}/${application}/${targetEnvironment}"
+
+                    sh "mkdir -p ${wdEvidencesDir} && mkdir -p ${wdEvidencesIndex}"
+                    sh "cp ${sourceEvidenceFile} ${wdEvidencesDir}/evidence-${buildId}.yaml"
+
+                    // Tag the YAML files with UTF-8 encoding
+                    sh "chtag -tc UTF-8 ${sourceEvidenceFile} ${wdEvidencesDir}/evidence-${buildId}.yaml"
+
+                    def indexCmd = "wazideploy-evidence --index ${wdEvidencesIndex} --dataFolder ${wdEvidencesRoot} i"
+                    def rc = sh(script: indexCmd, returnStatus: true)
+
+                    if (rc == 0) {
+                        def msg = "Evidence storage and indexing passed (RC=0)"
+                        echo "[INFO] ${msg}"
+
+                        addSummary icon: "success.gif",
+                                text: "Evidence storage and indexing passed",
+                                style: "color: var(--success-color)"
+                    } else {
+                        def msg = "Evidence storage and indexing FAILED (RC=${rc})"
+                        echo "[ERROR] ${msg}"
+
+                        addSummary icon: "error",
+                                   text: "${MsgHdr} ${msg}",
+                                   style: "color: var(--danger-color)"
+
+                        addErrorBadge icon: "error",
+                                      text: msg
+                        error msg
+                    }
+                }
+            }
+
+            post {
+                always {
+                    dir("${uniqueWorkspaceId}/deployPkgDir/deploy/evidences") {
+                        archiveArtifacts allowEmptyArchive: true, artifacts: '*.yaml'
+                    }
+                }
+            }
+        }
+
+        stage('Workspace Cleanup') {
+            steps {
+                cleanWs(deleteDirs: true, notFailBuild: true)
+            }
+        }
+    }
+}

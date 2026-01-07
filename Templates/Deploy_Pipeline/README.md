@@ -1,3 +1,6 @@
 This folder contains templates for standalone deployment pipelines.
 
-Refer to [Deploy_Pipeline/REDME.md](../Deploy_Pipeline/README.md)
+Documentation:
+
+- [Gitlab Pipeline Templates](./Gitlab/README.md)
+- [Jenkins Pipeline Templates](./Jenkins/README.md)
