@@ -33,7 +33,7 @@ trigger: none
 
 parameters:
   - name: deploymentEnvironment
-    displayName: "Target deployment environment - Environment where the package will be deployed"
+    displayName: "Target deployment environment - Environment where the package should be deployed to"
     type: string
     default: Acceptance
     values: 
