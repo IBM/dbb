@@ -1,4 +1,4 @@
-# Branches that triggers this pipleline
+# Branches that triggers this pipeline
 trigger:
   - feature/*
   - release/*
@@ -6,7 +6,6 @@ trigger:
   - epic/*
   - main
 
-# Pipeline input parameters to drive build and release pipelines
 parameters:
   - name: pipelineType
     displayName: "Pipeline Type"
@@ -26,7 +25,7 @@ parameters:
       - patch
 
   - name: verboseLogging
-    displayName: "zAppBuild verbose logging"
+    displayName: "Verbose Logging"
     type: boolean
     default: false
 
@@ -60,37 +59,31 @@ variables:
   #  Ex: export PIPELINE_SCRIPTS=/var/dbb/Common-Backend-Scripts
   #      export PATH=$PIPELINE_SCRIPTS:$PATH
 
-  ### Input parameter variables:
-  pipelineType: ${{ parameters.pipelineType }}
-  releaseType: ${{ parameters.releaseType }}
-  # Computation DBB verbose logging
-  ${{ if eq(parameters.verboseLogging, true) }}: 
-    verbose: "-v"
-  ${{ if eq(parameters.verboseLogging, false) }}:
-    verbose: ""
-  
   ### Variables generated during run time
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/') }}: # Extract branch name for push
     branch: $[ replace(variables['Build.SourceBranch'], 'refs/heads/', '') ]
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/pull/') }}: # Extract branch name for pull request
     branch: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
   buildNumber: $(Build.BuildNumber) # Build number
-  organization_tmp: $[ replace(variables['System.TeamFoundationCollectionUri'], 'https://dev.azure.com/', '') ] # Generate Azure repository uri for cloning
-  organization: $[ replace(variables['organization_tmp'], '/', '') ] # Azure organization name
   project: $(System.TeamProject) # Project name
   application: ${{ variables['Build.Repository.Name'] }} # Application name
-  repo: "git@ssh.dev.azure.com:v3/$(organization)/$(project)/$(application)" # Git repository path
-  uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/$(branch)/build-$(buildNumber) # Calculated worksapce path
-  packageName: $(application) # Name of the Package
+  repo: ${{ variables['Build.Repository.Uri'] }}" # retrieves the http uri of the triggering project
+  uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/$(branch)/build-$(buildNumber) # Calculated workspace path
+  # packageName: $(application) # Name of the Package
+  pipelineType: ${{ parameters.pipelineType }}
+  releaseType: ${{ parameters.releaseType }}
   isMain: $[contains(variables['Build.SourceBranch'], 'main')] # Variable to indicate pipeline for the main branch
-
-  # Azure package name. Package names must contain only lowercase alphanumeric segments separated by a dash, dot or underscore.
-  # reformattedBranchName: $[ replace(variables['branch'], '/', '-')]
-  # lowerApplicationName: $[ lower(variables['application']) ]
-  # lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
-  # azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicationName).tar
-
-
+  # Computation DBB verbose logging
+  ${{ if eq(parameters.verboseLogging, true) }}: 
+    verbose: "-v"
+  ${{ if eq(parameters.verboseLogging, false) }}:
+    verbose: ""
+  # Azure artifact upload. Package names must contain only lowercase alphanumeric segments separated by a dash, dot or underscore.
+  # Kept for reference for users wanting to upload to Azure Artifacts instead of Artifactory/Nexus
+  #reformattedBranchName: $[ replace(variables['branch'], '/', '-')]
+  #lowerApplicatioName: $[ lower(variables['application']) ]
+  #lowerReformattedBranchName: $[ lower(variables['reformattedBranchName']) ]
+  #azureArtifactName: $(lowerReformattedBranchName)-$(lowerApplicatioName).tar
 # Pipeline stages
 stages:
   - stage: Setup
@@ -112,7 +105,6 @@ stages:
               echo "verbose                    = ${{ parameters.verboseLogging }} "
               echo "branch                     = $(branch)"
               echo "buildNumber                = $(buildNumber)"
-              echo "organization               = $(organization)"
               echo "project                    = $(project)"
               echo "application                = $(application)"
               echo "repo                       = $(repo)"
@@ -133,7 +125,8 @@ stages:
             inputs:
               sshEndpoint: $(zosSSHConnection)
               runOptions: "commands"
-              commands: ". ./.profile && gitClone.sh -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)"
+              # Showcases how the System.Accesstoken can be passed to authenticate the pipeline for cloning via HTTP
+              commands: ". ./.profile && gitClone.sh -c \"AUTHORIZATION: Bearer $(System.AccessToken)\" -w $(uniqueWorkspaceId) -r $(repo) -b $(branch)"
               readyTimeout: "20000"
             displayName: "Clone application repo"
 
@@ -141,8 +134,6 @@ stages:
   # Invoke build and create a release candidate tag
 
   - stage: Build
-    dependsOn:
-      - Setup
     jobs:
       - job: Build
         displayName: "Build"
@@ -152,8 +143,8 @@ stages:
             inputs:
               sshEndpoint: $(zosSSHConnection)
               runOptions: "commands"
-              commands: ". ./.profile && dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) ${{variables.verbose}}"
-              #commands: ". ./.profile && zBuilder.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) ${{variables.verbose}}"
+             #commands: ". ./.profile && dbbBuild.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) ${{variables.verbose}}"
+              commands: ". ./.profile && zBuilder.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) ${{variables.verbose}}"
               readyTimeout: "20000"
               failOnStdErr: false
             displayName: "Build application"
@@ -215,6 +206,15 @@ stages:
         displayName: "Package Outputs"
         steps:
           - checkout: none
+          - task: SSH@0
+            condition: succeeded()
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) -r $(packageVersion) -i $(buildNumber)"
+              readyTimeout: "20000"
+            displayName: "Package the build artifacts"
+          # Alternative way to use DevOps Deploy packaging
           #- task: SSH@0
           #  inputs:
           #    sshEndpoint: $(zosSSHConnection)
@@ -222,23 +222,14 @@ stages:
           #    commands: '. ./.profile && ucdPackaging.sh -v $(packageName) -c $(application) -w $(uniqueWorkspaceId)  -b $(branch) -e $artifactRepoConfig'
           #    readyTimeout: '20000'
           #  displayName: 'Package the build artifacts for Deployment'
-          - task: SSH@0
-            condition: succeeded()
-            inputs:
-              sshEndpoint: $(zosSSHConnection)
-              runOptions: "commands"
-              commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -p $(pipelineType) -r $(packageVersion) -i $(buildNumber)"
-              # For reference when creating a local tar file, skipping the upload
-              #commands: ". ./.profile && packageBuildOutputs.sh -w $(uniqueWorkspaceId) -t $(application).tar -a $(application) -b $(branch) -p $(pipelineType) -v $(packageVersion)"
-              readyTimeout: "20000"
-            displayName: "Package the build artifacts for Deployment"
         variables:
             ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
               packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
-            ${{ if not(eq(variables['pipelineType'], 'release')) }}: # Default for all other cases
-              packageVersion: $(packageName)
+            ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
+              packageVersion: $(branch)
 
-        # Alternate upload option to demonstrate to upload package to Azure DevOps Artifacts
+        # Demonstrate to upload package to Azure DevOps Artifacts
+        ## TODO - Requires more work to distinguish build and release packages
 #      - job: PublishPackage
 #        displayName: "Publish deployment package"
 #        dependsOn: Package
@@ -280,13 +271,16 @@ stages:
       Environment: Integration
       ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
          packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
-      ${{ if not(eq(variables['pipelineType'], 'release')) }}: # Default for all other cases
-         packageVersion: $(packageName)
+      ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
+         packageVersion: $(branch)
+      
     jobs:
       - template: deployment/deployPackage.yml@templates
         parameters:
           environmentName: ${{ variables.Environment }}
-          packageVersion: "$(packageVersion)"
+          packageReference: $(packageVersion)
+          packageIdentifier: $(buildNumber)
+          packageType: $(pipelineType)
 
   ## Deployment to higher test environments
   # deployments to these test environment can only happen when the development team requests a release pipeline
@@ -303,33 +297,41 @@ stages:
       ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
          packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
       ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
-         packageVersion: $(packageName)
+         packageVersion: $(branch)
     jobs:
       - template: deployment/deployPackage.yml@templates
         parameters:
           environmentName: ${{ variables.Environment }}
-          packageVersion: "$(packageVersion)"
+          packageReference: $(packageVersion)
+          packageIdentifier: $(buildNumber)
+          packageType: $(pipelineType)
 
   # Add additional deployment stages as you need.
+  
+  # The below deployment is expected to be run through the deployment pipeline to drive 
+  # deployments independent of the CI pipeline
 
-  # Production environment
-  - stage: Deploy_PRODUCTION
-    displayName: "Deploy Production"
-    dependsOn: 
-      - Build
-      - Deploy_ACCEPTANCE
-    condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
-    variables:
-      Environment: Production
-      ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
-         packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
-      ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
-         packageVersion: $(packageName)      
-    jobs:
-      - template: deployment/deployPackage.yml@templates
-        parameters:
-          environmentName: ${{ variables.Environment }}
-          packageVersion: "$(packageVersion)"
+#  # Production environment
+#  - stage: Deploy_PRODUCTION
+#    displayName: "Deploy Production"
+#    dependsOn: 
+#      - Build
+#      - Deploy_ACCEPTANCE
+#    condition: and(succeeded(), eq(variables.isMain, true), eq(variables['pipelineType'], 'release'))
+#    variables:
+#      Environment: Production
+#      ${{ if eq(variables['pipelineType'], 'release') }}: # Retrieve the version name from the release candidate
+#         packageVersion: $[ stageDependencies.Build.Tag.outputs['computeReleaseName.nextReleaseVersion'] ]
+#      ${{ if not(eq(variables['pipelineType'], 'release')) }}: # For all other cases
+#         packageVersion: $(branch)      
+#    jobs:
+#      - template: deployment/deployPackage.yml@templates
+#        parameters:
+#          environmentName: ${{ variables.Environment }}
+#          packageVersion: $(packageVersion)
+#          packageReference: $(packageVersion)
+#          packageIdentifier: $(buildNumber)
+#          packageType: $(pipelineType)
           
   # Cleanup
   - stage: Cleanup

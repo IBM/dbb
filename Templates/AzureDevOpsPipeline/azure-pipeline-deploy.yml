@@ -1,0 +1,141 @@
+#
+# DEPLOYMENT PIPELINE
+#
+# This is a manually triggered pipeline that deploys a referenced archive of the application into the selected runtime environment
+# using IBM Wazi Deploy
+#
+#  It leverages the conventions of the Common Backend scripts, and assumes that the archive (a.k.a the package)
+#  has been uploaded to Artifactory or Nexus
+# 
+#  It relates to the environments, that have been configured for the project in the ADO project
+
+
+# Configuration
+
+  ### Variables to be created in Azure pipeline configuration
+  
+  # ) agentPool                            # Agent pool name for Azure Agents to connect to MVS
+  # ) zosSSHConnection                     # zOS - SSH connection name
+  # ) zosSSHKnownHost                      # Known host entry for secure shell connections
+  # ) zosSSHPrivateKeySecureFile           # Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is
+  #                                          that installed for sftp processes to fetch logs
+  # ) pipelineWorkspace                    # Root directory on z/OS Unix System services to perform build and deployments. E.g. `/u/ado/workspace`
+  # ) zosHostname                          # zOS - Host IP for SFTP connection
+  # ) zosSFTPUser                          # zOS - Host user for SFTP connection
+
+  ### Environment variables to be added in z/OS Unix System Services $HOME/.profile
+  #  To locate the backend scripts. See also Installation of backend scripts.
+  #  PIPELINE_SCRIPTS:
+  #  Ex: export PIPELINE_SCRIPTS=/var/dbb/Common-Backend-Scripts
+  #      export PATH=$PIPELINE_SCRIPTS:$PATH
+
+trigger: none
+
+parameters:
+  - name: deploymentEnvironment
+    displayName: "Target deployment environment - Environment where the package should be deployed to"
+    type: string
+    default: Acceptance
+    values: 
+     - Integration
+     - Acceptance
+     - Production  
+  - name: archiveType
+    displayName: "Archive Type - a preliminary build or release candidate"
+    type: string
+    default: build
+    values:
+      - build
+      - release
+  - name: archiveReference
+    displayName: "Archive Reference - either the branch name (like 'main') or release name (like 'rel-1.0.0') for the archive"
+    type: string
+    default: main
+  - name: archiveBuildIdentifier
+    displayName: "Archive Identifier - Identifier for the archive, like build number or timestamp"
+    type: string
+    default: "build-identifier"
+
+# pipeline templates
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: PipelineCore/PipelineCore
+
+# Agent pool where the pipeline runs
+pool:
+  name: $(agentPool)
+
+# Variables used in the pipeline
+variables:
+
+  ### Variables generated during run time
+  organization: $[ replace(variables['organization_tmp'], '/', '') ] # Azure organization name
+  project: $(System.TeamProject) # Project name
+  application: ${{ variables['Build.Repository.Name'] }} # Application name
+  repo: "git@ssh.dev.azure.com:v3/$(organization)/$(project)/$(application)" # Git repository path
+  uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/deployments/${{ parameters.archiveType }}/${{ parameters.archiveReference }}/build-$(Build.BuildNumber) # Calculated workspace path
+  packageName: $(application) # default name of the Package
+  buildNumber: ${{ parameters.archiveBuildIdentifier }} # Build reference
+  pipelineType: ${{ parameters.archiveType }}
+  branch: ${{ parameters.archiveReference }}
+
+# Pipeline stages
+stages:
+  - stage: Setup
+    jobs:
+      - job: Setup
+        continueOnError: false
+        steps:
+          - checkout: none
+          # Display CI-CD pipeline parms
+          - script: |
+              echo " "
+              echo " Deployment pipeline parameters"
+              echo "*******************************************"
+              echo "organization               = $(organization)"
+              echo "project                    = $(project)"
+              echo "application                = $(application)"
+              echo "repo                       = $(repo)"
+              echo " Archive information"
+              echo "archiveReference           = $${{ parameters.archiveReference }}"
+              echo "archiveBuildIdentifier     = $(buildNumber)"
+              echo "archiveType                = $(pipelineType)"
+              echo " Connectivity"
+              echo "zosSSHConnection           = $(zosSSHConnection)"
+              echo "zosHostname                = $(zosHostname)"
+              echo "zosSFTPUser                = $(zosSFTPUser)"
+              echo "ussWorkspaceRoot           = $(pipelineWorkspace)"
+              echo "ussWorkspaceDir            = $(uniqueWorkspaceId)"
+              echo " "
+            displayName: "Deploy pipeline parameters"
+
+  # Production environment
+  - stage: Deploy
+    displayName: "Deploy Package"
+    dependsOn: 
+      - Setup
+    jobs:
+      - template: deployment/deployPackage.yml@templates
+        parameters:
+          environmentName: ${{ parameters.deploymentEnvironment }}
+          packageReference: "${{ parameters.archiveReference }}"
+          packageIdentifier: "${{ parameters.archiveBuildIdentifier }}"
+          packageType: "${{ parameters.archiveType }}"
+  
+  # Cleanup
+  - stage: Cleanup
+    condition: always()
+    jobs:
+      - job: Cleanup
+        displayName: "Cleanup Deployment Workspace"
+        steps:
+          - checkout: none
+          - task: SSH@0
+            inputs:
+              sshEndpoint: $(zosSSHConnection)
+              runOptions: "commands"
+              commands: ". ./.profile && deleteWorkspace.sh -w $(uniqueWorkspaceId)"
+              readyTimeout: "20000"
+            displayName: "Delete Deployment folder on USS"

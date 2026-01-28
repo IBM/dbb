@@ -30,6 +30,8 @@
 # 2023/07/06 TLD 1.0.0 Initial Release
 # 2023/09/25 DB  1.1.0 Initial Release
 # 2024/03/01 DB  1.2.0 Updated Error Handling
+# 2025/11/28 DB  1.3.0 Support for http.extraHeader
+#                      argument to support Bearer tokens
 #===================================================================================
 
 Help() {
@@ -67,13 +69,18 @@ Help() {
   echo "       -b <Branch>  - Name of the Branch to be cloned.        "
   echo "                      Default=None, Required.                 "
   echo "                                                              "
+  echo "                 Ex: main                                     "
+  echo "                                                              "
   echo "       Optional:                                              "
   echo "       -a <Application>    - Folder name to clone the         "
   echo "                             application git repo             "
   echo "                                                              "
   echo "                 Ex: MortgageApplication                      "
   echo "                                                              "
-  echo "         Ex: refs/heads/main                                  "
+  echo "       -c <http.extraHeader>  - Bearer Token configuration    "
+  echo "                                                              "
+  echo "                 Ex: 'Authorization: Bearer abc'              "
+  echo "                                                              "
   echo " "
   exit 0
 }
@@ -82,7 +89,7 @@ Help() {
 # Customization
 # Configuration file leveraged by the backend scripts
 # Either an absolute path or a relative path to the current working directory
-SCRIPT_HOME="`dirname "$0"`"
+SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 # Customization - End
 
@@ -92,7 +99,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.2.0"
+PGMVERS="1.3.0"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -101,11 +108,12 @@ ERRMSG=""
 Repo=""
 WorkDir=""
 Branch=""
+GitConfigurationParameters=()
 application=""
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
- Help
+  Help
 fi
 
 # Validate Shell environment
@@ -137,14 +145,14 @@ fi
 
 # Get Options
 if [ $rc -eq 0 ]; then
-  while getopts "h:r:a:w:b:" opt; do
+  while getopts "h:r:a:w:b:c:" opt; do
     case $opt in
     h)
       Help
       ;;
     r)
       argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
+      nextchar="${argument:0:1}"
       if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
         rc=4
         ERRMSG=$PGM": [WARNING] Git Repository URL is required. rc="$rc
@@ -155,7 +163,7 @@ if [ $rc -eq 0 ]; then
       ;;
     w)
       argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
+      nextchar="${argument:0:1}"
       if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
         rc=4
         ERRMSG=$PGM": [WARNING] Build Workspace Folder Name is required. rc="$rc
@@ -166,7 +174,7 @@ if [ $rc -eq 0 ]; then
       ;;
     a)
       argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
+      nextchar="${argument:0:1}"
       if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
         rc=4
         ERRMSG=$PGM": [WARNING] Application Name is required. rc="$rc
@@ -177,7 +185,7 @@ if [ $rc -eq 0 ]; then
       ;;
     b)
       argument="$OPTARG"
-      nextchar="$(expr substr $argument 1 1)"
+      nextchar="${argument:0:1}"
       if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
         rc=4
         ERRMSG=$PGM": [WARNING] Branch Name is required. rc="$rc
@@ -185,6 +193,17 @@ if [ $rc -eq 0 ]; then
         break
       fi
       Branch="$argument"
+      ;;
+    c)
+      argument="$OPTARG"
+      nextchar="${argument:0:1}"
+      if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+        rc=4
+        ERRMSG=$PGM": [WARNING] Git configuration parameter for http.extraHeader required. rc="$rc
+        echo $ERRMSG
+        break
+      fi
+      GitConfigurationParameters+=("${argument}")
       ;;
     \?)
       Help
@@ -203,37 +222,36 @@ fi
 #
 
 # Validate Options
-validateOptions(){
+validateOptions() {
 
   if [ -z "${Repo}" ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] Application Repository is required. rc="$rc
     echo $ERRMSG
   fi
-   
+
   if [ -z "${Workspace}" ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] Unique Workspace Path is required. rc="$rc
     echo $ERRMSG
   else
-    if [[ ${Workspace:0:1} != "/" ]] ; then
+    if [[ ${Workspace:0:1} != "/" ]]; then
       if [ ! -d "${buildRootDir}" ]; then
         rc=8
         ERRMSG=$PGM": [ERROR] Workspace Directory (${buildRootDir}) was not found. rc="$rc
         echo $ERRMSG
       fi
-    fi  
-  fi 
-    
+    fi
+  fi
+
   if [ -z "${Branch}" ]; then
     rc=8
     ERRMSG=$PGM": [ERROR] Branch Name is required. rc="$rc
     echo $ERRMSG
   fi
-    
+
 }
 #
-
 
 # Call validate Options
 if [ $rc -eq 0 ]; then
@@ -261,7 +279,7 @@ if [ $rc -eq 0 ]; then
   echo $PGM": [INFO] **       WorkDir:" $(getWorkDirectory)
   if [ ! -z "${application}" ]; then
     echo $PGM": [INFO] **        GitDir:" ${application}
-  else    
+  else
     echo $PGM": [INFO] **        GitDir:" ${GitDir}
   fi
   echo $PGM": [INFO] **           Ref:" ${Branch} "->" ${BranchID}
@@ -271,8 +289,8 @@ fi
 #
 # Set up to perform the clone of the Repo
 if [ $rc -eq 0 ]; then
-  
-  if [[ ${Workspace:0:1} != "/" ]] ; then 
+
+  if [[ ${Workspace:0:1} != "/" ]]; then
     cd ${buildRootDir}
     rc=$?
   fi
@@ -302,16 +320,30 @@ fi
 # Clone the Repo to z/OS UNIX System Services with a re-Direct of STDERR to STDOUT
 if [ $rc -eq 0 ]; then
 
-  echo $PGM": [INFO] Preforming Git Clone of Repo ${Repo}, Ref ${BranchID} to $(getWorkDirectory)"
-  if [ ! -z "${application}" ]; then
-    CMD="git clone -b ${BranchID} ${Repo} ${application}"
-  else   
-    CMD="git clone -b ${BranchID} ${Repo}"
-  fi
+  echo $PGM": [INFO] Performing Git Clone of Repo ${Repo}, Ref ${BranchID} to $(getWorkDirectory)"
 
-  echo $PGM": [INFO] ${CMD}"
-  ${CMD} 2>&1
-  rc=$?
+  # Construct Clone cmd
+  if [ ! -z "${GitConfigurationParameters[@]}" ]; then
+    if [ ! -z "${application}" ]; then
+      echo $PGM": [INFO] git -c http.extraHeader=<PARM> clone -b ${BranchID} ${Repo} ${application}"
+      git -c http.extraHeader="${GitConfigurationParameters[@]}" clone -b ${BranchID} ${Repo} ${application} 2>&1
+      rc=$?
+    else
+      echo $PGM": [INFO] git -c http.extraHeader=<PARM> clone -b ${BranchID} ${Repo}"
+      git -c http.extraHeader="${GitConfigurationParameters[@]}" clone -b ${BranchID} ${Repo} 2>&1
+      rc=$?
+    fi
+  else
+    if [ ! -z "${application}" ]; then
+      echo $PGM": [INFO] git -clone -b ${BranchID} ${Repo} ${application}"
+      git clone -b ${BranchID} ${Repo} ${application} 2>&1
+      rc=$?
+    else
+      echo $PGM": [INFO] git clone -b ${BranchID} ${Repo}"
+      git clone -b ${BranchID} ${Repo} 2>&1
+      rc=$?
+    fi
+  fi
 
   if [ $rc -ne 0 ]; then
     ERRMSG=$PGM": [ERROR] Unable to Clone Repo ${Repo}, Ref ${BranchID}. rc="$rc
@@ -326,7 +358,7 @@ if [ $rc -eq 0 ]; then
 
   if [ ! -z "${application}" ]; then
     cd ${application}
-  else   
+  else
     cd ${GitDir}
   fi
   rc=$?
@@ -363,7 +395,7 @@ fi
 if [ $rc -eq 0 ]; then
   ERRMSG=$PGM": [INFO] Clone Repository Complete. rc="$rc
   echo $ERRMSG
-else 
+else
   ERRMSG=$PGM": [ERROR] Clone Repository Failed. Check Log. rc="$rc
   echo $ERRMSG
 fi
