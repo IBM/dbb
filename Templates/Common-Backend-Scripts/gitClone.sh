@@ -105,7 +105,7 @@ SYS=$(uname -Ia)
 
 rc=0
 ERRMSG=""
-Repo=()
+Repo=""
 WorkDir=""
 Branch=""
 GitConfigurationParameters=()
@@ -159,7 +159,7 @@ if [ $rc -eq 0 ]; then
         echo $ERRMSG
         break
       fi
-      Repo+=("${argument}")
+      Repo="$argument"
       ;;
     w)
       argument="$OPTARG"
@@ -325,22 +325,22 @@ if [ $rc -eq 0 ]; then
   # Construct Clone cmd
   if [ ! -z "${GitConfigurationParameters[@]}" ]; then
     if [ ! -z "${application}" ]; then
-      echo $PGM": [INFO] git -c http.extraheader=<PARM> clone -b ${BranchID} ${Repo} ${application}"
-      git -c http.extraheader="${GitConfigurationParameters[@]}" clone -b ${BranchID} "${Repo[@]}" ${application} 2>&1
+      echo $PGM": [INFO] git -c http.extraHeader=<PARM> clone -b ${BranchID} ${Repo} ${application}"
+      git -c http.extraHeader="${GitConfigurationParameters[@]}" clone -b ${BranchID} ${Repo} ${application} 2>&1
       rc=$?
     else
-      echo $PGM": [INFO] git -c http.extraheader=<PARM> clone -b ${BranchID} ${Repo}"
-      git -c http.extraheader="${GitConfigurationParameters[@]}" clone -b ${BranchID} "${Repo[@]}" 2>&1
+      echo $PGM": [INFO] git -c http.extraHeader=<PARM> clone -b ${BranchID} ${Repo}"
+      git -c http.extraHeader="${GitConfigurationParameters[@]}" clone -b ${BranchID} ${Repo} 2>&1
       rc=$?
     fi
   else
     if [ ! -z "${application}" ]; then
       echo $PGM": [INFO] git -clone -b ${BranchID} ${Repo} ${application}"
-      git clone -b ${BranchID} "${Repo[@]}" ${application} 2>&1
+      git clone -b ${BranchID} ${Repo} ${application} 2>&1
       rc=$?
     else
       echo $PGM": [INFO] git clone -b ${BranchID} ${Repo}"
-      git clone -b ${BranchID} "${Repo[@]}" 2>&1
+      git clone -b ${BranchID} ${Repo} 2>&1
       rc=$?
     fi
   fi
