@@ -1,6 +1,6 @@
 # Azure DevOps pipeline templates
 
-This template provides an [azure-pipelines.yml](azure-pipelines.yml) definition file to setup an Azure DevOps Pipeline for applications managed in an Azure Git repository along with the [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) definition file as a dedicated pipeline to run the deployment/installation of an existing package via IBM Wazi Deploy for installing into more controlled environments.
+This template provides an [azure-pipelines.yml](azure-pipelines.yml) definition file to setup an Azure DevOps Pipeline for applications managed in an Azure Git repository along with the [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) definition file as a dedicated pipeline to run the deployment/installation of an existing package via IBM Wazi Deploy for installing into controlled environments.
 
 ## Overview and capabilities
 
@@ -8,40 +8,40 @@ This pipeline template is implementing the [Git-based process and branching mode
 
 It leverages the [Common Backend scripts](../Common-Backend-Scripts/) to implement the Setup, Build, Packaging and Deployment stages. 
 
-The **application pipeline** implements the following stages
+The **development pipeline** [azure-pipelines.yml](azure-pipelines.yml) implements the following stages
 
-* `Setup` stage to [clone](../Common-Backend-Scripts/README.md#41---gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
+* `Setup` stage to [clone](../Common-Backend-Scripts/README.md#clone-repository-with-gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
 * `Build` stage 
-  * to invoke the zAppBuild [build](../Common-Backend-Scripts/README.md#42---dbbbuildsh) framework,
-  * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the log files and publish them to the Azure build result.
+  * to invoke the [build](../Common-Backend-Scripts/README.md#build-stage) stage for either zBuilder or zAppBuild,
+  * to [prepare](../Common-Backend-Scripts/README.md#preparelogssh) the log files and publish them to the Azure build result.
 * `Packaging` stage
-  * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#44---packagebuildoutputssh)
+  * to create a package (TAR file) based on the [PackageBuildOutputs script](../Common-Backend-Scripts/README.md#packaging-stage)
   * to publish the package file to the configured Artifact repository (Artifactory or Nexus, depending on the `publish` flag in CBS).
-  * (Alternatively - commented out) to create a new [UCD component version](../Common-Backend-Scripts/README.md#45---ucdpackagingsh) version
+  * (Alternatively - commented out) to create a new [UCD component version](../Common-Backend-Scripts/README.md#ucdpackagingsh) version
 * `Deployment` stage to deploy to the development test environment
-  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
-  * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based)
-  * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
-  * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
-* `Deployment` stages to deploy to controlled test environments. Triggered a [release pipeline process](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) via a manual pipeline request with the pipelineType set to release `release`:
+  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
+  * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#wazideploy-deploysh) (Python-based)
+  * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#wazideploy-evidencesh) to generate deployment report and updating the evidence.
+  * to [prepare](../Common-Backend-Scripts/README.md#preparelogssh) the deployment log files and publish them to the Azure build result.
+* `Deployment` stages to deploy to controlled test environments, if triggered the [release pipeline process](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-release-pipeline-with-build-package-and-deploy-stages) via a manual pipeline request with the pipelineType set to release `release`:
   * to create the release candidate Git tag using the [computeReleaseVersion script](../Common-Backend-Scripts/README.md#computereleaseversionsh).
-  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#47---wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
-  * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#48---wazideploy-deploysh) (Python-based) into development and test regions
-  * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#49---wazideploy-evidencesh) to generate deployment report and updating the evidence.
-  * to [prepare](../Common-Backend-Scripts/README.md#49---preparelogssh) the deployment log files and publish them to the Azure build result.
+  * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
+  * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#wazideploy-deploysh) (Python-based) into development and test regions
+  * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#wazideploy-evidencesh) to generate deployment report and updating the evidence.
+  * to [prepare](../Common-Backend-Scripts/README.md#preparelogssh) the deployment log files and publish them to the Azure build result.
 * `Cleanup` stage: 
-  * to [delete the build workspace](../Common-Backend-Scripts/README.md#411---deleteworkspacesh) on z/OS Unix System Services.
+  * to [delete the build workspace](../Common-Backend-Scripts/README.md#deleteworkspacesh) on z/OS Unix System Services.
 
-The deployment pipeline is a manual driven pipeline template that allows teams to deploy an application package that has previously been created by the application pipeline into more controlled environments, such as acceptance and production environments.
+The [**deployment pipeline** template [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) is a manually-driven pipeline that allows teams to deploy an application package that has previously been created by the application pipeline into controlled environments, such as acceptance and production environments.
 
 It mandates the following input parameters:
-* Target deployment environment choice
+* Target deployment environment selection
 * Packaging information to retrieve the package from the artifact repository:
   * Package type - either a preliminary or release build
   * Package reference - either the branch name (like 'main') or release name (like 'rel-1.0.0') for the archive
   * Package identifier - the unique identifier of the build. The ADO build number
 
-Depending on your selected deployment technology, review the definitions and (de-)/activate the appropriate steps.
+Based on the above information it kicks off the installation of the specified package
 
 The pipeline uses the Azure concepts `Stage`, `Jobs` and `Tasks`, as well as [Azure DevOps templates](#supplied-azure-pipeline-templates).
 
@@ -133,7 +133,7 @@ Please make yourself familiar with the [Git branching for mainframe development]
 
 ### Development pipeline
 
-The application development pipeline definition supporting various workflows. The [azure-pipelines.yml](azure-pipelines.yml) supports: 
+The development pipeline definition supporting various workflows. The [azure-pipelines.yml](azure-pipelines.yml) supports: 
 
 * automated [build pipelines for feature branches](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#pipeline-build-of-feature-branches) with a clone and build stage, 
 * the [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the branch `main` and
@@ -143,7 +143,7 @@ The deployment pipeline definition supports teams to install an existing package
 
 Please check the pipeline definition to understand the various triggers for which this pipeline is executed and also the conditions when stages, jobs or steps are executed. 
 
-#### Application Pipeline parameters 
+#### Development pipeline parameters 
 
 In a default setup, the pipeline is triggered for each new commit.
 
@@ -158,7 +158,7 @@ verbose          | boolean flag to control logging of build framework. (Default:
 
 #### Supported workflows
 
-##### Feature Branch pipeline
+##### Feature branch pipeline
 
 The pipeline for feature branches executes the following steps:
 
@@ -169,7 +169,7 @@ The pipeline for feature branches executes the following steps:
 
 Overview of the pipeline:  
 
-![Feature Branch pipeline](images/ado_featureBranchPipeline.png)
+![Feature branch pipeline](images/ado_featureBranchPipeline.png)
 
 ##### Basic build pipeline for Integration branches
 
