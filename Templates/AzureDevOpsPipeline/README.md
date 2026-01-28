@@ -32,7 +32,7 @@ The **development pipeline** [azure-pipelines.yml](azure-pipelines.yml) implemen
 * `Cleanup` stage: 
   * to [delete the build workspace](../Common-Backend-Scripts/README.md#deleteworkspacesh) on z/OS Unix System Services.
 
-The [**deployment pipeline** template [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) is a manually-driven pipeline that allows teams to deploy an application package that has previously been created by the application pipeline into controlled environments, such as acceptance and production environments.
+The **deployment pipeline** template [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) is a manually-driven pipeline that allows teams to deploy an application package that has previously been created by the application pipeline into controlled environments, such as acceptance and production environments.
 
 It mandates the following input parameters:
 * Target deployment environment selection
@@ -41,7 +41,7 @@ It mandates the following input parameters:
   * Package reference - either the branch name (like 'main') or release name (like 'rel-1.0.0') for the archive
   * Package identifier - the unique identifier of the build. The ADO build number
 
-Based on the above information it kicks off the installation of the specified package
+Based on the above information it kicks off the installation of the specified package.
 
 The pipeline uses the Azure concepts `Stage`, `Jobs` and `Tasks`, as well as [Azure DevOps templates](#supplied-azure-pipeline-templates).
 
@@ -193,7 +193,7 @@ It covers the followings steps:
 * Build and creation of Git tagging for the release candidate
 * Package & publish package
 * Deployment to the integration test environment
-* Deployment to the controlled test environments including Production
+* Deployment to the controlled test environments such as the Acceptance Test environment
 * Cleanup
 
 The development team manually requests the pipeline and specifies the *pipeline type* `release` as a parameter. Along with the *release type*, the pipeline will tag a release candidate and also the final release that is deployed to production.
@@ -206,7 +206,7 @@ Overview of the release pipeline:
 
 ### Deployment pipeline
 
-A dedicated, manually invoked deployment pipeline template is provided to trigger the installation of an existing package from artifactory into more test and production environments, that are not on the default route for the application team. 
+A dedicated, manually invoked deployment pipeline template is provided to trigger the installation of an existing package from artifactory into additional test environments, that are not on the default route for the application teams, or to drive the deployment of release packages into the production environments.
 
 #### Pipeline parameters 
 
