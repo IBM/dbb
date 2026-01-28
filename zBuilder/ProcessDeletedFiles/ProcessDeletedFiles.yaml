@@ -1,0 +1,102 @@
+---
+########################################################################################
+# 
+# Required configuration for the associated "ProcessDeletedFiles" custom groovy task. 
+#
+# This YAML file defines the ProcessDeletedFiles task and the 'outputLibs' variable
+# required to execute the task. The groovy script "ProcessDeletedFiles.groovy" will be 
+# automatically discovered as long as it is placed in the $DBB_BUILD/groovy directory.
+#
+# By default, the 'outputLibs' variable is configured for the output libraries for each
+# sample language shipped with DBB. Adjust as needed for your environment. Variable 
+# definitions can be moved into dbb-app.yaml if necessary. 
+#
+#
+# Setup Instructions: 
+# - Copy this configuration YAML file and the associated groovy script to your $DBB_BUILD
+#   directory. Important: Ensure the Groovy script is in the groovy sub-directory so it 
+#   will be discovered automatically. 
+# - Review and adjust the outputLibs variable definitions as needed for your environment.
+# - Include this YAML file in dbb-build.yaml to source the task and variable configuration. 
+# - Add the ProcessDeletedFiles task to the 'impact' lifecycle in dbb-build.yaml ordered 
+#   after the ImpactAnalysis task. 
+#
+########################################################################################
+
+version: 1.0.0
+tasks: 
+  - task: ProcessDeletedFiles
+   
+    variables:
+      
+      # Define the list of output PDS libraries that should be added to the DELETE_RECORD. 
+      - name: outputLibs
+        forFiles: "**/cobol/*.cbl"
+        value: 
+          - "${HLQ}.OBJ"
+          - "${HLQ}.DBRM"
+          - "${HLQ}.LOAD"
+
+      # Override the variable multiple times using forFiles to map different file patterns
+      # to different output libraries.
+      - name: outputLibs
+        forFiles: "**.bms"
+        value:
+          - "${HLQ}.BMS.COPY"
+          - "${HLQ}.LOAD"
+
+      - name: outputLibs
+        forFiles: "**.pli"
+        value: 
+          - "${HLQ}.OBJ"
+          - "${HLQ}.DBRM"
+          - "${HLQ}.LOAD"
+
+      - name: outputLibs
+        forFiles: "**.asm"
+        value:
+          - "${HLQ}.DBRM"
+          - "${HLQ}.OBJ"
+          - "${HLQ}.EQALANGX"
+          - "${HLQ}.LOAD"
+
+      - name: outputLibs
+        forFiles: 
+          - "**.c"
+          - "**.C"
+        value:
+          - "${HLQ}.OBJ"
+          - "${HLQ}.LOAD" 
+
+      - name: outputLibs
+        forFiles: 
+          - "**/rexx/*.rexx"
+        value:
+          - "${HLQ}.OBJ"
+          - "${HLQ}.CEXEC"
+          - "${HLQ}.LOAD" 
+
+      - name: outputLibs
+        forFiles: "**.lnk"
+        value:
+          - "${HLQ}.LOAD"
+
+      - name: outputLibs
+        forFiles: "**.jcl"
+        value:
+          - "${HLQ}.JCL" 
+
+      - name: outputLibs
+        forFiles: "**.proc"
+        value:
+          - "${HLQ}.PROC" 
+
+      - name: outputLibs
+        forFiles: "**.cntl"
+        value: 
+          - "${HLQ}.CNTL"
+
+      - name: outputLibs
+        forFiles: "**.rexx"
+        value:
+          - "${HLQ}.REXX"

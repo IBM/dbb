@@ -19,6 +19,7 @@ String variableName = config.getVariable("checkFileExistsVariableName")
 if (variableName == null) {
    println ">> ERROR: checkFileExistsVariableName variable for is not set"
    return -1
+}
 
 // Create new File object 
 def file = new File(filePath)

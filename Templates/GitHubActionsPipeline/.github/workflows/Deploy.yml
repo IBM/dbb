@@ -1,0 +1,133 @@
+name: Deploy
+on:
+    workflow_dispatch:
+        inputs:
+            environmentName:
+                description: Environment to deploy to
+                default: Integration
+                type: choice
+                options:
+                  - Integration
+                  - Acceptance
+                  - Production
+                required: true
+            packageType:
+                description: Build or Release package
+                default: build
+                type: choice
+                options:
+                  - build
+                  - release
+                required: true
+            packageReference: 
+                description: Package reference value - either the release reference such as (rel-1.0.0) for release packages or referencing a preliminary package indicated by the branch of the build.
+                default: "main" # rel-#.#.# for release, branch for build 
+                type: string
+                required: true
+            packageBuildIdentifier:
+                description: the buildIdentifier for the package stored in the artifact repository. 
+                type: string
+                required: true
+        
+env:
+    uniqueWorkspaceId: /u/github/workspace/${{ github.repository }}/${{ github.ref_name }}/build_${{github.run_number }} 
+    packageBuildIdentifier: ${{ inputs.packageBuildIdentifier}}
+    branch : ${{ github.ref_name }} 
+    application: ${{  github.event.repository.name  }}
+    packageReference: ${{ inputs.packageReference}}
+    environmentName: ${{ inputs.environmentName }}
+    packageName: ${{github.run_id}}
+    packageType: ${{ inputs.packageType}}
+    zosHostname: lpar.dev.ibm.com
+    zosSFTPUser: GITHUB@lpar.dev.ibm.com
+    githubAccessToken: ${{ secrets.GH_ACTIONS_PAT }} 
+
+jobs:
+    Setup:
+        runs-on: self-hosted
+        steps:
+          - name: CI-CD pipeline parameter printout
+            run: |
+                echo " "
+                echo "Following are the CI-CD pipeline parameters"
+                echo "*******************************************"
+                echo "uniqueWorkspaceId                  = ${{ env.uniqueWorkspaceId}}"
+                echo "branch                             = ${{ env.branch}}"
+                echo "application                        = ${{ env.application}}"
+                echo "zosSFTPUser                        = ${{ env.zosSFTPUser}}"
+                echo "zosHostname                        = ${{ env.zosHostname}}"
+                echo "packageName                        = ${{ env.packageName}}"
+                echo "packageType                        = ${{ env.packageType}}"
+                echo "packageReference                   = ${{ env.packageReference}}"
+                echo "packageBuildIdentifier             = ${{ env.packageBuildIdentifier}}"
+                echo "Retrieval Environment              = ${{ env.environmentName}}"
+          
+    Deploy:
+        needs:
+            - Setup
+        runs-on: self-hosted
+        steps:
+
+          - name: Create deployment plan with Wazi Deploy
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && mkdir -p ${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs-${{ env.environmentName }}/ && wazideploy-generate.sh -w ${{ env.uniqueWorkspaceId }} -a ${{env.application}} -P ${{ env.packageType }} -R ${{ env.packageReference }} -I ${{ env.packageBuildIdentifier}}"
+          
+          - name: Deploy package with Wazi Deploy
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && wazideploy-deploy.sh -w ${{ env.uniqueWorkspaceId }} -e EOLEB7-${{ env.application }}-${{ env.environmentName}}.yaml -l deploy-logs-${{ env.environmentName }}/evidences/evidence.yaml"
+
+          - name: Generate deployment report with Wazi Deploy
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && wazideploy-evidence.sh -w ${{ env.uniqueWorkspaceId }} -l deploy-logs-${{ env.environmentName }}/evidence.yaml -o deploy-logs-${{ env.environmentName }}/deployment-report.html"
+
+          - name: Retrieve deployment reports
+            if: ${{ env.packageType == 'release' }}
+            run: |
+              rm -rf "${{ runner.temp }}/deploy-logs-${{ env.environmentName }}"
+              mkdir "${{ runner.temp }}/deploy-logs-${{ env.environmentName }}"
+              sftp -r ${{ env.zosSFTPUser}}:${{ env.uniqueWorkspaceId }}/deployPkgDir/deploy-logs-${{ env.environmentName }}/* "\"${{ runner.temp }}/deploy-logs-${{ env.environmentName }}\""
+
+          - name: Publish deployment logs
+            if: ${{ env.packageType == 'release' }}
+            uses: actions/upload-artifact@v4.0.0
+            with:
+              path: "${{ runner.temp }}/deploy-logs-${{ env.environmentName }}/"
+              name: "artifact-${{ env.environmentName }}" 
+
+          - name: Create Wazi Deploy Index
+            if: ${{ env.packageType == 'release' }}
+            uses: "./.github/actions/createwazideployindex"
+            with:
+              evidenceFolder: deploy-logs-${{ env.environmentName }}
+              environmentName: "${{ env.environmentName }}"
+              buildNumber: ${{github.run_number }} 
+              zosSFTPUser: ${{ env.zosSFTPUser}}
+
+          - name: Create production release      
+            if: ${{ env.packageType == 'release' && env.environmentName == 'production' }}
+            env:
+              GH_TOKEN: ${{ env.githubAccessToken }}
+            run: |-
+              githubReleaseName="${{ env.packageReference}}-${{ env.packageBuildIdentifier}}"
+              rc=0
+              # Create new release
+              echo "[INFO] Creating Release ${githubReleaseName} as latest production state."
+
+              gh release edit ${githubReleaseName} --prerelease=false --latest --verify-tag 
+              
+              # catch RC rest command return code
+              rc=$?
+              if [ $rc -eq 0 ]; then
+                echo "[INFO] - GH command has completed successfully."
+              else
+                echo "[WARNING] - GH command has ended with a return code other than 0. rc="$rc
+                exit rc
+              fi
+            shell: bash
+
+    Cleanup:
+        needs:
+            - Deploy
+        runs-on: self-hosted
+        if: always()
+        steps:
+          - name: Cleanup Build Environment
+            run: ssh ${{ env.zosSFTPUser}} ". ./.profile && deleteWorkspace.sh -w ${{ env.uniqueWorkspaceId }}"
+            

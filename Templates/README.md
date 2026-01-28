@@ -1,11 +1,12 @@
 # Pipeline Templates
 
-This category provides templates to implement a CI/CD pipeline covering the entire development lifecycle. These assets are developed based on [The Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev) and help you to quickly setup your pipeline environment. Prior to implementing these templates, you should get familiar with the outlined Git branching model.
+This category provides templates to implement a CI/CD pipeline covering the entire development lifecycle. These assets are developed based on [The Git branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev) and help you to quickly setup your pipeline environment. Prior to implementing these templates, you should get familiar with the outlined Git branching model.
 
 ## Table of Contents 
 Asset | Description | Documentation Link
 --- | --- | ---
 Common-Backend-Scripts | Core asset to simplify defining the pipeline orchestration by providing central services for the various stages of the CI/CD pipeline. Especially useful for pipeline architectures which don't provide a native runner . | [Common-Backend-Scripts/README.md](Common-Backend-Scripts/README.md)
+Deploy_Pipeline | Templates to setup standalone deployment pipelines. | [Deploy_Pipeline/README.md](Deploy_Pipeline/README.md)
 Azure DevOps Pipeline Template | Template to setup a [AzureDevOps pipeline](https://learn.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops&viewFallbackFrom=azure-pipelines) to build, package and deploy Azure Repos Git. | [AzureDevOpsPipeline/README.md](AzureDevOpsPipeline/README.md)
 Gitlab CI/CD Pipeline Template | .gitlab-ci.yml template to setup a [Gitlab CI/CD pipeline](https://docs.gitlab.com/ee/ci/pipelines/) to build, package and deploy with the Gitlab platform. | [GitlabCIPipeline/README.md](GitlabCIPipeline/README.md)
 Gitlab CI/CD Pipeline Template for z/OS-native GitLab Runner | .gitlab-ci.yml template to setup a [Gitlab CI/CD pipeline](https://docs.gitlab.com/ee/ci/pipelines/) to build, package and deploy with the Gitlab platform using a [z/OS-native Gitlab Runner](https://about.gitlab.com/blog/gitlab-ultimate-for-ibm-z-modern-devsecops-for-mainframes/). | [GitlabCIPipeline-for-zos-native-runner/README.md](GitlabCIPipeline-for-zos-native-runner/README.md)
