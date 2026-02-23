@@ -61,6 +61,10 @@
                 "type": "string"
             }
         },
+        "rescue": {
+            "$ref": "#/$defs/d_rescue",
+            "description": "Used to jump to a target activity, action, or step if an exception occurs during the current activity, action, or step. No condition is indicated."
+        },
         "activities": {
             "type": "array",
             "description": "A set of ordered actions. Some standard activities are available but you can create your own activity. If the activity applies to artifacts, you must specify the types of the artifacts",
@@ -129,6 +133,10 @@
                             },
                             "loop": {
                                 "$ref": "#/$defs/d_loop"
+                            },
+                            "retry": {
+                                "$ref": "#/$defs/d_retry",
+                                "description": "Used to retry the activity, action, or step when it fails the first time."
                             },
                             "actions": {
                                 "type": "array",
@@ -206,6 +214,10 @@
                                                     "$ref": "#/$defs/d_loop",
                                                     "description": "Used to iteratively run the activity, action, or step."
                                                 },
+                                                "retry": {
+                                                    "$ref": "#/$defs/d_retry",
+                                                    "description": "Used to retry the activity, action, or step when it fails the first time."
+                                                },
                                                 "steps": {
                                                     "type": "array",
                                                     "description": "A command that is part of an action. Each step must be implemented by an Ansible or Python building block on the targeted z/OS environment.",
@@ -272,6 +284,10 @@
                                                                         "$ref": "#/$defs/d_loop",
                                                                         "description": "Used to iteratively run the activity, action, or step."
                                                                     },
+                                                                    "retry": {
+                                                                        "$ref": "#/$defs/d_retry",
+                                                                        "description": "Used to retry the activity, action, or step when it fails the first time."
+                                                                    },
                                                                     "properties": {
                                                                         "$ref": "#/$defs/props",
                                                                         "description": "A pair of key and associated value. \n The values of some of these properties overwrite the default values of the variables in the environment variables file. The following properties are used by the building blocks: \n 1. A properties element whose key field is set to template and whose value field is the name of the building block, such as cics_cmci_prog_create. \n 2. A properties element whose key field is set to var_template and whose value field is the name of the variable that contains the building block name. \n 3. A properties element that overwrites the default variable from the environment variables file."
@@ -321,7 +337,7 @@
         "s_name": {
             "type": "string",
             "maxLength": 30,
-            "pattern": "^([A-Z]|[a-z]|[0-9]|_)+$"
+            "pattern": "^(?!(?:apiVersion|kind|metadata|default_tags|default_plan_tags|default_skip_tags|default_plan_skip_tags|rescue|activities)$)([A-Z]|[a-z]|[0-9]|_)+$"
         },
         "d_when": {
             "oneOf": [
@@ -414,7 +430,22 @@
                 }
             },
             "required": ["location"]
-    },
+        },
+        "d_retry": {
+            "additionalProperties": false,
+            "properties": {
+                "max_attempt": {
+                    "oneOf": [
+                        {"type": "string"},
+                        {"type": "number"}
+                    ]
+                },
+                "interval": {
+                    "type": "integer"
+                }
+            },
+            "required": ["max_attempt"]
+        },
         "d_types": {
             "type": "array",
             "items": {
