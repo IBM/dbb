@@ -1,6 +1,6 @@
 # zDeploy 
 
-zDeploy is a Wazi Deploy deployment configuration framework, that allows maintaining application specific configuration along the core deployment configuration for Wazi Deploy.
+zDeploy is a Wazi Deploy deployment configuration framework, that allows maintaining application specific configuration along the core deployment configuration for [Wazi Deploy](https://www.ibm.com/docs/en/developer-for-zos/17.0.x?topic=deploy-whats-new-in-wazi).
 
 ## Architecture 
 
@@ -67,11 +67,12 @@ The core configuration sets parameters for the Wazi Deploy specific building blo
 * ZOAU 1.3.6.3 or compatible (for Python deployment method)
 * Ansible 2.9+ with IBM Wazi Deploy Ansible Collection (for Ansible deployment method)
 
-## Setup
+## Setup and Install
 
 * Take a fork of this repository
 * Update environment configuration files according to your environment
-* Clone the repository to IBM Unix System Services and reference it in your wazideploy commands. See the [CBS](https://github.com/IBM/dbb/tree/main/Templates/Common-Backend-Scripts) for integration examples.
+* Clone the repository to IBM Unix System Services when following the Python based deployment automation and reference it in your wazideploy commands. See the [CBS](https://github.com/IBM/dbb/tree/main/Templates/Common-Backend-Scripts) for integration examples.
+* Or clone it to the control node when integrating it in an Ansible based deployment automation
 
 ## Conventions and Principles
 
