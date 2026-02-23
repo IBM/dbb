@@ -1,0 +1,40 @@
+#*******************************************************************************
+# Licensed Materials - Property of IBM
+# (c) Copyright IBM Corp. 2021. All Rights Reserved.
+#
+# Note to U.S. Government Users Restricted Rights:
+# Use, duplication or disclosure restricted by GSA ADP Schedule
+# Contract with IBM Corp.
+#*******************************************************************************
+int:
+  hosts: 
+    int_a_zos_host:
+      ansible_host: "eoleb7.dat.ibm.com"
+      ansible_port: 22
+      ansible_user: "MDALBIN"
+      ansible_ssh_private_key_file: "/home/gitlab-runner/.ssh/id_rsa"
+      ansible_ssh_pipelining: true
+    int_b_zos_host:
+      ansible_host: "eoleb7.dat.ibm.com"
+      ansible_port: 22
+      ansible_user: "MDALBIN"
+      ansible_ssh_private_key_file: "/home/gitlab-runner/.ssh/id_rsa"
+      ansible_ssh_pipelining: true
+
+accept:
+  hosts: 
+    accept_zos_host:
+      ansible_host: "eoleb7.dat.ibm.com"
+      ansible_port: 22
+      ansible_user: "MDALBIN"
+      ansible_ssh_private_key_file: "/home/gitlab-runner/.ssh/id_rsa"
+      ansible_ssh_pipelining: true
+
+prod:  
+  hosts: 
+    prod_zos_host:
+      ansible_host: "eoleb7.dat.ibm.com"
+      ansible_port: 22
+      ansible_user: "MDALBIN"
+      ansible_ssh_private_key_file: "/home/gitlab-runner/.ssh/id_rsa"
+      ansible_ssh_pipelining: true

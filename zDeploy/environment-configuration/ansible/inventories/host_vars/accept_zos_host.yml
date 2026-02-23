@@ -1,0 +1,47 @@
+---
+apiVersion: deploy.ibm.com/v1
+kind: Environment
+metadata:
+  name: "EOLEB7-Acceptance"
+  version: 1.0.0
+
+# variables that can be overridden via extra vars
+application: "{{ application if application is defined else '' }}"
+hlq: "{{ extra_vars.hlq if extra_vars.hlq is defined else 'WDEPLOY.QA' }}"
+uss_root: "{{ extra_vars.uss_root if extra_vars.uss_root is defined else '/tmp/wazi-deploy/qa' }}"
+deploy_cfg_home: "{{  extra_vars.deploy_cfg_home if extra_vars.deploy_cfg_home is defined else '/var/wazi-deploy-config-sample' }}"
+
+#################################################################################
+# This contains the 
+# Environment specific settings according to the parent folder name
+#################################################################################
+
+# CICS
+default_cics_user: "IBMUSER"
+default_cics_password: "sys1"
+default_cics_context: "CICS01"
+default_cmci_host: "127.0.0.1"
+default_cmci_port: 1490
+default_cmci_scheme: "http"
+default_csd_group: "DEFAULT"
+default_cics_cmci_action: "NEWCOPY"
+default_env_cics_sdfhload: "DFH610.CICS.SDFHLOAD"
+default_env_cics_csd: ""
+
+# Db2
+default_db2_sdsnload: "DBC0CFG.DB2.V12.SDSNLOAD"
+default_pkg_jobcard: "BINDPKG JOB 'WD-PKGBIND',MSGLEVEL=(1,1),MSGCLASS=R,NOTIFY=&SYSUID"
+default_plan_jobcard: "BINDPLA JOB 'WD-PLANBIND',MSGLEVEL=(1,1),MSGCLASS=R,NOTIFY=&SYSUID"
+default_db2_sqlid: "IBMUSER"
+default_db2_package: "DEFAULT"
+default_db2_plan: "DEFAULT"
+default_db2_qualifier: "QUAL"
+default_db2_subsys: "DBC1"
+default_db2_plan_pklist: "*.CBSAPK.*"
+default_db2_action: "REPLACE"
+
+# load shared configuration
+include_global_vars:
+  files_list:
+    - "{{ deploy_cfg_home }}/deployment-configuration/global/global_initialization.yml"
+  files_must_exist: true

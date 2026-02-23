@@ -1,0 +1,91 @@
+#*******************************************************************************
+# Licensed Materials - Property of IBM
+# (c) Copyright IBM Corp. 2022. All Rights Reserved.
+#
+# Note to U.S. Government Users Restricted Rights:
+# Use, duplication or disclosure restricted by GSA ADP Schedule
+# Contract with IBM Corp.
+#*******************************************************************************
+
+################################################################################
+# Enviroment variables for all z/OS managed nodes (target) that do not need
+# further configuration.
+################################################################################
+
+################################################################################
+# Description of the properties used in this configuration:
+################################################################################
+# - Property BPXK_AUTOCVT must be configured to "ON"; e.g., _BPXK_AUTOCVT: "ON"
+# - Property ZOAU_HOME is the ZOA Utilities install root path; e.g., ZOAU_HOME: "/usr/lpp/IBM/zoautil"
+# - Property LIBPATH is both the path to the Python libraries on the target
+#   and the ZOA Utilities Python library path separated by semi-colons; e.g.,
+#   LIBPATH: "/usr/lpp/IBM/zoautil/lib/:/usr/lpp/IBM/cyp/v3r10/pyz/lib:/usr/lib:/lib:."
+# - Property PATH is the ZOA utilities BIN path and Python interpreter path, e.g.,
+#   PATH: "/usr/lpp/IBM/zoautil/bin:/usr/lpp/IBM/cyp/v3r10/pyz/bin:/bin"
+# - Property _CEE_RUNOPTS is the invocation Language Environment® runtime
+#   options for programs and used by Python. e.g.,
+#   _CEE_RUNOPTS: "FILETAG(AUTOCVT,AUTOTAG) POSIX(ON)"
+# - Properties __TAG_REDIR_ERR, _TAG_REDIR_IN, _TAG_REDIR_OUT are txt and used
+#   by the shell; e.g.,
+#      _TAG_REDIR_ERR: "txt"
+#      _TAG_REDIR_IN: "txt"
+#      _TAG_REDIR_OUT: "txt"
+# - Property LANG is the name of the default locale; value
+#   C specifies the POSIX locale; for example: ``LANG: "C"``.
+################################################################################
+VENV_HOME: "/var/python-envs/wazi-deploy-v3.0.7_preview"
+PYZ: "/usr/lpp/cyp/v3r13/pyz"
+ZOAU: "/var/zoau-1.3.6.0"
+
+environment_vars:
+  _BPXK_AUTOCVT: "ON"
+  ZOAU_HOME: "{{ ZOAU }}"
+  #PYTHONPATH: "{{ ZOAU }}/lib:{{ VENV_HOME }}/lib/python3.13/site-packages"
+  PYTHONPATH: "{{ VENV_HOME }}/lib/python3.13/site-packages"
+  PYTHONSTDINENCODING: "cp1047"
+  LIBPATH: "{{ ZOAU }}/lib:{{ PYZ }}/lib:/lib:/usr/lib:."
+  PATH: "{{ ZOAU }}/bin:{{ PYZ }}/bin:/bin:/var/bin"
+  _CEE_RUNOPTS: "FILETAG(AUTOCVT,AUTOTAG) POSIX(ON)"
+  _TAG_REDIR_ERR: "txt"
+  _TAG_REDIR_IN: "txt"
+  _TAG_REDIR_OUT: "txt"
+  LANG: "C"
+  TMPHLQ: "{{ ansible_user }}"
+  VIRTUAL_ENV: "{{ VENV_HOME }}"
+
+################################################################################
+# Description of the properties used in this configuration:
+# - Property `PYZ` is the python installation home path on the z/OS managed node (target),
+#    e.g, pyz: "/usr/lpp/IBM/cyp/v3r10/pyz"
+# - Property `ZOAU` is the ZOAU installation home on the z/OS managed node (target),
+#    e.g, zoau: "/usr/lpp/IBM/zoautil"
+# - property `ansible_python_interpreter` is the z/OS managed node (target) Python
+#    binary installation path, e.g, ansible_python_interpreter: "{{PYZ}}/bin/python3.8"
+#
+# Note, PYZ and ZOAU environment variables must be configured.
+################################################################################
+
+
+
+  
+################################################################################
+# Do not configure, variable substituion will correctly set the
+# variable`ansible_python_interpreter`
+################################################################################
+ansible_python_interpreter: "{{ PYZ }}/bin/python3"
+
+#################################################################################
+# global configuration references
+#################################################################################
+
+# load shared configuration
+include_global_vars:
+  files_list:
+    - "{{ deploy_cfg_home }}/deployment-configuration/global/global_initialization.yml"
+  files_must_exist: true
+
+# Default folders and logging values
+wd_env:
+   uss_dir: "/tmp/wd_deploy/{{ansible_user|lower}}/{{inventory_hostname}}"
+   local_dir: "/tmp/wd_deploy/{{lookup('env','USER')|lower}}/{{inventory_hostname}}"
+wd_no_log_flag: "{{ wd_log | bool  if wd_log is defined  else False}}"
