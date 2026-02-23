@@ -51,6 +51,6 @@ Sample | Description
 [Utilities/PermissionCheck](Utilities/PermissionCheck) | Groovy script to check the DBB role for a provided user.
 [Wazi_Deploy/Reporting](Wazi_Deploy/Reporting) | This category provides templates for querying IBM Wazi Deploy evidence files and generating detailed reports.
 [Wazi_Deploy/Schemas](Wazi_Deploy/Schemas) | Wazi Deploy schemas used to configure Yaml validation for the config file, the deployment method file and the manifest file.
+[Wazi_Deploy/zDeploy](Wazi_Deploy/zDeploy/) |  Wazi Deploy deployment configuration framework for both Ansible and Python, that allows maintaining application specific configuration along the core deployment configuration for Wazi Deploy.
 [zBuilder extensions](zBuilder/) | IBM zBuilder extensions showcasing advanced scenarios. 
 [zBuilder/MortgageApplication](zBuilder/MortgageApplication/) | Mortgage Application sample application prepared to be built with IBM DBB zBuilder.
-[zDeploy](zDeploy/) |  Wazi Deploy deployment configuration framework for both Ansible and Python, that allows maintaining application specific configuration along the core deployment configuration for Wazi Deploy.
