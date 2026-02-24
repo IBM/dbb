@@ -17,7 +17,8 @@ csd_update_template:
  use_template: True
  max_rc: 4
  dest: "{{ working_folder }}/cics_csd_update/cics_csd_dfhcsdup.jcl"
- searchpath: "{{ working_folder }}"
+ search_paths:
+  - "{{ working_folder }}"
 
 # CSD definitions
 cics_csd: "{{ default_env_cics_csd }}"

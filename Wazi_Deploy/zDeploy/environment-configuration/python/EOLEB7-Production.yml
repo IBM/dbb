@@ -25,8 +25,8 @@ default_cmci_port: 1490
 default_cmci_scheme: "https"
 default_csd_group: "DEFAULT"
 default_cics_cmci_action: "NEWCOPY"
-default_env_cics_sdfhload: "DFH610.CICS.SDFHLOAD"
-default_env_cics_csd: ""
+default_env_cics_sdfhload: "CICSTS.V5R5.CICS.SDFHLOAD"
+default_env_cics_csd: "CICSGUSR.CICS.CICS01.DFHCSD"
 
 # Db2
 default_db2_sdsnload: "DBC0CFG.DB2.V12.SDSNLOAD"
