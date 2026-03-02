@@ -9,7 +9,7 @@ zDeploy maintains a single _deployment method_ for the various application archi
 At it's core, it separates into
 
 * a single [Wazi Deploy Deployment Method config](deployment-configuration/deployment-method.yml) implementing below [deployment scenarios](#deployment-scenarios) and **core** configuration files of the Wazi Deploy building block variables in [deployment-configuration/global/](deployment-configuration/global/)
-* [environment configuration](environment-configuration/), containing the environment specific defaults such as Db2 and CICS subystem parameters, hlq config variables depending on the seleceted Wazi Deploy configuration path. These environment files can are passed to the wazideploy-deploy command. Variables are prefixed with `default_`, and referenced in the core configuration.
+* [environment configuration](environment-configuration/), containing the environment specific defaults such as Db2 and CICS subystem parameters, hlq config variables depending on the selected Wazi Deploy configuration path. These environment files can are passed to the wazideploy-deploy command. Variables are prefixed with `default_`, and referenced in the core configuration.
 * a **centrally** managed location for any [application specific config](deployment-configuration/application-env-configurations/) overrides, that are loaded dynamically, if present. Variables are prefixed with `app_`, and allow application specific configuration.
 
 The core configuration sets parameters for the Wazi Deploy specific building block schemas, while the environment configuration is based on simple structures. 
