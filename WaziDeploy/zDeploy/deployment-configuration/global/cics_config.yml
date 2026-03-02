@@ -1,0 +1,25 @@
+#################################################################################
+# This file configures the CICS actions for the deployment
+#################################################################################
+
+cics_sys_def:
+  context: "{{ app_cics_context if app_cics_context is defined and app_cics_context else default_cics_context}}"
+  cmci_user: "{{ app_cmci_user if app_cmci_user is defined and app_cmci_user else  default_cics_user}}"
+  cmci_password: "{{ app_cmci_password if app_cmci_password is defined and app_cmci_password else 'default_cics_password' }}"
+  csd_group: "{{ app_csd_group if app_csd_group is defined and app_csd_group else default_csd_group }}"
+  cmci_host: "{{ app_cmci_host if app_cmci_host is defined and app_cmci_host else default_cmci_host}}"
+  cmci_port: "{{ app_cmci_port if app_cmci_port is defined and app_cmci_port else default_cmci_port}}"  
+  scheme: "{{ app_cmci_scheme if app_cmci_scheme is defined and app_cmci_scheme else default_cmci_scheme}}"
+ 
+csd_update_template:
+ src: "{{ deploy_cfg_home }}/deployment-configuration/templates/cics_csd_dfhcsdup.jcl.j2"
+ encoding: "IBM-1047"
+ use_template: True
+ max_rc: 4
+ dest: "{{ working_folder }}/cics_csd_update/cics_csd_dfhcsdup.jcl"
+ search_paths:
+  - "{{ working_folder }}"
+
+# CSD definitions
+cics_csd: "{{ default_env_cics_csd }}"
+cics_sdfhload: "{{ default_env_cics_sdfhload }}"

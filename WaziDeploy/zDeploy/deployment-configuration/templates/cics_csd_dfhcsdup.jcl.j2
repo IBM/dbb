@@ -1,0 +1,51 @@
+//CSDTOOL  JOB CLASS=A,MSGLEVEL=(1,1),MSGCLASS=A,REGION=0M,
+//         NOTIFY=&SYSUID,TIME=30
+//*******************************************
+//*
+//* Notes:
+//*
+//* This Jinja2 templates includes the CSD definitions
+//*  as instream for 
+//*  execute the prepare commands file (delete)
+//*  execute the update commands file (define)
+//*
+//* Author DBEHM
+//*******************************************
+//DEFINE EXEC PGM=DFHCSDUP,REGION=0M
+//STEPLIB  DD DSN={{ environment.cics_sdfhload }},DISP=SHR
+//DFHCSD   DD DISP=SHR,DSN={{ environment.cics_csd }}
+//SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(100,100))
+//SYSPRINT DD SYSOUT=*
+//*SYSIN    DD DISP=SHR,DSN={{ environment.hlq }}.CSD({{ app_csd_name if app_csd_name is defined and app_csd_name else 'PREP' }})
+//SYSIN    DD *
+{% for artifact in step.artifacts %}
+  {% for prop in artifact['properties'] -%}
+    {# Only get the path #}
+    {% if prop['key'] == 'path' -%}
+      {% if 'prepare' in prop['value'] -%}
+{% include  prop['value'] -%}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+//*
+//DEFINE EXEC PGM=DFHCSDUP,REGION=0M
+//STEPLIB  DD DSN={{ environment.cics_sdfhload }},DISP=SHR
+//DFHCSD   DD DISP=SHR,DSN={{ environment.cics_csd }}
+//SYSUT1   DD UNIT=SYSDA,SPACE=(1024,(100,100))
+//SYSPRINT DD SYSOUT=*
+//*SYSIN    DD DISP=SHR,DSN={{ environment.hlq }}.CSD({{ app_csd_name if app_csd_name is defined and app_csd_name else 'MORT' }})
+//SYSIN    DD *
+{% for artifact in step.artifacts %}
+  {% for prop in artifact['properties'] -%}
+    {# Only get the path #}
+    {% if prop['key'] == 'path' -%}
+      {% if 'prepare' not in prop['value'] -%}
+{% include  prop['value'] -%}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+//*

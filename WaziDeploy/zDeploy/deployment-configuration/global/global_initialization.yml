@@ -1,0 +1,25 @@
+---
+#################################################################################
+# global configuration references
+#################################################################################
+
+# reference application level settings
+include_application_vars:
+  files_list:
+    - "{{ deploy_cfg_home }}/environment-configuration/application-overrides/{{ application }}/{{ metadata.name }}.yml"
+  files_must_exist: false
+
+# reference to middleware deployment configuration
+include_middleware_vars:
+  files_list:
+    - "{{ deploy_cfg_home }}/deployment-configuration/global/cics_config.yml"
+    - "{{ deploy_cfg_home }}/deployment-configuration/global/db2_config.yml"
+  files_must_exist: true
+
+# reference to global deployment configurations and capabilities
+include_common_vars:
+  files_list:
+    - "{{ deploy_cfg_home }}/deployment-configuration/global/jcl_verification.yml"
+    - "{{ deploy_cfg_home }}/deployment-configuration/global/pds_specification.yml"
+    - "{{ deploy_cfg_home }}/deployment-configuration/global/types_pattern_mapping.yml"
+  files_must_exist: true
