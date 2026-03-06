@@ -32,7 +32,6 @@ mkdir -p $evidenceDir
 
 deploymentMethod=${SCRIPT_DIR}/../../deployment-configuration/deployment-method.yml
 configFile=$WAZI_DEPLOY_CONFIG_FILE
-deploy_config_home=${SCRIPT_DIR}/../../
 
 #
 # config - deploy phase
@@ -71,7 +70,7 @@ if [ $rc -eq 0 ]; then
   --envFile ../../environment-configuration/python/EOLEB7-Integration.yml \
   -e application=$APPLICATION \
   -e hlq=$TARGET_HLQ \
-  -e deploy_cfg_home=$deploy_config_home \
+  -e deploy_cfg_home=../../ \
   --packageInputFile $outputDir/applicationArchive.tar \
   --evidencesFileName $evidenceDir/evidence.yaml"""
 
@@ -95,7 +94,7 @@ if [ $rc -eq 0 ]; then
   --planTags restore \
   -e application=$APPLICATION \
   -e hlq=$TARGET_HLQ \
-  -e deploy_cfg_home=$deploy_config_home \
+  -e deploy_cfg_home=../../ \
   --packageInputFile $outputDir/applicationArchive.tar \
   --evidencesFileName $evidenceDir/evidence.yaml"""
 
