@@ -29,7 +29,6 @@ The `wazi-deploy-config.sh` file contains the following key settings:
 | `PACKAGE_URL` | URL or path to the application package (tar file) | `http://server:8081/artifactory/.../package.tar` |
 | `ANSIBLE_INVENTORY` | Ansible inventory directory (Ansible only) | `inventories` |
 | `ZOS_ENVIRONMENT` | Target z/OS environment host (Ansible only) | `int_a_zos_host` |
-| `DEPLOY_CFG_HOME` | Path to deployment configuration repository (Ansible only) | `/var/git/wazi-deploy-config-sample` |
 
 ### Customizing for Your Application
 
@@ -46,7 +45,6 @@ To use these test scripts with your own application package:
    - `WAZI_DEPLOY_CONFIG_FILE` path
 1. For Ansible deployments, also configure:
    - `ZOS_ENVIRONMENT`: Target host from your inventory
-   - `DEPLOY_CFG_HOME`: Path to your deployment configuration repository
 
 **Note**: The configuration file is sourced by all test scripts, ensuring consistent settings across test cases.
 

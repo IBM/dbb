@@ -18,11 +18,6 @@ rm -Rf ${SCRIPT_DIR}/${SCRIPT_NAME}
 mkdir -p $outputDir
 mkdir -p $evidenceDir
 
-
-
-# Deployment Configuration Home
-DEPLOY_CFG_HOME="${SCRIPT_DIR}/../../deployment-configuration"
-
 echo "[INFO] - Wazi Deploy Ansible environment configured:"
 echo "  - User HLQ: $TMPHLQ"
 echo "  - Target HLQ: $TARGET_HLQ"
@@ -74,7 +69,7 @@ if [ $rc -eq 0 ]; then
   -e wd_package_file=$outputDir/applicationArchive.tar \
   -e hlq=$TARGET_HLQ \
   -e application=$APPLICATION \
-  -e deploy_cfg_home=$DEPLOY_CFG_HOME -v"""
+  -e deploy_cfg_home=../../ \ -v"""
     echo "[INFO] Executing following command : $CMD"
     ${CMD} | tee ${outputDir}/02-wazideploy-ansible-deploy.log
     rc=$?

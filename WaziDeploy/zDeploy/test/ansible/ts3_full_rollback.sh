@@ -22,7 +22,7 @@ mkdir -p $outputDir
 mkdir -p $evidenceDir
 
 # Deployment Configuration Home
-DEPLOY_CFG_HOME="${SCRIPT_DIR}/../../deployment-configuration"
+DEPLOY_CFG_HOME="${SCRIPT_DIR}/../../"
 
 echo "[INFO] - Wazi Deploy Ansible environment configured:"
 echo "  - User HLQ: $TMPHLQ"
@@ -79,7 +79,7 @@ if [ $rc -eq 0 ]; then
   -e wd_package_file=$outputDir/applicationArchive.tar \
   -e hlq=$TARGET_HLQ \
   -e application=$APPLICATION \
-  -e deploy_cfg_home=$DEPLOY_CFG_HOME"""
+  -e deploy_cfg_home=../../ \"""
     echo "[INFO] Executing following command : $CMD"
     ${CMD} | tee ${outputDir}/02-wazideploy-ansible-deploy.log
     rc=$?
@@ -103,7 +103,7 @@ if [ $rc -eq 0 ]; then
   -e planTags=restore \
   -e hlq=$TARGET_HLQ \
   -e application=$APPLICATION \
-  -e deploy_cfg_home=$DEPLOY_CFG_HOME"""
+  -e deploy_cfg_home=../../ \"""
     echo "[INFO] Executing following command : $CMD"
     ${CMD} | tee ${outputDir}/03-wazideploy-ansible-deploy-rollback.log
     rc=$?

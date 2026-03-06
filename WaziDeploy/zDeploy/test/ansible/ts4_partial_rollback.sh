@@ -22,7 +22,7 @@ mkdir -p $outputDir
 mkdir -p $evidenceDir
 
 # Deployment Configuration Home
-DEPLOY_CFG_HOME="${SCRIPT_DIR}/../../deployment-configuration"
+DEPLOY_CFG_HOME="${SCRIPT_DIR}/../../"
 
 echo "[INFO] - Wazi Deploy Ansible environment configured:"
 echo "  - User HLQ: $TMPHLQ"
