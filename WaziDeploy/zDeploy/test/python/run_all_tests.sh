@@ -1,4 +1,4 @@
-#!/bin/env s
+#!/bin/env bash
 
 #
 # Wazi Deploy Test Driver
