@@ -61,7 +61,7 @@ The core configuration sets parameters for the Wazi Deploy specific building blo
 
 ## Prerequisites
 
-* [Wazi Deploy 3.0.7](https://www.ibm.com/docs/en/developer-for-zos/17.0.x?topic=deploy-whats-new-in-wazi) required
+* Requires [Wazi Deploy 3.0.7+](https://www.ibm.com/docs/en/developer-for-zos/17.0.x?topic=deploy-whats-new-in-wazi) at minimum
 * Supports both Python and Ansible deployment approaches for Wazi Deploy
 * Python 3.13 on z/OS (for Python deployment method)
 * ZOAU 1.3.6.3 or compatible (for Python deployment method)
