@@ -1,0 +1,6 @@
+- hosts: "{{ wd_hosts if wd_hosts is defined else 'all' }}"
+  gather_facts: "{{ wd_gather_facts if wd_gather_facts is defined else 'no' }}"
+  serial: "{{ wd_serial if wd_serial is defined else 5 }}"
+  tasks:
+      - import_role:
+          name: ibm.ibm_zos_wazi_deploy.zos_deploy

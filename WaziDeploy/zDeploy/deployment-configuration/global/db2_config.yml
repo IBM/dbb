@@ -1,0 +1,18 @@
+#################################################################################
+# This file configures the CICS actions for the deployment
+#################################################################################
+
+db2_sys_def:
+  package_maxrc: 8
+  plan_maxrc: 8
+  sqlid: "{{ app_db2_sqlid if app_db2_sqlid is defined and app_db2_sqlid else default_db2_sqlid }}"
+  package: "{{ app_db2_package if app_db2_package is defined and app_db2_package else default_db2_package }}"
+  plan: "{{ app_db2_plan if app_db2_plan is defined and app_db2_plan else default_db2_plan }}"
+  qualifier: "{{ app_db2_qualifier if app_db2_qualifier is defined and app_db2_qualifier else default_db2_qualifier }}"
+  subsys: "{{ app_db2_subsys if app_db2_subsys is defined and app_db2_subsys else default_db2_subsys }}"
+  package_jobcard: "{{ app_pkg_jobcard if app_pkg_jobcard is defined and app_pkg_jobcard else default_pkg_jobcard}}"
+  plan_jobcard: "{{  app_plan_jobcard if app_plan_jobcard is defined and app_plan_jobcard else default_plan_jobcard}}"
+  package_action: "{{ app_db2_action if app_db2_action is defined and app_db2_action else default_db2_action }}"
+  plan_action: "{{ app_db2_action if app_db2_action is defined and app_db2_action else default_db2_action }}"
+  sdsnload: "{{ app_db2_sdsnload if app_db2_sdsnload is defined and app_db2_sdsnload else default_db2_sdsnload }}"
+  plan_pklist: "{{ app_db2_plan_pklist if app_db2_plan_pklist is defined and app_db2_plan_pklist else  default_db2_plan_pklist }}"

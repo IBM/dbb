@@ -1,0 +1,20 @@
+# Variables for shell_command template
+# Collection of sample shell commands that can be used for demo/testing purposes
+
+shell_command_default: |
+  #!/bin/sh
+  echo "hello world - default shell cmd"
+procs_shell_cmd: |
+  #!/bin/sh
+  echo "hello world"
+  echo "this is a proc"
+jcl_shell_cmd: |
+  #!/bin/sh
+  echo "hello world"
+  echo "this is a jcl"
+
+# Variables for shell_command template
+# Is this a left over from earlier?
+shell_command_cmd_default: |
+  #!/bin/sh
+  echo "hello world"
