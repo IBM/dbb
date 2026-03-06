@@ -10,14 +10,14 @@ include_application_vars:
   files_must_exist: false
 
 # reference to middleware deployment configuration
-include_middleware_vars:
+include_middleware_cfg:
   files_list:
     - "{{ deploy_cfg_home }}/deployment-configuration/global/cics_config.yml"
     - "{{ deploy_cfg_home }}/deployment-configuration/global/db2_config.yml"
   files_must_exist: true
 
 # reference to global deployment configurations and capabilities
-include_common_vars:
+include_common_cfg:
   files_list:
     - "{{ deploy_cfg_home }}/deployment-configuration/global/jcl_verification.yml"
     - "{{ deploy_cfg_home }}/deployment-configuration/global/pds_specification.yml"

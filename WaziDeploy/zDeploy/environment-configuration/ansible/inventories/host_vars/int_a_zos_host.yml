@@ -41,7 +41,7 @@ default_db2_plan_pklist: "*.CBSAPK.*"
 default_db2_action: "REPLACE"
 
 # load shared configuration
-include_global_vars:
+include_global_config:
   files_list:
     - "{{ deploy_cfg_home }}/deployment-configuration/global/global_initialization.yml"
   files_must_exist: true

@@ -13,7 +13,8 @@ metadata:
 
 activities:
   # Load all deployment configurations first
-  - name: CONFIG
+  - name: LOAD CONFIG
+    short_name: LOAD_CONFIG
     description: |
       Load the generic Wazi Deploy Configuration variables
       Specific for the Python implementation
@@ -21,95 +22,132 @@ activities:
       - always
     actions:
       - name: READ CONFIGURATION
-        short_name: CONFIG
+        short_name: READ_CONFIG
         steps:
           # Load global include configuration from central location
-          - name: INCLUDE GLOBAL VARIABLES
-            short_name: INCLUDE_GLOBAL_VARS
+          - name: INCLUDE GLOBAL CONFIG
+            short_name: INCLUDE_GLOBAL_CFG
+            description: |
+              Load global include configuration global_initialization.yml from central location
             properties:
               - key: template
                 value: include_vars
               - key: var_include_vars
-                value: include_global_vars
+                value: include_global_config
           # Load application specific settings from central location
           #  these are environment specific
           - name: INCLUDE APPLICATION VARIABLES
             short_name: INCLUDE_APP_VARS
+            description: |
+              Load environment specific application overrides from central location
             properties:
               - key: template
                 value: include_vars
               - key: var_include_vars
                 value: include_application_vars
-          # Load middleware configurations, such as Db2 and CICS settings
-          #  can be environment specific
-          - name: INCLUDE MIDDLEWARE VARIABLES
-            short_name: INCLUDE_MIDDLEWARE_VARS
+          # Load middleware configurations such as Db2 and CICS settings that configure the Wazi Deploy building blocks
+          #  environment specific config are passed via the environment configurations
+          - name: INCLUDE MIDDLEWARE CONFIG
+            short_name: INCLUDE_MIDDLEWARE_CFG
+            description: |
+              Load global middleware configuration configuring the Wazi Deploy building blocks
             properties:
               - key: template
                 value: include_vars
               - key: var_include_vars
-                value: include_middleware_vars
+                value: include_middleware_cfg
           # Load global and common variables such as types mappings or dataset configurations
-          - name: INCLUDE COMMON VARIABLES
-            short_name: INCLUDE_COMMON_VARS
+          - name: INCLUDE COMMON CONFIG
+            short_name: INCLUDE_COMMON_CFG
+            description: |
+              Load global configuration for Wazi Deploy Core building blocks such as type mappings and dataset configurations
             properties:
               - key: template
                 value: include_vars
               - key: var_include_vars
-                value: include_common_vars
+                value: include_common_cfg
 
   - name: PACKAGE
+    short_name: PACKAGE
     description: |
       This activity expands the package into the working directory
     actions:
-      - name: PACKAGE
+      - name: EXPAND PACKAGE
+        short_name: EXPAND_PACKAGE
         steps:
           - name: PACKAGE
     plan_tags:
       - always
 
+  - name: CICS CSD UPDATES
+    short_name: CICS_CSD_UPDATES
+    description: |
+      This activity applies CICS Resource Builder configurations to the target CICS system.
+    is_artifact: True
+    types:
+      - name: "CSD"
+    actions:
+      - name: CSD
+        states:
+          - UNDEFINED
+        steps:
+         - name: UPDATE
+           is_artifact: true
+           properties:
+             - key: template
+               value: job_submit
+             - key: var_job_submit
+               value: csd_update_template
+
   # activity to process DBRMs always first
   #  * A tag is used to be able to run these actions only and skip others 
   #    in it's own run
   #  * member_copy is configured to move the DBRM into a temp library first
-  - name: DB2
+  - name: PROCESS DBRMS
     description: |
-      This activity is dedicated to DBRM bind modules
+      This activity is dedicated to DBRM bind modules and will process DBRM members of the package first using dedicated PDS libraries 
+    short_name: PROCESS_DBRMS
     actions:
       # Manage deletions of DBRMS
       - name: DELETE
+        short_name: DELETE
         description: |
           This action is applicable when the artifacts are deleted
         states:
           - DELETED
         steps:
-          - name: MEMBER_ARCHIVE
+          - name: MEMBER ARCHIVE
+            short_name: MEMBER_ARCHIVE
             description: |
               This step backs up already installed artifacts into the backup PDS
-          - name: MEMBER_DELETE
+          - name: MEMBER DELETE
+            short_name: MEMBER_DELETE
             description: |
               This step deletes the artifacts
       # Manage Updates
       - name: UPDATE
+        short_name: UPDATE
         description: |
           This action is applicable when we add new or changed artifacts.
         steps:
-          - name: MEMBER_COPY
+          - name: MEMBER COPY
+            short_name: MEMBER_COPY
             description: |
               This step copies DBRMs into temporary PDS library. See 'type_dbrm_temp'
             properties:
               - key: var_type
                 value: type_dbrm_temp
-      # Invoke Bind operations
-      - name: BIND
-        description: |
-          This action is applicable when we update a DBRM modules
-        steps:
-          - name: DB2_BIND_PACKAGE
+          - name: DB2 BIND PACKAGE
+            short_name: DB2_BIND_PACKAGE
+            description: |
+              This step performs the DB2 Bind package operations for all DBRM members of the package
             properties:
               - key: var_type
                 value: type_dbrm_temp
-          - name: DB2_BIND_PLAN
+          - name: DB2 BIND PLAN
+            short_name: DB2_BIND_PLAN
+            description: |
+              This step performs the DB2 Bind plan operations for all DBRM members of the package
             properties:
               - key: var_type
                 value: type_dbrm_temp
@@ -120,30 +158,37 @@ activities:
       - db2
 
   # General deployment routines including taking backups
-  - name: DEPLOY_MODULES
+  - name: DEPLOY MODULES
+    short_name: DEPLOY_MODULES
     description: |
       This activity is deploys artifacts into the target PDS libraries
     actions:
       - name: DELETE
+        short_name: DELETE
         description: |
           This action is applicable when the artifacts are deleted
         states:
           - DELETED
         steps:
-          - name: MEMBER_ARCHIVE
+          - name: MEMBER ARCHIVE
+            short_name: MEMBER_ARCHIVE
             description: |
               This step backs up already installed artifacts into the backup PDS
-          - name: MEMBER_DELETE
+          - name: MEMBER DELETE
+            short_name: MEMBER_DELETE
             description: |
               This step deletes the artifacts
       - name: UPDATE
+        short_name: UPDATE
         description: |
           This action is applicable when we add new or changed artifacts.
         steps:
-          - name: MEMBER_ARCHIVE
+          - name: MEMBER ARCHIVE
+            short_name: MEMBER_ARCHIVE
             description: |
               This step backs up already installed artifacts into the backup PDS
-          - name: MEMBER_COPY
+          - name: MEMBER COPY
+            short_name: MEMBER_COPY
             description: |
               This step do the copy of artifacts into PDSs
     types:
@@ -157,27 +202,35 @@ activities:
       - deploy
 
   # ROLLBACK activities
-  - name: ROLLBACK_MODULES
+  - name: ROLLBACK MODULES
+    short_name: ROLLBACK_MODULES
     description: |
-      This activity is restores artifacts from back PDS libraries
+      This action is applicable when when restoring files from the backup 
+      datasets. It is only executed when plan_tags 'restore' is provided.   
     actions:
-      - name: MODULES
+      - name: RESTORE
         description: |
-          This action is applicable when when restoring files from the backup 
-          datasets. It is only executed when plan_tags 'restore' is provided.
+          Retrieve members from backup dataset
         steps:
-          - name: MEMBER_RESTORE
+          - name: MEMBER RESTORE
+            short_name: MEMBER_RESTORE
             description: |
-              This step restored the backup from the backup PDS.
+              This step restores the backup from the backup PDS
       # Invoke Bind operations
       - name: BIND
         types:
          - name: "DBRM"
         description: |
-          This action is applicable when we update a DBRM modules
+          This action runs Db2 Bind package and plan for restored DBRM members
         steps:
-          - name: DB2_BIND_PACKAGE
-          - name: DB2_BIND_PLAN
+          - name: DB2 BIND PACKAGE
+            short_name: DB2_BIND_PACKAGE
+            description: |
+              This step performs the DB2 Bind package operations for restored DBRM members
+          - name: DB2 BIND PLAN
+            short_name: DB2_BIND_PLAN
+            description: |
+              This step performs the DB2 Bind plan operations for restored DBRM members
     types:
       - name: "LOAD"
       - name: "DBRM"
@@ -191,18 +244,23 @@ activities:
 
   # JCL Verification operation
   - name: VERIFICATION
+    short_name: VERIFICATION
     description: |
       This action block verifies that the deployed JCLs are correct.
       It uses the JCL Expert to scan and validate them. This showcases 
-      how the conditional deployment 'loop' keyword can be used.
+      how the conditional deployment 'loop' keyword can be used. (Optional).
     types:
       - name: "JCL"
     actions:
       - name: JCLEXPERT
+        short_name: JCLEXPERT
         description: |
-          Invoke JCL expert interface for a single member of a dataset
+          Invoke JCL expert interface for each deployed JCL member
         steps:
-          - name: SCAN_JCL
+          - name: SCAN JCL
+            short_name: SCAN_JCL
+            description: | 
+              This step loops over all JCL members and performs an JCL Expert scan
             is_artifact: True
             types:
               - name: "JCL"
@@ -218,33 +276,26 @@ activities:
                 value: jcl_expert_verification
 
   # CICS online activation
-  - name: CICS
+  - name: CICS ACTIVATION
+    short_name: CICS_ACTIVATION
     description: |
-      This activity is dedicated to CICS artifacts
+      This activity is dedicated for deployed or restored CICS artifacts.
     plan_tags:
       - restore
+    types:
+      - name: "CICSLOAD"
+      - name: "MAPLOAD"
     actions:
-      - name: CSD
-        types: 
-         - name: "CSD"
-        states:
-          - UNDEFINED
-        steps:
-         - name: UPDATE
-           is_artifact: true
-           properties:
-             - key: template
-               value: job_submit
-             - key: var_job_submit
-               value: csd_update_template
       - name: UPDATE
-        types:
-         - name: "CICSLOAD"
-         - name: "MAPLOAD"
+        short_name: UPDATE
+        description: |
+          Update CICS runtime
         states:
           - UNDEFINED
         steps:
           - name: PROG_UPDATE
+            description: |
+              Refreshes CICS programs and maps via the CMCI interface
             properties:
               - key: "template"
                 value: "cics_cmci_prog_update"
