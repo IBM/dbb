@@ -36,6 +36,7 @@ echo "  - z/OS Environment: $ZOS_ENVIRONMENT"
 
 deploymentMethod=${SCRIPT_DIR}/../../deployment-configuration/deployment-method.yml
 configFile=$WAZI_DEPLOY_CONFIG_FILE
+deploy_config_home=${SCRIPT_DIR}/../../
 
 #
 # config - deploy phase
@@ -79,7 +80,7 @@ if [ $rc -eq 0 ]; then
   -e wd_package_file=$outputDir/applicationArchive.tar \
   -e hlq=$TARGET_HLQ \
   -e application=$APPLICATION \
-  -e deploy_cfg_home=../../ \"""
+  -e deploy_cfg_home=$deploy_config_home """
     echo "[INFO] Executing following command : $CMD"
     ${CMD} | tee ${outputDir}/02-wazideploy-ansible-deploy.log
     rc=$?
@@ -103,7 +104,7 @@ if [ $rc -eq 0 ]; then
   -e planTags=restore \
   -e hlq=$TARGET_HLQ \
   -e application=$APPLICATION \
-  -e deploy_cfg_home=../../ \"""
+  -e deploy_cfg_home=$deploy_config_home """
     echo "[INFO] Executing following command : $CMD"
     ${CMD} | tee ${outputDir}/03-wazideploy-ansible-deploy-rollback.log
     rc=$?
