@@ -26,13 +26,3 @@ export ZOS_ENVIRONMENT="int_a_zos_host"
 
 # Ansible PATH setup
 export PATH=/usr/local/bin/:$PATH
-
-# Deployment Configuration Home
-export DEPLOY_CFG_HOME="/var/git/wazi-deploy-config-sample"
-
-echo "[INFO] - Wazi Deploy Ansible environment configured:"
-echo "  - Virtual Environment: wazi-deploy-v3.0.7_preview"
-echo "  - User HLQ: $TMPHLQ"
-echo "  - Target HLQ: $TARGET_HLQ"
-echo "  - Application: $APPLICATION"
-echo "  - z/OS Environment: $ZOS_ENVIRONMENT"

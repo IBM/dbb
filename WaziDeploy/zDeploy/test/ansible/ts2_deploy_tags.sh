@@ -18,6 +18,15 @@ rm -Rf ${SCRIPT_DIR}/${SCRIPT_NAME}
 mkdir -p $outputDir
 mkdir -p $evidenceDir
 
+# Deployment Configuration Home
+DEPLOY_CFG_HOME="${SCRIPT_DIR}/../../deployment-configuration"
+
+echo "[INFO] - Wazi Deploy Ansible environment configured:"
+echo "  - User HLQ: $TMPHLQ"
+echo "  - Target HLQ: $TARGET_HLQ"
+echo "  - Application: $APPLICATION"
+echo "  - z/OS Environment: $ZOS_ENVIRONMENT"
+
 #
 # config - generate phase
 #
