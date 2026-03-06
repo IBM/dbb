@@ -79,10 +79,10 @@ activities:
     plan_tags:
       - always
 
-  - name: CICS_CSD_UPDATES
-    short_name: CICS_CSD_UPDATES
+  - name: CICS_REGION
+    short_name: CICS_REGION
     description: |
-      This activity applies CICS Resource Builder configurations to the target CICS system.
+      This activity applies CICS Resource Builder configurations to the target CICS region
     is_artifact: True
     types:
       - name: "CSD"
