@@ -1,5 +1,5 @@
 #################################################################################
-# This file configures the CICS actions for the deployment
+# This file configures the Db2 actions for the deployment
 #################################################################################
 
 db2_sys_def:

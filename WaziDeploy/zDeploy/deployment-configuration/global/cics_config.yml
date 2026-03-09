@@ -5,7 +5,7 @@
 cics_sys_def:
   context: "{{ app_cics_context if app_cics_context is defined and app_cics_context else default_cics_context}}"
   cmci_user: "{{ app_cmci_user if app_cmci_user is defined and app_cmci_user else  default_cics_user}}"
-  cmci_password: "{{ app_cmci_password if app_cmci_password is defined and app_cmci_password else 'default_cics_password' }}"
+  cmci_password: "{{ app_cmci_password if app_cmci_password is defined and app_cmci_password else default_cics_password }}"
   csd_group: "{{ app_csd_group if app_csd_group is defined and app_csd_group else default_csd_group }}"
   cmci_host: "{{ app_cmci_host if app_cmci_host is defined and app_cmci_host else default_cmci_host}}"
   cmci_port: "{{ app_cmci_port if app_cmci_port is defined and app_cmci_port else default_cmci_port}}"  
