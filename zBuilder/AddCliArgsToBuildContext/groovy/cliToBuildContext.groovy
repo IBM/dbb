@@ -1,7 +1,7 @@
 @groovy.transform.BaseScript com.ibm.dbb.groovy.TaskScript baseScript
 import com.ibm.dbb.task.TaskConstants
 
-println "   > Add CLI args to Build Context"
+println "> Add CLI args to Build Context"
 
 // See https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=tutorials-creating-custom-task
 // https://www.ibm.com/docs/api/v1/content/SS6T76_3.0.0/javadoc/com/ibm/dbb/task/AbstractTask.html#getCommandLine()
