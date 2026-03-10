@@ -24,7 +24,7 @@ mkdir -p $evidenceDir
 
 echo "[INFO] - wazideploy-genereate."
 CMD="""wazideploy-generate \
- --deploymentMethod $deploymentMethod \
+ --deploymentMethod $DEPLOYMENT_METHOD \
  --deploymentPlan $outputDir/deploymentPlan.yaml \
  --deploymentPlanReport $outputDir/deploymentPlanReport.html \
  --packageInputFile $PACKAGE_URL \
