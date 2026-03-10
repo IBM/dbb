@@ -32,7 +32,7 @@ CMD="""wazideploy-generate \
  --deploymentPlanReport $outputDir/deploymentPlanReport.html \
  --packageInputFile $PACKAGE_URL \
  --packageOutputFile $outputDir/applicationArchive.tar \
- --WAZI_DEPLOY_CONFIG_FILE_ANSIBLE $WAZI_DEPLOY_CONFIG_FILE_ANSIBLE """
+ --configFile $WAZI_DEPLOY_CONFIG_FILE_ANSIBLE """
 echo "[INFO] Executing following command : $CMD"
 ${CMD} | tee ${outputDir}/01-wazideploy-generate.log
 rc=$?
