@@ -18,11 +18,11 @@ rm -Rf ${SCRIPT_DIR}/${SCRIPT_NAME}
 mkdir -p $outputDir
 mkdir -p $evidenceDir
 
-
 #
-# config - deploy phase
+# Generate
 #
 
+echo "[INFO] - wazideploy-genereate."
 CMD="""wazideploy-generate \
  --deploymentMethod $DEPLOYMENT_METHOD \
  --deploymentPlan $outputDir/deploymentPlan.yaml \
@@ -41,15 +41,20 @@ else
     exit 1
 fi
 
+#
+# Deploy
+#
+echo "[INFO] - wazideploy-deploy."
+
 CMD="""wazideploy-deploy \
---workingFolder $outputDir \
---deploymentPlan $outputDir/deploymentPlan.yaml \
---envFile ../../environment-configuration/python/EOLEB7-Integration.yml \
--e application=$APPLICATION \
--e hlq=$TARGET_HLQ \
--e deploy_cfg_home=../../ \
---packageInputFile $outputDir/applicationArchive.tar \
---evidencesFileName $evidenceDir/evidence.yaml"""
+ --workingFolder $outputDir \
+ --deploymentPlan $outputDir/deploymentPlan.yaml \
+ --envFile ../../environment-configuration/python/EOLEB7-Integration.yml \
+ -e application=$APPLICATION \
+ -e hlq=$TARGET_HLQ \
+ -e deploy_cfg_home=../../ \
+ --packageInputFile $outputDir/applicationArchive.tar \
+ --evidencesFileName $evidenceDir/evidence.yaml"""
 
 ${CMD} | tee ${outputDir}/02-wazideploy-deloy.log
 rc=$?
