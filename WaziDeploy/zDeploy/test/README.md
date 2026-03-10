@@ -13,50 +13,56 @@ This directory contains test scripts for validating Wazi Deploy configurations u
 
 ## Configuration
 
-Before running the test scripts, you must configure the `wazi-deploy-config.sh` file in either the `ansible/` or `python/` directory. This configuration file serves as a template for deploying your own application packages.
+Before running the test scripts, you must configure the [wazi-deploy-test.config](wazi-deploy-test.config) file in the test directory. This centralized configuration file is used by both Ansible and Python test scripts.
 
 ### Configuration Settings
 
-The `wazi-deploy-config.sh` file contains the following key settings:
+The [wazi-deploy-test.config](wazi-deploy-test.config) file contains the following key settings:
 
 | Setting | Description | Example |
 |---------|-------------|---------|
 | `TMPHLQ` | Temporary high-level qualifier for z/OS datasets | `DBEHM` |
-| `ZOAU_HOME` | Path to Z Open Automation Utilities installation | `/var/zoau-1.3.6.0` |
-| `WAZI_DEPLOY_CONFIG_FILE` | Path to Wazi Deploy configuration file (Artifactory/repository settings) | `/var/git/artifactoryConfig.yml` |
+| `DEPLOYMENT_METHOD` | Path to deployment method YAML file | `${SCRIPT_DIR}/../../deployment-configuration/deployment-method.yml` |
+| `DEPLOYMENT_CONFIG_HOME` | Base directory for deployment configuration | `${SCRIPT_DIR}/../../` |
 | `TARGET_HLQ` | Target high-level qualifier for deployed datasets | `DBEHM.WD.ANSIBLE.BASE` |
 | `APPLICATION` | Application name identifier | `base` |
-| `PACKAGE_URL` | URL or path to the application package (tar file) | `http://server:8081/artifactory/.../package.tar` |
-| `ANSIBLE_INVENTORY` | Ansible inventory directory (Ansible only) | `inventories` |
-| `ZOS_ENVIRONMENT` | Target z/OS environment host (Ansible only) | `int_a_zos_host` |
+| `PACKAGE_URL` | URL or path to the application package (tar file) | `http://10.3.20.231:8081/artifactory/.../package.tar` |
+| `ANSIBLE_INVENTORY` | Ansible inventory directory | `inventories` |
+| `ZOS_ENVIRONMENT` | Target z/OS environment host | `int_a_zos_host` |
+| `WAZI_DEPLOY_CONFIG_FILE_ANSIBLE` | Wazi Deploy config file for Ansible (Artifactory/repository settings) | `/var/git/artifactoryConfig.yml` |
+| `PYTHON_VENV` | Python virtual environment path | `/var/python-envs/wazi-deploy-v3.0.7.1` |
+| `ZOAU_HOME_DIR` | Path to Z Open Automation Utilities installation | `/var/zoau-1.3.6.0` |
+| `WAZI_DEPLOY_CONFIG_FILE_PYTHON` | Wazi Deploy config file for Python (Artifactory/repository settings) | `/var/WaziDeploy/config/WaziDeploy-ConfigFile.yml` |
 
 ### Customizing for Your Application
 
 To use these test scripts with your own application package:
 
-1. Update the following required settings:
+1. Edit [wazi-deploy-test.config](wazi-deploy-test.config) and update the following required settings:
    - `TMPHLQ`: Your z/OS user ID or temporary HLQ
    - `TARGET_HLQ`: Target library prefix for your application
    - `APPLICATION`: Your application name
    - `PACKAGE_URL`: Path or URL to your application package
-1. Verify environment paths:
-   - Python virtual environment path (line 14)
-   - `ZOAU_HOME` path
-   - `WAZI_DEPLOY_CONFIG_FILE` path
-1. For Ansible deployments, also configure:
+2. Verify environment paths:
+   - `PYTHON_VENV`: Python virtual environment path
+   - `ZOAU_HOME_DIR`: Z Open Automation Utilities path
+   - `WAZI_DEPLOY_CONFIG_FILE_ANSIBLE`: Ansible config file path
+   - `WAZI_DEPLOY_CONFIG_FILE_PYTHON`: Python config file path
+3. For Ansible deployments, also configure:
+   - `ANSIBLE_INVENTORY`: Your inventory directory
    - `ZOS_ENVIRONMENT`: Target host from your inventory
 
-**Note**: The configuration file is sourced by all test scripts, ensuring consistent settings across test cases.
+**Note**: The centralized configuration file is sourced by both [ansible/env.sh](ansible/env.sh) and [python/env.sh](python/env.sh), ensuring consistent settings across all test cases.
 
 ## Usage
 
 Both Ansible and Python implementations follow the same test case structure. Each test script:
 
-1. Loads configuration from `wazi-deploy-config.sh`
-2. Generates a deployment plan using `wazideploy-generate`
+1. Loads configuration from [wazi-deploy-test.config](wazi-deploy-test.config) via the env.sh.
+2. Generates a deployment plan using wazideploy-generate
 3. Executes deployment operations using either:
-   - **Ansible**: `ansible-playbook deploy.yml`
-   - **Python**: `wazideploy-deploy`
+   - **Ansible**: ansible-playbook deploy.yml
+   - **Python**: wazideploy-deploy
 4. Creates timestamped log directories with deployment evidence
 
 ### Running Individual Tests
@@ -83,9 +89,61 @@ cd test/python
 ```
 
 **Test Driver Features:**
-- Runs all 4 test scenarios sequentially (ts1-ts4)
+- Runs all 4 test scenarios sequentially ([ts1](python/ts1_full_deploy.sh)-[ts4](python/ts4_partial_rollback.sh))
 - Tracks pass/fail status for each test
 - Generates timestamped results directory with individual test logs
-- Creates summary report showing total/passed/failed counts
+- Creates summary report ([test_results.log](python/test_results/)) showing total/passed/failed counts
 - Returns exit code 0 if all tests pass, 1 if any fail
 - Results saved to: `test/python/test_results/YYYY-MM-DD_HH-MM-SS/`
+
+## Environment Setup
+
+### Ansible Environment
+
+The [ansible/env.sh](ansible/env.sh) script:
+- Sources the centralized [wazi-deploy-test.config](wazi-deploy-test.config)
+- Sets up PATH for Ansible
+- Displays version information for `wazideploy-generate` and `ansible-playbook`
+
+### Python Environment
+
+The [python/env.sh](python/env.sh) script:
+- Sources the centralized [wazi-deploy-test.config](wazi-deploy-test.config)
+- Configures ZOAU (Z Open Automation Utilities) environment variables
+- Activates the Python virtual environment
+- Displays version information for `wazideploy-generate`
+
+## Test Output
+
+Each test creates a timestamped directory structure:
+
+```
+test/
+├── ansible/
+│   └── ts1_full_deploy.sh_logs/
+│       └── YYYY-MM-DD_HH-MM-SS/
+│           ├── 01-wazideploy-generate.log
+│           ├── 02-wazideploy-ansible-deploy.log
+│           ├── deploymentPlan.yaml
+│           ├── deploymentPlanReport.html
+│           ├── applicationArchive.tar
+│           └── evidences/
+│               └── (deployment evidence files)
+└── python/
+    ├── ts1_full_deploy.sh_logs/
+    │   └── YYYY-MM-DD_HH-MM-SS/
+    │       ├── 01-wazideploy-generate.log
+    │       ├── 02-wazideploy-deloy.log
+    │       ├── deploymentPlan.yaml
+    │       ├── deploymentPlanReport.html
+    │       ├── applicationArchive.tar
+    │       └── evidences/
+    │           └── evidence.yaml
+    └── test_results/
+        └── YYYY-MM-DD_HH-MM-SS/
+            ├── test_results.log
+            ├── ts1_full_deploy.sh.log
+            ├── ts2_deploy_tags.sh.log
+            ├── ts3_full_rollback.sh.log
+            └── ts4_partial_rollback.sh.log
+```
