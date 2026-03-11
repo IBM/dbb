@@ -2,34 +2,34 @@
 
 ## Overview
 
-The AddCliArgsToBuildContext custom Groovy task reads the command line arguments passed to the zBuilder framework and adds them as [variables](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=reference-predefined-variables) into the Build Context.
+The CLIToBuildContext custom Groovy task reads the command line arguments passed to the zBuilder framework and adds them as [variables](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=reference-predefined-variables) into the Build Context.
 
 ## Contents
 | Folder/File | Description |
 | --- | --- |
-| groovy/cliToBuildContext.groovy | Groovy script that implements the logic. |
-| AddCliArgsToBuildContext.yaml | YAML configuration file defining the task that can be added to dbb-build.yaml . |
+| groovy/CLIToBuildContext.groovy | Groovy script that implements the logic. |
+| CLIToBuildContext.yaml | YAML configuration file defining the task that can be added to dbb-build.yaml . |
 
 ## Installation Instructions
 
 ### Copy Files
 
 - Clone this [DBB Community Repository](https://github.com/IBM/dbb) to your workstation.
-- Copy the `cliToBuildContext.groovy` script to the `$DBB_BUILD/groovy` directory.
+- Copy the `CLIToBuildContext.groovy` script to the `$DBB_BUILD/groovy` directory.
 - Update dbb-build.yaml to include the new task .
 
 > **Note:** The Groovy script must reside in the `$DBB_BUILD/groovy` subdirectory to be automatically discovered by the task configuration.
 
 ### Integrate task in dbb-build.yaml
 
-- Include the `AddCliArgsToBuildContext.yaml` in your `dbb-build.yaml` to source the task and variable configuration.
-- Add the `AddCliArgsToBuildContext` task to the lifecycles where you want the cli arguments be available as variables in the build context.
+- Include the `CLIToBuildContext.yaml` in your `dbb-build.yaml` to source the task and variable configuration.
+- Add the `CLIToBuildContext` task to the lifecycles where you want the cli arguments be available as variables in the build context.
 
 Example `dbb-build.yaml` configuration:
 ```yaml
 include: 
   - file: Languages.yaml
-  - file: AddCliArgsToBuildContext.yaml
+  - file: CLIToBuildContext.yaml
 
 # sample lifecycle
 lifecycles:
@@ -37,7 +37,7 @@ lifecycles:
     tasks:
       - Start
       - ScannerInit
-      - AddCliArgsToBuildContext # Defined in the include
+      - CLIToBuildContext # Defined in the include
       - MetadataInit
       - ImpactAnalysis
       - Languages    # Defined in Languages.yaml
