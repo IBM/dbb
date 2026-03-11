@@ -37,6 +37,7 @@ if [ $rc -eq 0 ]; then
     echo "[INFO] - wazideploy-generate completed."
 else
     echo "[WARNING] - wazideploy-generate failed."
+    exit 1
 fi
 
 
