@@ -1,0 +1,34 @@
+common_pds_load_spec:
+  type: LIBRARY
+  primary_space: 10CYL
+  secondary_space: 20CYL
+  record_format: U
+  record_length: 0
+  block_size: 32760
+common_pds_binary_spec:
+  type: LIBRARY
+  primary_space: 10CYL
+  secondary_space: 20CYL
+  record_format: FB
+  record_length: 80
+  block_size: 32720
+common_pds_txt_spec:
+  type: LIBRARY
+  primary_space: 10CYL
+  secondary_space: 20CYL
+  record_format: FB
+  record_length: 80
+  #block_size: 32688
+seq_spec:
+  type: SEQ
+  primary_space: 5TRK
+  secondary_space: 2TRK
+  record_format: FB
+  record_length: 20
+#     replace: yes
+seq_spec_a:
+  type: SEQ
+  primary_space: 2TRK
+  secondary_space: 1TRK
+  record_format: FB
+  record_length: 15
