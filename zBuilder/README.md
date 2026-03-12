@@ -7,7 +7,7 @@ zBuilder provides several extension points where users can provide custom tasks 
 
 Sample/Extension | Type | Description
 --- | --- | ---
-| [Add Cli Args to Build Context](CliArgsToBuildContext/) | Custom Groovy Task | This custom groovy task adds the Cli arguments with their value as variables into the build context. The variables can be used by subsequent tasks and language tasks. |
+| [Add Cli Args to Build Context](CliToBuildContext/) | Custom Groovy Task | This custom groovy task adds the Cli arguments with their value as variables into the build context. The variables can be used by subsequent tasks and language tasks. |
 | [Check File Exists Variable](CheckFileExistsVariable) | Language Step | This language step task extension checks for the existence of a file on z/OS Unix and then sets a boolean variable that can then be used as a `condition:` target in later language steps. |
 | [File Name Base Variable](FileNameBaseVariable)  | Language Step | This language step task extension creates and sets a new language variable called `FILE_NAME_BASE` that contains just the current build file's name without file extension.<br>Example: 'MortgageApplication/cobol/epsnbrvl.cbl' --> 'epsnbrvl'. Delivered as product capability in [DBB 3.0.3](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=overview-what-is-new-noteworthy#version-303) |
 | [Language Configuration](LanguageConfiguration) | Language Step |  This language step task extension allows users to provide simple YAML configuration files that can be used to override default language task configuration variables. Delivered as product capability in [DBB 3.0.3](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=overview-what-is-new-noteworthy#version-303) |
