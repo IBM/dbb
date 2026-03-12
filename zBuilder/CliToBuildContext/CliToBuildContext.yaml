@@ -1,9 +1,9 @@
 ---
 ########################################################################################
 # 
-# Required configuration for the associated "AddCliArgsToBuildContext" custom groovy task. 
+# Required configuration for the associated "CliToBuildContext" custom groovy task. 
 #
-# This YAML file defines the AddCliArgsToBuildContext task 
+# This YAML file defines the CliToBuildContext task 
 #
 # The groovy script "CLIToBuildContext.groovy" will be 
 # automatically discovered as long as it is placed in the $DBB_BUILD/groovy directory.
@@ -14,11 +14,11 @@
 #   directory. Important: Ensure the Groovy script is in the groovy sub-directory so it 
 #   will be discovered automatically. 
 # - Include this YAML file in dbb-build.yaml to source the task configuration. 
-# - Add the AddCliArgsToBuildContext task to your build lifecycle in dbb-build.yaml ordered 
+# - Add the CliToBuildContext task to your build lifecycle in dbb-build.yaml ordered 
 #   configuration before you want to make use of the variables. 
 #
 ########################################################################################
 
 version: 1.0.0
 tasks: 
-  - task: CLIToBuildContext
+  - task: CliToBuildContext
