@@ -164,6 +164,7 @@ CLI parameter | Description
 -r `<repoURL>` | **Git repository URL**, can either be SSH or HTTPS-based. Example: `-r git@github.com:Organization/MortgageApplication.git`
 -b `<branch>` | **Git branch** that should be checked out. Example: `-b main`
 -a `<application>` | (Optional) **Application name** to specify the directory into which git will clone. This is required for instance in the scenario if the repository name differs from the application name that is used in the build phase. Example: `-a CBSA`.
+-c `<http extra header parms>` | (Optional) **http extra header parms** passed from the pipeline orchestrator that are added to the `-c http.extraHeader` option. This can be used to pass in an authentication token.
 
 **Dealing with private repositories**
 
@@ -274,111 +275,6 @@ baselines:
   buildid: "build-7656"
 ```
 
-### dbbBuild.sh for zAppBuild framework
-
-This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. 
-
-By design, the script implements the recommended working practice. It makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/main/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild to set the baseline Git hash. This is used to identify all the committed changes for the upcoming deliverable (that can be a planned release, a emergency fix, or a significant development initiative)
-
-The computation of the build configuration is performed by the [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf` directory in order to compute the baseline reference.
-
-#### Invocation
-
-The `dbbBuild.sh` script can be invoked as follows:
-
-```
-dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
-```
-
-CLI parameter | Description
----------- | ----------------------------------------------------------------------------------------
--w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps.
--a `<application>` | **Application name** to be built, which is passed to zAppBuild as the `--application` parameter.
--b `<branch>` | **Git branch** that is built. Used to compute various build properties such as the `--hlq` and build type.
--p `<build/release/preview>` | (Optional) **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules), or if it runs in `preview` mode.
--v | (Optional) zAppBuild verbose tracing flag.
--t `<buildTypeArgument>` | (Optional) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Arguments must be provided between quotes - e.g.: `-t '--fullBuild'`. Providing this parameter overrides the computation of the build type in the backend scripts. For instance can be used to initialize the DBB Metadatastore. 
--q `<hlqPrefix>` |(Optional) **HLQ prefix**. Default is retrieved from the [pipelineBackend.config](pipelineBackend.config) file, if the configuration file is not modified - the default value is set to the user executing the script.
-
-**Pipeline type**
-
-The type of pipeline (`-p` option), is used to modify the operational behavior of the build framework on producing executables:
-* `build` configures the build options for test/debug options. This is the **default**.
-* `release` used to indicate to produce executables with the flag for performance-optimized runtime modules. This is required for the release pipelines which include release candidate packages.
-* `preview` configures the build process to execute without producing any outputs. It is used to preview what the build will do. The pipeline should not have any subsequent actions.
-
-#### Output
-
-The section below contains the output that is produced by the `dbbBuild.sh` script.
-
-<details>
-  <summary>Script Output</summary>
-
-```
-dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
-
-$ dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p b
-<ster/build-1 -a MortgageApplication -b main -p bu                 ild
-dbbBuild.sh: [INFO] Dependency Based Build. Version=1.00
-dbbBuild.sh: [INFO] **************************************************************
-dbbBuild.sh: [INFO] ** Started - DBB Build on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-dbbBuild.sh: [INFO] **          Workspace: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1
-dbbBuild.sh: [INFO] **        Application: MortgageApplication
-dbbBuild.sh: [INFO] **             Branch: main
-dbbBuild.sh: [INFO] **         Build Type: --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
-dbbBuild.sh: [INFO] **                HLQ: DBEHM.MORTGAGE.MAIN.BLD
-dbbBuild.sh: [INFO] **             AppDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/MortgageApplication
-dbbBuild.sh: [INFO] **             LogDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs
-dbbBuild.sh: [INFO] **     zAppBuild Path: /var/dbb/dbb-zappbuild_300
-dbbBuild.sh: [INFO] **           DBB_HOME: /usr/lpp/dbb/v2r0
-dbbBuild.sh: [INFO] **      DBB JDBC USER: DBEHM
-dbbBuild.sh: [INFO] **  DBB JDBC Pwd File: /var/dbb/config/db2-pwd-file.xml
-dbbBuild.sh: [INFO] **           Verbose : No
-dbbBuild.sh: [INFO] **         DBB Logger: No
-dbbBuild.sh: [INFO] **************************************************************
-
-dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
-dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /var/dbb/pipelineBackend/workspace/MortApp/main/build-1 --application MortgageApplication --outDir /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs --hlq DBEHM.MORTGAGE.MAIN.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
-
-** Build start at 20230825.043936.039
-** Build output located at /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039
-** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20230825.163936.039
-** Loading DBB scanner mapping configuration dbb.scannerMapping
-** --impactBuild option selected. Building impacted programs for application MortgageApplication 
-** Writing build list file to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/buildList.txt
-** Populating file level properties from individual artifact properties files.
-** Invoking build scripts according to build order: BMS.groovy,Cobol.groovy,LinkEdit.groovy
-** Building 2 files mapped to Cobol.groovy script
-*** (1/2) Building file MortgageApplication/cobol/epsnbrvl.cbl
-*** (2/2) Building file MortgageApplication/cobol/epscmort.cbl
-** Writing build report data to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/BuildReport.json
-** Writing build report to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20230825.163936.039
-** Build ended at Fri Aug 25 16:39:43 GMT+01:00 2023
-** Build State : CLEAN
-** Total files processed : 2
-** Total build time  : 7.025 seconds
-
-** Build finished
-dbbBuild.sh: [INFO} LastBuildLog = /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/buildList.txt
-dbbBuild.sh: [INFO] DBB Build Complete. rc=0
-```  
-
-</details>
-
-#### Script utility - dbbBuildUtils.sh
-
-The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a core utility script providing the `computeBuildConfiguration()` method to compute the zAppBuild's options and parameters according to the branch naming conventions. For instance
-
-* `build type`, such as the `--impactBuild` zAppBuild build option,
-  * the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file for integration branches, 
-* the configured topic branch build behavior (see parameter `featureBranchBuildBehaviour` in pipelineBackend.config), that can either be configured as
-  * `merge-base` (default) for cumulative builds that include all the changes added to the feature branch that flow to the integration branch. This setting automatically computes the merge-base commit, which defines the commit when the feature branch was forked.
-  * `incremental` for standard zAppBuild `--impactBuild` behavior.
-  * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`. 
-* flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules).
-* the `mainBuildBranch` to configure feature branch pipelines to clone the corresponding DBB dependency metadata collections.
-
 ### zBuilder.sh for DBB zBuilder
 
 This script implements the invocation of the [zBuilder](https://www.ibm.com/docs/en/dbb/3.0?topic=building-zos-applications-zbuilder) framework.
@@ -488,6 +384,111 @@ The [dbbzBuilderUtils](utilities/dbbzBuilderUtils.sh) script is a core utility s
   * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`. 
 <!-- flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules). -->
 * the `mainBuildBranch` to configure feature branch pipelines to clone the corresponding DBB dependency metadata collections by generating a config.yaml that is passed into zBuilder.
+
+### dbbBuild.sh for zAppBuild framework
+
+This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. 
+
+By design, the script implements the recommended working practice. It makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/main/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild to set the baseline Git hash. This is used to identify all the committed changes for the upcoming deliverable (that can be a planned release, a emergency fix, or a significant development initiative)
+
+The computation of the build configuration is performed by the [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf` directory in order to compute the baseline reference.
+
+#### Invocation
+
+The `dbbBuild.sh` script can be invoked as follows:
+
+```
+dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
+```
+
+CLI parameter | Description
+---------- | ----------------------------------------------------------------------------------------
+-w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps.
+-a `<application>` | **Application name** to be built, which is passed to zAppBuild as the `--application` parameter.
+-b `<branch>` | **Git branch** that is built. Used to compute various build properties such as the `--hlq` and build type.
+-p `<build/release/preview>` | (Optional) **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules), or if it runs in `preview` mode.
+-v | (Optional) zAppBuild verbose tracing flag.
+-t `<buildTypeArgument>` | (Optional) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Arguments must be provided between quotes - e.g.: `-t '--fullBuild'`. Providing this parameter overrides the computation of the build type in the backend scripts. For instance can be used to initialize the DBB Metadatastore. 
+-q `<hlqPrefix>` |(Optional) **HLQ prefix**. Default is retrieved from the [pipelineBackend.config](pipelineBackend.config) file, if the configuration file is not modified - the default value is set to the user executing the script.
+
+**Pipeline type**
+
+The type of pipeline (`-p` option), is used to modify the operational behavior of the build framework on producing executables:
+* `build` configures the build options for test/debug options. This is the **default**.
+* `release` used to indicate to produce executables with the flag for performance-optimized runtime modules. This is required for the release pipelines which include release candidate packages.
+* `preview` configures the build process to execute without producing any outputs. It is used to preview what the build will do. The pipeline should not have any subsequent actions.
+
+#### Output
+
+The section below contains the output that is produced by the `dbbBuild.sh` script.
+
+<details>
+  <summary>Script Output</summary>
+
+```
+dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
+
+$ dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p b
+<ster/build-1 -a MortgageApplication -b main -p bu                 ild
+dbbBuild.sh: [INFO] Dependency Based Build. Version=1.00
+dbbBuild.sh: [INFO] **************************************************************
+dbbBuild.sh: [INFO] ** Started - DBB Build on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
+dbbBuild.sh: [INFO] **          Workspace: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1
+dbbBuild.sh: [INFO] **        Application: MortgageApplication
+dbbBuild.sh: [INFO] **             Branch: main
+dbbBuild.sh: [INFO] **         Build Type: --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
+dbbBuild.sh: [INFO] **                HLQ: DBEHM.MORTGAGE.MAIN.BLD
+dbbBuild.sh: [INFO] **             AppDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/MortgageApplication
+dbbBuild.sh: [INFO] **             LogDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs
+dbbBuild.sh: [INFO] **     zAppBuild Path: /var/dbb/dbb-zappbuild_300
+dbbBuild.sh: [INFO] **           DBB_HOME: /usr/lpp/dbb/v2r0
+dbbBuild.sh: [INFO] **      DBB JDBC USER: DBEHM
+dbbBuild.sh: [INFO] **  DBB JDBC Pwd File: /var/dbb/config/db2-pwd-file.xml
+dbbBuild.sh: [INFO] **           Verbose : No
+dbbBuild.sh: [INFO] **         DBB Logger: No
+dbbBuild.sh: [INFO] **************************************************************
+
+dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
+dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /var/dbb/pipelineBackend/workspace/MortApp/main/build-1 --application MortgageApplication --outDir /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs --hlq DBEHM.MORTGAGE.MAIN.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
+
+** Build start at 20230825.043936.039
+** Build output located at /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039
+** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20230825.163936.039
+** Loading DBB scanner mapping configuration dbb.scannerMapping
+** --impactBuild option selected. Building impacted programs for application MortgageApplication 
+** Writing build list file to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/buildList.txt
+** Populating file level properties from individual artifact properties files.
+** Invoking build scripts according to build order: BMS.groovy,Cobol.groovy,LinkEdit.groovy
+** Building 2 files mapped to Cobol.groovy script
+*** (1/2) Building file MortgageApplication/cobol/epsnbrvl.cbl
+*** (2/2) Building file MortgageApplication/cobol/epscmort.cbl
+** Writing build report data to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/BuildReport.json
+** Writing build report to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/BuildReport.html
+** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20230825.163936.039
+** Build ended at Fri Aug 25 16:39:43 GMT+01:00 2023
+** Build State : CLEAN
+** Total files processed : 2
+** Total build time  : 7.025 seconds
+
+** Build finished
+dbbBuild.sh: [INFO} LastBuildLog = /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/buildList.txt
+dbbBuild.sh: [INFO] DBB Build Complete. rc=0
+```  
+
+</details>
+
+#### Script utility - dbbBuildUtils.sh
+
+The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a core utility script providing the `computeBuildConfiguration()` method to compute the zAppBuild's options and parameters according to the branch naming conventions. For instance
+
+* `build type`, such as the `--impactBuild` zAppBuild build option,
+  * the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file for integration branches, 
+* the configured topic branch build behavior (see parameter `featureBranchBuildBehaviour` in pipelineBackend.config), that can either be configured as
+  * `merge-base` (default) for cumulative builds that include all the changes added to the feature branch that flow to the integration branch. This setting automatically computes the merge-base commit, which defines the commit when the feature branch was forked.
+  * `incremental` for standard zAppBuild `--impactBuild` behavior.
+  * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`. 
+* flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules).
+* the `mainBuildBranch` to configure feature branch pipelines to clone the corresponding DBB dependency metadata collections.
 
 ## Packaging stage
 
