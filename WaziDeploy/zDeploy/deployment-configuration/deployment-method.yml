@@ -152,7 +152,7 @@ activities:
               This step performs the DB2 Bind plan operations for all DBRM members of the package
             properties:
               - key: template
-                value: db2_bind_plan            
+                value: db2_bind_plan
               - key: var_type
                 value: type_dbrm_temp
     types:
@@ -284,6 +284,8 @@ activities:
                 value: job_submit
               - key: var_job_submit
                 value: jcl_expert_verification
+    when:
+      - environment.run_jcl_expert
 
   # CICS online activation
   - name: CICS_ACTIVATION

@@ -24,6 +24,12 @@ app_csd_group:
 app_cmci_scheme:
 app_cmci_host:
 app_cmci_port:
+app_cmci_insecure:
+app_cmci_cert:
+app_cmci_key:
+app_cmci_insecure:
+app_cmci_cert:
+app_cmci_key:
 
 # jcl text substitutions
 app_jcl_text_subs_patterns:
