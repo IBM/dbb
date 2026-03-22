@@ -3,3 +3,4 @@ Build/.project
 Build/.settings/**
 **/bin/
 .DS_Store*
+/.project
