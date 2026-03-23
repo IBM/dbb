@@ -10,7 +10,10 @@ cics_sys_def:
   cmci_host: "{{ app_cmci_host if app_cmci_host is defined and app_cmci_host else default_cmci_host}}"
   cmci_port: "{{ app_cmci_port if app_cmci_port is defined and app_cmci_port else default_cmci_port}}"  
   scheme: "{{ app_cmci_scheme if app_cmci_scheme is defined and app_cmci_scheme else default_cmci_scheme}}"
- 
+  insecure: "{{ app_cmci_insecure if app_cmci_insecure is defined and app_cmci_insecure else default_cmci_insecure}}"
+  cmci_cert: "{{ app_cmci_cert if app_cmci_cert is defined and app_cmci_cert else default_cmci_cert}}"
+  cmci_key: "{{ app_cmci_key if app_cmci_key is defined and app_cmci_key else default_cmci_key}}"
+
 csd_update_template:
  src: "{{ deploy_cfg_home }}/deployment-configuration/templates/cics_csd_dfhcsdup.jcl.j2"
  encoding: "IBM-1047"

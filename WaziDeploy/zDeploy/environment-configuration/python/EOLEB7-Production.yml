@@ -27,6 +27,9 @@ default_csd_group: "DEFAULT"
 default_cics_cmci_action: "NEWCOPY"
 default_env_cics_sdfhload: "CICSTS.V5R5.CICS.SDFHLOAD"
 default_env_cics_csd: "CICSGUSR.CICS.CICS01.DFHCSD"
+default_cmci_insecure: False
+default_cmci_cert: ""
+default_cmci_key: ""
 
 # Db2
 default_db2_sdsnload: "DBC0CFG.DB2.V12.SDSNLOAD"
@@ -45,3 +48,6 @@ include_global_config:
   files_list:
     - "{{ deploy_cfg_home }}/deployment-configuration/global/global_initialization.yml"
   files_must_exist: true
+
+# jcl expert
+run_jcl_expert: False
