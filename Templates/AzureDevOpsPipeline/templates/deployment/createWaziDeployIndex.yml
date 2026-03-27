@@ -1,0 +1,59 @@
+###########
+# ADO template to save the Wazi Deploy evidence files on ADO runner environment
+# 
+#  This template:
+#   * Copies the evidences into a common evidences directory
+#   * Invoked from deployPackage.yml template
+
+parameters:
+  - name: evidenceFolder
+    type: string
+    default: "." # defaults for any parameters that specified with "." (current directory)
+  - name: environmentName
+    type: string
+    default: "."
+
+steps:
+  - bash: |
+
+          # local Variables
+          rc=0
+          PGM="deployment/createWaziDeployIndex.yml"
+          evidenceFile="$(Build.ArtifactStagingDirectory)/${{ parameters.evidenceFolder }}/evidences/evidence.yaml"
+          evidencesPath=/var/work/wazi_deploy_evidences_ado/$(application)/$(pipelineType)/${{ parameters.environmentName }}
+
+          rc=0
+
+          # check evidence file
+          if [ ! -f "${evidenceFile}" ]; then
+              rc=8
+              ERRMSG=$PGM": [ERROR] Evidence file (${evidenceFile}) was not found. rc="$rc
+              echo $ERRMSG
+          fi
+
+          # create evidence dir
+          if [ $rc -eq 0 ]; then
+
+              CMD="mkdir -p $evidencesPath"
+              ${CMD}
+              rc=$?
+          fi
+
+          # Copy evidence File
+          if [ $rc -eq 0 ]; then
+
+              CMD="cp ${evidenceFile} $evidencesPath/evidence-$(buildNumber).yaml"
+              ${CMD}
+              rc=$?
+          fi
+
+          # Error Handling
+          if [ $rc -eq 0 ]; then
+              echo "${PGM}: [INFO] - Copy Evidence File (evidence-$(buildNumber).yaml) to Evidence Inventory ($evidencesPath) completed."
+          else
+
+              echo "${PGM}: [WARNING] - Copy Evidence File to Evidence Inventory Failed"
+              exit 1
+          fi
+
+    displayName: "Copy Evidence File to Evidence Inventory"
