@@ -417,19 +417,25 @@ pipeline {
                         if (BuildHasFiles) {
                             Msg = "Build resulted in updated files."
                             println("${PipelineName}[INFO]: ${Msg}")
-                            createSummary icon:"accept.svg", text: "${MsgHdr} ${Msg}"
+                            if (dslMethodExists('createSummary')) {
+                                createSummary icon:"accept.svg", text: "${MsgHdr} ${Msg}"
+                            }
                         } else {
                             Buildrc = 4
                             Msg = "Build resulted in no updated files."
                             println("${PipelineName}[WARN]: ${Msg}")
-                            createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
+                            if (dslMethodExists('createSummary')) {
+                                createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
+                            }
                             WdDoPackaging  = false // Do not package if nothing was built.
                             WdDoDeployment = false // Do not deploy is nothing was built.
                         }
                     } else {
                         Msg = "Build resulted in a return code=${Buildrc}. Refer to Jenkins Console Output Log."
                         println("${PipelineName}[ERROR]: ${Msg}")
-                        createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        if (dslMethodExists('createSummary')) {
+                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        }
                         WdDoPackaging  = false // Do not package if nothing was built.
                         WdDoDeployment = false // Do not deploy is nothing was built.
 
@@ -515,13 +521,17 @@ pipeline {
                             } else {
                                 Msg = "Computing release version failed. No version specified. Refer to Jenkins Console Output Log."
                                 println("${PipelineName}[ERROR]: ${Msg}")
-                                createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                                if (dslMethodExists('createSummary')) {
+                                    createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                                }
                                 autoCancelled = true
                             }
                         } else {
                             Msg = "Computing release version failed. Exit code: ${outRc}. Refer to Jenkins Console Output Log."
                             println("${PipelineName}[ERROR]: ${Msg}")
-                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                            if (dslMethodExists('createSummary')) {
+                                createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                            }
                             autoCancelled = true
                         }
                         if (verbose) {
@@ -570,7 +580,9 @@ pipeline {
                         } else {
                             Msg = "Packaging job failed. Exit code: ${Packagerc}. Refer to Jenkins Console Output Log."
                             println("${PipelineName}[ERROR]: ${Msg}")
-                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                            if (dslMethodExists('createSummary')) {
+                                createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                            }
                             autoCancelled = true
                         }
                     }
@@ -619,7 +631,9 @@ pipeline {
                     } else {
                         Msg = "Generate the deployment plan job failed. Exit code: ${WdGenDeployPlanrc}. Refer to Jenkins Console Output Log."
                         println("${PipelineName}[ERROR]: ${Msg}")
-                        createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        if (dslMethodExists('createSummary')) {
+                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        }
                         autoCancelled = true
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             sh "echo 'Generate deployment plan job failed. Please check console output log.' && exit ${WdGenDeployPlanrc}"
@@ -714,7 +728,9 @@ pipeline {
                     } else {
                         Msg = "Deploy to integration job failed. Exit code: ${WdDeployrc}. Refer to Jenkins Console Output Log."
                         println("${PipelineName}[ERROR]: ${Msg}")
-                        createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        if (dslMethodExists('createSummary')) {
+                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        }
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             sh "echo 'Deployment job failed. Please check console output log.' && exit ${WdDeployrc}"
                         }
@@ -825,4 +841,8 @@ def runCommand(String cmd) {
         }
     }
     return [stdout, rc]
+}
+
+boolean dslMethodExists(String name) {
+    return this.getBinding().hasVariable(name)   
 }
