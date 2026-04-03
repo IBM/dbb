@@ -417,15 +417,15 @@ pipeline {
                         if (BuildHasFiles) {
                             Msg = "Build resulted in updated files."
                             println("${PipelineName}[INFO]: ${Msg}")
-                            if (dslMethodExists('createSummary')) {
-                                createSummary icon:"accept.svg", text: "${MsgHdr} ${Msg}"
+                            if (dslMethodExists('addSummary')) {
+                                addSummary icon: "symbol-build plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--success-color)"
                             }
                         } else {
                             Buildrc = 4
                             Msg = "Build resulted in no updated files."
                             println("${PipelineName}[WARN]: ${Msg}")
-                            if (dslMethodExists('createSummary')) {
-                                createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
+                            if (dslMethodExists('addSummary')) {
+                                addSummary icon: "symbol-warning-outline plugin-ionicons-api plugin-ionicons-api", text: "${MsgHdr} ${Msg}"
                             }
                             WdDoPackaging  = false // Do not package if nothing was built.
                             WdDoDeployment = false // Do not deploy is nothing was built.
@@ -433,8 +433,8 @@ pipeline {
                     } else {
                         Msg = "Build resulted in a return code=${Buildrc}. Refer to Jenkins Console Output Log."
                         println("${PipelineName}[ERROR]: ${Msg}")
-                        if (dslMethodExists('createSummary')) {
-                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        if (dslMethodExists('addSummary')) {
+                            addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                         }
                         WdDoPackaging  = false // Do not package if nothing was built.
                         WdDoDeployment = false // Do not deploy is nothing was built.
@@ -521,16 +521,16 @@ pipeline {
                             } else {
                                 Msg = "Computing release version failed. No version specified. Refer to Jenkins Console Output Log."
                                 println("${PipelineName}[ERROR]: ${Msg}")
-                                if (dslMethodExists('createSummary')) {
-                                    createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                                if (dslMethodExists('addSummary')) {
+                                    addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                                 }
                                 autoCancelled = true
                             }
                         } else {
                             Msg = "Computing release version failed. Exit code: ${outRc}. Refer to Jenkins Console Output Log."
                             println("${PipelineName}[ERROR]: ${Msg}")
-                            if (dslMethodExists('createSummary')) {
-                                createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                            if (dslMethodExists('addSummary')) {
+                                addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                             }
                             autoCancelled = true
                         }
@@ -580,8 +580,8 @@ pipeline {
                         } else {
                             Msg = "Packaging job failed. Exit code: ${Packagerc}. Refer to Jenkins Console Output Log."
                             println("${PipelineName}[ERROR]: ${Msg}")
-                            if (dslMethodExists('createSummary')) {
-                                createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                            if (dslMethodExists('addSummary')) {
+                                addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                             }
                             autoCancelled = true
                         }
@@ -631,8 +631,8 @@ pipeline {
                     } else {
                         Msg = "Generate the deployment plan job failed. Exit code: ${WdGenDeployPlanrc}. Refer to Jenkins Console Output Log."
                         println("${PipelineName}[ERROR]: ${Msg}")
-                        if (dslMethodExists('createSummary')) {
-                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        if (dslMethodExists('addSummary')) {
+                            addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                         }
                         autoCancelled = true
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
@@ -728,8 +728,8 @@ pipeline {
                     } else {
                         Msg = "Deploy to integration job failed. Exit code: ${WdDeployrc}. Refer to Jenkins Console Output Log."
                         println("${PipelineName}[ERROR]: ${Msg}")
-                        if (dslMethodExists('createSummary')) {
-                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        if (dslMethodExists('addSummary')) {
+                            addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                         }
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             sh "echo 'Deployment job failed. Please check console output log.' && exit ${WdDeployrc}"
