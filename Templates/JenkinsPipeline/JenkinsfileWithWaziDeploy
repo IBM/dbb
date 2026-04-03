@@ -804,15 +804,25 @@ def searchLogOutput(String regexPattern, String logContent) {
  * @return A list containing [stdout, returnCode]
  */
 def runCommand(String cmd) {
-    def stdout
+    def stdout = ""
     def rc = 0
-    //println("[DEBUG]: Start runCommand: ${cmd}")
     try {
         stdout = sh(script: cmd, returnStdout: true)
         echo stdout
-    } catch (e) {
-        echo "${e}"
-        rc = "${e}".tokenize().last()
+    } catch (Exception e) {
+        echo "[ERROR]: Command execution failed: ${e.message}"
+        // More robust error code extraction
+        def errorMsg = e.toString()
+        if (errorMsg.contains('script returned exit code')) {
+            def matcher = errorMsg =~ /exit code (\d+)/
+            if (matcher.find()) {
+                rc = matcher.group(1) as Integer
+            } else {
+                rc = 1  // Default error code
+            }
+        } else {
+            rc = 1  // Default error code
+        }
     }
     return [stdout, rc]
 }
