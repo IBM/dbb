@@ -2,557 +2,562 @@
 //
 // Description: A sample Jenkins Declarative Multibranch pipeline job that demonstrates how to
 // implement the IBM recommended Git flow branching model.
-// https://ibm.github.io/z-devops-acceleration-program/docs/git-branching-model-for-mainframe-dev/
-// The pipeline uses Jenkins, IBM Dependency Based Build, SonarQube Scan and IBM Wazi Deploy
-// and the Common Backend scripts
+// https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev
+// The pipeline uses Jenkins, IBM Dependency Based Build, SonarQube Scan, IBM Wazi Deploy,
+// and the Common Backend scripts.
 //
 // Refer to README.md for more information.
-//
-//import java.nio.file.Files;
-//import java.nio.file.Paths;
 
-// Jenkins
-//
+// ============================================================================
+// Jenkins Configuration
+// ============================================================================
 // Information required to identify Jenkins specific configuration values.
 //
-//   JenkinsAgent             - Label of the Jenkins Agent where the pipeline
-//                              will execute in the Jenkins environment.
-def JenkinsAgent              = "ZosAgent" // Jenkins Node/Label under z/OS UNIX System Services
-def JenkinsX86Agent			  = "x86-builder"  // Jenkins Node/Label to drive distributed actions, such as requisting SonarQube scan
+//   JenkinsAgent    - Label of the Jenkins Agent where the pipeline will execute.
+//   JenkinsX86Agent - Label for distributed actions, such as requesting SonarQube scan.
+def JenkinsAgent    = "ZosAgent"  // Jenkins Node/Label under z/OS UNIX System Services.
+def JenkinsX86Agent = "x86-builder"   // Jenkins Node/Label to drive distributed actions.
 
 // Debug Variables
-def pipeverbose               = true  // Enabled Pipeline Debug Messages (true/false).
+def pipeverbose = false  // Enable Pipeline Debug Messages (true/false) - Default to false for production.
 
-// Lifecycle
-//
+// ============================================================================
+// Lifecycle Management
+// ============================================================================
 // Variables for lifecycle management
 //
-//     PipelineType           - The type of pipeline relating to the development lifecycle. Set by the user via
-//                              pipeline parameter. Potential values:
-//                               preview
-//                               build (default)
-//                               release
-//     ReleaseType            - Defining the information for the semantic versioning to compute release candidate tags and release names.
-//                              TODO - Further enhancement to automatically compute release candidate tag
-def PipelineType			  = "build"
-def ReleaseType               = ""
+//   PipelineType - The type of pipeline relating to the development lifecycle.
+//                  Set by the user via pipeline parameter. Potential values:
+//                    - preview
+//                    - build (default)
+//                    - release
+//   ReleaseType  - Defining the information for the semantic versioning to compute
+//                  release candidate tags and release names.
+def PipelineType = "build"
+def ReleaseType  = ""
 
-// Application
-//
-//     AppName                - Name of the Application folder within the application repository.
-//     AppHLQ                 - Build destination High-Level Qualifier for any pipeline
-//
-def AppName                   = "MortgageApplication"
-def AppHLQ                    = "JENKINS.PIPELINE"
+// ============================================================================
+// Application Configuration
+// ============================================================================
+//   AppName - Name of the Application folder within the application repository.
+//   AppHLQ  - Build destination High-Level Qualifier for any pipeline.
+def AppBranch = ""
+def BuildDir  = ""
+def Branch    = ""
+def AppName   = "MortgageApplication"
+def AppHLQ    = "JENKINS.PIPELINE"
 
+// ============================================================================
 // Generic Build Solution (zBuilder)
+// ============================================================================
+// Variables that pertain to zBuilder and Common Backend Scripts.
 //
-//   Variables that pertain to the generic build solution zBuilder and Common Backend Script dbbBuild.sh
-//
-//     zBuilderVerbose       - Verbose string passed to the DBB Build script. Set later on based on the
-//                              value of pipeline verbose variable.
-//     DbbDoBuild             - If true, perform the DBB Build. Computed in Branch Contol stage
-//     DbbCommunityRepo       - Install location of the DBB community git repository.
-//     DbbPipelineScripts     - Path to the DBB Common-Backend-Scripts directory.
-def zBuilderVerbose          = ""
-def DbbDoBuild                = true
+//   zBuilderVerbose    - Verbose string passed to the DBB Build script. Set later on based on the
+//                        value of pipeline verbose variable.
+//   DbbDoBuild         - If true, perform the DBB Build. Computed in Branch Control stage.
+//   DbbCommunityRepo   - Install location of the DBB community git repository.
+//   DbbPipelineScripts - Path to the DBB Common-Backend-Scripts directory.
+def zBuilderVerbose    = ""
+def DbbDoBuild         = true
 def DbbCommunityRepo   = "/u/user/dbb"
 def DbbPipelineScripts = "${DbbCommunityRepo}/Templates/Common-Backend-Scripts"
 
+// ============================================================================
 // Software Analysis with SonarQube
-//
-//   Variables that pertain to the software analysis stage
-//
-//     SonarQubeConnection    - Name of the configured sonarQube Connection in Jenkins
-//     SonarQubeDoScan        - If true, perform the Sonar analysis. Computed in Branch Contol stage
-def SonarQubeConnection       = "zsonar1" // Configured SonarQube connection
-def SonarQubeDoScan           = true
+// ============================================================================
+// Variables that pertain to the software analysis stage.
+//   SonarQubeConnection - Name of the configured SonarQube Connection in Jenkins.
+//   SonarQubeDoScan     - If true, perform the Sonar analysis. Computed in Branch Control stage.
+def SonarQubeConnection = "zsonar1" // Configured SonarQube connection
+def SonarQubeDoScan     = true
 
-// Jenkins
+// ============================================================================
+// Jenkins Runtime Variables
+// ============================================================================
+// Variables that pertain to Jenkins runtime information
 //
-//   Variables that pertain to Jenkins.
-//
-//     PipelineName           - Supplied by Jenkins JOB_NAME Environmental Variable.
-//     BuildNumber            - Supplied by Jenkins BUILD_NUMBER Environemntal Variable. Value will be
-//                              eight (8) characters in length, padded to the left with zeros (0).
-def PipelineName              = ""
-def BuildNumber               = ""
+//   PipelineName - Supplied by Jenkins JOB_NAME Environmental Variable.
+//   BuildNumber  - Supplied by Jenkins BUILD_NUMBER Environmental Variable.
+//                  Value will be eight (8) characters in length, padded to the left with zeros (0).
+def PipelineName = ""
+def BuildNumber  = ""
 
+// ============================================================================
 // Branch Controls
+// ============================================================================
+// Variables that pertain to Repository Branches
 //
-//   Variables that pertain to Repository Branches.
+//   BranchOkay - Process controls for Branches that have been defined
+def BranchOkay = false
+
+// ============================================================================
+// Wazi Deploy Configuration
+// ============================================================================
+// Variables that pertain to the deployment stage
 //
-//     BranchOkay             - Process controls for Branches that have been defined.
-def BranchOkay                = false
+//   WdDoPackaging        - If true, perform the Packaging.
+//   WdDoDeployment       - If true, perform the Deployment through Wazi Deploy.
+//   WdEnvFileIntegration - Environment file for integration deployment.
+//   WdEvidencesRoot      - Root directory to persist Wazi Deploy Evidence files.
+//   WdEvidencesIndex     - Directory to create Wazi Deploy Index.
+//   WdEvidencesDir       - Working directory for evidences.
+def WdDoPackaging        = true
+def WdDoDeployment       = false
+def WdEnvFileIntegration = "${DbbCommunityRepo}/WaziDeploy/zDeploy/environment-configuration/python/EOLEB7-Integration.yml"
+def WdEvidencesRoot      = "/var/work/wazi_deploy_evidences_jenkins/"
+def WdEvidencesIndex     = "/var/work/wazi_deploy_evidences_jenkins_index/"
+def WdEvidencesDir       = ""
 
-// Wazi Deploy
-//
-// Vairables that pertain to the deployment stage
-//
-//		WdDoPackaging         - If true, perform the Packaging.
-// 		WdDoDeployment        - If true, perform the Deployment through Wazi Deploy.
-//
-def WdDoPackaging	           = true
-def Artifactory                = ""
+// ============================================================================
+// Internal Constants and Variables - Build Stage
+// ============================================================================
+def BuildCmd        = ""    // DBB Build Command
+def Buildrc         = 0     // DBB Build Command Return Code
+def BuildOutputList = ""    // List of timestamped directories under Jenkins Build Directory.
+def BuildOutputDir  = ""    // DBB Build Output Directory (Discovered)
+def BuildFile       = ""    // Will contain the contents of the DBB buildFile.txt.
+def BuildHasFiles   = true  // DBB buildFile.txt indicates changed files.
 
-def WdDoDeployment	           = false
-def WdEnvFileIntegration       = "${DbbCommunityRepo}/WaziDeploy/zDeploy/environment-configuration/python/EOLEB7-Integration.yml"
-
-// Directories on the GitLab runner environment to persist Wazi Deploy Evidence files and to create an Wazi Deploy Index
-def WdEvidencesRoot			   = "/var/work/wazi_deploy_evidences_jenkins/"
-def WdEvidencesIndex           = "/var/work/wazi_deploy_evidences_jenkins_index/"
-def WdEvidencesDir 			   = ""
-
-// Internal Constants and Variables
-// Build stage
-def BuildCmd                  = ""         // DBB Build Command.
-def Buildrc                   = 0          // DBB Build Command Return Code.
-def BuildOutputList           = ""         // List of timestamped directories under Jenkins Build Directory.
-def BuildOutputDir            = ""         // DBB Build Output Directory (Discovered).
-def BuildFile                 = ""         // Will contain the contents of the DBB buildFile.txt.
-def BuildHasFiles             = true       // DBB buildFile.txt indicates changed files.
-
-// Packaging stage
-def ComputeReleaseVersionCmd  = ""		   // Compute Release Version Command.
-def ComputeReleaseVersionrc   = 0		   // Compute Release Version Return Code.
-def ReleaseVersion			  = ""		   // Next release version.
-def PackageCmd                = ""         // Packaging Command.
-def Packagerc                 = 0          // Packaging Command Return Code.
-def PackageOutputDir          = ""         // Temporary Directory for Packaging
+// ============================================================================
+// Internal Constants and Variables - Packaging Stage
+// ============================================================================
+def ComputeReleaseVersionCmd = ""  // Compute Release Version Command
+def ComputeReleaseVersionrc  = 0   // Compute Release Version Return Code
+def ReleaseVersion           = ""  // Next release version
+def PackageCmd               = ""  // Packaging Command
+def Packagerc                = 0   // Packaging Command Return Code
+def PackageOutputDir         = ""  // Temporary Directory for Packaging
 def PackageTarPath           = ""  // Temporary tar created by Packaging
-def PackageVersion			  = ""		   // Package Version when deploy through Wazi Deploy.
-def WdManifest                = ""         // Wazi Deploy Manifest File
+def PackageVersion           = ""  // Package Version when deploy through Wazi Deploy
+def WdManifest               = ""  // Wazi Deploy Manifest File
 
-// Deployment plan generation stage
-def WdGenDeployPlanCmd	      = ""		   // Generate Deployment Plan Command.
-def WdGenDeployPlanrc	      = 0		   // Generate Deployment Plan Return Code.
-def ArtifactoryURL            = ""
+// ============================================================================
+// Internal Constants and Variables - Deployment Plan Generation Stage
+// ============================================================================
+def WdGenDeployPlanCmd = ""  // Generate Deployment Plan Command
+def WdGenDeployPlanrc  = 0   // Generate Deployment Plan Return Code
+def ArtifactoryURL     = ""
 
-// Deployment stage
-def WdDeployCmd		          = ""		   // Wazi Deploy Deploy Command.
-def WDDeployrc		      	  = 0		   // Wazi Deploy Return Code.
-def DeployOutputDir	      	  = ""         // Wazi Deploy Output Directory.
-def DeployEvidencesDir		  = ""		   // Wazi Deploy Evidences Directory.
-def WdEvidenceCmd			  = ""		   // Wazi Deploy Evidences Command.
-def WdEvidenceRc			  = 0		   // Wazi Deploy Evidences Return Code.
+// ============================================================================
+// Internal Constants and Variables - Deployment Stage
+// ============================================================================
+def WdDeployCmd        = ""  // Wazi Deploy Deploy Command
+def WdDeployrc         = 0   // Wazi Deploy Return Code (Fixed typo from WDDeployrc)
+def DeployOutputDir    = ""  // Wazi Deploy Output Directory
+def DeployEvidencesDir = ""  // Wazi Deploy Evidences Directory
+def WdEvidenceCmd      = ""  // Wazi Deploy Evidences Command
+def WdEvidenceRc       = 0   // Wazi Deploy Evidences Return Code
 
-def autoCancelled             = false      // Cancellation Flag.
-def DefaultEncoding           = "IBM-1047" // Default Encoding.
-def Msg                       = ""         // Message String.
-def MsgHdr                    = ""         // HTML Header String ID for Jenkins Build Log.
-def ShCmd					  = ""		   // Shell command.
-def ShCmdRc					  = 0          // Retrun code from shell command.
-def StartDateTime             = ""         // Pipeline Start Date/Time.
-
-// Okay, Let's Begin
+// ============================================================================
+// General Variables
+// ============================================================================
+def autoCancelled   = false      // Cancellation Flag
+def DefaultEncoding = "IBM-1047" // Default Encoding
+def Msg             = ""         // Message String
+def MsgHdr          = ""         // HTML Header String ID for Jenkins Build Log
+def ShCmd           = ""         // Shell command
+def ShCmdRc         = 0          // Return code from shell command
+def StartDateTime   = ""         // Pipeline Start Date/Time
 StartDateTime = new Date()
 
-//
-// Pipeline - Begin the Pipeline.
-//
+// ============================================================================
+// Pipeline Definition
+// ============================================================================
 pipeline {
-	
-	agent { label JenkinsAgent }
+    agent { label JenkinsAgent }
 
-	options {
-		checkoutToSubdirectory("${AppName}") // Added AppName for checkout dir of implizit checkout
-		disableConcurrentBuilds() 			 // throttle builds
-	}
-	environment {
-		GIT_TRACE       = 'false'               // Trace git for testing  true/false,1,2.
-		GIT_TRACE_SETUP = 'false'               // really cool trace tools.
-	}
-	
-	stages {
-		
-		stage ('Pipeline Setup') {
-			steps {
-				script {
+    options {
+        checkoutToSubdirectory("${AppName}")      // Added AppName for checkout dir of implicit checkout.
+        disableConcurrentBuilds()                 // Throttle builds.
+    }
+    environment {
+        GIT_TRACE       = 'false'                    // Trace git for testing (true/false, 1, 2).
+        GIT_TRACE_SETUP = 'false'                    // Git trace tools.
+    }
 
-					// Required Input Parameters
-					properties([
-						parameters([
-							choice(
-								choices : ["build", "release", "preview"],
-								description: 'Please select the pipeline type',
-								defaultValue: 'build',
-								name: 'PipelineType'
-							),
-							choice(
-								choices : ["major", "minor", "patch"],
-								description: 'Please provide the release type for automated computing of tags',
-								defaultValue: 'minor',
-								name: 'ReleaseType'
-							),
-							choice(
-								choices : ["no", "yes"],
-								description: 'Enable pipeline logging',
-								defaultValue: 'no',
-								name: 'PipelineVerboseLogging'
-							)
-						])
-					])
+    stages {
+        stage('Pipeline Setup') {
+            steps {
+                script {
+                    // Required Input Parameters
+                    properties([
+                        parameters([
+                            choice(
+                                choices: ["build", "release", "preview"],
+                                description: 'Pipeline type: build (CI), release (CD), or preview (quick validation)',
+                                defaultValue: 'build',
+                                name: 'PipelineType'
+                            ),
+                            choice(
+                                choices : ["patch", "minor", "major"],
+                                description: 'Release type for semantic versioning (major.minor.patch)',
+                                defaultValue: 'minor',
+                                name: 'ReleaseType'
+                            ),
+                            choice(
+                                choices: ["no", "yes"],
+                                description: 'Enable verbose pipeline logging for debugging',
+                                defaultValue: 'no',
+                                name: 'PipelineVerboseLogging'
+                            )
+                        ])
+                    ])
 
-					println("${PipelineName}[INFO]: Start Date/Time              = " + StartDateTime)
-			
-					// Assess user provided parameters
-					if (params.PipelineVerboseLogging.equals("yes")){
-						zBuilderVerbose = "-v"
-						pipeverbose = true
-					} else {
-						zBuilderVerbose = ""
-						pipeverbose = false
-					}
+                    println("${PipelineName}[INFO]: Start Date/Time = " + StartDateTime)
 
-					PipelineType = params.PipelineType
-					ReleaseType = params.ReleaseType
+                    // Validate and assess user provided parameters
+                    if (params.PipelineVerboseLogging.equals("yes")){
+                        zBuilderVerbose = "-v"
+                        pipeverbose = true
+                    } else {
+                        zBuilderVerbose = ""
+                        pipeverbose = false
+                    }
 
-					Buildrc = 0
+                    PipelineType = params.PipelineType
+                    ReleaseType = params.ReleaseType
 
-					if (pipeverbose) {
-						println("${PipelineName}[DEBUG]:   Format yyyyMMdd.hhmmss.mmm = " + StartDateTime.format("yyyyMMdd.hhmmss.mmm"))
-						println("${PipelineName}[DEBUG]:   Format yyyyMMdd.HHmmss.mmm = " + StartDateTime.format("yyyyMMdd.HHmmss.mmm"))
-						sh "env"
-					}
-					
-					// Pick up the AppBranch from Jenkins.
-					AppBranch = "${env.BRANCH_NAME}"
-					
-					// Fetch the Pipeline Name and Build Number.  Set up and format the DBB Working
-					// directory for the build results.
-					PipelineName   = env.JOB_NAME.split("/")
-					PipelineName   = PipelineName[0]
+                    Buildrc = 0
 
-					BuildNumber    = "${env.BUILD_NUMBER}"
-					BuildNumber    = BuildNumber.padLeft(8,"0") // Make Build Directories easier to sort.
-					
-					//Build directory
-					BuildDir       = "${WORKSPACE}"
+                    if (pipeverbose) {
+                        println("${PipelineName}[DEBUG]: Format yyyyMMdd.hhmmss.mmm = " + StartDateTime.format("yyyyMMdd.hhmmss.mmm"))
+                        println("${PipelineName}[DEBUG]: Format yyyyMMdd.HHmmss.mmm = " + StartDateTime.format("yyyyMMdd.HHmmss.mmm"))
+                        sh "env | sort"
+                    }
 
-					// Branch Control Setup
-					Branch         = env.BRANCH_NAME.toUpperCase()
-					BranchOkay     = false
-					PipelineTypeUpper = PipelineType.toUpperCase()
-					
-					// Configure the stages for the main branch
-					if  ( (Branch.startsWith('MAIN') == true) ) {
+                    // Pick up the AppBranch from Jenkins.
+                    AppBranch = "${env.BRANCH_NAME}"
 
-						DbbDoBuild      = true  // Perform DBB Build.
-						SonarQubeDoScan = true  // Perform Sonar scan.
+                    // Fetch the Pipeline Name and Build Number.
+                    // Set up and format the DBB working directory for the build results.
+                    PipelineName = env.JOB_NAME.split("/")
+                    PipelineName = PipelineName[0]
 
-						WdDoPackaging   = true  // Perform the Packaging.
-						if (PipelineType == "release") { // Perform the Deployment through Wazi Deploy for a release pipeline.
-							WdDoDeployment  = true 
-                        	DeployOutputDir = "${BuildDir}/deployPkgDir"
-							DeployEvidencesDir = "${DeployOutputDir}/deploy/evidences"
-						}
-						else { //Do not perform the deployment if this is a build pipeline.
-							WdDoDeployment  = false 
-						}
-						
-						BranchOkay = true
-					}
+                    BuildNumber = "${env.BUILD_NUMBER}"
+                    BuildNumber = BuildNumber.padLeft(8, "0") // Make Build Directories easier to sort.
 
-					// Configure the stages for feature and hotfix branches
-					if  (Branch.startsWith('FEATURE') == true || Branch.startsWith('HOTFIX') == true) {
+                    // Build directory
+                    BuildDir = "${WORKSPACE}"
 
-						DbbDoBuild      = true  // Perform DBB Build.
-						SonarQubeDoScan = true  // Perform Sonar scan.
+                    // Branch Control Setup
+                    Branch         = env.BRANCH_NAME.toUpperCase()
+                    BranchOkay     = false
+                    def PipelineTypeUpper = PipelineType.toUpperCase()
 
-						WdDoPackaging   = true  // Perform the Packaging.
-						WdDoDeployment  = false  // Do not perform the Deployment through Wazi Deploy. Up to the developer to install it.
+                    // Configure the stages for the main branch
+                    if ((Branch.startsWith('MAIN') == true)) {
 
-						BranchOkay = true
-					}
+                        DbbDoBuild      = true  // Perform DBB Build.
+                        SonarQubeDoScan = true  // Perform Sonar scan.
 
-					// Configure the stages for RELEASE and EPIC branches
-					if  (Branch.startsWith('RELEASE') == true || Branch.startsWith('EPIC') == true) {
-						
-						DbbDoBuild      = true  // Perform DBB Build.
-						SonarQubeDoScan = true  // Perform Sonar scan.
-
-						WdDoPackaging   = true  // Perform the Packaging.
-						WdDoDeployment  = false  // Do not perform the Deployment through Wazi Deploy. Up to the developer to install it.
-
-						BranchOkay = true
-					}
-
-					// Manage preview pipelines
-					if  ( (PipelineTypeUpper.startsWith('PREVIEW') == true) ) {
-						DbbDoBuild          = true
-						// Skip any subsequent steps
-						SonarQubeDoScan     = false
-						WdDoPackaging       = false
-						WdDoDeployment  	= false
-					}
-					
-					// If Branch Proceesing has not been defined, gracefully terminate the Pipeline.
-					if (BranchOkay == false) {
-						autoCancelled       = true
-						DbbDoBuild          = false
-						SonarQubeDoScan     = false
-						WdDoPackaging       = false
-						WdDoDeployment  	= false
-					}
-
-					println("${PipelineName}[INFO]: AppBranch = ${AppBranch} .")
-					
-				}
-			}
-		} // End: stage ('Pipeline Setup')
-
-		stage ('Parameters and Values') {
-			steps {
-				script {
-					println("**************************************************************")
-					println("* Parameters and Variable Values")
-					println("*")
-					println("*   Lifecycle")
-					println("*     PipelineType            : ${PipelineType}")
-					println("*     ReleaseType             : ${ReleaseType}")
-					println("*")
-					println("*   Jenkins")
-					println("*     env.JOB_NAME            : ${env.JOB_NAME}")
-					println("*     env.GIT_URL             : ${env.GIT_URL}")
-					println("*     env.GIT_BRANCH          : ${env.GIT_BRANCH}")
-					println("*     env.BRANCH_NAME         : ${env.BRANCH_NAME}")
-					println("*     env.BUILD_NUMBER        : ${env.BUILD_NUMBER}")
-					println("*     env.CHANGE_URL          : ${env.CHANGE_URL}") // If this is a PR build
-					println("*     WORKSPACE               : ${WORKSPACE}")
-					println("*     BuildNumber             : ${BuildNumber}")
-					println("*     PipelineName            : ${PipelineName}")
-					println("*     JenkinsAgent            : ${JenkinsAgent}")
-					println("*")
-					println("*   Application")
-					println("*     AppBranch               : ${AppBranch}")
-					println("*     AppName                 : ${AppName}")
-					println("*     AppHLQ                  : ${AppHLQ}")
-					println("*     BuildDir                : ${BuildDir}")
-					println("*")
-					println("*   Build/zBuilder")
-					println("*     zBuilderVerbose         : ${zBuilderVerbose}")
-					println("*     DbbDoBuild              : ${DbbDoBuild}")
-					println("*")
-					println("*   Anaylsis/SonarQube")
-					println("*     SonarQubeConnection     : ${SonarQubeConnection}")
-					println("*     SonarQubeDoScan         : ${SonarQubeDoScan}")
-					println("*")										
-					println("*   Packaging")
-					println("*     WdDoPackaging           : ${WdDoPackaging}")
-					println("*")
-					println("*   Deployment/Wazi Deploy")
-					println("*     WdDoDeployment      	   : ${WdDoDeployment}")
-					println("*     WdEnvFileIntegration    : ${WdEnvFileIntegration}")
-					println("*     DeployOutputDir    	   : ${DeployOutputDir}")
-					println("*     WdEvidenceRoot          : ${WdEvidencesRoot}")
-					println("*")
-					println("*   General")
-					println("*     DefaultEncoding         : ${DefaultEncoding}")
-					println("*     autoCancelled           : ${autoCancelled}")
-					println("*")
-					println("*   Environmental")
-					println("*     HOME                    : ${HOME}")
-					println("*     CLASSPATH               : ${CLASSPATH}")
-					println("*     PATH                    : ${PATH}")
-					println("*     JAVA_HOME               : ${JAVA_HOME}")
-					println("*     JENKINS_HOME            : $JENKINS_HOME")
-					println("*")
-					println("**************************************************************")
-				}
-			}
-		} // End: stage ('Parameters and Values')
-
-	
-		stage('Build') {
-			when {
-				expression { return ((DbbDoBuild == true) && (autoCancelled == false)) }
-			}
-			steps {
-				script {
-					println("${PipelineName}[INFO]: DBB Build Starting.")
-					MsgHdr = "<strong>Build Step:</strong>"
-					
-					Buildrc = 0
-											
-						if (pipeverbose) {
-							sh "echo ${PipelineName}[DEBUG]: HOME        = ${HOME}"
-							sh "echo ${PipelineName}[DEBUG]: DBB_HOME    = ${DBB_HOME}"
-							sh "echo ${PipelineName}[DEBUG]: DBB_CONF    = ${DBB_CONF}"
-							sh "echo ${PipelineName}[DEBUG]: CLASSPATH   = ${CLASSPATH}"
-						}
-						
-						BuildCmd = "${DbbPipelineScripts}/zBuilder.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -q ${AppHLQ} ${zBuilderVerbose}"
-						println("${PipelineName}[INFO]: Build Command = ${BuildCmd}")
-
-                        dir("${WORKSPACE}/${AppName}") {
-						    Buildrc = sh(script: "${BuildCmd}", returnStatus: true)
+                        WdDoPackaging   = true  // Perform the Packaging.
+                        if (PipelineType == "release") { // Perform the Deployment through Wazi Deploy for a release pipeline.
+                            WdDoDeployment  = true 
+                            DeployOutputDir = "${BuildDir}/deployPkgDir"
+                            DeployEvidencesDir = "${DeployOutputDir}/deploy/evidences"
+                        } else { //Do not perform the deployment if this is a build pipeline.
+                            WdDoDeployment  = false 
                         }
-						
-						if (pipeverbose) {
-							sh "echo ${PipelineName}[DEBUG]: HOME        = ${HOME}"
-							sh "echo ${PipelineName}[DEBUG]: DBB_HOME    = ${DBB_HOME}"
-							sh "echo ${PipelineName}[DEBUG]: DBB_CONF    = ${DBB_CONF}"
-							sh "echo ${PipelineName}[DEBUG]: CLASSPATH   = ${CLASSPATH}"
-						}
-						
-						BuildOutputDir = "${WORKSPACE}/${AppName}/logs"
+                        BranchOkay = true
+                    }
 
-						println("${PipelineName}[INFO]: Build Output Folder = ${BuildOutputDir}")
-					
-						if (pipeverbose) {
-							// Show the contents of the DBB Build Directory.
-							dir ("${BuildOutputDir}") {
-								sh "pwd ; ls -alT"
-							}
-						}
-					
-						// Check to see if the build has any files
-						if (Buildrc == 0) {
-						
-							dir ("${BuildOutputDir}") {
-								BuildFile = findFiles(glob: "buildList.txt")
-							}
-						
-							if (pipeverbose) {
-								println("${PipelineName}[DEBUG]: BuildFile           = " + BuildFile)
-								println("${PipelineName}[DEBUG]: BuildFile.length    = " + BuildFile.length)
-								println("${PipelineName}[DEBUG]: BuildFile[0].length = " + BuildFile[0].length)
-							}
-						
-							BuildHasFiles = (BuildFile.length > 0) && (BuildFile[0].length > 0)
-						
-							if (BuildHasFiles) {
-								Msg     = "Build resulted in updated files."
-								println("${PipelineName}[INFO]: ${Msg}")
-								createSummary icon:"accept.svg", text: "${MsgHdr} ${Msg}"
-							} else {
-								Buildrc = 4
-								Msg     = "Build resulted in no updated files."
-								println("${PipelineName}[WARN]: ${Msg}")
-								createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
-								WdDoPackaging  = false // Do not package if nothing was built.
-								WdDoDeployment = false // Do not deploy is nothing was built.
-							}
-						} else {
-							Msg = "Build resulted in a return code=${Buildrc}. Refer to Jenkins Console Output Log."
-							println("${PipelineName}[WARN]: ${Msg}")
-							createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
-							WdDoPackaging  = false // Do not package if nothing was built.
-							WdDoDeployment = false // Do not deploy is nothing was built.
+                    // Configure the stages for feature and hotfix branches
+                    if (Branch.startsWith('FEATURE') == true || Branch.startsWith('HOTFIX') == true) {
 
-							if (Buildrc == 4) { // Mark Build unstable
-								unstable "DBB Build Warning. No source changes detected."
-							} else { // Mark Stage as Error
-								SonarQubeDoScan = false // Do not scan the repo.
-								catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-									sh "echo 'DBB Build Error. Please check log.' && exit ${Buildrc}"
-								}
-							}
+                        DbbDoBuild      = true  // Perform DBB Build.
+                        SonarQubeDoScan = true  // Perform Sonar scan.
 
-						}
-				}
-			}
-			post {
-				always {
-					// Pick up files created by the build.
-					 dir ("${BuildOutputDir}") {
-					 	archiveArtifacts allowEmptyArchive: true,
-					 		artifacts: '*.log,*.json,*.html,*.txt',
-					 		excludes: '*clist',
-					 		onlyIfSuccessful: false
-					 }
-				}
-			}
-		} // End: stage('Build')
+                        WdDoPackaging   = true  // Perform the Packaging.
+                        WdDoDeployment  = false  // Do not perform the Deployment through Wazi Deploy. Up to the developer to install it.
 
-		stage('SonarQube Analysis') {
-			// Application repository is automatically checked out
-			agent { label JenkinsX86Agent }
+                        BranchOkay = true
+                    }
 
-			when {
-				expression { return ((sonarQubeDoScan == true) && (autoCancelled == false)) }
-			}
+                    // Configure the stages for RELEASE and EPIC branches
+                    if  (Branch.startsWith('RELEASE') == true || Branch.startsWith('EPIC') == true) {
+                        DbbDoBuild      = true  // Perform DBB Build.
+                        SonarQubeDoScan = true  // Perform Sonar scan.
 
-			steps {
-				// Pull scanner configuration
-				dir ("${WORKSPACE}/${AppName}") {
-					withSonarQubeEnv(sonarQubeConnection) {
-						sh "sonar-scanner"
-					}
-				}
+                        WdDoPackaging   = true  // Perform the Packaging.
+                        WdDoDeployment  = false  // Do not perform the Deployment through Wazi Deploy. Up to the developer to install it.
 
-			}
-  		} // End: stage('SonarQube Analysis')
+                        BranchOkay = true
+                    }
 
-		stage('Packaging') {
-			when {
-					expression { return ((WdDoPackaging == true) && (autoCancelled == false)) }
-			}
-		steps {
-				script {
-					println("${PipelineName}[INFO]: Packaging Starting.")
-					//println("${PipelineName}[DEBUG]: Pipeline Type = ${PipelineType}")
-					//println("${PipelineName}[DEBUG]: Release Type = ${ReleaseType}")
-					MsgHdr = "<strong>Packaging Step:</strong>"				
+                    // Manage preview pipelines
+                    if ((PipelineTypeUpper.startsWith('PREVIEW') == true)) {
+                        DbbDoBuild      = true
+                        // Skip any subsequent steps for preview.
+                        SonarQubeDoScan = false
+                        WdDoPackaging   = false
+                        WdDoDeployment  = false
+                    }
+
+                    // If branch processing has not been defined, gracefully terminate the pipeline.
+                    if (BranchOkay == false) {
+                        autoCancelled   = true
+                        DbbDoBuild      = false
+                        SonarQubeDoScan = false
+                        WdDoPackaging   = false
+                        WdDoDeployment  = false
+                    }
+
+                    println("${PipelineName}[INFO]: AppBranch = ${AppBranch}")
+                }
+            }
+        } // End: stage('Pipeline Setup')
+
+        stage('Parameters and Values') {
+            steps {
+                script {
+                    println("**************************************************************")
+                    println("* Parameters and Variable Values")
+                    println("*")
+                    println("*   Lifecycle")
+                    println("*     PipelineType            : ${PipelineType}")
+                    println("*     ReleaseType             : ${ReleaseType}")
+                    println("*")
+                    println("*   Jenkins")
+                    println("*     env.JOB_NAME            : ${env.JOB_NAME}")
+                    println("*     env.GIT_URL             : ${env.GIT_URL}")
+                    println("*     env.GIT_BRANCH          : ${env.GIT_BRANCH}")
+                    println("*     env.BRANCH_NAME         : ${env.BRANCH_NAME}")
+                    println("*     env.BUILD_NUMBER        : ${env.BUILD_NUMBER}")
+                    println("*     env.CHANGE_URL          : ${env.CHANGE_URL}") // If this is a PR build
+                    println("*     WORKSPACE               : ${WORKSPACE}")
+                    println("*     BuildNumber             : ${BuildNumber}")
+                    println("*     PipelineName            : ${PipelineName}")
+                    println("*     JenkinsAgent            : ${JenkinsAgent}")
+                    println("*")
+                    println("*   Application")
+                    println("*     AppBranch               : ${AppBranch}")
+                    println("*     AppName                 : ${AppName}")
+                    println("*     AppHLQ                  : ${AppHLQ}")
+                    println("*     BuildDir                : ${BuildDir}")
+                    println("*")
+                    println("*   Build/zBuilder")
+                    println("*     zBuilderVerbose         : ${zBuilderVerbose}")
+                    println("*     DbbDoBuild              : ${DbbDoBuild}")
+                    println("*")
+                    println("*   Analysis/SonarQube")
+                    println("*     SonarQubeConnection     : ${SonarQubeConnection}")
+                    println("*     SonarQubeDoScan         : ${SonarQubeDoScan}")
+                    println("*")
+                    println("*   Packaging")
+                    println("*     WdDoPackaging           : ${WdDoPackaging}")
+                    println("*")
+                    println("*   Deployment/Wazi Deploy")
+                    println("*     WdDoDeployment          : ${WdDoDeployment}")
+                    println("*     WdEnvFileIntegration    : ${WdEnvFileIntegration}")
+                    println("*     DeployOutputDir         : ${DeployOutputDir}")
+                    println("*     WdEvidenceRoot          : ${WdEvidencesRoot}")
+                    println("*")
+                    println("*   General")
+                    println("*     DefaultEncoding         : ${DefaultEncoding}")
+                    println("*     autoCancelled           : ${autoCancelled}")
+                    println("*")
+                    println("*   Environmental")
+                    println("*     HOME                    : ${HOME}")
+                    println("*     CLASSPATH               : ${CLASSPATH}")
+                    println("*     PATH                    : ${PATH}")
+                    println("*     JAVA_HOME               : ${JAVA_HOME}")
+                    println("*     JENKINS_HOME            : ${JENKINS_HOME}")
+                    println("*")
+                    println("**************************************************************")
+                }
+            }
+        } // End: stage('Parameters and Values')
+
+        stage('Build') {
+            when {
+                expression { return ((DbbDoBuild == true) && (autoCancelled == false)) }
+            }
+            steps {
+                script {
+                    println("${PipelineName}[INFO]: DBB Build Starting.")
+                    MsgHdr = "Build Step:"
+
+                    Buildrc = 0
+
+                    if (pipeverbose) {
+                        sh "echo ${PipelineName}[DEBUG]: HOME      = ${HOME}"
+                        sh "echo ${PipelineName}[DEBUG]: DBB_HOME  = ${DBB_HOME}"
+                        sh "echo ${PipelineName}[DEBUG]: DBB_CONF  = ${DBB_CONF}"
+                        sh "echo ${PipelineName}[DEBUG]: CLASSPATH = ${CLASSPATH}"
+                    }
+                    BuildCmd = "${DbbPipelineScripts}/zBuilder.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -q ${AppHLQ} ${zBuilderVerbose}"
+                    println("${PipelineName}[INFO]: Build Command = ${BuildCmd}")
+
+                    dir("${WORKSPACE}/${AppName}") {
+                        Buildrc = sh(script: "${BuildCmd}", returnStatus: true)
+                    }
+
+                    if (pipeverbose) {
+                        sh "echo ${PipelineName}[DEBUG]: Build Return Code = ${Buildrc}"
+                    }
+                    BuildOutputDir = "${WORKSPACE}/${AppName}/logs"
+                    println("${PipelineName}[INFO]: Build Output Folder = ${BuildOutputDir}")
+
+                    if (pipeverbose) {
+                        // Show the contents of the DBB Build Directory
+                        dir("${BuildOutputDir}") {
+                            sh "pwd ; ls -alT"
+                        }
+                    }
+
+                    // Check to see if the build has any files
+                    if (Buildrc == 0) {
+                        dir("${BuildOutputDir}") {
+                            BuildFile = findFiles(glob: "buildList.txt")
+                        }
+                    
+                        if (pipeverbose) {
+                            println("${PipelineName}[DEBUG]: BuildFile           = " + BuildFile)
+                            println("${PipelineName}[DEBUG]: BuildFile.length    = " + BuildFile.length)
+                            if (BuildFile.length > 0) {
+                                println("${PipelineName}[DEBUG]: BuildFile[0].length = " + BuildFile[0].length)
+                            }
+                        }
+                    
+                        BuildHasFiles = (BuildFile.length > 0) && (BuildFile[0].length > 0)
+
+                        if (BuildHasFiles) {
+                            Msg = "Build resulted in updated files."
+                            println("${PipelineName}[INFO]: ${Msg}")
+                            createSummary icon:"accept.svg", text: "${MsgHdr} ${Msg}"
+                        } else {
+                            Buildrc = 4
+                            Msg = "Build resulted in no updated files."
+                            println("${PipelineName}[WARN]: ${Msg}")
+                            createSummary icon:"warning.svg", text: "${MsgHdr} ${Msg}"
+                            WdDoPackaging  = false // Do not package if nothing was built.
+                            WdDoDeployment = false // Do not deploy is nothing was built.
+                        }
+                    } else {
+                        Msg = "Build resulted in a return code=${Buildrc}. Refer to Jenkins Console Output Log."
+                        println("${PipelineName}[ERROR]: ${Msg}")
+                        createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        WdDoPackaging  = false // Do not package if nothing was built.
+                        WdDoDeployment = false // Do not deploy is nothing was built.
+
+                        if (Buildrc == 4) { // Mark Build unstable
+                            unstable "DBB Build Warning. No source changes detected."
+                        } else { // Mark Stage as Error
+                            SonarQubeDoScan = false // Do not scan the repo.
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                sh "echo 'DBB Build Error. Please check log.' && exit ${Buildrc}"
+                            }
+                        }
+                    }
+                }
+            }
+            post {
+                always {
+                    // Pick up files created by the build.
+                    dir("${BuildOutputDir}") {
+                        archiveArtifacts allowEmptyArchive: true,
+                            artifacts: '*.log,*.json,*.html,*.txt',
+                            excludes: '*clist',
+                            onlyIfSuccessful: false
+                    }
+                }
+            }
+        } // End: stage('Build')
+
+        stage('SonarQube Analysis') {
+            // Application repository is automatically checked out.
+            agent { label JenkinsX86Agent }
+
+            when {
+                expression { return ((SonarQubeDoScan == true) && (autoCancelled == false)) }
+            }
+
+            steps {
+                script {
+                    println("${PipelineName}[INFO]: Starting SonarQube Analysis.")
+                    
+                    // Pull scanner configuration
+                    dir("${WORKSPACE}/${AppName}") {
+                        withSonarQubeEnv(SonarQubeConnection) {
+                            sh "sonar-scanner"
+                        }
+                    }
+                }
+            }
+        } // End: stage('SonarQube Analysis')
+
+        stage('Packaging') {
+            when {
+                expression { return ((WdDoPackaging == true) && (autoCancelled == false)) }
+            }
+            steps {
+                script {
+                    println("${PipelineName}[INFO]: Packaging Starting.")
+                    if (pipeverbose) {
+                        println("${PipelineName}[DEBUG]: Pipeline Type = ${PipelineType}")
+                        println("${PipelineName}[DEBUG]: Release Type = ${ReleaseType}")println("${PipelineName}[DEBUG]: Release Type = ${ReleaseType}")
+                    }
+
+                    MsgHdr = "Packaging Step:"
 
                     PackageOutputDir = "${WORKSPACE}/logs/tempPackageDir"
 
-					// Compute the next release verion for a release pipeline.
-					if (PipelineType == "release") {
-						println("${PipelineName}[INFO]: Start computing the next release version.")
-						ComputeReleaseVersionCmd = "${DbbPipelineScripts}/computeReleaseVersion.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -r ${ReleaseType}"
-						
-						println("${PipelineName}[INFO]: Compute Release Version Command = ${ComputeReleaseVersionCmd}")
-						
-						def (outText, outRc) = runCommand(ComputeReleaseVersionCmd)
-						//println("${PipelineName}[DEBUG]: *******  runCommand DONE *******: ${outRc}")
-						
-						if (outRc == 0) {
-							//println("${PipelineName}[DEBUG]: Start Search: ${outText}")
-							def version = searchLogOutput("version: .*", outText)
-							if (version){
-                                //println("${PipelineName}[DEBUG]: ${version}")
-                                ReleaseVersion = version.substring(9,version.length())
-								println("${PipelineName}[INFO]: Compute Release Version successfully, Next Release = ${ReleaseVersion}")
+                    // Compute the next release version for a release pipeline.
+                    if (PipelineType == "release") {
+                        println("${PipelineName}[INFO]: Start computing the next release version.")
+                        ComputeReleaseVersionCmd = "${DbbPipelineScripts}/computeReleaseVersion.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -r ${ReleaseType}"
+
+                        println("${PipelineName}[INFO]: Compute Release Version Command = ${ComputeReleaseVersionCmd}")
+
+                        def (outText, outRc) = runCommand(ComputeReleaseVersionCmd)
+
+                        if (outRc == 0) {
+                            def version = searchLogOutput("version: .*", outText)
+                            if (version) {
+                                if (pipeverbose) {
+                                    println("${PipelineName}[DEBUG]: ${version}")
+                                }
+                                ReleaseVersion = version.substring(9, version.indexOf(". rc="))
+                                println("${PipelineName}[INFO]: Compute Release Version successfully, Next Release = ${ReleaseVersion}")
                             } else {
                                 Msg = "Computing release version failed. No version specified. Refer to Jenkins Console Output Log."
-								println("${PipelineName}[WARN]: ${Msg}")
-								createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
-								autoCancelled == true
+                                println("${PipelineName}[ERROR]: ${Msg}")
+                                createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                                autoCancelled = true
                             }
-						}
-						else {
-							Msg = "Computing release version failed. Exit code: ${ComputeReleaseVersionrc}. Refer to Jenkins Console Output Log."
-							println("${PipelineName}[WARN]: ${Msg}")
-							createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
-							autoCancelled == true
-						}
-						//println("${PipelineName}[DEBUG]: Do not compute the next release version for non-release pipeline.")
-						autoCancelled == false
-					}
+                        } else {
+                            Msg = "Computing release version failed. Exit code: ${outRc}. Refer to Jenkins Console Output Log."
+                            println("${PipelineName}[ERROR]: ${Msg}")
+                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                            autoCancelled = true
+                        }
+                        if (pipeverbose) {
+                            println("${PipelineName}[DEBUG]: Do not compute the next release version for non-release pipeline.")
+                        }
+                        autoCancelled = false
+                    }
 
-					// Start packaging when compute the next release version successfully or not a release pipeline
-					if (autoCancelled == false) {
+                    // Start packaging when compute the next release version successfully or not a release pipeline.
+                    if (autoCancelled == false) {
                         // The packaging script expects the BuildOutputDir to be in the workspace directory.
                         sh "rm -rf ${WORKSPACE}/logs"
                         sh "mv ${BuildOutputDir} ${WORKSPACE}"
 
                         // Start packageBuildOutputs.sh command
-						if (ReleaseVersion == "") {
-							println("${PipelineName}[INFO]: Start packaging for a build pipeline.")
-							PackageCmd = "${DbbPipelineScripts}/packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -i ${BuildNumber}"
-						}
-						else {
-							println("${PipelineName}[INFO]: Start packaging for a release pipeline. Release version: ${ReleaseVersion}")
-							PackageCmd = "${DbbPipelineScripts}/packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -r ${ReleaseVersion} -i ${BuildNumber}"
-						}
-						
-						println("${PipelineName}[INFO]: Package Command = ${PackageCmd}")
+                        if (ReleaseVersion == "") {
+                            println("${PipelineName}[INFO]: Start packaging for a build pipeline.")
+                            PackageCmd = "${DbbPipelineScripts}/packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -i ${BuildNumber}"
+                        } else {
+                            println("${PipelineName}[INFO]: Start packaging for a release pipeline. Release version: ${ReleaseVersion}")
+                            PackageCmd = "${DbbPipelineScripts}/packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -r ${ReleaseVersion} -i ${BuildNumber}"
+                        }
 
-						Packagerc = sh(script: "${PackageCmd}" , returnStatus: true)
-						if (Packagerc == 0) {
-							println("${PipelineName}[INFO]: Packaging job passed.")
-							autoCancelled = false
+                        println("${PipelineName}[INFO]: Package Command = ${PackageCmd}")
+
+                        Packagerc = sh(script: "${PackageCmd}", returnStatus: true)
+                        if (Packagerc == 0) {
+                            println("${PipelineName}[INFO]: Packaging job passed.")
+                            autoCancelled = false
 
                             // Find the package tar file to use as input for Wazi Deploy stages.
                             dir("${WORKSPACE}/logs") {
@@ -570,241 +575,246 @@ pipeline {
                                 }
                             }
                         } else {
-							Msg = "Packaging job failed. Exit code: ${Packagerc}. Refer to Jenkins Console Output Log."
-							println("${PipelineName}[WARN]: ${Msg}")
-							createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
-							autoCancelled == true
-						}
-					}
+                            Msg = "Packaging job failed. Exit code: ${Packagerc}. Refer to Jenkins Console Output Log."
+                            println("${PipelineName}[ERROR]: ${Msg}")
+                            createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                            autoCancelled = true
+                        }
+                    }
 
-					if (autoCancelled == true) { // Mark Stage as Error		
-						catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-							sh "echo 'Packaging jab failed. Please check console output log.' && exit 8"
-						}
-					}	
-				}
-		}
-		post {
-				always {
-					// Pick up files created by the packaging.
-					 dir ("${PackageOutputDir}") {
-					 	archiveArtifacts allowEmptyArchive: true,
-					 		artifacts: '*.log,*.json,*.html,*.txt',
-					 		excludes: '*clist',
-					 		onlyIfSuccessful: false
-					 }
-				}
-		}
-	}
+                    if (autoCancelled == true) {  // Mark Stage as Error
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            sh "echo 'Packaging job failed. Please check console output log.' && exit 8"
+                        }
+                    }
+                }
+            }
+            post {
+                always {
+                    // Pick up files created by the packaging
+                    dir("${PackageOutputDir}") {
+                        archiveArtifacts allowEmptyArchive: true,
+                            artifacts: '*.log,*.json,*.html,*.txt',
+                            excludes: '*clist',
+                            onlyIfSuccessful: false
+                    }
+                }
+            }
+        } // End: stage('Packaging')
 
-		stage ('Generate Deployment Plan') {
-			when {
-				expression { return ((WdDoDeployment == true) && (autoCancelled == false)) }
-			}
-			steps {
-				script {
-					
-					WdGenDeployPlanrc = 0
-					MsgHdr = "<strong>Generate Deployment Plan Step:</strong>"	
+        stage('Generate Deployment Plan') {
+            when {
+                expression { return ((WdDoDeployment == true) && (autoCancelled == false)) }
+            }
+            steps {
+                script {
+                    WdGenDeployPlanrc = 0
+                    MsgHdr = "Generate Deployment Plan Step:"
 
-					// Generage deployment plan
-					println("${PipelineName}[INFO] Start generating the deployment plan for a release pipeline. Release version: ${ReleaseVersion}")
-					WdGenDeployPlanCmd = "${DbbPipelineScripts}/wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -P ${PipelineType} -R ${ReleaseVersion} -I ${BuildNumber} -i ${PackageTarPath}"
+                    // Generate deployment plan
+                    println("${PipelineName}[INFO]: Start generating the deployment plan for a release pipeline. Release version: ${ReleaseVersion}")
+                    if (autoCancelled == false) {
+                        WdGenDeployPlanCmd = "${DbbPipelineScripts}/wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -P ${PipelineType} -R ${ReleaseVersion} -I ${BuildNumber} -i ${PackageTarPath}"
 
-                    WdGenDeployPlanrc = sh(script: "${WdGenDeployPlanCmd}" , returnStatus: true)
+                        dir("${WORKSPACE}") {
+                            WdGenDeployPlanrc = sh(script: "${WdGenDeployPlanCmd}", returnStatus: true)
+                        }
 
-					if (WdGenDeployPlanrc == 0) {
-						println("${PipelineName}[INFO]: Generate the deployment plan job passed.")
-						autoCancelled == false
-					}
-					else {
-						Msg = "Generate the deployment plan job failed. Exit code: ${WdGenDeployPlanrc}. Refer to Jenkins Console Output Log."
-						println("${PipelineName}[WARN]: ${Msg}")
-						createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
-						autoCancelled == true	
-						catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-							sh "echo 'Packaging jab failed. Please check console output log.' && exit ${WdGenDeployPlanrc}"
-						}
-					}
+                    if (WdGenDeployPlanrc == 0) {
+                        println("${PipelineName}[INFO]: Generate the deployment plan job passed.")
+                        autoCancelled = false
+                    } else {
+                        Msg = "Generate the deployment plan job failed. Exit code: ${WdGenDeployPlanrc}. Refer to Jenkins Console Output Log."
+                        println("${PipelineName}[ERROR]: ${Msg}")
+                        createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        autoCancelled = true
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            sh "echo 'Generate deployment plan job failed. Please check console output log.' && exit ${WdGenDeployPlanrc}"
+                        }
+                    }
 
-					DeployOutputDir = "${WORKSPACE}/deployPkgDir"
-					//println("${PipelineName}[DEBUG]: DeployOutputDir = ${DeployOutputDir}")	
+                    DeployOutputDir = "${WORKSPACE}/deployPkgDir"
+                    if (pipeverbose) {
+                        println("${PipelineName}[DEBUG]: DeployOutputDir = ${DeployOutputDir}")
+                    }
+                }
+            }
+            post {
+                always {
+                    // Pick up files created by the packaging
+                    dir("${DeployOutputDir}") {
+                        archiveArtifacts allowEmptyArchive: true,
+                            artifacts: '*.html,*.yaml',
+                            excludes: '*clist',
+                            onlyIfSuccessful: false
+                    }
+                }
+            }
+        } // End: stage('Generate Deployment Plan')
 
-				}
-			}
-			post {
-				always {
-					// Pick up files created by the packaging.
-					 dir ("${DeployOutputDir}") {
-					 	archiveArtifacts allowEmptyArchive: true,
-					 		artifacts: '*.html,*.yaml',
-					 		excludes: '*clist',
-					 		onlyIfSuccessful: false
-					 }
-				}
-			}
-		} // End: stage('Generate Deployment Plan')
+        stage('Deployment-INT') {
+            when {
+                expression { return ((WdDoDeployment == true) && (autoCancelled == false)) }
+            }
+            steps {
+                script {
+                    WdDeployCmd = ""
+                    MsgHdr = "Deploy Integration Step:"
 
-		stage ('Deployment-INT') {
-			when {
-				expression { return ((WdDoDeployment == true) && (autoCancelled == false)) }
-			}
-			steps {
-				script {
-					
-					WdDeployCmd = 0
-					MsgHdr = "<strong>Deploy Integration Step:</strong>"
+                    WdDeployCmd = "${DbbPipelineScripts}/wazideploy-deploy.sh -w ${WORKSPACE} -e ${WdEnvFileIntegration} -i ${PackageTarPath} -l deploy/evidences/evidence.yaml"
+                    if (pipeverbose) {
+                        WdDeployCmd = WdDeployCmd+" -d"
+                    }
+                    WdDeployrc = sh(script: "${WdDeployCmd}", returnStatus: true)
 
-					WdDeployCmd = "${DbbPipelineScripts}/wazideploy-deploy.sh -w ${WORKSPACE} -e ${WdEnvFileIntegration} -i ${PackageTarPath} -l deploy/evidences/evidence.yaml"
+                    if (WdDeployrc == 0) {
+                        println("${PipelineName}[INFO]: Deploy to integration job passed")
 
-					WdDeployrc = sh(script: "${WdDeployCmd}" , returnStatus: true)
+                        WdEvidenceCmd = "${DbbPipelineScripts}/wazideploy-evidence.sh -w ${WORKSPACE} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html"
+                        WdEvidenceRc = sh(script: "${WdEvidenceCmd}", returnStatus: true)
+                        if (pipeverbose) {
+                            println("${PipelineName}[DEBUG]: WdEvidenceRc: ${WdEvidenceRc}")
+                        }
 
-					if (WdDeployrc == 0) {
-						println("${PipelineName}[INFO]: Deploy to integration job passed")
+                        // Generate deployment evidence report
+                        if (WdEvidenceRc == 0) {
+                            println("${PipelineName}[INFO]: Generated deployment evidence report")
+                        } else {
+                            println("${PipelineName}[ERROR]: Failed to generate deployment evidence report")
+                        }
 
-						WdEvidenceCmd = "${DbbPipelineScripts}/wazideploy-evidence.sh -w ${WORKSPACE} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html"
-						WdEvidenceRc = sh(script: "${WdEvidenceCmd}" , returnStatus: true)
-						//println("${PipelineName}[DEBUG]: WdEvidenceRc: ${WdEvidenceRc}")
+                        DeployEvidencesDir = "${WORKSPACE}/deployPkgDir/deploy/evidences"
+                        WdEvidencesDir = "${WdEvidencesRoot}/${AppName}/integration"
+                        if (pipeverbose) {
+                            println("${PipelineName}[DEBUG]: DeployEvidencesDir = ${DeployEvidencesDir}")
+                            println("${PipelineName}[DEBUG]: WdEvidencesDir = ${WdEvidencesDir}")
+                        }
 
-						// Generate deployment evidence report
-						if (WdEvidenceRc == 0) {
-							println("${PipelineName}[INFO]: Generated deployment evidence report")
-						}
-						else {
-							println("${PipelineName}[ERROR]: Failed to generate deployment evidence report")
-						}
-						
-						DeployEvidencesDir = "${WORKSPACE}/deployPkgDir/deploy/evidences"
-						WdEvidencesDir = "${WdEvidencesRoot}/${AppName}/integration"
-						//println("${PipelineName}[DEBUG]: DeployEvidencesDir = ${DeployEvidencesDir}")
+                        // Create evidence directory
+                        ShCmd = "mkdir -p ${WdEvidencesDir} && mkdir -p ${WdEvidencesIndex}"
+                        ShCmdRc = sh(script: "${ShCmd}", returnStatus: true)
 
-						//println("${PipelineName}[DEBUG]: WdEvidencesDir = ${WdEvidencesDir}")
+                        // Copy evidence file
+                        if (ShCmdRc == 0) {
+                            println("${PipelineName}[INFO]: Created evidence directory successfully: ${WdEvidencesDir}")
+                            println("${PipelineName}[INFO]: Created evidence index directory successfully: ${WdEvidencesIndex}")
+                            ShCmd = "cp ${DeployEvidencesDir}/evidence.yaml ${WdEvidencesDir}/evidence-${BuildNumber}.yaml"
+                            ShCmdRc = sh(script: "${ShCmd}", returnStatus: true)
+                        } else {
+                            println("${PipelineName}[ERROR]: Create evidence directories failed")
+                        }
 
-						// Create evidence directory
-						ShCmd = "mkdir -p ${WdEvidencesDir} && mkdir -p ${WdEvidencesIndex}"
-						ShCmdRc = sh(script: "${ShCmd}" , returnStatus: true)
-						//println("${PipelineName}[DEBUG]: ShCmdRc: ${ShCmdRc}")
+                        // Refresh index of all applications
+                        if (ShCmdRc == 0) {
+                            println("${PipelineName}[INFO]: Persisted deployment evidence file successfully at ${WdEvidencesDir}")
+                            println("${PipelineName}[INFO]: Refresh index of all applications at ${WdEvidencesIndex}")
+                            WdEvidenceCmd = "wazideploy-evidence --index ${WdEvidencesIndex} --dataFolder ${WdEvidencesRoot} i"
+                            WdEvidenceRc = sh(script: "${WdEvidenceCmd}", returnStatus: true)
+                        }
 
-						//Copy evidence file
-						if (ShCmdRc == 0) {
-							println("${PipelineName}[INFO]: Created evidence directory successfully: ${WdEvidencesDir}")
-							println("${PipelineName}[INFO]: Created evidence index directory successfully: ${WdEvidencesIndex}")
-							ShCmd = "cp ${DeployEvidencesDir}/evidence.yaml ${WdEvidencesDir}/evidence-${BuildNumber}.yaml"
-							ShCmdRc = sh(script: "${ShCmd}" , returnStatus: true)
-							//println("${PipelineName}[DEBUG]: ShCmdRc: ${ShCmdRc}")
-						}
-						else {
-							println("${PipelineName}[ERROR]: Create evidence directories failed")
-						}
+                        // Error handling
+                        if (WdEvidenceRc == 0) {
+                            println("${PipelineName}[INFO]: Update Wazi Deploy index completed.")
+                        } else {
+                            println("${PipelineName}[WARNING]: Update Wazi Deploy index failed.")
+                        }
+                    } else {
+                        Msg = "Deploy to integration job failed. Exit code: ${WdDeployrc}. Refer to Jenkins Console Output Log."
+                        println("${PipelineName}[ERROR]: ${Msg}")
+                        createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            sh "echo 'Deployment job failed. Please check console output log.' && exit ${WdDeployrc}"
+                        }
+                    }
+                }
+            }
+            post {
+                always {
+                    // Pick up files created by the deployment.
+                    dir("${DeployEvidencesDir}") {
+                        archiveArtifacts allowEmptyArchive: true,
+                            artifacts: '*.yml,*.yaml',
+                            excludes: '*clist',
+                            onlyIfSuccessful: false
+                    }
+                    dir("${WORKSPACE}/deployPkgDir/deploy") {
+                        archiveArtifacts allowEmptyArchive: true,
+                            artifacts: '*.html',
+                            excludes: '*clist',
+                            onlyIfSuccessful: false
+                    }
+                }
+            }
+        } // End: stage('Deployment-INT')
 
-						// Refresh index of all applications
-						if (ShCmdRc == 0) {
-							println("${PipelineName}[INFO]: Persisted deployment evidence file successfully at ${WdEvidencesDir}")
-							println("${PipelineName}[INFO]: Refresh index of all applications at ${WdEvidencesIndex}")
-							WdEvidenceCmd = "wazideploy-evidence --index ${WdEvidencesIndex} --dataFolder ${WdEvidencesRoot} i"
-							WdEvidenceRc = sh(script: "${WdEvidenceCmd}" , returnStatus: true)
-						}
-
-						// Error handling
-						if (WdEvidenceRc == 0) {
-							println("${PipelineName}[INFO]: Update Wazi Deploy index completed.")
-						}
-						else {
-							println("${PipelineName}[WARNING]: Update Wazi Deploy index failed.")
-						}	
-
-					}
-					else {
-						Msg = "Deploy to integration job failed. Exit code: ${WdDeployrc}. Refer to Jenkins Console Output Log."
-						println("${PipelineName}[WARN]: ${Msg}")
-						createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
-						catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-							sh "echo 'Packaging jab failed. Please check console output log.' && exit ${WdDeployrc}"
-						}
-					}					
-				}
-			}
-			post {
-				always {
-					// Pick up files created by the deployment.
-					 dir ("${DeployEvidencesDir}") {
-					 	archiveArtifacts allowEmptyArchive: true,
-					 		artifacts: '*.yml,*.yaml',
-					 		excludes: '*clist',
-					 		onlyIfSuccessful: false
-					 }
-					 dir ("${WORKSPACE}/deployPkgDir/deploy") {
-					 	archiveArtifacts allowEmptyArchive: true,
-					 		artifacts: '*.html',
-					 		excludes: '*clist',
-					 		onlyIfSuccessful: false
-					 }
-				}
-			}
-		} // End: stage('Deployment-INT')
-
-		stage ('Workspace Cleanup') {
-			when {
-				expression { return (autoCancelled == false) }
-			}
-			steps {
-				script {
-					if (pipeverbose) {
-						println("${PipelineName}[DEBUG]: Final Cleanup before deletes.")
-
-						dir("${WORKSPACE}") {
-							sh "pwd ; ls -al"
-						}
-					}
-					
-					if (pipeverbose) {
-						println("${PipelineName}[DEBUG]: Final Cleanup after deletes.")
-
-						dir("${WORKSPACE}") {
-							sh "pwd ; ls -al"
-						}
-					}
-				}
-			}
-			post {
-			// Clean after build
-				always {
-					cleanWs(cleanWhenNotBuilt: false,
-							deleteDirs: true,
-							disableDeferredWipeout: true,
-							notFailBuild: true)
-				}
-			}
-
-		} // End: stage ('Final Cleanup')
-	} // End: stages
+        stage('Workspace Cleanup') {
+            when {
+                expression { return (autoCancelled == false) }
+            }
+            steps {
+                script {
+                    println("${PipelineName}[INFO]: Performing workspace cleanup.")
+                    
+                    if (pipeverbose) {
+                        dir("${WORKSPACE}") {
+                            sh "pwd ; ls -al"
+                        }
+                    }
+                }
+            }
+            post {
+                // Clean after build
+                always {
+                    cleanWs(cleanWhenNotBuilt: false,
+                        deleteDirs: true,
+                        disableDeferredWipeout: true,
+                        notFailBuild: true)
+                }
+            }
+        } // End: stage('Workspace Cleanup')
+    } // End: stages
 
 } // End: pipeline
 
-/**
- * Methods that perform non-serializable actions
- */
+// ============================================================================
+// Helper Methods
+// ============================================================================
 
+/**
+ * Search for a pattern in log output
+ * @param regexPattern The regex pattern to search for
+ * @param logContent The log content to search in
+ * @return The matched result or null if not found
+ */
 @NonCPS
-def searchLogOutput(String regexPattern, String logContent){
-    //println("[DEBUG]: Start searchLogOutput = ${regexPattern} and ${logContent}")
-	pattern = java.util.regex.Pattern.compile(regexPattern)
-	def pMatcher = pattern.matcher(logContent)
-	if (pMatcher.find()) {
-		def result = "${pMatcher.group()}"
-        println("Results == ${result}")
-		return result
-	} else {
-		println("[INFO]: Failed to search for ${regexPattern}")
+def searchLogOutput(String regexPattern, String logContent) {
+    try {
+        def pattern = java.util.regex.Pattern.compile(regexPattern)
+        def pMatcher = pattern.matcher(logContent)
+        if (pMatcher.find()) {
+            def result = "${pMatcher.group()}"
+            println("Results == ${result}")
+            return result
+        } else {
+            println("[INFO]: Failed to search for ${regexPattern}")
+            return null
+        }
+    } catch (Exception e) {
+        println("[ERROR]: Exception in searchLogOutput: ${e.message}")
         return null
-	}
+    }
 }
 
+/**
+ * Execute a shell command and capture output
+ * @param cmd The command to execute
+ * @return A list containing [stdout, returnCode]
+ */
 def runCommand(String cmd) {
     def stdout
     def rc = 0
     //println("[DEBUG]: Start runCommand: ${cmd}")
-	try {
+    try {
         stdout = sh(script: cmd, returnStdout: true)
         echo stdout
     } catch (e) {
