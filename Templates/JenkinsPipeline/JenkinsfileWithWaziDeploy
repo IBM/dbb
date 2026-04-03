@@ -17,7 +17,7 @@
 //
 //   JenkinsAgent             - Label of the Jenkins Agent where the pipeline
 //                              will execute in the Jenkins environment.
-def JenkinsAgent              = "ztec-201-STC" // Jenkins Node/Label under z/OS UNIX System Services
+def JenkinsAgent              = "ZosAgent" // Jenkins Node/Label under z/OS UNIX System Services
 def JenkinsX86Agent			  = "x86-builder"  // Jenkins Node/Label to drive distributed actions, such as requisting SonarQube scan
 
 // Debug Variables
