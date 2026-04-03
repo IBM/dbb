@@ -45,15 +45,19 @@ def ReleaseType               = ""
 def AppName                   = "MortgageApplication"
 def AppHLQ                    = "JENKINS.PIPELINE"
 
-// Generic Build Solution (zAppBuild)
+// Generic Build Solution (zBuilder)
 //
-//   Variables that pertain to the generic build solution zAppBuild and Common Backend Script dbbBuild.sh
+//   Variables that pertain to the generic build solution zBuilder and Common Backend Script dbbBuild.sh
 //
-//     zAppBuildVerbose       - Verbose string passed to the DBB Build script. Set later on based on the
+//     zBuilderVerbose       - Verbose string passed to the DBB Build script. Set later on based on the
 //                              value of pipeline verbose variable.
 //     DbbDoBuild             - If true, perform the DBB Build. Computed in Branch Contol stage
-def zAppBuildVerbose          = ""
+//     DbbCommunityRepo       - Install location of the DBB community git repository.
+//     DbbPipelineScripts     - Path to the DBB Common-Backend-Scripts directory.
+def zBuilderVerbose          = ""
 def DbbDoBuild                = true
+def DbbCommunityRepo   = "/u/user/dbb"
+def DbbPipelineScripts = "${DbbCommunityRepo}/Templates/Common-Backend-Scripts"
 
 // Software Analysis with SonarQube
 //
@@ -92,7 +96,7 @@ def WdDoPackaging	           = true
 def Artifactory                = ""
 
 def WdDoDeployment	           = false
-def WdEnvFileIntegration       = "EOLEB7-MortgageApplication-Integration.yaml"
+def WdEnvFileIntegration       = "${DbbCommunityRepo}/WaziDeploy/zDeploy/environment-configuration/python/EOLEB7-Integration.yml"
 
 // Directories on the GitLab runner environment to persist Wazi Deploy Evidence files and to create an Wazi Deploy Index
 def WdEvidencesRoot			   = "/var/work/wazi_deploy_evidences_jenkins/"
@@ -115,6 +119,7 @@ def ReleaseVersion			  = ""		   // Next release version.
 def PackageCmd                = ""         // Packaging Command.
 def Packagerc                 = 0          // Packaging Command Return Code.
 def PackageOutputDir          = ""         // Temporary Directory for Packaging
+def PackageTarPath           = ""  // Temporary tar created by Packaging
 def PackageVersion			  = ""		   // Package Version when deploy through Wazi Deploy.
 def WdManifest                = ""         // Wazi Deploy Manifest File
 
@@ -192,10 +197,10 @@ pipeline {
 			
 					// Assess user provided parameters
 					if (params.PipelineVerboseLogging.equals("yes")){
-						zAppBuildVerbose = "-v"
+						zBuilderVerbose = "-v"
 						pipeverbose = true
 					} else {
-						zAppBuildVerbose = ""
+						zBuilderVerbose = ""
 						pipeverbose = false
 					}
 
@@ -324,8 +329,8 @@ pipeline {
 					println("*     AppHLQ                  : ${AppHLQ}")
 					println("*     BuildDir                : ${BuildDir}")
 					println("*")
-					println("*   Build/zAppBuild")
-					println("*     zAppBuildVerbose        : ${zAppBuildVerbose}")
+					println("*   Build/zBuilder")
+					println("*     zBuilderVerbose         : ${zBuilderVerbose}")
 					println("*     DbbDoBuild              : ${DbbDoBuild}")
 					println("*")
 					println("*   Anaylsis/SonarQube")
@@ -376,11 +381,12 @@ pipeline {
 							sh "echo ${PipelineName}[DEBUG]: CLASSPATH   = ${CLASSPATH}"
 						}
 						
-						BuildCmd = "dbbBuild.sh -w ${BuildDir} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -q ${AppHLQ} ${zAppBuildVerbose}"
+						BuildCmd = "${DbbPipelineScripts}/zBuilder.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -q ${AppHLQ} ${zBuilderVerbose}"
 						println("${PipelineName}[INFO]: Build Command = ${BuildCmd}")
-					
-						Buildrc = sh(script: "${BuildCmd}", returnStatus: true)
 
+                        dir("${WORKSPACE}/${AppName}") {
+						    Buildrc = sh(script: "${BuildCmd}", returnStatus: true)
+                        }
 						
 						if (pipeverbose) {
 							sh "echo ${PipelineName}[DEBUG]: HOME        = ${HOME}"
@@ -389,7 +395,7 @@ pipeline {
 							sh "echo ${PipelineName}[DEBUG]: CLASSPATH   = ${CLASSPATH}"
 						}
 						
-						BuildOutputDir = "${BuildDir}/logs"
+						BuildOutputDir = "${WORKSPACE}/${AppName}/logs"
 
 						println("${PipelineName}[INFO]: Build Output Folder = ${BuildOutputDir}")
 					
@@ -489,12 +495,12 @@ pipeline {
 					//println("${PipelineName}[DEBUG]: Release Type = ${ReleaseType}")
 					MsgHdr = "<strong>Packaging Step:</strong>"				
 
-                    PackageOutputDir = "${BuildDir}/logs/tempPackageDir"
+                    PackageOutputDir = "${WORKSPACE}/logs/tempPackageDir"
 
 					// Compute the next release verion for a release pipeline.
 					if (PipelineType == "release") {
 						println("${PipelineName}[INFO]: Start computing the next release version.")
-						ComputeReleaseVersionCmd = "computeReleaseVersion.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -r ${ReleaseType}"
+						ComputeReleaseVersionCmd = "${DbbPipelineScripts}/computeReleaseVersion.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -r ${ReleaseType}"
 						
 						println("${PipelineName}[INFO]: Compute Release Version Command = ${ComputeReleaseVersionCmd}")
 						
@@ -527,14 +533,18 @@ pipeline {
 
 					// Start packaging when compute the next release version successfully or not a release pipeline
 					if (autoCancelled == false) {
-						// Start packageBuildOutputs.sh command
+                        // The packaging script expects the BuildOutputDir to be in the workspace directory.
+                        sh "rm -rf ${WORKSPACE}/logs"
+                        sh "mv ${BuildOutputDir} ${WORKSPACE}"
+
+                        // Start packageBuildOutputs.sh command
 						if (ReleaseVersion == "") {
 							println("${PipelineName}[INFO]: Start packaging for a build pipeline.")
-							PackageCmd = "packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -i ${BuildNumber}"
+							PackageCmd = "${DbbPipelineScripts}/packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -i ${BuildNumber}"
 						}
 						else {
 							println("${PipelineName}[INFO]: Start packaging for a release pipeline. Release version: ${ReleaseVersion}")
-							PackageCmd = "packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -r ${ReleaseVersion} -i ${BuildNumber}"
+							PackageCmd = "${DbbPipelineScripts}/packageBuildOutputs.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -p ${PipelineType} -r ${ReleaseVersion} -i ${BuildNumber}"
 						}
 						
 						println("${PipelineName}[INFO]: Package Command = ${PackageCmd}")
@@ -542,9 +552,24 @@ pipeline {
 						Packagerc = sh(script: "${PackageCmd}" , returnStatus: true)
 						if (Packagerc == 0) {
 							println("${PipelineName}[INFO]: Packaging job passed.")
-							autoCancelled == false
-						}
-						else {
+							autoCancelled = false
+
+                            // Find the package tar file to use as input for Wazi Deploy stages.
+                            dir("${WORKSPACE}/logs") {
+                                def tarFiles = findFiles(glob: "build-*.tar")
+                                if (tarFiles.length > 0) {
+                                    PackageTarPath = tarFiles[0].path
+                                    println("${PipelineName}[INFO]: Found package tar file: ${PackageTarPath}")
+                                } else {
+                                    Msg = "No package tar file found in ${WORKSPACE}/logs/"
+                                    println("${PipelineName}[ERROR]: ${Msg}")
+                                    autoCancelled = true
+                                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                        sh "echo '${Msg}' && exit 1"
+                                    }
+                                }
+                            }
+                        } else {
 							Msg = "Packaging job failed. Exit code: ${Packagerc}. Refer to Jenkins Console Output Log."
 							println("${PipelineName}[WARN]: ${Msg}")
 							createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
@@ -584,7 +609,7 @@ pipeline {
 
 					// Generage deployment plan
 					println("${PipelineName}[INFO] Start generating the deployment plan for a release pipeline. Release version: ${ReleaseVersion}")
-					WdGenDeployPlanCmd = "wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -b ${AppBranch} -P ${PipelineType} -R ${ReleaseVersion} -I ${BuildNumber}"
+					WdGenDeployPlanCmd = "${DbbPipelineScripts}/wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -P ${PipelineType} -R ${ReleaseVersion} -I ${BuildNumber} -i ${PackageTarPath}"
 
                     WdGenDeployPlanrc = sh(script: "${WdGenDeployPlanCmd}" , returnStatus: true)
 
@@ -630,14 +655,14 @@ pipeline {
 					WdDeployCmd = 0
 					MsgHdr = "<strong>Deploy Integration Step:</strong>"
 
-					WdDeployCmd = "wazideploy-deploy.sh -w ${WORKSPACE} -e ${WdEnvFileIntegration} -l deploy/evidences/evidence.yaml"
+					WdDeployCmd = "${DbbPipelineScripts}/wazideploy-deploy.sh -w ${WORKSPACE} -e ${WdEnvFileIntegration} -i ${PackageTarPath} -l deploy/evidences/evidence.yaml"
 
 					WdDeployrc = sh(script: "${WdDeployCmd}" , returnStatus: true)
 
 					if (WdDeployrc == 0) {
 						println("${PipelineName}[INFO]: Deploy to integration job passed")
 
-						WdEvidenceCmd = "wazideploy-evidence.sh -w ${WORKSPACE} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html"
+						WdEvidenceCmd = "${DbbPipelineScripts}/wazideploy-evidence.sh -w ${WORKSPACE} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html"
 						WdEvidenceRc = sh(script: "${WdEvidenceCmd}" , returnStatus: true)
 						//println("${PipelineName}[DEBUG]: WdEvidenceRc: ${WdEvidenceRc}")
 
@@ -669,7 +694,7 @@ pipeline {
 							//println("${PipelineName}[DEBUG]: ShCmdRc: ${ShCmdRc}")
 						}
 						else {
-							println("${PipelineName}[INFO]: Create evidence directories failed")
+							println("${PipelineName}[ERROR]: Create evidence directories failed")
 						}
 
 						// Refresh index of all applications
