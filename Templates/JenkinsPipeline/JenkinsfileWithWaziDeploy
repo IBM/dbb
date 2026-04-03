@@ -427,6 +427,9 @@ pipeline {
                             if (dslMethodExists('addSummary')) {
                                 addSummary icon: "symbol-warning-outline plugin-ionicons-api plugin-ionicons-api", text: "${MsgHdr} ${Msg}"
                             }
+                            if (dslMethodExists('addWarningBadge')) {
+                                addWarningBadge icon: "symbol-warning-outline plugin-ionicons-api plugin-ionicons-api", text: "${MsgHdr} ${Msg}"
+                            }
                             WdDoPackaging  = false // Do not package if nothing was built.
                             WdDoDeployment = false // Do not deploy is nothing was built.
                         }
@@ -435,6 +438,9 @@ pipeline {
                         println("${PipelineName}[ERROR]: ${Msg}")
                         if (dslMethodExists('addSummary')) {
                             addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
+                        }
+                        if (dslMethodExists('addErrorBadge')) {
+                            addErrorBadge icon: "symbol-error", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                         }
                         WdDoPackaging  = false // Do not package if nothing was built.
                         WdDoDeployment = false // Do not deploy is nothing was built.
@@ -524,6 +530,9 @@ pipeline {
                                 if (dslMethodExists('addSummary')) {
                                     addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                                 }
+                                if (dslMethodExists('addErrorBadge')) {
+                                    addErrorBadge icon: "symbol-error", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
+                                }
                                 autoCancelled = true
                             }
                         } else {
@@ -531,6 +540,9 @@ pipeline {
                             println("${PipelineName}[ERROR]: ${Msg}")
                             if (dslMethodExists('addSummary')) {
                                 addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
+                            }
+                            if (dslMethodExists('addErrorBadge')) {
+                                addErrorBadge icon: "symbol-error", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                             }
                             autoCancelled = true
                         }
@@ -583,6 +595,9 @@ pipeline {
                             if (dslMethodExists('addSummary')) {
                                 addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                             }
+                            if (dslMethodExists('addErrorBadge')) {
+                                addErrorBadge icon: "symbol-error", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
+                            }
                             autoCancelled = true
                         }
                     }
@@ -633,6 +648,9 @@ pipeline {
                         println("${PipelineName}[ERROR]: ${Msg}")
                         if (dslMethodExists('addSummary')) {
                             addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
+                        }
+                        if (dslMethodExists('addErrorBadge')) {
+                            addErrorBadge icon: "symbol-error", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                         }
                         autoCancelled = true
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
@@ -730,6 +748,9 @@ pipeline {
                         println("${PipelineName}[ERROR]: ${Msg}")
                         if (dslMethodExists('addSummary')) {
                             addSummary icon: "symbol-alert-circle-outline plugin-ionicons-api", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
+                        }
+                        if (dslMethodExists('addErrorBadge')) {
+                            addErrorBadge icon: "symbol-error", text: "${MsgHdr} ${Msg}", style: "color: var(--error-color)"
                         }
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             sh "echo 'Deployment job failed. Please check console output log.' && exit ${WdDeployrc}"
