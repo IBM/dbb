@@ -19,7 +19,7 @@ def JenkinsAgent    = "ZosAgent"  // Jenkins Node/Label under z/OS UNIX System S
 def JenkinsX86Agent = "x86-builder"   // Jenkins Node/Label to drive distributed actions.
 
 // Debug Variables
-def pipeverbose = false  // Enable Pipeline Debug Messages (true/false) - Default to false for production.
+def verbose = false  // Enable Pipeline Debug Messages (true/false) - Default to false for production.
 
 // ============================================================================
 // Lifecycle Management
@@ -219,10 +219,10 @@ pipeline {
                     // Validate and assess user provided parameters
                     if (params.PipelineVerboseLogging.equals("yes")){
                         zBuilderVerbose = "-v"
-                        pipeverbose = true
+                        verbose = true
                     } else {
                         zBuilderVerbose = ""
-                        pipeverbose = false
+                        verbose = false
                     }
 
                     PipelineType = params.PipelineType
@@ -230,7 +230,7 @@ pipeline {
 
                     Buildrc = 0
 
-                    if (pipeverbose) {
+                    if (verbose) {
                         println("${PipelineName}[DEBUG]: Format yyyyMMdd.hhmmss.mmm = " + StartDateTime.format("yyyyMMdd.hhmmss.mmm"))
                         println("${PipelineName}[DEBUG]: Format yyyyMMdd.HHmmss.mmm = " + StartDateTime.format("yyyyMMdd.HHmmss.mmm"))
                         sh "env | sort"
@@ -372,7 +372,7 @@ pipeline {
 
                     Buildrc = 0
 
-                    if (pipeverbose) {
+                    if (verbose) {
                         sh "echo ${PipelineName}[DEBUG]: HOME      = ${HOME}"
                         sh "echo ${PipelineName}[DEBUG]: DBB_HOME  = ${DBB_HOME}"
                         sh "echo ${PipelineName}[DEBUG]: DBB_CONF  = ${DBB_CONF}"
@@ -385,13 +385,13 @@ pipeline {
                         Buildrc = sh(script: "${BuildCmd}", returnStatus: true)
                     }
 
-                    if (pipeverbose) {
+                    if (verbose) {
                         sh "echo ${PipelineName}[DEBUG]: Build Return Code = ${Buildrc}"
                     }
                     BuildOutputDir = "${WORKSPACE}/${AppName}/logs"
                     println("${PipelineName}[INFO]: Build Output Folder = ${BuildOutputDir}")
 
-                    if (pipeverbose) {
+                    if (verbose) {
                         // Show the contents of the DBB Build Directory
                         dir("${BuildOutputDir}") {
                             sh "pwd ; ls -alT"
@@ -404,7 +404,7 @@ pipeline {
                             BuildFile = findFiles(glob: "buildList.txt")
                         }
                     
-                        if (pipeverbose) {
+                        if (verbose) {
                             println("${PipelineName}[DEBUG]: BuildFile           = " + BuildFile)
                             println("${PipelineName}[DEBUG]: BuildFile.length    = " + BuildFile.length)
                             if (BuildFile.length > 0) {
@@ -486,7 +486,7 @@ pipeline {
             steps {
                 script {
                     println("${PipelineName}[INFO]: Packaging Starting.")
-                    if (pipeverbose) {
+                    if (verbose) {
                         println("${PipelineName}[DEBUG]: Pipeline Type = ${PipelineType}")
                         println("${PipelineName}[DEBUG]: Release Type = ${ReleaseType}")println("${PipelineName}[DEBUG]: Release Type = ${ReleaseType}")
                     }
@@ -507,7 +507,7 @@ pipeline {
                         if (outRc == 0) {
                             def version = searchLogOutput("version: .*", outText)
                             if (version) {
-                                if (pipeverbose) {
+                                if (verbose) {
                                     println("${PipelineName}[DEBUG]: ${version}")
                                 }
                                 ReleaseVersion = version.substring(9, version.indexOf(". rc="))
@@ -524,7 +524,7 @@ pipeline {
                             createSummary icon:"error.svg", text: "${MsgHdr} ${Msg}"
                             autoCancelled = true
                         }
-                        if (pipeverbose) {
+                        if (verbose) {
                             println("${PipelineName}[DEBUG]: Do not compute the next release version for non-release pipeline.")
                         }
                         autoCancelled = false
@@ -627,7 +627,7 @@ pipeline {
                     }
 
                     DeployOutputDir = "${WORKSPACE}/deployPkgDir"
-                    if (pipeverbose) {
+                    if (verbose) {
                         println("${PipelineName}[DEBUG]: DeployOutputDir = ${DeployOutputDir}")
                     }
                 }
@@ -655,7 +655,7 @@ pipeline {
                     MsgHdr = "Deploy Integration Step:"
 
                     WdDeployCmd = "${DbbPipelineScripts}/wazideploy-deploy.sh -w ${WORKSPACE} -e ${WdEnvFileIntegration} -i ${PackageTarPath} -l deploy/evidences/evidence.yaml"
-                    if (pipeverbose) {
+                    if (verbose) {
                         WdDeployCmd = WdDeployCmd+" -d"
                     }
                     WdDeployrc = sh(script: "${WdDeployCmd}", returnStatus: true)
@@ -665,7 +665,7 @@ pipeline {
 
                         WdEvidenceCmd = "${DbbPipelineScripts}/wazideploy-evidence.sh -w ${WORKSPACE} -l deploy/evidences/evidence.yaml -o deploy/deployment-report.html"
                         WdEvidenceRc = sh(script: "${WdEvidenceCmd}", returnStatus: true)
-                        if (pipeverbose) {
+                        if (verbose) {
                             println("${PipelineName}[DEBUG]: WdEvidenceRc: ${WdEvidenceRc}")
                         }
 
@@ -678,7 +678,7 @@ pipeline {
 
                         DeployEvidencesDir = "${WORKSPACE}/deployPkgDir/deploy/evidences"
                         WdEvidencesDir = "${WdEvidencesRoot}/${AppName}/integration"
-                        if (pipeverbose) {
+                        if (verbose) {
                             println("${PipelineName}[DEBUG]: DeployEvidencesDir = ${DeployEvidencesDir}")
                             println("${PipelineName}[DEBUG]: WdEvidencesDir = ${WdEvidencesDir}")
                         }
@@ -748,7 +748,7 @@ pipeline {
                 script {
                     println("${PipelineName}[INFO]: Performing workspace cleanup.")
                     
-                    if (pipeverbose) {
+                    if (verbose) {
                         dir("${WORKSPACE}") {
                             sh "pwd ; ls -al"
                         }
