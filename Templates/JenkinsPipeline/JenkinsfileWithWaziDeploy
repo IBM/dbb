@@ -161,6 +161,17 @@ def StartDateTime   = ""         // Pipeline Start Date/Time
 StartDateTime = new Date()
 
 // ============================================================================
+// Branch Configuration Map
+// ============================================================================
+def branchConfigs = [
+    'MAIN':    [build: true, scan: false, package: true, deploy: false],
+    'FEATURE': [build: true, scan: false, package: true, deploy: false],
+    'HOTFIX':  [build: true, scan: false, package: true, deploy: false],
+    'RELEASE': [build: true, scan: false, package: true, deploy: false],
+    'EPIC':    [build: true, scan: false, package: true, deploy: false]
+]
+
+// ============================================================================
 // Pipeline Definition
 // ============================================================================
 pipeline {
@@ -244,53 +255,34 @@ pipeline {
                     BranchOkay     = false
                     def PipelineTypeUpper = PipelineType.toUpperCase()
 
-                    // Configure the stages for the main branch
-                    if ((Branch.startsWith('MAIN') == true)) {
-
-                        DbbDoBuild      = true  // Perform DBB Build.
-                        SonarQubeDoScan = true  // Perform Sonar scan.
-
-                        WdDoPackaging   = true  // Perform the Packaging.
-                        if (PipelineType == "release") { // Perform the Deployment through Wazi Deploy for a release pipeline.
-                            WdDoDeployment  = true 
-                            DeployOutputDir = "${BuildDir}/deployPkgDir"
+                    // Apply branch configuration using centralized map
+                    def branchPrefix = branchConfigs.keySet().find { Branch.startsWith(it) }
+                    
+                    if (branchPrefix) {
+                        def config = branchConfigs[branchPrefix]
+                        DbbDoBuild      = config.build
+                        SonarQubeDoScan = config.scan
+                        WdDoPackaging   = config.package
+                        WdDoDeployment  = config.deploy
+                        
+                        // Special handling for MAIN branch release pipeline
+                        if ((branchPrefix == 'MAIN' || branchPrefix == 'RELEASE') && PipelineType == "release") {
+                            WdDoDeployment     = true
+                            DeployOutputDir    = "${BuildDir}/deployPkgDir"
                             DeployEvidencesDir = "${DeployOutputDir}/deploy/evidences"
-                        } else { //Do not perform the deployment if this is a build pipeline.
-                            WdDoDeployment  = false 
                         }
+                        
                         BranchOkay = true
                     }
 
-                    // Configure the stages for feature and hotfix branches
-                    if (Branch.startsWith('FEATURE') == true || Branch.startsWith('HOTFIX') == true) {
-
-                        DbbDoBuild      = true  // Perform DBB Build.
-                        SonarQubeDoScan = true  // Perform Sonar scan.
-
-                        WdDoPackaging   = true  // Perform the Packaging.
-                        WdDoDeployment  = false  // Do not perform the Deployment through Wazi Deploy. Up to the developer to install it.
-
-                        BranchOkay = true
-                    }
-
-                    // Configure the stages for RELEASE and EPIC branches
-                    if  (Branch.startsWith('RELEASE') == true || Branch.startsWith('EPIC') == true) {
-                        DbbDoBuild      = true  // Perform DBB Build.
-                        SonarQubeDoScan = true  // Perform Sonar scan.
-
-                        WdDoPackaging   = true  // Perform the Packaging.
-                        WdDoDeployment  = false  // Do not perform the Deployment through Wazi Deploy. Up to the developer to install it.
-
-                        BranchOkay = true
-                    }
-
-                    // Manage preview pipelines
-                    if ((PipelineTypeUpper.startsWith('PREVIEW') == true)) {
+                    // Manage preview pipelines - override configuration
+                    if (PipelineTypeUpper.startsWith('PREVIEW')) {
                         DbbDoBuild      = true
-                        // Skip any subsequent steps for preview.
+                        // Skip any subsequent steps for preview
                         SonarQubeDoScan = false
                         WdDoPackaging   = false
                         WdDoDeployment  = false
+                        BranchOkay      = true  // Allow preview on any branch
                     }
 
                     // If branch processing has not been defined, gracefully terminate the pipeline.
@@ -303,6 +295,7 @@ pipeline {
                     }
 
                     println("${PipelineName}[INFO]: AppBranch = ${AppBranch}")
+                    println("${PipelineName}[INFO]: Branch Configuration Applied: Build=${DbbDoBuild}, Scan=${SonarQubeDoScan}, Package=${WdDoPackaging}, Deploy=${WdDoDeployment}")
                 }
             }
         } // End: stage('Pipeline Setup')
