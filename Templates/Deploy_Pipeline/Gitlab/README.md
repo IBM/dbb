@@ -101,7 +101,7 @@ The [Common Backend Scripts](../Common-Backend-Scripts/) and Wazi Deploy must be
 
 ### Step 1: Configure GitLab CI/CD Variables
 
-Navigate to **Settings → CI/CD → Variables** in your GitLab project and add the following **protected** and **masked** variables:
+Navigate to **Settings → CI/CD → Variables** in your GitLab project and add the following variables, as **protected** and **masked**:
 
 | Variable                   | Description                                          | Example Value              |
 | -------------------------- | ---------------------------------------------------- | -------------------------- |
@@ -174,7 +174,7 @@ The pipeline defines the following inputs with built-in validation:
 ### Running the Pipeline via Manual Trigger
 
 1. Navigate to **Build → Pipelines → Run Pipeline**
-2. Select the branch (typically `main`)
+2. Select the branch for which the pipeline is selected to run
 3. Fill in the pipeline inputs:
 
    **Example for Build Deployment:**
