@@ -14,12 +14,12 @@ The pipeline supports **manual and API triggers** and implements the following s
 
   * Validates the pipeline input parameters passed during manual or API trigger.
   * Determines the appropriate environment configuration file based on the selected target environment.
-  * Ensures all required parameters (e.g., `application`, `buildId`, `artifactoryRepo`) are defined.
+  * Ensures all required parameters (e.g., `application`, `buildId`, ..) are defined.
 
 * `Generate Plan` 
 
   * Uses the Wazi Deploy script [`wazideploy-generate.sh`](../../Common-Backend-Scripts/wazideploy-generate.sh) to create the deployment plan on z/OS Unix System Services.
-  * Supports both build-based and release-based deployments depending on the `pipelineType` value.
+  * Supports both build-based and release-based deployments depending on the `packageType` value.
 
 * `Deploy` 
 
@@ -95,71 +95,117 @@ The [Common Backend Scripts](../Common-Backend-Scripts/) and Wazi Deploy must be
 
 ---
 
-## Installation and Setup of Template
+## Installation and Setup
 
 **Note:** Please work with your DevOps or pipeline specialist to configure this template.
 
-1. Place the `.gitlab-ci.yml` file in the **root directory** of your GitLab project.
-2. Ensure the **GitLab runner** has access to both the USS environment and the Artifactory repository.
-3. Review and adapt the environment paths and variables according to your setup.
+### Step 1: Configure GitLab CI/CD Variables
 
-### Required Environment Variables (in GitLab → Settings → CI/CD → Variables)
+Navigate to **Settings → CI/CD → Variables** in your GitLab project and add the following variables, as **protected** and **masked**:
 
-| Variable                                    | Description                                                         |
-| ------------------------------------------- | ------------------------------------------------------------------- |
-| `RSEAPI_USER`                               | Username for RSE API server authentication (Zowe).                  |
-| `RSEAPI_PASSWORD`                           | Password for RSE API user.                                          |
-| `RSEAPI_WORKING_DIRECTORY`                  | Working directory path on USS for Zowe commands.                    |
+| Variable                   | Description                                          | Example Value              |
+| -------------------------- | ---------------------------------------------------- | -------------------------- |
+| `RSEAPI_USER`              | Username for RSE API server authentication (Zowe)   | `USERID`                   |
+| `RSEAPI_PASSWORD`          | Password for RSE API user                            | `********`                 |
+| `RSEAPI_WORKING_DIRECTORY` | Working directory path on USS for Zowe commands      | `/u/userid`                |
+| `PIPELINE_WORKSPACE`       | Base workspace directory on USS for pipeline runs    | `/u/userid/pipeline-work`  |
+
+### Step 2: Customize Pipeline Configuration
+
+1. Place the [`.gitlab-ci.yml`](.gitlab-ci.yml) file in the **root directory** of your GitLab project.
+
+2. Review and customize the following variables in the `.gitlab-ci.yml` file according to your environment:
+
+   ```yaml
+   variables:
+     # Evidence directories - adjust paths as needed
+     wdEvidencesRoot: /var/work/wazi_deploy_evidences_gitlab/
+     wdEvidencesIndex: /var/work/wazi_deploy_evidences_gitlab_index/
+   ```
+
+3. Update the `targetEnvironment` options in the `spec.inputs` section to match your environment names:
+
+   ```yaml
+   spec:
+     inputs:
+       targetEnvironment:
+         options:
+           - "EOLEB7-Integration"
+           - "EOLEB7-Acceptance"
+           - "EOLEB7-Production"
+   ```
+
+### Step 3: Verify Prerequisites
+
+Ensure the following are properly configured:
+
+* **GitLab runner** with shell executor and access to z/OS USS environment
+* **Zowe CLI** with RSE API plugin (version 4.0.0 or later) installed on the runner
+* **Common Backend Scripts** deployed and accessible on z/OS USS
+* **IBM Wazi Deploy** installed and configured on z/OS
+* Corresponding environment configuration files (e.g., `EOLEB7-Integration.yml`) available in the Wazi Deploy environment configuration directory
 
 ---
 
 ## Pipeline Usage
 
-This CD pipeline supports **manual or API triggers** and can be used for both build and release deployments.
+This CD pipeline uses **GitLab CI/CD inputs** (introduced in GitLab 15.11) to provide a simplified, type-safe parameter interface. The pipeline supports **manual and API triggers** for both build and release deployments.
 
-It automatically performs validation, plan generation, deployment, evidence generation, and cleanup.
+### Pipeline Inputs
 
-### Pipeline Parameters
+The pipeline defines the following inputs with built-in validation:
 
-| Parameter           | Required                      | Description                                                               |
-| ------------------- | ----------------------------- | ------------------------------------------------------------------------- |
-| `application`       |                              | Application name to deploy.                                                |
-| `buildId`           |                              | Build identifier corresponding to the artifact.                            |
-| `releaseVersion`    |  Only for release pipelines  | Release version to deploy (e.g., `rel-2.6.0`).                             |
-| `targetEnvironment` |                              | Target deployment environment (`integration`, `acceptance`, `production`). |
-| `branchName`        |                              | Source branch name used for the build.                                     |
-| `pipelineType`      |                              | Pipeline type: `build` or `release`.                                       |
+| Input               | Type   | Required | Default              | Description                                                                                      |
+| ------------------- | ------ | -------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| `application`       | string | Yes      | -                    | Application name to deploy (e.g., `retirementCalculator`)                                        |
+| `packageType`       | string | No       | `build`              | Type of package: `build` (preliminary) or `release`                                              |
+| `packageReference`  | string | Yes      | -                    | Package reference - for releases: release name (e.g., `rel-2.6.0`), for builds: branch reference |
+| `buildId`           | string | Yes      | -                    | Build identifier from the original build pipeline (e.g., `12247`)                                |
+| `targetEnvironment` | string | No       | `EOLEB7-Integration` | Target deployment environment (dropdown selection)                                               |
+
+**Note:** The pipeline uses GitLab's `spec.inputs` feature, which provides:
+- Type validation and dropdown selections in the UI
+- Clear parameter descriptions
+- Default values for optional parameters
+- Better API integration support
 
 ---
 
-### Running the  Pipeline via Manual Trigger (from GitLab UI)
+### Running the Pipeline via Manual Trigger
 
-1. Navigate to **CI/CD → Pipelines → Run Pipeline**
-2. Choose the appropriate branch (e.g., `main`)
-3. Enter pipeline variables:
+1. Navigate to **Build → Pipelines → Run Pipeline**
+2. Select the branch for which the pipeline is selected to run
+3. Fill in the pipeline inputs:
 
-   Eg:
+   **Example for Build Deployment:**
    ```
    application: retirementCalculator
+   packageType: build
+   packageReference: main
    buildId: 12247
-   targetEnvironment: integration
-   branchName: main
-   pipelineType: build
+   targetEnvironment: EOLEB7-Integration
    ```
+
+   **Example for Release Deployment:**
+   ```
+   application: retirementCalculator
+   packageType: release
+   packageReference: rel-2.6.0
+   buildId: 12247
+   targetEnvironment: EOLEB7-Production
+   ```
+
 4. Click **Run pipeline**
 
----
+## Pipeline Artifacts
 
-## Summary
+After each deployment, the pipeline generates and publishes the following artifacts:
 
-This template provides a **deployment-only GitLab CD pipeline** to promote application builds across environments using IBM Wazi Deploy and Zowe CLI.
+* **Deployment Report** (`deployment-report.html`) - HTML report with deployment details and status
+* **Evidence File** (`evidence.yaml`) - YAML file containing deployment evidence for audit and compliance
 
-It is ideal for:
+These artifacts are available in the **Build → Pipelines → [Pipeline Run] → Job Artifacts at Stage 'Report'** section.
 
-* Automating deployments of prebuilt packages
-* Maintaining auditable evidence across environments
-* Integrating mainframe deployments into enterprise DevOps pipelines
 
----
 
 
