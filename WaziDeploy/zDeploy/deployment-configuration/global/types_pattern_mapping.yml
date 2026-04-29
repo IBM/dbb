@@ -1,0 +1,94 @@
+# Notes:
+# 
+# Upload strategy:
+#  Default: Upload files is via ZOAU python APIs by. native_copy only on selected operations where datasets
+#  without any shared allocations can be guaranteed (probably JCL).
+#
+# Concurrent access check:
+#  Default: Check for concurrent allocations on target datasets (not applicable when using native_copy). Deployment fails on concurrent access.
+#  Exceptions: Deploying into Online regions where concurrent allocations are expected
+# 
+
+types:
+  - type: "LOAD" # Not done yet - for Ansible
+    pattern: .*\.LOAD$ # Not done yet - for Pythpn 
+    pds: 
+      name: "{{ hlq }}.LOAD"
+      backup: "{{ hlq }}.BACK.LOAD"
+      spec: "{{ common_pds_load_spec }}"
+    is_load: true
+    force_lock: true
+    force: true
+    use_native_copy: true
+  - type: "CICSLOAD"
+    pattern: .*\.CICSLOAD$
+    pds: 
+      name: "{{ hlq }}.LOAD"
+      backup: "{{ hlq }}.BACK.LOAD"
+      spec: "{{ common_pds_load_spec }}"
+    is_load: true
+    force_lock: True
+    force: true
+    use_native_copy: true
+    cics_systems:
+      - "{{ cics_sys_def }}"
+  - type: "MAPLOAD"
+    pattern: .*\.MAPLOAD$
+    pds: 
+      name: "{{ hlq }}.LOAD"
+      backup: "{{ hlq }}.BACK.LOAD"
+      spec: "{{ common_pds_load_spec }}"
+    is_load: true
+    force_lock: true
+    use_native_copy: true
+    cics_systems:
+      - "{{ cics_sys_def }}"
+  - type: "DBRM"
+    pattern: .*.DBRM$
+    pds: 
+      name: "{{ hlq }}.DBRM"
+      backup: "{{ hlq }}.BACK.DBRM"
+      spec: "{{ common_pds_binary_spec }}"
+    is_binary: True
+    force_lock: false
+    use_native_copy: true
+    db2_systems:
+      - "{{ db2_sys_def }}"
+  - type: "JCL"
+    pattern: .*.JCL$
+    pds: 
+      name: "{{ hlq }}.JCL"
+      backup: "{{ hlq }}.BACK.JCL"
+      spec: "{{ common_pds_txt_spec }}"
+    force_lock: false
+    use_native_copy: true
+    text_subs: "{{ app_jcl_text_subs_patterns if app_jcl_text_subs_patterns is defined else [] }}"
+  - type: "BIN"
+    pattern: .*.BIN$
+    uss:
+     directory: "{{ uss_root }}/bin/"
+     directory_backup: "{{ uss_root }}/bin/back/"
+     dest_mode: 0777
+     artifact_mode: 0755
+    is_binary: True
+    use_native_copy: true
+  - type: "SH"
+    pattern: .*.SH$
+    uss: 
+     directory: "{{ uss_root }}/sh/"
+     directory_backup: "{{ uss_root }}/sh/back/"
+     dest_mode: 0777
+     artifact_mode: 0755
+
+type_dbrm_temp:
+  - type: "DBRM"
+    pattern: .*.DBRM$
+    pds: 
+      name: "{{ hlq }}.TMP.DBRM"
+      backup: "{{ hlq }}.BACK.TMP.DBRM"
+      spec: "{{ common_pds_binary_spec }}"
+    is_binary: True
+    force_lock: false
+    use_native_copy: true
+    db2_systems:
+      - "{{ db2_sys_def }}"

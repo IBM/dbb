@@ -22,8 +22,8 @@ EPDIFF1  DFHMDF POS=(10,15),LENGTH=22,INITIAL='Interest Rate: ',       *
 EPRATE   DFHMDF POS=(10,42),LENGTH=5,INITIAL='99.99',                  *
                ATTRB=(NUM,FSET,NORM),COLOR=GREEN
          DFHMDF POS=(15,7),LENGTH=60,                                  *
-               INITIAL='Press PF9 to see companies that can match or be*
-               at this rate',                                          *
+               INITIAL='Press PF9 to see companies that can match'     *
+                 '  or be at this rate',                               *
                ATTRB=(ASKIP,NORM),HILIGHT=OFF,COLOR=BLUE
          DFHMDF POS=(14,15),LENGTH=43,                                 *
                INITIAL='Press F3 to quit or Enter to calculate loan',  *

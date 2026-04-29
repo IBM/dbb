@@ -35,6 +35,7 @@
 *.java zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
 *.yaml zos-working-tree-encoding=utf-8 git-encoding=utf-8
 *.yml zos-working-tree-encoding=utf-8 git-encoding=utf-8
+*.j2 zos-working-tree-encoding=utf-8 git-encoding=utf-8
 
 # binary files
 *.png binary

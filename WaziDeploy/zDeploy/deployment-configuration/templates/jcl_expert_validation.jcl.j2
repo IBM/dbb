@@ -1,0 +1,47 @@
+//CXPS0200 JOB ,
+// MSGCLASS=H,MSGLEVEL=(1,1),TIME=NOLIMIT,REGION=0M,COND=(16,LT)
+//*********************************************************************
+//* PID 5698-J01                                                      *
+//* COPYRIGHT TERACLOUD APS 2022, 2025                                *
+//*********************************************************************
+//* Run JCL Expert on a single PDS member.                            *
+//*********************************************************************
+//* Add job statement parameters, and configure the SET statements    *
+//*  1.  CXPHLQ should point to the HLQ of the product install.       *
+//*  2.  CXPPATH should point to the zFS product install location.    *
+//*  3.  JCLMEMB should point to the JCL member that will be scanned. *
+//*  4.  (optional) If CEE.SCEERUN is not in your LINKLST or LPA then *
+//*        modify the STEPLIB accordingly.                            *
+//*********************************************************************
+//*******************************************
+//*
+//* Notes:
+//*
+//* This Jinja2 templates iterate over the variable that is passed in
+//* via the loop condition
+//*
+//* This template is processed for each artifact. It does
+//*  submit a JCL per member
+//*
+//* This template uses the JCL Expert interface to parse
+//* and validate a single JCL member
+//*
+//* Author DBEHM
+//*******************************************
+//* CUSTOMIZATION JOB
+//*******************************************
+{# def jinja variables #}
+{# --- #}
+{% set artifact = jcl_member %}
+{# --- #}
+//* Invoke JCL Expert
+//EXPERT   EXEC PGM=CXPJCLB,PARMDD=PARMS
+//STEPLIB  DD DSN=JCLEXP.V2R1.SCXPLOAD,DISP=SHR
+//CXPHOME  DD PATH='/var/jclexpert/V2R1M0',PATHOPTS=ORDONLY
+//INDD     DD DSN={{ hlq }}.JCL({{ artifact['name'] }}),
+//         DISP=(SHR,KEEP)
+//PARMS DD * 
+POSIX(ON)/OUTPUT=TEXT 
+/*
+//*
+//*

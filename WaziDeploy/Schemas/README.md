@@ -1,0 +1,3 @@
+# Schemas
+
+This folder contains JSON schema to validate yaml deployment configuration files for Wazi Deploy. Those schema files are publicly hosted here so that developers can reference them as links in their IDEs to activate local validation for their configuration files. For more information, reference the [Wazi Deploy YAML Schema](https://www.ibm.com/docs/en/developer-for-zos/17.0.x?topic=reference-wazi-deploy-yaml-schemas).

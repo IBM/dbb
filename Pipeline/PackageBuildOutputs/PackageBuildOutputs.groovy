@@ -859,18 +859,28 @@ def copyArtifactsToUSS(Map<DeployableArtifact, Map> buildOutputsMap, String tarS
 
 
 		if (deployableArtifact.artifactType.equals("zFSFile")) {
-			def originalFile = new File(container + "/" + deployableArtifact.file)
-			println "\tCopy '${originalFile.toPath()}' to '${file.toPath()}'"
-			try {
-				copyFiles(originalFile.toString(), file.toString())
-				
-				// Append record to Wazi Deploy Application Manifest
-				if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
-					wdManifestGeneratorUtilities.appendArtifactToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, dependencySetRecord, propertiesRecord)
+			def originalFile
+			if(container) { // container can be null
+				originalFile = new File(container + "/" + deployableArtifact.file)
+			} else {
+				originalFile = new File(deployableArtifact.file)
+			}
+			if (originalFile.exists()) {
+
+				println "\tCopy '${originalFile.toPath()}' to '${file.toPath()}'"
+				try {
+					copyFiles(originalFile.toString(), file.toString())
+
+					// Append record to Wazi Deploy Application Manifest
+					if (wdManifestGeneratorUtilities && props.generateWaziDeployAppManifest && props.generateWaziDeployAppManifest.toBoolean()) {
+						wdManifestGeneratorUtilities.appendArtifactToManifest(deployableArtifact, "$relativeFilePath/$fileName", record, dependencySetRecord, propertiesRecord)
+					}
+				} catch (IOException exception) {
+					println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
+					rc = Math.max(rc, 1)
 				}
-				
-			} catch (IOException exception) {
-				println "!* [ERROR] Copy failed: an error occurred when copying '${originalFile.toPath()}' to '${file.toPath()}'"
+			} else {
+				println "!* [ERROR] The build output file '${originalFile.toPath()}' was not found.'"
 				rc = Math.max(rc, 1)
 			}
 		} else if  (deployableArtifact.artifactType.equals("DatasetMember")) {

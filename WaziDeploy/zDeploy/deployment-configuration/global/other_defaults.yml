@@ -1,0 +1,2 @@
+# Variables for system_command template
+system_command_cmd_default: "D T"
