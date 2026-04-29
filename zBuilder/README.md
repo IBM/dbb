@@ -13,4 +13,4 @@ Sample/Extension | Type | Description
 | [Language Configuration](LanguageConfiguration) | Language Step |  This language step task extension allows users to provide simple YAML configuration files that can be used to override default language task configuration variables. Delivered as product capability in [DBB 3.0.3](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=overview-what-is-new-noteworthy#version-303) |
 | [Mortgage Application](MortgageApplication) | Sample | A copy of the MortgageApplication sample that ships with DBB v3.0.x provided to be easily consumable by IDz for Eclipse and IDz for VSCode IDEs to demonstrate the User Build feature. |
 | [Process Deleted Files](ProcessDeletedFiles) | Custom Groovy Task | This custom groovy task manages deleted files in incremental builds by adding deletion records to the DBB Build Report for packaging compatibility and deleting build artifacts. |
-
+| [Document Build Reason](ReasonToBuildDocumentation/) | Groovy Task | This custom groovy task inspects the build list to analyze and document which files were built because they were changed or built because they are an impacted file. |
