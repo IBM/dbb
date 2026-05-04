@@ -673,18 +673,11 @@
                           "description": "Unix command to execute"
                         },
                         "options": {
-                          "if": { "type": ["string"] },
-                          "then": {
+                          "type": "array",
+                          "description": "Unix options",
+                          "items": {
                             "type": "string",
-                            "description": "Reference to a variable containing a list of unix options"
-                          },
-                          "else": {
-                            "type": "array",
-                            "description": "Unix options",
-                            "items": {
-                              "type": "string",
-                              "description": "Unix option"
-                            }
+                            "description": "Unix option"
                           }
                         },
                         "log": {
@@ -847,10 +840,7 @@
     },
     "logMode": {
       "type": "string",
-      "description": "The CopyMode for the copied log file",
-      "enum": [
-        "TEXT", "ASA_TEXT", "BINARY", "VB_BINARY", "LOAD"
-      ]
+      "description": "The CopyMode for the copied log file"
     },
     "scan": {
       "type": ["boolean", "string"],
