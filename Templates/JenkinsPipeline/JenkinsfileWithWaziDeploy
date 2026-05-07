@@ -195,7 +195,7 @@ pipeline {
                         parameters([
                             choice(
                                 choices: ["build", "release", "preview"],
-                                description: 'Pipeline type: build (CI), release (CD), or preview (quick validation)',
+                                description: 'Pipeline type: build, release, or preview (quick validation)',
                                 defaultValue: 'build',
                                 name: 'PipelineType'
                             ),
