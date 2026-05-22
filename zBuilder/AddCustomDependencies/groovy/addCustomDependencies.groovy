@@ -12,7 +12,7 @@ import java.nio.file.PathMatcher
 /**
  * Add Custom Dependency
  *
- * For each file in CHANGED_FILES, this task looks for a matching package
+ * For each file in SOURCE_FILE, this task looks for a matching package
  * configuration file named config/<memberName>.pkg somewhere in the
  * repository workspace. When found, it adds a custom logical dependency
  * from the changed file to that config file path.
@@ -64,11 +64,10 @@ if (sourceFiles.isEmpty()) {
 	return 0
 }
 
-int dependenciesAdded = 0
 int configMatchesFound = 0
 
 BuildGroup buildGroup = context.getBuildGroup(TaskConstants.BUILD_GROUP)
-Collection sourceCollection = buildGroup.getCollection("sources") // based on zBuilder defaults
+Collection sourceCollection = buildGroup.getCollection(TaskConstants.SOURCES)
 
 if (sourceCollection == null) {
 	if (verbose) {
@@ -100,28 +99,24 @@ sourceFiles.each {
 		return
 	}
 
-	if (dependencyTarget ){
-
-		configMatchesFound++
-
-		LogicalFile logicalFile = sourceCollection.getLogicalFile(sourceFile)
-		if (logicalFile == null) {
-			println ">> WARNING: Unable to resolve LogicalFile for ${sourceFile}. Skipping dependency ${dependencyTarget}"
-			return
-		}
-		String depName = CopyToPDS.createMemberName(dependencyTarget)
-		String library = "${configDirectoryName}".toUpperCase()
-		String category = configExtension?.replaceFirst(/^\./, '')?.toUpperCase()
-		LogicalDependency logicalDependency = new LogicalDependency(depName,library , category)
-		logicalFile.addLogicalDependency(logicalDependency)
-		updatedLogicalFiles.add(logicalFile)
-		dependenciesAdded++
-
-		println "> Added custom dependency to file '${sourceFile}'"
+	LogicalFile logicalFile = sourceCollection.getLogicalFile(sourceFile)
+	if (logicalFile == null) {
+		println ">> WARNING: Unable to resolve LogicalFile for ${sourceFile}. Skipping dependency ${dependencyTarget}"
+		return
 	}
+	String depName = CopyToPDS.createMemberName(dependencyTarget)
+	String library = "${configDirectoryName}".toUpperCase()
+	String category = configExtension?.replaceFirst(/^\./, '')?.toUpperCase()
+	LogicalDependency logicalDependency = new LogicalDependency(depName,library , category)
+	logicalFile.addLogicalDependency(logicalDependency)
+	updatedLogicalFiles.add(logicalFile)
+	configMatchesFound++
+
+	println "> Added custom dependency to file '${sourceFile}'"
+
 }
 
-println "> Updating logical files: ${configMatchesFound}"
+println "> Updated logical files: ${configMatchesFound}"
 sourceCollection.addLogicalFiles(updatedLogicalFiles)
 
 return 0
