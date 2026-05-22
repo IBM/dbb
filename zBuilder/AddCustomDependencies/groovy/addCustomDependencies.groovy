@@ -33,7 +33,7 @@ boolean verbose = context.getBooleanVariable(TaskConstants.IS_VERBOSE_MODE)
 String configDirectoryName = config.getVariable("dependencyFilePath")
 String configExtension = config.getVariable("dependencyfileExtension")
 List<String> forFilesFilterPatterns = config.getListVariable("forFilesFilter") ?: ["**/*", "**/.*"]
-workspacePath = context.getStringVariable(TaskConstants.WORKSPACE)
+String workspacePath = context.getStringVariable(TaskConstants.WORKSPACE)
 
 if (!configDirectoryName) {
 	println ">> ERROR: Missing task configuration 'dependencyFilePath'. Exiting."
@@ -71,9 +71,9 @@ Collection sourceCollection = buildGroup.getCollection(TaskConstants.SOURCES)
 
 if (sourceCollection == null) {
 	if (verbose) {
-		println ">> The collection 'sources' was not found in BuildGroup.}"
+		println ">> The collection 'sources' was not found in BuildGroup."
 	}
-	return
+	return 1
 }
 
 List<LogicalFile> updatedLogicalFiles = new ArrayList<LogicalFile>()
