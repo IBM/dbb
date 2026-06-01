@@ -76,7 +76,7 @@ computeBuildConfiguration() {
                 getBaselineReference
                 Lifecycle="${Lifecycle} --baselineRef ${baselineRef}"
                 # Release maintenance / epic / project branch clones the dependency information from the main build branch
-                writezBuilderOverride "${mainBranchSegment}"
+                
                 # appending the --debug flag to compile with TEST options
                 # Lifecycle="${Lifecycle} --debug"
             fi
