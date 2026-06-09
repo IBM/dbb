@@ -1,0 +1,24 @@
+---
+-  name: "Perform Fetch"
+   collections:
+     - ibm.ibm_zos_core
+   vars:
+    zos_environment_vars:
+      _BPXK_AUTOCVT: "ON"
+      LIBPATH: "{{ zos_python_installation_path }}/lib:{{ ZOAU_HOME }}/lib:/lib:/usr/lib:/lib"
+      PATH: "{{ zos_python_installation_path }}/bin:{{ ZOAU_HOME }}/bin:/bin:/var/bin"
+      _CEE_RUNOPTS: "FILETAG(AUTOCVT,AUTOTAG) POSIX(ON)"
+      _TAG_REDIR_ERR: "txt"
+      _TAG_REDIR_IN: "txt"
+      _TAG_REDIR_OUT: "txt"
+      LANG: "C"
+   
+   block:
+
+    - name: Fetch USS file from z/OS
+      zos_fetch:
+        src: "{{ zos_smpe_installation_dir }}/tar/wazideploy.tar"
+        dest: "{{ local_extract_dir }}/"
+        flat: true
+        is_binary: true
+      environment: "{{ zos_environment_vars }}"
