@@ -1,11 +1,85 @@
+# This template is triggered either from an application or deployment pipeline
+#  It takes a set of arguments and triggers
+#  an IBM Wazi Deploy deployment process through the Common Backend scripts
+#  It assumes, that the package was upload to Artifactory or Nexus
+
 parameters:
   - name: environmentName
     type: string
-    default: "." # defaults for any parameters that specified with "." (current directory)
-  - name: packageVersion
+  - name: packageReference
     type: string
-    default: "default"
+  - name: packageIdentifier
+    type: string
+  - name: packageType
+    type: string
+
 jobs:
+  - deployment: DEPLOY_${{ parameters.environmentName }}
+    displayName: "Deploy to ${{ parameters.environmentName }}"
+    environment: "${{ parameters.environmentName }}"
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: none
+            - task: InstallSSHKey@0
+              inputs:
+                knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
+                sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
+
+            # Generate Deployment Plan.
+            - task: SSH@0
+              inputs:
+                sshEndpoint: $(zosSSHConnection)
+                runOptions: "commands"
+                commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -r deploy-logs-${{ parameters.environmentName }}/deployment-plan-report.html -I ${{ parameters.packageIdentifier }} -R ${{ parameters.packageReference }} -P ${{ parameters.packageType }}"
+                # For reference when creating a local tar file, and skipping the upload. In this case the pipeline needs to provide the reference to the tar file.
+                # commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -i $(application).tar -r deploy-logs/deployment-plan-report.html"
+                readyTimeout: "20000"
+              displayName: "Generate Deployment Plan with Wazi Deploy"
+
+
+            # Perform Deployment.
+            - task: SSH@0
+              inputs:
+                sshEndpoint: $(zosSSHConnection)
+                runOptions: "commands"
+                commands: ". ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e EOLEB7-$(application)-${{ parameters.environmentName }}.yaml -l deploy-logs-${{ parameters.environmentName }}/evidences/evidence.yaml"
+                readyTimeout: "20000"
+              displayName: "Deploy Package with Wazi Deploy"
+
+            # Generate Evidence.
+            - task: SSH@0
+              inputs:
+                sshEndpoint: $(zosSSHConnection)
+                runOptions: "commands"
+                commands: ". ./.profile && wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l deploy-logs-${{ parameters.environmentName }}/evidence.yaml -o deploy-logs-${{ parameters.environmentName }}/deployment-report.html"
+                readyTimeout: "20000"
+              displayName: "Generate deployment report with Wazi Deploy"
+
+            # Pull logs and publish them.
+            - task: CmdLine@2
+              inputs:
+                script: |
+                  rm -rf "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}" 
+                  mkdir "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}" 
+                  sftp -r $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy-logs-${{ parameters.environmentName }}/* "\"$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}\""
+              displayName: "Retrieve deployment reports"
+
+            - task: PublishBuildArtifacts@1
+              inputs:
+                PathtoPublish: "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}/"
+                ArtifactName: "deploy-logs-${{ parameters.environmentName }}"
+                publishLocation: "Container"
+              displayName: "Publish deployment logs"
+
+            # Store logs in evidence inventory
+            - template: createWaziDeployIndex.yml
+              parameters:
+                evidenceFolder: "deploy-logs-${{ parameters.environmentName }}"
+                environmentName: "${{ parameters.environmentName }}"
+
+
 # Left this as a template from a previous version showcasing the ADO package registry
 #  - job: RetrievePackage
 #    displayName: "Retrieve Deployment Package"
@@ -74,68 +148,3 @@ jobs:
 #          overwrite: true # boolean. Overwrite. Default: true.
 #          failOnEmptySource: true # boolean. Fail if no files found to copy. Default: false.
 #        displayName: "Upload Package to Deployment environment"
-
-  - deployment: DEPLOY_${{ parameters.environmentName }}
-    displayName: "Deploy to ${{ parameters.environmentName }}"
-    environment: "${{ parameters.environmentName }}"
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-            - download: none
-            - task: InstallSSHKey@0
-              inputs:
-                knownHostsEntry: $(zosSSHKnownHost) # Known Hosts Entry for build LPAR
-                sshKeySecureFile: $(zosSSHPrivateKeySecureFile) # Required.Reference to uploaded Private SSH Key that in ADO Pipeline/Libary/SecureFile that is installed for sftp processes
-
-            # Generate Deployment Plan.
-            - task: SSH@0
-              inputs:
-                sshEndpoint: $(zosSSHConnection)
-                runOptions: "commands"
-                commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -b $(branch) -r deploy-logs-${{ parameters.environmentName }}/deployment-plan-report.html -I $(buildNumber) -R ${{ parameters.packageVersion }} -P $(pipelineType)"
-                # For reference when creating a local tar file, and skipping the upload. In this case the pipeline needs to provide the reference to the tar file.
-                # commands: ". ./.profile && wazideploy-generate.sh -w $(uniqueWorkspaceId) -a $(application) -i $(application).tar -r deploy-logs/deployment-plan-report.html"
-                readyTimeout: "20000"
-              displayName: "Generate Deployment Plan with Wazi Deploy"
-
-
-            # Perform Deployment.
-            - task: SSH@0
-              inputs:
-                sshEndpoint: $(zosSSHConnection)
-                runOptions: "commands"
-                commands: ". ./.profile && wazideploy-deploy.sh -w $(uniqueWorkspaceId) -e EOLEB7-$(application)-${{ parameters.environmentName }}.yaml -l deploy-logs-${{ parameters.environmentName }}/evidences/evidence.yaml"
-                readyTimeout: "20000"
-              displayName: "Deploy Package with Wazi Deploy"
-
-            # Generate Evidence.
-            - task: SSH@0
-              inputs:
-                sshEndpoint: $(zosSSHConnection)
-                runOptions: "commands"
-                commands: ". ./.profile && wazideploy-evidence.sh -w $(uniqueWorkspaceId) -l deploy-logs-${{ parameters.environmentName }}/evidence.yaml -o deploy-logs-${{ parameters.environmentName }}/deployment-report.html"
-                readyTimeout: "20000"
-              displayName: "Generate deployment report with Wazi Deploy"
-
-            # Pull logs and publish them.
-            - task: CmdLine@2
-              inputs:
-                script: |
-                  rm -rf "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}" 
-                  mkdir "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}" 
-                  sftp -r $(zosSFTPUser)@$(zosHostname):$(uniqueWorkspaceId)/deployPkgDir/deploy-logs-${{ parameters.environmentName }}/* "\"$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}\""
-              displayName: "Retrieve deployment reports"
-
-            - task: PublishBuildArtifacts@1
-              inputs:
-                PathtoPublish: "$(Build.ArtifactStagingDirectory)/deploy-logs-${{ parameters.environmentName }}/"
-                ArtifactName: "deploy-logs-${{ parameters.environmentName }}"
-                publishLocation: "Container"
-              displayName: "Publish deployment logs"
-
-            # Store logs in evidence inventory
-            - template: createWaziDeployIndex.yml
-              parameters:
-                evidenceFolder: "deploy-logs-${{ parameters.environmentName }}"
-                environmentName: "${{ parameters.environmentName }}"
