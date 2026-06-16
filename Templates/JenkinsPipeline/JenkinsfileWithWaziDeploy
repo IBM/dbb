@@ -607,10 +607,17 @@ pipeline {
                     WdGenDeployPlanrc = 0
                     MsgHdr = "Generate Deployment Plan Step:"
 
+                    def packageIdentifier = ""
+                    if (ReleaseVersion == ""){
+                        packageIdentifier = "${AppBranch}"
+                    } else {
+                        packageIdentifier = "${ReleaseVersion}"
+                    }
+
                     // Generate deployment plan
-                    println("${PipelineName}[INFO]: Start generating the deployment plan for a release pipeline. Release version: ${ReleaseVersion}")
+                    println("${PipelineName}[INFO]: Start generating the deployment plan. Version: ${packageIdentifier}. BuildIdentifier: ${BuildNumber}")
                     if (autoCancelled == false) {
-                        WdGenDeployPlanCmd = "${DbbPipelineScripts}/wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -P ${PipelineType} -R ${ReleaseVersion} -I ${BuildNumber}"
+                        WdGenDeployPlanCmd = "${DbbPipelineScripts}/wazideploy-generate.sh -w ${WORKSPACE} -a ${AppName} -P ${PipelineType} -R ${packageIdentifier} -I ${BuildNumber}"
 
                         dir("${WORKSPACE}") {
                             WdGenDeployPlanrc = sh(script: "${WdGenDeployPlanCmd}", returnStatus: true)
@@ -663,7 +670,7 @@ pipeline {
                     WdDeployCmd = ""
                     MsgHdr = "Deploy Integration Step:"
 
-                    WdDeployCmd = "${DbbPipelineScripts}/wazideploy-deploy.sh -w ${WORKSPACE} -e ${WdEnvFileIntegration} -l deploy/evidences/evidence.yaml"
+                    WdDeployCmd = "${DbbPipelineScripts}/wazideploy-deploy.sh -a ${AppName} -w ${WORKSPACE} -e ${WdEnvFileIntegration} -l deploy/evidences/evidence.yaml"
                     if (verbose) {
                         WdDeployCmd = WdDeployCmd+" -d"
                     }
