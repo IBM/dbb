@@ -1,14 +1,14 @@
 # Azure DevOps pipeline templates
 
-This template provides an [azure-pipelines.yml](azure-pipelines.yml) definition file to setup an Azure DevOps Pipeline for applications managed in an Azure Git repository along with the [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) definition file as a dedicated pipeline to run the deployment/installation of an existing package via IBM Wazi Deploy for installing into controlled environments.
+This template provides an [azure-pipelines.yml](azure-pipelines.yml) definition file to setup an Azure DevOps Pipeline for applications managed in an Azure Git repository. The [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) definition file is a dedicated pipeline to run the deployment/installation of an existing package via IBM Wazi Deploy for installing into controlled environments.
 
 ## Overview and capabilities
 
-This pipeline template is implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/working-practices-intro) within an Azure DevOps context.
+These pipeline templates are implementing the [Git-based process and branching model for mainframe development](https://ibm.github.io/z-devops-acceleration-program/docs/working-practices-intro) within an Azure DevOps context.
 
-It leverages the [Common Backend scripts](../Common-Backend-Scripts/) to implement the Setup, Build, Packaging and Deployment stages. 
+They use the [Common Backend scripts](../Common-Backend-Scripts/) to implement the Setup, Build, Packaging and Deployment stages. 
 
-The **development pipeline** [azure-pipelines.yml](azure-pipelines.yml) implements the following stages
+The **development pipeline** [azure-pipelines.yml](azure-pipelines.yml) implements the following stages:
 
 * `Setup` stage to [clone](../Common-Backend-Scripts/README.md#clone-repository-with-gitclonesh) the Git repository to a workspace directory on z/OS Unix System Services. 
 * `Build` stage 
@@ -23,7 +23,7 @@ The **development pipeline** [azure-pipelines.yml](azure-pipelines.yml) implemen
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#wazideploy-deploysh) (Python-based)
   * to run the Wazi Deploy [evidence command](../Common-Backend-Scripts/README.md#wazideploy-evidencesh) to generate deployment report and updating the evidence.
   * to [prepare](../Common-Backend-Scripts/README.md#preparelogssh) the deployment log files and publish them to the Azure build result.
-* `Deployment` stages to deploy to controlled test environments, if triggered the [release pipeline process](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-release-pipeline-with-build-package-and-deploy-stages) via a manual pipeline request with the pipelineType set to release `release`:
+* `Deployment` stages to deploy to controlled test environments, if the [release pipeline process](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline/#the-release-pipeline-with-build-package-and-deploy-stages) is triggered via a manual pipeline request with the `pipelineType` set to release `release`:
   * to create the release candidate Git tag using the [computeReleaseVersion script](../Common-Backend-Scripts/README.md#computereleaseversionsh).
   * to run the Wazi Deploy [generate command](../Common-Backend-Scripts/README.md#wazideploy-generatesh) to download the package from the configured Artifact repository and generate the Deployment Plan.
   * to deploy the package with the Wazi Deploy [deploy command](../Common-Backend-Scripts/README.md#wazideploy-deploysh) (Python-based) into development and test regions
@@ -32,14 +32,14 @@ The **development pipeline** [azure-pipelines.yml](azure-pipelines.yml) implemen
 * `Cleanup` stage: 
   * to [delete the build workspace](../Common-Backend-Scripts/README.md#deleteworkspacesh) on z/OS Unix System Services.
 
-The **deployment pipeline** template [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) is a manually-driven pipeline that allows teams to deploy an application package that has previously been created by the application pipeline into controlled environments, such as acceptance and production environments.
+The **deployment pipeline** [azure-pipeline-deploy.yml](azure-pipeline-deploy.yml) is a manually-triggered pipeline that allows teams to deploy an application package, that has previously been created by the application pipeline,  into controlled environments, such as acceptance and production environments.
 
 It mandates the following input parameters:
 * Target deployment environment selection
 * Packaging information to retrieve the package from the artifact repository:
   * Package type - either a preliminary or release build
   * Package reference - either the branch name (like 'main') or release name (like 'rel-1.0.0') for the archive
-  * Package identifier - the unique identifier of the build. The ADO build number
+  * Package identifier - the unique identifier of the build, like the Azure DevOps build number
 
 Based on the above information it kicks off the installation of the specified package.
 
@@ -51,7 +51,7 @@ To leverages this template, access to an Azure DevOps environment is required, a
 
 The template leverages the [SSH Task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/ssh-v0?view=azure-pipelines) to invoke the [Common Backend scripts](../Common-Backend-Scripts/) via the configured SSH endpoint. Alternatively, the template can be modified to use the [CmdLine task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/cmd-line-v2?view=azure-pipelines) to leverage an alternative communication technology such as Zowe CLI.
 
-The Common Backend Scripts need to be configured for the selected deployment technologies to operate correctly. It is assumed that the Common Backend Scripts are configured to publish (upload) the package to the configured Artifact repository server, from where the deployment pipeline will automatically pick it up.
+The Common Backend Scripts need to be configured for the selected deployment technologies to operate correctly. It is assumed that the Common Backend Scripts are configured to publish (upload) the package to the configured Artifact repository server, where the deployment pipeline will automatically pick up the archives from.
 
 To tag important commits in the history of the application's Git repository, the Azure CLI is used and must be available on the Azure runner. Please follow the [documentation](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to install the Azure CLI on all the agents within the agent pool that the pipelines will use.
 
@@ -139,7 +139,7 @@ The development pipeline definition supporting various workflows. The [azure-pip
 * the [basic pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-basic-build-pipeline-for-main-epic-and-release-branches) when changes are merged into the branch `main` and
 * a [release pipeline](https://ibm.github.io/z-devops-acceleration-program/docs/branching-model-supporting-pipeline#the-release-pipeline-with-build-packaging-and-deploy-stages) to build and package the release candidate, installation to predefined environments.
 
-The deployment pipeline definition supports teams to install an existing package that is stored in an artifact repository
+The deployment pipeline definition helps teams install an existing package that is stored in an Artifact repository.
 
 Please check the pipeline definition to understand the various triggers for which this pipeline is executed and also the conditions when stages, jobs or steps are executed. 
 
@@ -219,7 +219,7 @@ packageType              | Package Type - a preliminary build or release package
 packageReference         | Package Reference - either the branch name (like 'main') for preliminary build packages or the release name (like 'rel-1.5.0') for the release package type.
 packageBuildIdentifier   | Package Build Identifier - Identifier for the archive, like build number
 
-These information allow the CBS to find the package in the configured artifact repository.
+These information allow the Common Backend Scripts to find the package in the configured artifact repository.
 
 #### Pipeline stages
 
