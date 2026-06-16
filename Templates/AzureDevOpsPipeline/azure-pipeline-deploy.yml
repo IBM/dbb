@@ -74,12 +74,10 @@ variables:
   organization: $[ replace(variables['organization_tmp'], '/', '') ] # Azure organization name
   project: $(System.TeamProject) # Project name
   application: ${{ variables['Build.Repository.Name'] }} # Application name
-  repo: "git@ssh.dev.azure.com:v3/$(organization)/$(project)/$(application)" # Git repository path
+  repo: ${{ variables['Build.Repository.Uri'] }} # Application name
   uniqueWorkspaceId: $(pipelineWorkspace)/$(application)/deployments/${{ parameters.archiveType }}/${{ parameters.archiveReference }}/build-$(Build.BuildNumber) # Calculated workspace path
-  packageName: $(application) # default name of the Package
-  buildNumber: ${{ parameters.archiveBuildIdentifier }} # Build reference
   pipelineType: ${{ parameters.archiveType }}
-  branch: ${{ parameters.archiveReference }}
+  archiveBuildIdentifier: ${{ parameters.archiveBuildIdentifier }} # Build reference
 
 # Pipeline stages
 stages:
@@ -99,9 +97,9 @@ stages:
               echo "application                = $(application)"
               echo "repo                       = $(repo)"
               echo " Archive information"
-              echo "archiveReference           = $${{ parameters.archiveReference }}"
-              echo "archiveBuildIdentifier     = $(buildNumber)"
               echo "archiveType                = $(pipelineType)"
+              echo "archiveReference           = $${{ parameters.archiveReference }}"
+              echo "archiveBuildIdentifier     = $(archiveBuildIdentifier)"
               echo " Connectivity"
               echo "zosSSHConnection           = $(zosSSHConnection)"
               echo "zosHostname                = $(zosHostname)"
