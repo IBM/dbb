@@ -1,0 +1,152 @@
+---
+- name: Conditional Wazi deploy Installation z/OS or local
+  hosts: all
+  gather_facts: false
+
+  vars:
+    zos_smpe_installation_dir: "/usr/lpp/IBM/gdp"
+    zos_python_installation_path: "/usr/lpp/IBM/cyp/v3r13/pyz"
+    zos_python_venv_path: "/global/opt/pyenv/gdp"
+    ZOAU_HOME: "/var/usr/lpp/IBM/zoautil/v1.3.6.3"
+
+  tasks:
+
+    - name: Validate install_mode property
+      assert:
+        that:
+          - install_mode is defined
+        fail_msg: "install_mode must be defined"
+        success_msg: "install_mode is defined"
+ 
+    - name: Validate tar_file_location property
+      assert:
+        that:
+          - tar_file_location is defined
+        fail_msg: "tar_file_location must be defined when install_mode is 'fetch'"
+        success_msg: "tar_file_location is defined"
+      when: install_mode == 'fetch'
+    
+    - name: Extract version property from the z/OS installation directory
+      shell: grep '^version:' {{ zos_smpe_installation_dir }}/version.properties | cut -d':' -f2
+      register: version_output
+      when: install_mode != 'fetch'
+
+    - name: Define the wazideploy_version property
+      set_fact:
+        wazideploy_version: "{{ version_output.stdout | trim | regex_replace('^\"|\"$', '') }}"
+      when: install_mode != 'fetch'
+    
+    - name: Create Python virtual environment and activate it
+      raw: |
+        umask 022
+        "{{ zos_python_installation_path }}/bin/python3" -m venv "{{ zos_python_venv_path }}"
+      when: install_mode == 'zos'
+
+    - name: Install Wazi Deploy dependencies
+      raw: |
+        cd "{{ zos_smpe_installation_dir }}"
+        umask 022
+        "{{ zos_python_venv_path }}/bin/python3" -m pip install --no-deps --no-cache-dir -r dependencies/requirements.txt --no-index --find-links dependencies
+      when: install_mode == 'zos'
+
+    - name: Install Wazi Deploy
+      raw: |
+        cd "{{ zos_smpe_installation_dir }}"
+        PY_VERSION=$("{{ zos_python_installation_path }}/bin/python3" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        umask 022
+        "{{ zos_python_venv_path }}/bin/python3" -m pip install --no-deps --no-cache-dir wazideploy-{{ wazideploy_version }}-py${PY_VERSION}-none-any.whl
+      when: install_mode == 'zos'
+
+    - name: "Validate Wazi Deploy installation"
+      raw: |
+        "{{ zos_python_venv_path }}/bin/python3" "{{ zos_python_venv_path }}/bin/wazideploy-package" -h
+      when: install_mode == 'zos'
+
+    - name: Create a temporary folder on the controller
+      tempfile:
+        state: directory
+        prefix: wazideploy_
+      register: controller_temp_dir
+      delegate_to: localhost
+      when: install_mode != 'zos'
+
+    - name: Define the local extract directory
+      set_fact:
+        local_extract_dir: "{{ controller_temp_dir.path }}"
+      delegate_to: localhost
+      when: install_mode != 'zos'
+
+    - name: "Install Ansible community general collection"
+      command: ansible-galaxy collection install community.general
+      delegate_to: localhost
+      when: install_mode != 'zos'
+
+    - name: "Install Ansible zos_core collection"
+      command: ansible-galaxy collection install ibm.ibm_zos_core:1.14.1
+      delegate_to: localhost
+      when: install_mode != 'zos'
+      
+    - name: "Install Ansible zos_cics collection"
+      command: ansible-galaxy collection install ibm.ibm_zos_cics:1.0.6
+      delegate_to: localhost
+      when: install_mode == 'controller'
+
+    - name: "Install Ansible zos_ims collection"
+      command: ansible-galaxy collection install ibm.ibm_zos_ims:1.3.1
+      delegate_to: localhost
+      when: install_mode == 'controller'
+
+    - name: "Install Python module for Ansible"
+      shell: |
+        pip3 install xmltodict
+        pip3 install jmespath
+      delegate_to: localhost
+      when: install_mode == 'controller'
+
+    - name: "Copy file from zOS"
+      include_tasks: "task_fetch.yml"
+      when: install_mode != 'zos'
+
+    - name: "Copy file from temp dir to {{ tar_file_location }}" 
+      copy:
+        src: "{{ local_extract_dir }}/wazideploy.tar"
+        dest: "{{ tar_file_location }}"
+      delegate_to: localhost
+      when: install_mode == 'fetch'
+
+    - name: "Untar the file locally"
+      shell: |
+        umask 022
+        cd "{{ local_extract_dir }}"
+        tar -xvf "{{ local_extract_dir }}/wazideploy.tar"
+      delegate_to: localhost
+      when: install_mode == 'controller'
+      
+    - name: "Local - Install Wazi Deploy dependencies"
+      raw: |
+        cd "{{ local_extract_dir }}"
+        umask 022
+        pip3 install --no-deps --no-cache-dir -r dependencies/requirements.txt --no-index --find-links dependencies
+      delegate_to: localhost
+      when: install_mode == 'controller'
+      
+    - name: "Install Wazi Deploy python part"
+      raw: |
+        cd "{{ local_extract_dir }}"
+        PY_LOCAL_VERSION=$("python3" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        umask 022
+        pip3 install --no-deps --no-cache-dir wazideploy-{{ wazideploy_version }}-py${PY_LOCAL_VERSION}-none-any.whl
+      delegate_to: localhost
+      when: install_mode == 'controller'
+
+    - name: Change version number for Wazi Deploy Ansible Collection
+      set_fact:
+        wazideploy_ansible_version: "{{ (wazideploy_version.split('.') | length > 3) | ternary(wazideploy_version | regex_replace('\\.([^.]+)$', '-\\1'), wazideploy_version) }}"
+      delegate_to: localhost
+      when: install_mode == 'controller'
+
+    - name: "Install Ansible Wazi Deploy collection"
+      command: ansible-galaxy collection install "{{ local_extract_dir }}"/ibm-ibm_zos_wazi_deploy-{{ wazideploy_ansible_version }}.tar.gz
+      delegate_to: localhost
+      when: install_mode == 'controller'
+      
