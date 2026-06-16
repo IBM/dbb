@@ -206,7 +206,7 @@ Overview of the release pipeline:
 
 ### Deployment pipeline
 
-A dedicated, manually invoked deployment pipeline template is provided to trigger the installation of an existing package from artifactory into additional test environments, that are not on the default route for the application teams, or to drive the deployment of release packages into the production environments.
+A dedicated, manually invoked deployment pipeline template is provided to trigger the installation of an existing package from an artifact repository server (Artifactory or Nexus) into additional test environments. These environments might not be on the default route for the standard application's lifecycle, or might require manual intervention before deployment.
 
 #### Pipeline parameters 
 
