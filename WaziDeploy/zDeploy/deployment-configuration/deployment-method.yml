@@ -91,21 +91,21 @@ activities:
         states:
           - UNDEFINED
         steps:
-         - name: UPDATE
-           is_artifact: true
-           properties:
-             - key: template
-               value: job_submit
-             - key: var_job_submit
-               value: csd_update_template
+          - name: UPDATE
+            is_artifact: true
+            properties:
+              - key: template
+                value: job_submit
+              - key: var_job_submit
+                value: csd_update_template
 
   # activity to process DBRMs always first
-  #  * A tag is used to be able to run these actions only and skip others 
+  #  * A tag is used to be able to run these actions only and skip others
   #    in it's own run
   #  * member_copy is configured to move the DBRM into a temp library first
   - name: DBRMS
     description: |
-      This activity is dedicated to DBRM bind modules and will process DBRM members of the package first using dedicated PDS libraries 
+      This activity is dedicated to DBRM bind modules and will process DBRM members of the package first using dedicated PDS libraries
     short_name: DBRMS
     actions:
       # Manage deletions of DBRMS
@@ -210,7 +210,7 @@ activities:
     short_name: ROLLBACK_MODULES
     description: |
       This action is applicable when when restoring files from the backup 
-      datasets. It is only executed when plan_tags 'restore' is provided.   
+      datasets. It is only executed when plan_tags 'restore' is provided.
     actions:
       - name: RESTORE
         description: |
@@ -223,7 +223,7 @@ activities:
       # Invoke Bind operations
       - name: BIND
         types:
-         - name: "DBRM"
+          - name: "DBRM"
         description: |
           This action runs Db2 Bind package and plan for restored DBRM members
         steps:
@@ -233,14 +233,14 @@ activities:
               This step performs the DB2 Bind package operations for restored DBRM members
             properties:
               - key: template
-                value: db2_bind_package    
+                value: db2_bind_package
           - name: BIND_PLAN
             short_name: BIND_PLAN
             description: |
               This step performs the DB2 Bind plan operations for restored DBRM members
             properties:
               - key: template
-                value: db2_bind_plan    
+                value: db2_bind_plan
     types:
       - name: "LOAD"
       - name: "DBRM"
@@ -269,7 +269,7 @@ activities:
         steps:
           - name: SCAN_JCL
             short_name: SCAN_JCL
-            description: | 
+            description: |
               This step loops over all JCL members and performs an JCL Expert scan
             is_artifact: True
             types:
@@ -313,3 +313,59 @@ activities:
               - key: "template"
                 value: "cics_cmci_prog_update"
     is_artifact: True
+
+  - name: DEPLOY_ZOS_CONNECT
+    short_name: DEPLOY_ZOS_CONNECT
+    description: |
+      This activity deals with IBM z/OS Connect artifacts
+    actions:
+      - name: RESTORE_TO_USS
+        description: |
+          Restores the war file to Unix System Services
+        types:
+          - name: "war"
+        tags:
+          - zosconnect_copy
+        is_artifact: True
+        steps:
+          - name: USS_ARCHIVE
+          - name: USS_COPY
+          - name: USS_RESTORE
+            plan_tags:
+              - restore
+              - never
+      - name: CONFIG_FILES
+        description: |
+          Process and deploy z/OS Connect configuration files with variable substitution
+        steps:
+          - name: CREATE
+            properties:
+              - key: "template"
+                value: "template"
+              - key: "var_template_name"
+                value: "template_name_zosconnect_config"
+            loop:
+              loop_query: "wd_query[[ current_plan_step.artifacts[].name ]]"
+              loop_var: "api_name"
+            types:
+              - name: "war"
+            tags:
+              - zosconnect_config
+            is_artifact: True
+
+      - name: ZOS_CONNECT_SERVER
+        description: |
+          Refresh z/OS Connect config and applications via a modify command
+        steps:
+          - name: REFRESH_CONFIG #"Refresh z/OS Config"
+            properties:
+              - key: "template"
+                value: "system_command"
+              - key: "var_system_command"
+                value: "system_command_refresh_config"
+          - name: REFRESH_APP #"Refresh z/OS Applications"
+            properties:
+              - key: "template"
+                value: "system_command"
+              - key: "var_system_command"
+                value: "system_command_refresh_apps"
