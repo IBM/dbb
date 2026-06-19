@@ -44,9 +44,8 @@ default_db2_plan_pklist: "*.CBSAPK.*"
 default_db2_action: "REPLACE"
 
 # z/OS Connect
-zos_connect_root: "/var/zosconnect/servers/production/wazideploy-cics"
-zos_connect_job_name: "BAQSERV3"
-zosconnect_http_port: 9083
+default_zos_connect_root: "/var/zosconnect/servers/production/wazideploy-cics"
+default_zos_connect_job_name: "BAQSERV3"
 
 # load shared configuration
 include_global_config:

@@ -29,5 +29,7 @@ The `EOLEB7-Integration.yml` file defines application-level configuration settin
 | app_cmci_scheme          | CICS schema http/https                           |
 | app_cmci_host            | CICS CMCI host                                   |
 | app_cmci_port            | CICS CMCI port                                   |
+| app_zos_connect_root     | z/OS Connect server USS root directory path      |
+| app_zos_connect_job_name | z/OS Connect server job name for management commands |
 | app_jcl_text_subs_patterns | List of JCL text substitution patterns for JCL text substitutions, such as replacing `@PGMLIB` with the value of `{{ hlq }}`.        |
 
