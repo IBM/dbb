@@ -36,16 +36,18 @@ The core configuration sets parameters for the Wazi Deploy specific building blo
          │  • pds_spec.yml     │              │                         │
          │  • cics_config.yml  │    ┌─────────▼─────────┐    ┌──────────▼────────┐
          │  • db2_config.yml   │    │  default_* vars   │    │   app_* vars      │
-         │  • jcl_verify.yml   │    │  /python/ or      │    │  /application-    │
-         │  • shell_cmds.yml   │    │  /ansible/        │    │   overrides/      │
-         │                     │    │                   │    │                   │
-         │  Templates:         │    │  Environment      │    │  Application      │
-         │  • cics_csd.jcl.j2  │    │  Defaults:        │    │  Overrides:       │
-         │  • jcl_expert.jcl.j2│    │  • HLQ            │    │  • app_db2_*      │
-         └─────────────────────┘    │  • USS paths      │    │  • app_cics_*     │
-                                    │  • CICS subsys    │    │  • app_jcl_*      │
-                                    │  • DB2 subsys     │    │  • app_jobcard    │
-                                    │  • Job cards      │    │                   │
+         │  • zos_connect.yaml │    │  /python/ or      │    │  /application-    │
+         │  • jcl_verify.yml   │    │  /ansible/        │    │   overrides/      │
+         │  • shell_cmds.yml   │    │                   │    │                   │
+         │                     │    │  Environment      │    │  Application      │
+         │  Templates:         │    │  Defaults:        │    │  Overrides:       │
+         │  • cics_csd.jcl.j2  │    │  • HLQ            │    │  • app_db2_*      │
+         │  • jcl_expert.jcl.j2│    │  • USS paths      │    │  • app_cics_*     │
+         │  • zos_connect_app_ │    │  • CICS subsys    │    │  • app_jcl_*      │
+         │    config.xml.j2    │    │  • DB2 subsys     │    │  • app_jobcard    │
+         │                     │    │  • Job cards      │    │  • app_zos_       │
+         └─────────────────────┘    │  • z/OS Connect   │    │    connect_*      │
+                                    │    server         │    │                   │
                                     └───────────────────┘    └───────────────────┘
 ```
 

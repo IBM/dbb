@@ -1,0 +1,25 @@
+template_name_zosconnect_config:
+  src: '{{ deploy_cfg_home }}/deployment-configuration/templates/zos_connect_app_config.xml.j2'
+  dest: '{{ zos_connect_root }}/configDropins/overrides/{{api_name}}.xml'
+  mode: 0755
+  delegate: False
+
+
+# System commands for z/OS Connect server management
+system_command_start_server:
+  cmd: 'S {{zos_connect_job_name}}'
+  verbose: false
+  wait_time_s: 5
+  wait: true
+
+system_command_refresh_config:
+  cmd: 'MODIFY {{zos_connect_job_name}},REFRESH,CONFIG'
+  verbose: false
+  wait_time_s: 3
+  wait: true
+
+system_command_refresh_apps:
+  cmd: 'MODIFY {{zos_connect_job_name}},REFRESH,APPS'
+  verbose: false
+  wait_time_s: 3
+  wait: true

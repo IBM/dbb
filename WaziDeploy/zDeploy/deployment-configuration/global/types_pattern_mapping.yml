@@ -79,6 +79,14 @@ types:
      directory_backup: "{{ uss_root }}/sh/back/"
      dest_mode: 0777
      artifact_mode: 0755
+  - type: "WAR"     
+    pattern: .*\.WAR$
+    uss:
+       dest: '{{zos_connect_root}}/apps'
+       backup_dest: '{{zos_connect_root}}/backup/apps'
+       mode: 0755
+    mode: 0777
+    is_binary: True
 
 type_dbrm_temp:
   - type: "DBRM"
