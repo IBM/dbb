@@ -46,8 +46,6 @@ default_db2_action: "REPLACE"
 # z/OS Connect
 default_zos_connect_root: "/var/zosconnect/servers/acceptance/wazideploy-cics"
 default_zos_connect_job_name: "BAQSERV1"
-default_zosconnect_http_port: 9080
-
 
 # load shared configuration
 include_global_config:
