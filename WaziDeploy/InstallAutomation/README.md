@@ -108,9 +108,9 @@ ansible-playbook wd-installation.yml -i hosts.yml -e "install_mode=zos"
 ansible-playbook wd-installation.yml -i hosts.yml -e "install_mode=controller"
 ```
 
-#### 4. Only fetch the `wazideploy.tar` file from the zOS and put it in the `/home/XXX/wazi_deploy_folder` folder
+#### 3. Only fetch the `wazideploy.tar` file from the zOS and put it in the `/home/XXX/wazi_deploy_folder` folder
 ```bash
-ansible-playbook wd-installation.yml -i hosts.yml -e "install_mode=fetch" -e "tar_file_location=/home/XXX/wazi_deploy_folder"
+ansible-playbook wd-installation.yml -i hosts.yml -e "install_mode=fetch" -e "tar_file_location=/home/XXX/wazi_deploy_folder/"
 ```
 
 ## Support
