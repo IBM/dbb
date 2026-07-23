@@ -1,6 +1,0 @@
-       IDENTIFICATION DIVISION.
-       PROGRAM-ID.  TEST9.
-
-       PROCEDURE DIVISION.
-           DISPLAY "Nine".
-           STOP RUN.
