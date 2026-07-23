@@ -33,7 +33,6 @@ Sample | Description
 [Pipeline/CreateUCDComponentVersion](Pipeline/CreateUCDComponentVersion) | Post-build script to parse the DBB Build report to generate a UCD component shiplist file and to create a new UCD component version.
 [Pipeline/DeployUCDComponentVersion](Pipeline/DeployUCDComponentVersion) | Sample script to trigger a UCD deployment from the pipeline, where the pipeline orchestrator does not provide standard plugins for this task.
 [Pipeline/PackageBuildOutputs](Pipeline/PackageBuildOutputs) | Post-build script to create a generic package with the produced build outputs, optionally uploads results to an Artifactory repository. Artifactory deploy/download sample script.    
-[Pipeline/PublishSharedInterfaces](Pipeline/PublishSharedInterfaces) | Post-build script to publish shared copybooks to a shared git repository managing all shared copybooks. 
 [Pipeline/RunIDZCodeReview](Pipeline/RunIDZCodeReview) | Post-build script to integrate IBM IDz Code Review application into a pipeline.
 [Pipeline/SimplePackageDeploy](Pipeline/SimplePackageDeploy) | Post-build script to deploy the tar package contents to the target libraries.
 [Scanners](Scanners) | Sample dependency scanner implementations using the extension framework of the DBB toolkit.
