@@ -23,7 +23,7 @@ import java.nio.file.*
  *  -c,--component <name>         Name of the UCD component to create version in
  *  -v,--versionName <name>       Name of the UCD component version name (Optional)
  *  -h,--help                     Prints this message
- *  -ar,--artifactRepository      Absolute path to Artifact Respository Server connection file (Optional)
+ *  -ar,--artifactRepository      Absolute path to Artifact Repository Server connection file (Optional)
  *  -prop,--propertyFile          Absolute path to property file (Optional). From UCD v7.1.x and greater it replace the -ar option.
  *  -p,--preview                  Preview, not executing buztool.sh
  *  -pURL,--pipelineURL           URL to the pipeline build result (Optional)
@@ -56,7 +56,7 @@ import java.nio.file.*
  *    Keep backward compatibility with older toolkits
  *
  * Version 4 - 2020-11
- *  Take into account new properties for Artifact Respository Server connection.
+ *  Take into account new properties for Artifact Repository Server connection.
  *
  * Version 5 - 2021-04
  *  Take into account https://github.com/IBM/dbb/issues/76.
@@ -132,6 +132,13 @@ properties.buildReportOrder.each { buildReportFile ->
         } catch (Exception e) {}
     }
 
+    // Collect CopyToUnixRecord outputs produced by Transfer.groovy (USS copy path)
+    def copyToUnixRecords = buildReport.getRecords().findAll {
+        try {
+            it.getType() == DefaultRecordFactory.TYPE_COPY_TO_UNIX && it.isOutput()
+        } catch (Exception e) { false }
+    }
+
     def datasetMembersCount = 0
     def zFSFilesCount = 0
     def deletionCount = 0
@@ -171,6 +178,19 @@ properties.buildReportOrder.each { buildReportFile ->
     }
 
 
+    // managing TYPE_COPY_TO_UNIX (CopyToUnixRecord) produced by Transfer.groovy USS copy path
+    copyToUnixRecords.each { record ->
+        def targetPath = record.getTargetPath()
+        def deployType = record.getDeployType()
+        if (deployType && deployType != 'ZUNIT-TESTCASE') {
+            def targetFile = Paths.get(targetPath)
+            def rootDir    = targetFile.getParent().toString()
+            def fileName   = targetFile.getFileName().toString()
+            zFSFilesCount++
+            tempBuildOutputsMap.put(new DeployableArtifact(fileName, deployType), [rootDir, buildReport, record, buildReportRank])
+        }
+    }
+
     // store build output information in Hashmap buildOutputsMap to replace potential duplicates
     // managing DELETE_RECORD leveraging the generic AnyTypeRecord Type
     deletions.each { deleteRecord ->
@@ -196,12 +216,15 @@ properties.buildReportOrder.each { buildReportFile ->
                 ussRecord.getAttribute("outputs").split(';').collectEntries { entry ->
                     outputs += entry.replaceAll('\\[|\\]', '').split(',')
                 }
-                outputs.each { output -> 
+                outputs.each { output ->
                     rootDir = output[0].trim()
                     file = output[1].trim()
-                    deployType = output[2].trim() 
+                    deployType = output[2].trim()
                     println("   $rootDir/$file, $deployType")
                 }
+            }
+            copyToUnixRecords.each { record ->
+                println("   ${record.getTargetPath()}, ${record.getDeployType()}")
             }
         }
 
@@ -227,7 +250,7 @@ tempBuildOutputsMap.each { deployableArtifact, info ->
     record = info[2]
     artifactRank = info[3]
     
-    if (record.getType() == DefaultRecordFactory.TYPE_EXECUTE || record.getType() == DefaultRecordFactory.TYPE_COPY_TO_PDS || record.getType() == "USS_RECORD") {
+    if (record.getType() == DefaultRecordFactory.TYPE_EXECUTE || record.getType() == DefaultRecordFactory.TYPE_COPY_TO_PDS || record.getType() == "USS_RECORD" || record.getType() == DefaultRecordFactory.TYPE_COPY_TO_UNIX) {
         DeployableArtifact deleteArtifact = new DeployableArtifact(container + "(" + deployableArtifact.file + ")", "DELETE")
         if (tempBuildOutputsMap.containsKey(deleteArtifact)) {
             deleteArtifactInfo = tempBuildOutputsMap.get(deleteArtifact)
@@ -473,6 +496,58 @@ xml.manifest(type:"MANIFEST_SHIPLIST"){
                     }
                 }
             }        
+        }
+        else if (record.getType() == DefaultRecordFactory.TYPE_COPY_TO_UNIX) {
+            // CopyToUnixRecord produced by Transfer.groovy when copying to USS            
+            def targetPath  = record.getTargetPath()
+            def deployType  = record.getDeployType()
+            def targetFile  = Paths.get(targetPath)
+            def rootDir     = targetFile.getParent().toString()
+            def fileName    = targetFile.getFileName().toString()
+
+            if (deployableArtifact.file.equals(fileName)) {
+                if (isZFSFile(targetPath)) {
+                    println "   Creating shiplist record for build output $targetPath with recordType $record.type."
+                    def containerAttributes = [name:rootDir, rootDir:rootDir, type:"directory"]
+                    container(containerAttributes) {
+                        resource(name:fileName, type:"file", deployType:deployType) {
+
+                            // document dbb build result url and build properties on the element level when there are more than one buildReport processed
+                            if (properties.buildReportOrder.size() != 1) {
+                                if (buildResult != null) {
+                                    property(name : "dbb-buildResultUrl", label: buildResult.getLabel(), value : buildResult.getUrl())
+                                }
+                                if (buildResultProperties != null) {
+                                    buildResultProperties.each {
+                                        property(name:it.key, value:it.value)
+                                    }
+                                }
+                            }
+
+                            // add githash — matched against the source (original workspace) file
+                            def githash = ""
+                            if (buildResultProperties != null) {
+                                def gitproperty = buildResultProperties.find {
+                                    it.key.contains(":githash:") && record.getSourcePath().contains(it.key.substring(9))
+                                }
+                                if (gitproperty != null) {
+                                    githash = gitproperty.getValue()
+                                    property(name:"githash", value:githash)
+                                    if (properties.git_commitURL_prefix) property(name:"git-link-to-commit", value:"${properties.git_commitURL_prefix}/${githash}")
+                                }
+                            }
+
+                            // source traceability — use the original workspace source path
+                            inputUrl = (buildResultProperties != null && properties.git_treeURL_prefix && githash != "") ? "${properties.git_treeURL_prefix}/${githash}/" + record.getSourcePath() : ""
+                            inputs(url : "${inputUrl}") {
+                                input(name : record.getSourcePath(), compileType : "Main", url : inputUrl)
+                            }
+                        }
+                    }
+                } else {
+                    println "*! The file '${targetPath}' doesn't exist. Copy is skipped."
+                }
+            }
         }
         else if (record.getType()=="DELETE_RECORD") {
             // document delete container
