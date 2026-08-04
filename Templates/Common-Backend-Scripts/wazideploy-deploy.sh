@@ -29,6 +29,7 @@
 # 2023/10/19 MDLB 1.00 Initial Release
 # 2023/11/29 DB   1.10 Fixes to relative workspace directory
 # 2025/06/25 DB   1.20 Accept extraVars + pass default variables to WD
+# 2026/08/04 DB   1.30 Store copy of evidence file for IDZ on VS Code MCP tooling 
 #===================================================================================
 Help() {
     echo $PGM" - Deploy a package with Wazi Deploy                                  "
@@ -114,7 +115,7 @@ pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.20"
+PGMVERS="1.30"
 USER=$(whoami)
 SYS=$(uname -Ia)
 
@@ -129,6 +130,7 @@ Debug=""
 App=""            # passed via argument a
 extraVars=""      # passed via argument x
 extraOptions=""   # passed via argument o
+wdSharedEvidencesLocation=""
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -374,6 +376,19 @@ validateOptions() {
             EvidenceFile="$(wdDeployPackageDir)/${EvidenceFile}"
         fi
     fi
+
+    # verify shared evidences path configuration
+    if [ ! -z "${wdSharedEvidencesPath}" ]; then
+        if [ ! -d "${wdSharedEvidencesPath}" ]; then
+            rc=8
+            ERRMSG=$PGM": [ERROR] Path for shared Wazi Deploy Evidences (${wdSharedEvidencesPath}) was not found. rc="$rc
+            echo $ERRMSG
+        else
+            timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+            wdSharedEvidencesLocation=${wdSharedEvidencesPath}/${App}/deploy_${timestamp}.yaml
+            mkdir -p $wdSharedEvidencesLocation
+        fi
+    fi
 }
 
 # When publishing is enabled, check if the tarfile exists in the expected location
@@ -419,7 +434,9 @@ if [ $rc -eq 0 ]; then
     if [ ! -z "${EvidenceFile}" ]; then
         echo $PGM": [INFO] **                   Evidence File:" ${EvidenceFile}
     fi
-
+    if [ ! -z "${wdSharedEvidencesLocation}" ]; then
+        echo $PGM": [INFO] **.          Shared Evidences Path:" ${wdSharedEvidencesPath}
+    fi
     if [ ! -z "${Debug}" ]; then
         echo $PGM": [INFO] **         Debug output is enabled."
     else
@@ -469,6 +486,13 @@ if [ $rc -eq 0 ]; then
     echo ${CommandLine} 2>&1
     $CommandLine 2>&1
     rc=$?
+
+    echo $PGM": Wazi Deploy completed with rc="$rc
+
+    if [ -f ${EvidenceFile} ] && [ ! -z ${wdSharedEvidencesLocation} ]; then
+        echo $PGM": Copy ${EvidenceFile} to ${wdSharedEvidencesLocation}"
+        cp ${EvidenceFile} ${wdSharedEvidencesLocation}
+    fi
 
     if [ $rc -ne 0 ]; then
         ERRMSG=$PGM": [ERROR] Unable to Deploy package with Wazi Deploy. rc="$rc

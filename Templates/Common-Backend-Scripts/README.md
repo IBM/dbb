@@ -861,6 +861,8 @@ This script invokes the Wazi Deploy Deploy (with the Python Translator) command 
 
 If the `publish` parameter defined in the pipelineBackend.config file is set to true, the script checks for the package input file that was automatically retrieved from wazideploy-generate.sh.
 
+If the optional `wdSharedEvidencesPath` setting is configured in `pipelineBackend.config`, a timestamped copy of the evidence file is stored centrally after a successful deployment. This is intended for use with IBM Developer for z/OS on VS Code MCP tooling to enable Wazi Deploy analytics.
+
 #### Invocation
 
 The `wazideploy-deploy.sh` script can be invoked as follows:
