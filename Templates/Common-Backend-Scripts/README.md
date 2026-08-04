@@ -300,8 +300,12 @@ CLI parameter | Description
 -b `<branch>` | **Git branch** that is built. Used to compute various build properties such as the `--hlq` and build type.
 -p `<build/release/preview>` | (Optional) **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules), or if it runs in `preview` mode.
 -v | (Optional) zBuilder verbose tracing flag.
--t `<buildTypeArgument>` | (Optional) **zBuilder Build lifecycle** to override the build type, such as `full`, or `impact`. Arguments must be provided between quotes - e.g.: `-t 'full'`. Providing this parameter overrides the computation of the build type in the backend scripts. For instance can be used to initialize the DBB Metadatastore. 
--q `<hlqPrefix>` |(Optional) **HLQ prefix**. Default is retrieved from the [pipelineBackend.config](pipelineBackend.config) file, if the configuration file is not modified - the default value is set to the user executing the script.
+-t `<buildTypeArgument>` | (Optional) **zBuilder Build lifecycle** to override the build type, such as `full`, or `impact`. Arguments must be provided between quotes - e.g.: `-t 'full'`. Providing this parameter overrides the computation of the build type in the backend scripts. For instance can be used to initialize the DBB Metadatastore.
+-q `<hlqPrefix>` | (Optional) **HLQ prefix**. Default is retrieved from the [pipelineBackend.config](pipelineBackend.config) file, if the configuration file is not modified - the default value is set to the user executing the script.
+-i `<buildIdentifier>` | (Optional) **Build identifier** passed to the zBuilder package and publish task as `--build-id`. See [build context inputs](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=index-task-package#build-context-inputs).
+-r `<releaseIdentifier>` | (Optional) **Release identifier** passed to the zBuilder package and publish task as `--release-id`. See [build context inputs](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=index-task-package#build-context-inputs).
+-u `<artifactRepositoryUser>` | (Optional) **Artifact repository user name** for the zBuilder publish task. Overrides the `zBuilderPublishArtifactRepositoryUser` value set in [pipelineBackend.config](pipelineBackend.config). Only applies to **password-based authentication** (see [Artifact repository authentication](#artifact-repository-authentication) below).
+-s `<artifactRepositoryPasswordFile>` | (Optional) **Artifact repository password file** path for the zBuilder publish task. Overrides the `zBuilderPublishArtitfRepositoryPassword` value set in [pipelineBackend.config](pipelineBackend.config). Only applies to **password-based authentication** (see [Artifact repository authentication](#artifact-repository-authentication) below).
 
 **Pipeline type**
 
@@ -309,6 +313,16 @@ The type of pipeline (`-p` option), is used to modify the operational behavior o
 * `build` configures the build options for test/debug options. This is the **default**.
 * `release` used to indicate to produce executables with the flag for performance-optimized runtime modules. This is required for the release pipelines which include release candidate packages.
 * `preview` configures the build process to execute without producing any outputs. It is used to preview what the build will do. The pipeline should not have any subsequent actions.
+
+**Artifact repository authentication**
+
+The zBuilder publish task supports two authentication modes as described in the [IBM documentation](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=index-task-publish#cli-authentication-options):
+
+* **Password mode** — Supply a user name (`--arid`) and a path to a password file (`--arpf`). This mode is supported by `zBuilder.sh` through the `zBuilderPublishArtifactRepositoryUser` and `zBuilderPublishArtitfRepositoryPassword` settings in [pipelineBackend.config](pipelineBackend.config), which can be overridden at invocation time with the `-u` and `-s` CLI flags.
+
+* **Token mode** — Supply an API token file (`--artf`). **This mode is not yet supported** by `zBuilder.sh`. A future update will add a corresponding `-k <tokenFile>` CLI option and the matching `artifactRepositoryToken` configuration variable.
+
+> **Note:** Credentials should never be passed as plain-text values. Use a password file or token file stored in a secured location on the z/OS system and reference the file path only.
 
 #### Output
 
