@@ -189,7 +189,7 @@ zBuilderPublishArtifactRepositoryUser=""     # Artifact repository user (CLI ove
 zBuilderPublishArtitfRepositoryPassword="" # Artifact repository password file (CLI override via -s)
 
 DBBLogger=""
-zAppBuildVerbose=""
+Verbose=""
 HELP=$1
 
 if [ "$HELP" = "?" ]; then
@@ -602,6 +602,10 @@ if [ $rc -eq 0 ]; then
     fi
     if [ ! -z "${releaseIdentifier}" ]; then
         CMD="${CMD} --release-id ${releaseIdentifier}"
+    fi
+
+    if [ ! -z "${Verbose}" ]; then
+        CMD="${CMD} --verbose"
     fi
 
     echo $PGM": [INFO] ${CMD}"
