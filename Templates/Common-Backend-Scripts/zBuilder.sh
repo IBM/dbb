@@ -530,13 +530,13 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **      Pipeline Type:" ${PipelineType}
     echo $PGM": [INFO] **    Build Lifecycle:" ${Lifecycle}
     if [ -f "${zBuilderConfigOverrides}" ]; then
-        echo $PGM": [INFO] **   Config Override :" ${zBuilderConfigOverrides}
+        echo $PGM": [INFO] **    Config Override:" ${zBuilderConfigOverrides}
     fi
-    if [ -f "${buildIdentifier}" ]; then
-        echo $PGM": [INFO] **          build id :" ${buildIdentifier}
-    fi  
-    if [ -f "${packageIdentifier}" ]; then
-        echo $PGM": [INFO] **         package id :" ${packageIdentifier}
+    if [ ! -z "${buildIdentifier}" ]; then
+        echo $PGM": [INFO] **           Build Id:" ${buildIdentifier}
+    fi
+    if [ ! -z "${releaseIdentifier}" ]; then
+        echo $PGM": [INFO] **         Release Id:" ${releaseIdentifier}
     fi
     echo $PGM": [INFO] **                HLQ:" ${HLQ}
     echo $PGM": [INFO] **             AppDir:" ${AppDir}
@@ -546,7 +546,7 @@ if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] **      DBB JDBC USER:" ${dbbMetadataStoreJdbcId}
     echo $PGM": [INFO] **  DBB JDBC Pwd File:" ${dbbMetadataStoreJdbcPwdFile}
     if [ ! -z "${dbbMetadataStoreJdbcUrl}" ]; then
-        echo $PGM": [INFO] **      DBB JDBC Url :" ${dbbMetadataStoreJdbcUrl}
+        echo $PGM": [INFO] **       DBB JDBC Url:" ${dbbMetadataStoreJdbcUrl}
     fi
     if [ ${LoggerConfig} -eq 1 ]; then
         echo $PGM": [INFO] **         DBB Logger:" ${DBBLogger}
@@ -555,11 +555,11 @@ if [ $rc -eq 0 ]; then
     fi
     echo $PGM": [INFO] **   Pipeline Log Dir:" ${outDir}
     if [ ! -z "${zBuilderPublishArtifactRepositoryUser}" ]; then
-        echo $PGM": [INFO] **          ArtifactRepo User:" ${zBuilderPublishArtifactRepositoryUser}
+        echo $PGM": [INFO] **  ArtifactRepo User:" ${zBuilderPublishArtifactRepositoryUser}
     fi
     if [ ! -z "${zBuilderPublishArtitfRepositoryPassword}" ]; then
-        echo $PGM": [INFO] **      ArtifactRepo Password: xxxxx"
-    fi    
+        echo $PGM": [INFO] **   ArtifactRepo Pwd:" ${zBuilderPublishArtitfRepositoryPassword}
+    fi
     echo $PGM": [INFO] **************************************************************"
     echo ""
 fi
