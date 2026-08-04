@@ -45,6 +45,8 @@
 # Date       Who Vers  Description
 # ---------- --- ----- --------------------------------------------------------------
 # 2024/12/12 DB  1.0.0 Initial Release
+# 2025/04/07 DB  1.1.0 Ability to fetch external dependencies based on application descriptor
+# 2026/08/04 DB  1.2.0 zBuilder Package and Publish task integration
 #===================================================================================
 Help() {
     echo $PGM" - Invoke DBB zBuilder ("$PGMVERS")                       "
@@ -116,6 +118,20 @@ Help() {
     echo "                                                              "
     echo "                 Ex: -t 'full'                                "
     echo "                                                              "
+    echo "       -u <ArtiRepoUser>   - (Optional) Artifact repository   "
+    echo "                             user name to override the        "
+    echo "                             configured value in              "
+    echo "                             pipelineBackend.config           "
+    echo "                                                              "
+    echo "                 Ex: myUser                                   "
+    echo "                                                              "
+    echo "       -s <ArtiRepoPwdFile>- (Optional) Artifact repository   "
+    echo "                             password file path to override   "
+    echo "                             the configured value in          "
+    echo "                             pipelineBackend.config           "
+    echo "                                                              "
+    echo "                 Ex: /var/pipeline/secrets/artiRepo.password  "
+    echo "                                                              "
     echo "       -v                 - (Optional) Verbose tracing        "
     echo "                                                              "
     echo "                                                              "
@@ -138,7 +154,7 @@ fetchBuildDependenciesUtilities="${SCRIPT_HOME}/utilities/fetchBuildDependencies
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.10"
+PGMVERS="1.20"
 USER=$USER
 SYS=$(uname -Ia)
 
@@ -165,6 +181,12 @@ zBuilderConfigOverrides="" # Override of default build config for zBuilder
 zBuilderLogDir=""          # Path where zBuilder will store the logs
 buildListFile=""           # Location of the generate zBuilder buildList
 buildlistsize=0            # Used to assess if files got built
+
+buildIdentifier=""         # zBuilder package task build identifier (build context variable)
+releaseIdentifier=""       # zBuilder package task release identifier (build context variable)
+
+zBuilderPublishArtifactRepositoryUser=""     # Artifact repository user (CLI override via -u)
+zBuilderPublishArtitfRepositoryPassword="" # Artifact repository password file (CLI override via -s)
 
 DBBLogger=""
 zAppBuildVerbose=""
@@ -216,7 +238,7 @@ if [ $rc -eq 0 ]; then
     #
     # Get Options
     if [ $rc -eq 0 ]; then
-        while getopts "h:w:a:b:q:p:t:v" opt; do
+        while getopts "h:w:a:b:q:p:t:i:r:u:s:v" opt; do
             case $opt in
             h)
                 Help
@@ -266,6 +288,50 @@ if [ $rc -eq 0 ]; then
                 fi
                 Lifecycle="$argument"
                 userDefinedLifecycle=1 # set flag
+                ;;
+            i)
+                argument="$OPTARG"
+                nextchar="$(expr substr $argument 1 1)"
+                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                    rc=4
+                    ERRMSG=$PGM": [WARNING] The build identifier is required. rc="$rc
+                    echo $ERRMSG
+                    break
+                fi
+                buildIdentifier="$argument"
+                ;;                
+            r)
+                argument="$OPTARG"
+                nextchar="$(expr substr $argument 1 1)"
+                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                    rc=4
+                    ERRMSG=$PGM": [WARNING] The release identifier is required. rc="$rc
+                    echo $ERRMSG
+                    break
+                fi
+                releaseIdentifier="$argument"
+                ;;
+            u)
+                argument="$OPTARG"
+                nextchar="$(expr substr $argument 1 1)"
+                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                    rc=4
+                    ERRMSG=$PGM": [WARNING] The artifact repository user is required. rc="$rc
+                    echo $ERRMSG
+                    break
+                fi
+                zBuilderPublishArtifactRepositoryUser="$argument"
+                ;;
+            s)
+                argument="$OPTARG"
+                nextchar="$(expr substr $argument 1 1)"
+                if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
+                    rc=4
+                    ERRMSG=$PGM": [WARNING] The artifact repository password file is required. rc="$rc
+                    echo $ERRMSG
+                    break
+                fi
+                zBuilderPublishArtitfRepositoryPassword="$argument"
                 ;;
             p)
                 argument="$OPTARG"
@@ -466,6 +532,12 @@ if [ $rc -eq 0 ]; then
     if [ -f "${zBuilderConfigOverrides}" ]; then
         echo $PGM": [INFO] **   Config Override :" ${zBuilderConfigOverrides}
     fi
+    if [ -f "${buildIdentifier}" ]; then
+        echo $PGM": [INFO] **          build id :" ${buildIdentifier}
+    fi  
+    if [ -f "${packageIdentifier}" ]; then
+        echo $PGM": [INFO] **         package id :" ${packageIdentifier}
+    fi
     echo $PGM": [INFO] **                HLQ:" ${HLQ}
     echo $PGM": [INFO] **             AppDir:" ${AppDir}
     echo $PGM": [INFO] **      zBuilder Path:" ${DBB_BUILD}
@@ -482,6 +554,12 @@ if [ $rc -eq 0 ]; then
         echo $PGM": [INFO] **         DBB Logger: No"
     fi
     echo $PGM": [INFO] **   Pipeline Log Dir:" ${outDir}
+    if [ ! -z "${zBuilderPublishArtifactRepositoryUser}" ]; then
+        echo $PGM": [INFO] **          ArtifactRepo User:" ${zBuilderPublishArtifactRepositoryUser}
+    fi
+    if [ ! -z "${zBuilderPublishArtitfRepositoryPassword}" ]; then
+        echo $PGM": [INFO] **      ArtifactRepo Password: xxxxx"
+    fi    
     echo $PGM": [INFO] **************************************************************"
     echo ""
 fi
@@ -507,6 +585,23 @@ if [ $rc -eq 0 ]; then
     fi
     if [ -f "${zBuilderConfigOverrides}" ]; then
         CMD="${CMD} --config ${zBuilderConfigOverrides}" # Appending Config Override file if created
+    fi
+
+    # see https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=index-task-publish#cli-authentication-options
+    if [ ! -z "${zBuilderPublishArtifactRepositoryUser}" ]; then
+        CMD="${CMD} --arid ${zBuilderPublishArtifactRepositoryUser}"
+    fi
+    if [ ! -z "${zBuilderPublishArtitfRepositoryPassword}" ]; then
+        CMD="${CMD} --arpf ${zBuilderPublishArtitfRepositoryPassword}"
+    fi
+
+    # See Build context variables via CLI
+    # https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=index-task-package#build-context-inputs
+    if [ ! -z "${buildIdentifier}" ]; then
+        CMD="${CMD} --build-id ${buildIdentifier}"
+    fi
+    if [ ! -z "${releaseIdentifier}" ]; then
+        CMD="${CMD} --release-id ${releaseIdentifier}"
     fi
 
     echo $PGM": [INFO] ${CMD}"
