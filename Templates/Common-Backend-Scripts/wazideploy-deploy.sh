@@ -384,8 +384,8 @@ validateOptions() {
             ERRMSG=$PGM": [ERROR] Path for shared Wazi Deploy Evidences (${wdSharedEvidencesPath}) was not found. rc="$rc
             echo $ERRMSG
         else
-            timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-            wdSharedEvidencesLocation=${wdSharedEvidencesPath}/${App}/deploy_${timestamp}.yaml
+            timestamp=$(date +"%Y%m%d_%H-%M-%S")
+            wdSharedEvidencesLocation=${wdSharedEvidencesPath}/${App}/deploy_${timestamp}
             mkdir -p $wdSharedEvidencesLocation
         fi
     fi
