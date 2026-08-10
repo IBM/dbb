@@ -82,8 +82,8 @@ types:
   - type: "WAR"     
     pattern: .*\.WAR$
     uss:
-       dest: '{{zos_connect_root}}/apps'
-       backup_dest: '{{zos_connect_root}}/backup/apps'
+       dest: '{{zos_connect_sys_def.root}}/apps'
+       backup_dest: '{{zos_connect_sys_def.root}}/backup/apps'
        mode: 0755
     mode: 0777
     is_binary: True
