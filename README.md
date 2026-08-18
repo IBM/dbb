@@ -1,9 +1,8 @@
 # DBB Community Repository
 
-Welcome to the IBM Dependency Based Build (DBB) community repository. The helpful and handy location for finding and sharing example DBB scripts and snippets.
+Welcome to the IBM Dependency Based Build (DBB) community repository. The helpful and handy location for finding and sharing example DBB scripts and snippets when building out DevOps pipelines for the mainframe.
 
 ## Resources
-
 
 * [IBM Dependency Based Build Product Page](https://www.ibm.com/products/dependency-based-build)
 * [IBM DBB Documentation](https://www.ibm.com/docs/en/dbb)
@@ -14,12 +13,16 @@ Welcome to the IBM Dependency Based Build (DBB) community repository. The helpfu
 * [IBM DevOps Acceleration Program Solution Page](https://ibm.github.io/z-devops-acceleration-program/)
 
 ## Versions
-Branches and tags are used in this repository to help clarify the appropriate DBB version for the example scripts and snippets.
 
-This repository has different branches, currently:
-* [main](https://github.com/IBM/dbb/tree/main) - The branch where current development occurs, and the DBB repository is for the most recent DBB major version.  This branch may not be appropriate for older versions of DBB. 
+Branches and tags are used in this repository to outline the purpose of the community assets. 
+[Releases](https://github.com/IBM/dbb/releases) are created frequently to inform about important updates.
 
-The individual specific versions are tagged, such as [v2.0.0](https://github.com/IBM/dbb/tree/v2.0.0) and [v1.1.14](https://github.com/IBM/dbb/tree/v1.1.4) tags and can be found as [Github releases](https://github.com/IBM/dbb/releases)
+
+> [!NOTE]
+> In the upcoming releases, the repository layout and contents will be simplified. The `main` focusses DBB 3.0 and later, leveraging the zBuilder framework.
+> A release maintenance branch `groovy-based` will be introduced to provide access to existing assets for groovy based build framework implementations.
+
+* [main](https://github.com/IBM/dbb/tree/main) - The branch where current development occurs. This branch may not be appropriate for older versions of DBB. Backward compatibility is not a primary objective. Navigate through releases to access previous states of the community assets.
 
 ## Contributing
 
