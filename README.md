@@ -17,10 +17,9 @@ Welcome to the IBM Dependency Based Build (DBB) community repository. The helpfu
 Branches and tags are used in this repository to outline the purpose of the community assets. 
 [Releases](https://github.com/IBM/dbb/releases) are created frequently to inform about important updates.
 
-
 > [!NOTE]
-> In the upcoming releases, the repository layout and contents will be simplified. The `main` focusses DBB 3.0 and later, leveraging the zBuilder framework.
-> A release maintenance branch `groovy-based` will be introduced to provide access to existing assets for groovy based build framework implementations.
+> In upcoming releases, the repository layout and its contents will be simplified. The `main` branch targets DBB 3.0 and later using the zBuilder framework.
+> A `groovy-based` maintenance branch will be introduced for access to existing Groovy-based assets.
 
 * [main](https://github.com/IBM/dbb/tree/main) - The branch where current development occurs. This branch may not be appropriate for older versions of DBB. Backward compatibility is not a primary objective. Navigate through releases to access previous states of the community assets.
 
