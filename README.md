@@ -19,9 +19,9 @@ Branches convey the purpose of their assets. [Releases](https://github.com/IBM/d
 > [!NOTE]
 > In upcoming releases, the repository layout will be simplified. The `main` branch targets DBB 3.0 and later using the zBuilder framework. A `groovy-based` maintenance branch is introduced for existing Groovy-based assets.
 
-* [main](https://github.com/IBM/dbb/tree/main) - Active development branch targeting DBB 3.0 and later using the zBuilder framework. Not guaranteed to be compatible with older DBB versions; backward compatibility is not a primary objective.
+* [main](https://github.com/IBM/dbb/tree/main) - active development branch targeting DBB 3.0 and later using the zBuilder framework. Not guaranteed to be compatible with older DBB versions; backward compatibility is not a primary objective.
 
-* [groovy-based](https://github.com/IBM/dbb/tree/groovy-based) - branch for Groovy-based implementations such as zAppBuild.
+* [groovy-based](https://github.com/IBM/dbb/tree/groovy-based) - branch for Groovy-based assets targeting the zAppBuild build framework.
 
 See [releases](https://github.com/IBM/dbb/releases) for prior versions of the community assets.
 
