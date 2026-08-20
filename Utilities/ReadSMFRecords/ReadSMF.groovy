@@ -87,12 +87,17 @@ if ( rc == 0 && ZFile.dsExists("//'${smfwrk}'") )
 		while ((bytesRead = reader.read(buffer)) >= 0)
 		{
 			byte[] data = Arrays.copyOf(buffer, bytesRead)
-			def smfRec = new SmfRecord(data, true)
-			if ( !tools.isSmfTypeInteresting(smfRec.getType()) )
-				continue
-			// Add SMF information to the html table
-			tools.reportSMFRecord( report, data )
-			count++
+			try
+			{
+			   def smfRec = SmfRecordFactory.toRecord(data)
+               // Add SMF information to the html table
+			   tools.reportSMFRecord( report, data )
+			   count++
+			}
+			catch (IllegalArgumentException e)
+			{
+			   // ignore non-type 122 SMF records
+			}
 		}
 	}
 	finally

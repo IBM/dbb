@@ -293,6 +293,7 @@ def startReportTable( StringBuffer report)
 			<th style="text-align:left">Modification</th>
 			<th style="text-align:left">Build</th>
 			<th style="text-align:left">Timestamp</th>
+            <th style="text-align:left">Audit Message</th>
 		</tr>""")
 }
 
@@ -326,7 +327,7 @@ def reportSMFRecord( StringBuffer report, byte[] data )
 	// DBB knows about and is able to handle parsing.
 	if (smfRec.getType() == 122 && smfRec.getSubType() == 2)
 	{
-		def dbbSmfRec = new DBBSmfRecord( data );
+		def dbbSmfRec = SmfRecordFactory.toRecord( data );
 		report.append("""
 			<td>${dbbSmfRec.getProductName()}</td>
 			<td>${dbbSmfRec.getProductFeature()}</td>
@@ -337,6 +338,10 @@ def reportSMFRecord( StringBuffer report, byte[] data )
 			<td>${dbbSmfRec.getMod()}</td>
 			<td>${dbbSmfRec.getBuild()}</td>
 			<td>${dbbSmfRec.getTimestamp()}</td>""")
+	     if (dbbSmfRec instanceof AuditSmfRecord)
+            report.append("<td>${((AuditSmfRecord)dbbSmfRec).getMessage()}</td>")
+         else
+            report.append("<td></td>")
 	}
 	report.append("""
 		</tr>""")
