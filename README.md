@@ -42,6 +42,7 @@ Sample | Description
 [Utilities/DeletePDS](Utilities/DeletePDS) | Sample script to delete PDSes on z/OS that are no longer needed.
 [Utilities/Jenkins](Utilities/Jenkins) | Utility shell scripts supplied to address issues when running Jenkins remote agents on z/OS UNIX System Services (USS).
 [Utilities/PermissionCheck](Utilities/PermissionCheck) | Groovy script to check the DBB role for a provided user.
+[Utilities/ReadSMFRecords](Utilities/ReadSMFRecords) | Groovy scripts to read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities.
 [WaziDeploy/Reporting](WaziDeploy/Reporting) | This category provides templates for querying IBM Wazi Deploy evidence files and generating detailed reports.
 [WaziDeploy/Schemas](WaziDeploy/Schemas) | Wazi Deploy schemas used to configure Yaml validation for the config file, the deployment method file and the manifest file.
 [WaziDeploy/zDeploy](WaziDeploy/zDeploy/) |  Wazi Deploy deployment configuration framework for both Ansible and Python, that allows maintaining application specific configuration along the core deployment configuration for Wazi Deploy.
