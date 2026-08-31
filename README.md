@@ -14,14 +14,14 @@ Welcome to the IBM Dependency Based Build (DBB) community repository. The helpfu
 
 ## Versions
 
-Branches convey the purpose of their assets. [Releases](https://github.com/IBM/dbb/releases) are published frequently to highlight important updates. Tags no longer mirror product version numbers — samples document their own version requirements. 
+Branches convey the purpose of their assets. [Releases](https://github.com/IBM/dbb/releases) are published frequently to highlight important updates. Tags no longer mirror product version numbers — samples document their own version requirements. Backward compatibility is not a primary objective.
 
 > [!NOTE]
-> In upcoming releases, the repository layout will be simplified. The `main` branch targets DBB 3.0 and later using the zBuilder framework. A `groovy-based` maintenance branch is introduced for existing Groovy-based assets.
+> In upcoming releases, the repository layout will be simplified. The `main` branch will be renamed to `groovy-based` and serve as a maintenance branch for existing Groovy-based assets. A new `main` will then target DBB 3.0 and later using the zBuilder framework.
 
-* [main](https://github.com/IBM/dbb/tree/main) - active development branch targeting DBB 3.0 and later using the zBuilder framework. Not guaranteed to be compatible with older DBB versions; backward compatibility is not a primary objective.
+* [main](https://github.com/IBM/dbb/tree/main) - keeps the existing structure for both zBuilder and Groovy-based assets. Will be renamed to `groovy-based` once the new layout is in place.
 
-* [groovy-based](https://github.com/IBM/dbb/tree/groovy-based) - branch for Groovy-based assets targeting the zAppBuild build framework.
+* [simplify/community-templates](https://github.com/IBM/dbb/tree/simplify/community-templates) - active development branch targeting DBB 3.0 and later with the zBuilder framework. This holds the simplified, designated target layout for the project.
 
 See [releases](https://github.com/IBM/dbb/releases) for prior versions of the community assets.
 
