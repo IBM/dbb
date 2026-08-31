@@ -1,6 +1,6 @@
-# Samples/ReadSMFRecords Folder
-The ReadSMFRecords folder contains scripts to read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities. The script can read and process many types
-of SMF records. However, only the DBB SMF record (Type:122, subType:2) is fully parsed and recorded in the report. Only the header portion of other types will be recorded in the report.
+# ReadSMFRecords
+These sample scripts read System Management Facilities (SMF) records using IBM's Dependency Based Build capabilities. The script can read and process many types
+of SMF records. However, only the DBB SMF record (Type:122, subType:2) is fully parsed and recorded in the report. Only the header portion of other types will be recorded in the report. See [DBB SMF support](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=customization-enabling-system-management-facility-smf-support) for more details.
 
 ## Configuring
 The smf.properties is loaded by the read SMF script to provide default values for several parameters. Script parameters will override these values.
