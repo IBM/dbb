@@ -17,11 +17,13 @@ Welcome to the IBM Dependency Based Build (DBB) community repository. The helpfu
 Branches convey the purpose of their assets. [Releases](https://github.com/IBM/dbb/releases) are published frequently to highlight important updates. Tags no longer mirror product version numbers — samples document their own version requirements. Backward compatibility is not a primary objective.
 
 > [!NOTE]
-> In upcoming releases, the repository layout will be simplified. The `main` branch will be renamed to `groovy-based` and serve as a maintenance branch for existing Groovy-based assets. A new `main` will then target DBB 3.0 and later using the zBuilder framework.
+> In future releases, the repository layout will be simplified. In a next generation of the `main` branch, `main` will focus on assets targeting the use of the zBuilder framework with DBB 3.0 and later. A new epic branch will support the development of required changes. Contents of the current `main` branch will be kept available via a new `groovy-based` branch, acting as a maintenance branch, that will provide access to existing Groovy-based assets.
 
-* [main](https://github.com/IBM/dbb/tree/main) - keeps the existing structure for both zBuilder and Groovy-based assets. Will be renamed to `groovy-based` once the new layout is in place.
+Until this change, the below branches' purposes are:
 
-* [simplify/community-templates](https://github.com/IBM/dbb/tree/simplify/community-templates) - active development branch targeting DBB 3.0 and later with the zBuilder framework. This holds the simplified, designated target layout for the project.
+* [main](https://github.com/IBM/dbb/tree/main) - keeps the existing structure for both zBuilder and Groovy-based assets.
+
+* [simplify/community-templates](https://github.com/IBM/dbb/tree/simplify/community-templates) - the new development branch focussing on the zBuilder framework with DBB 3.0 and later. This holds the simplified, designated target layout for the project.
 
 See [releases](https://github.com/IBM/dbb/releases) for prior versions of the community assets.
 
