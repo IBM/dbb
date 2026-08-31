@@ -14,6 +14,7 @@ include_middleware_cfg:
   files_list:
     - "{{ deploy_cfg_home }}/deployment-configuration/global/cics_config.yml"
     - "{{ deploy_cfg_home }}/deployment-configuration/global/db2_config.yml"
+    - "{{ deploy_cfg_home }}/deployment-configuration/global/zos_connect.yml"    
   files_must_exist: true
 
 # reference to global deployment configurations and capabilities

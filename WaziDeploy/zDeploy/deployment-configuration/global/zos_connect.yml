@@ -1,0 +1,33 @@
+#################################################################################
+# This file configures the z/OS Connect actions for the deployment
+#################################################################################
+
+zos_connect_sys_def:
+  root: "{{ app_zos_connect_root if app_zos_connect_root is defined and app_zos_connect_root else default_zos_connect_root }}"
+  job_name: "{{ app_zos_connect_job_name if app_zos_connect_job_name is defined and app_zos_connect_job_name else default_zos_connect_job_name }}"
+
+template_name_zosconnect_config:
+  src: '{{ deploy_cfg_home }}/deployment-configuration/templates/zos_connect_app_config.xml.j2'
+  dest: '{{ zos_connect_sys_def.root }}/configDropins/overrides/{{api_name}}.xml'
+  mode: 0755
+  delegate: False
+
+
+# System commands for z/OS Connect server management
+system_command_start_server:
+  cmd: 'S {{ zos_connect_sys_def.job_name }}'
+  verbose: false
+  wait_time_s: 5
+  wait: true
+
+system_command_refresh_config:
+  cmd: 'MODIFY {{ zos_connect_sys_def.job_name }},REFRESH,CONFIG'
+  verbose: false
+  wait_time_s: 3
+  wait: true
+
+system_command_refresh_apps:
+  cmd: 'MODIFY {{ zos_connect_sys_def.job_name }},REFRESH,APPS'
+  verbose: false
+  wait_time_s: 3
+  wait: true
