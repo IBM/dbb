@@ -12,35 +12,11 @@ Provider applications declare what they export in `dbb-app.yaml` under `applicat
 
 Applications that have no imports are completely unaffected by this configuration.
 
-## MortgageApplication Sample
+## Samples
 
-The `MortgageApplication/` subdirectory contains IBM's standard [MortgageApplication](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=applications-sample-mortgage-application) sample, refactored from a single monolith into five independently buildable sub-applications. Each sub-application has its own `dbb-app.yaml` and can be built in isolation.
-
-The split is designed to cover the full range of artifact types the feature supports: authored source copybooks, compiled object decks, and generated BMS map copybooks.
-
-### Sub-applications
-
-| Sub-application | Contents | Exports | Depends on |
-|---|---|---|---|
-| `NumberValidation/` | `EPSNBRVL` sub-module + `epsnbrpm.cpy` | source copybook + object deck | none |
-| `PaymentCalculator/` | `EPSMPMT` sub-module + `epspdata.cpy` | source copybook + object deck | none |
-| `MortgageMaps/` | BMS mapsets (`epsmort.bms`, `epsmlis.bms`) | generated BMS map copybooks | none |
-| `MortgageWebService/` | SOAP converter (`EPSCSMRD`) | none | none |
-| `MortgageApplication/` | Main CICS transaction (`EPSCMORT`, `EPSCSMRT`, `EPSMLIST`) | COMMAREA copybooks | `NumberValidation`, `PaymentCalculator`, `MortgageMaps` |
-
-### Build order
-
-`NumberValidation`, `PaymentCalculator`, and `MortgageMaps` must be built and published before `MortgageApplication` can be built. `MortgageWebService` has no dependency on any of the others.
-
-```
-NumberValidation   ──┐
-PaymentCalculator  ──┼──▶  MortgageApplication
-MortgageMaps       ──┘
-
-MortgageWebService       (no ordering constraint)
-```
-
-The first three can be built in parallel.
+| Sample | Description |
+|---|---|
+| [`MortgageApplication/`](MortgageApplication/) | The standard MortgageApplication split into five independently buildable sub-applications, covering source copybooks, object decks, and generated BMS map copybooks as dependency types. |
 
 ## `build/` — sample build configuration
 

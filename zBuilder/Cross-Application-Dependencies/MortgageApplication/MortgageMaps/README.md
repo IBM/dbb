@@ -26,14 +26,6 @@ The BMS compile step generates COBOL copybooks (deploy type `MAPCOPY`) from each
 
 This application has no upstream dependencies and can be built independently, in parallel with `NumberValidation`, `PaymentCalculator`, and `MortgageWebService`.
 
-```
-NumberValidation   ──┐
-PaymentCalculator  ──┼──▶  MortgageApplication
-MortgageMaps       ──┘
-
-MortgageWebService       (independent — no ordering constraint)
-```
-
 ## Building with DBB zBuilder
 
 ```shell

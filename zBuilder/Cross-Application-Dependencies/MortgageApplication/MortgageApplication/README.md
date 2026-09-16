@@ -15,15 +15,6 @@ This application consumes three types of cross-application dependency:
 | `MortgageMaps` | `EPSMORT` copybook | **Generated output (MAPCOPY)** | Compile time — `COPY EPSMORT` in `epscmort.cbl` |
 | `MortgageMaps` | `EPSMLIS` copybook | **Generated output (MAPCOPY)** | Compile time — `COPY EPSMLIS` in `epsmlist.cbl` |
 
-### How dependencies are resolved at build time
-
-1. **PackageInit** runs before compilation. It downloads the declared build packages from the artifact repository, extracts them to the workspace staging area (`dbb-imports/`), and uploads non-source artifacts (object decks, generated BMS copybooks) to z/OS PDS datasets.
-2. **Source copybooks** (`epsnbrpm.cpy`, `epspdata.cpy`) remain in the workspace and are found by the COBOL compiler's dependency search path — they are copied to `${HLQ}.IMPORTS.COPY` during the `copySrc` step.
-3. **Object decks** (`EPSNBRVL.OBJ`, `EPSMPMT.OBJ`) are uploaded to `${HLQ}.IMPORTS.OBJ` and included in the link-edit SYSLIB.
-4. **Generated BMS copybooks** (`EPSMORT`, `EPSMLIS`) are uploaded to `${HLQ}.IMPORTS.BMS.COPY` and included in the COBOL compile SYSLIB.
-
-All dependency dataset inclusions are conditional on `${IMPORTS_ENABLED}`, which is set by `PackageInit` — builds without imports are unaffected.
-
 ## Repository contents
 
 | File | Description |
@@ -39,24 +30,14 @@ All dependency dataset inclusions are conditional on `${IMPORTS_ENABLED}`, which
 | `properties/epsmlist.cbl.properties` | Per-file compile option overrides for `epsmlist.cbl` |
 | `crb/cics-resourcesDef.yaml` | CICS Resource Builder definitions |
 | `dbb-app.yaml` | DBB zBuilder application configuration — declares imports, interfaces, and task overrides |
-
 ## Build order
 
-`NumberValidation`, `PaymentCalculator`, and `MortgageMaps` must be built and their packages published before this application can be built. `MortgageWebService` has no ordering constraint.
+`NumberValidation`, `PaymentCalculator`, and `MortgageMaps` must be built and their packages published before this application can be built. See [`../README.md`](../README.md) for the full build order across the suite.
 
-```
-NumberValidation   ──┐
-PaymentCalculator  ──┼──▶  MortgageApplication
-MortgageMaps       ──┘
-
-MortgageWebService       (independent — no ordering constraint)
-```
-
-`NumberValidation`, `PaymentCalculator`, and `MortgageMaps` can be built in parallel.
 
 ## Building with DBB zBuilder
 
-> **Before building:** fill in the `reference`, `buildid`, and `repository` fields in the `imports` section of `dbb-app.yaml` with values pointing to a configured artifact repository and valid published build packages from the upstream applications.
+> **Before building:** fill in the `reference`, `buildId`, and `repository` fields in the `imports` section of `dbb-app.yaml` with values pointing to a configured artifact repository and valid published build packages from the upstream applications.
 
 ```shell
 dbb build pipeline

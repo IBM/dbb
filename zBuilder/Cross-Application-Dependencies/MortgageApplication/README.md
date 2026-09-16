@@ -1,18 +1,18 @@
 # MortgageApplication Sample Suite
 
-This directory contains the IBM [MortgageApplication](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=applications-sample-mortgage-application) sample, split into five independently buildable sub-applications to demonstrate zBuilder's cross-application dependency management feature.
+This directory contains the IBM [MortgageApplication](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=applications-sample-mortgage-application) sample, refactored from a single monolith into five independently buildable sub-applications to demonstrate zBuilder's cross-application dependency management feature. The split is designed to cover the full range of artifact types the feature supports: authored source copybooks, compiled object decks, and generated BMS map copybooks.
 
 Each sub-application has its own `dbb-app.yaml` and can be built, versioned, and published separately. `MortgageApplication` is the consumer — it depends on build packages published by the other three provider applications.
 
 ## Sub-applications
 
-| Sub-application | Role | Exports |
-|---|---|---|
-| [`NumberValidation/`](NumberValidation/) | Validates numeric input fields | Source copybook + object deck |
-| [`PaymentCalculator/`](PaymentCalculator/) | Calculates monthly mortgage payments | Source copybook + object deck |
-| [`MortgageMaps/`](MortgageMaps/) | BMS screen definitions | Generated BMS map copybooks |
-| [`MortgageWebService/`](MortgageWebService/) | SOAP/XML converter | None |
-| [`MortgageApplication/`](MortgageApplication/) | Main CICS transaction | COMMAREA copybooks |
+| Sub-application | Contents | Exports | Depends on |
+|---|---|---|---|
+| [`NumberValidation/`](NumberValidation/) | `EPSNBRVL` sub-module + `epsnbrpm.cpy` | source copybook + object deck | none |
+| [`PaymentCalculator/`](PaymentCalculator/) | `EPSMPMT` sub-module + `epspdata.cpy` | source copybook + object deck | none |
+| [`MortgageMaps/`](MortgageMaps/) | BMS mapsets (`epsmort.bms`, `epsmlis.bms`) | generated BMS map copybooks | none |
+| [`MortgageWebService/`](MortgageWebService/) | SOAP converter (`EPSCSMRD`) | none | none |
+| [`MortgageApplication/`](MortgageApplication/) | Main CICS transaction (`EPSCMORT`, `EPSCSMRT`, `EPSMLIST`) | COMMAREA copybooks | `NumberValidation`, `PaymentCalculator`, `MortgageMaps` |
 
 ## Dependency map
 

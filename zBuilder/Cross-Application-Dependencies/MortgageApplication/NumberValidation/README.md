@@ -22,13 +22,7 @@ This application produces **no standalone load module**. The compiled object dec
 
 ## Build order
 
-This application has no upstream dependencies and can be built independently, in parallel with `PaymentCalculator` and `MortgageWebService`.
-
-```
-NumberValidation   ──┐
-                      ├──▶  MortgageApplication
-PaymentCalculator  ──┘
-```
+This application has no upstream dependencies and can be built independently, in parallel with `PaymentCalculator`, `MortgageMaps`, and `MortgageWebService`.
 
 ## Building with DBB zBuilder
 
