@@ -1,0 +1,50 @@
+---
+version: 1.0.0
+application:
+  name: MortgageMaps
+
+  baseline:
+    type: last
+    repository: dbb-zbuilder  # update to your repository name
+
+  # Interfaces exported into the build package for downstream consumers.
+  # MortgageApplication consumes the generated BMS copybooks at compile time.
+  interfaces:
+
+    outputs:
+      # Generated BMS copybooks — produced by the BMS CopyGen step (deployType: MAPCOPY)
+      # and exported for downstream consumption. MortgageApplication COPYs these generated
+      # copybooks into epscmort.cbl (EPSMORT mapset) and epsmlist.cbl (EPSMLIS mapset).
+      - description: "BMS map copybooks"
+        usage: public
+        deployTypes:
+          - MAPCOPY
+        buildFilePatterns:
+          - "${APP_DIR_NAME}/bms/*.bms"
+
+  tasks:
+
+    # Variable overrides for the ImpactAnalysis task
+    - task: ImpactAnalysis
+      variables:
+        - name: impactQueryPatterns
+          value:
+            # BMS maps have no copybook or program dependencies in this application
+            - languageExt: bms
+              dependencyPatterns: []
+
+    # Variable overrides for the ScanLoadModule task
+    - task: ScanLoadModule
+      variables:
+        - name: skipScan
+          value: true
+          forFiles:
+            - "**/bms/**"
+
+    # Variable overrides for the ScannerInit task
+    - task: ScannerInit
+      variables:
+        - name: loadModuleExcludeList
+          value: "${SCEELKED}.*,${SDFHLOAD}.*"
+
+    # No dependencies section — MortgageMaps has no upstream dependencies.

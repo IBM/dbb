@@ -1,0 +1,37 @@
+---
+version: 1.0.0
+application:
+  name: MortgageWebService
+
+  # No interfaces section — no other application consumes outputs from this application.
+
+  tasks:
+
+    # Variable overrides for the ImpactAnalysis task
+    - task: ImpactAnalysis
+      variables:
+        - name: impactQueryPatterns
+          value:
+            # No copybooks exist in this application today; pattern declared for future additions.
+            - languageExt: cbl
+              dependencyPatterns:
+                - ${APP_DIR_NAME}/copybook/*.cpy   # Copybook source dependency
+
+    # Variable overrides for the ScanLoadModule task
+    - task: ScanLoadModule
+      variables:
+        # epscsmrd.cbl defines 5 PROGRAM-IDs (EPSCSMRD, EPSCSMRF, EPSCSMRX, EPSCSMRI, EPSCSMRO).
+        # Only EPSCSMRD produces a deployable load module — skip scanning for copybooks.
+        - name: skipScan
+          value: true
+          forFiles:
+            - "**/copybook/**"
+
+    # Variable overrides for the ScannerInit task
+    - task: ScannerInit
+      variables:
+        - name: loadModuleExcludeList
+          value: "${SCEELKED}.*,${SDFHLOAD}.*"
+
+    # No dependencies section — MortgageWebService has no upstream dependencies.
+    # No baseline section — no interfaces: block means Package produces no build package to pass through.

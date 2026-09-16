@@ -1,0 +1,105 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2025
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+####################################
+# Build package configuration
+#
+# Centralises all Publish and PackageInit settings for cross-application
+# dependency management. These defaults apply to every application built with
+# this build configuration.
+#
+# Infrastructure settings (artifact repository URL, type, dataset mappings) live
+# here so individual applications do not repeat them. Applications declare only
+# what is application-specific in their own dbb-app.yaml:
+#   - interfaces:  what to publish (sources, outputs)
+#   - imports:     which upstream packages to fetch (name, type, reference, buildId)
+#
+# Applications with no declared imports are unaffected — PackageInit
+# and Publish are no-ops when application.imports / application.interfaces
+# are not present in dbb-app.yaml.
+#
+# Integration steps:
+#   1. Copy this file into your build configuration directory (alongside dbb-build.yaml).
+#   2. Add "- file: BuildPackages.yaml" to the include: section of dbb-build.yaml.
+#   3. Set the url values below to point to your artifact repository.
+#   4. If your artifact repository requires authentication, configure credentials
+#      as described in the DBB zBuilder documentation.
+####################################
+
+version: 1.0.0
+tasks:
+
+  # ---------------------------------------------------------------------------
+  # Publish — packages and uploads build outputs to the artifact repository.
+  # Runs at the end of every 'pipeline' lifecycle build.
+  # ---------------------------------------------------------------------------
+  - task: Publish
+    variables:
+
+      # Artifact repository connection — update these values for your environment
+      - name: type
+        value: artifactory
+      - name: url
+        value: https://your-artifactory-instance/artifactory/
+      - name: repositoryName
+        value: dbb-zbuilder
+
+  # ---------------------------------------------------------------------------
+  # PackageInit — downloads upstream build packages from the artifact
+  # repository, stages source artifacts in the workspace, and uploads binary
+  # artifacts (OBJ, MAPCOPY) to z/OS datasets before compilation begins.
+  # Runs as the first step of the 'pipeline' lifecycle, before ImpactAnalysis.
+  # ---------------------------------------------------------------------------
+  - task: PackageInit
+    variables:
+
+      # Artifact repository connection — should match Publish settings above
+      - name: type
+        value: artifactory
+      - name: url
+        value: https://your-artifactory-instance/artifactory/
+
+      # Import dataset mappings — PackageInit uploads ONLY public
+      # non-source artifacts from declared import build packages to these datasets.
+      # Source artifacts (copybooks) remain in the workspace staging area and are
+      # resolved by the compiler's search path (packageSearchPath in Cobol.yaml).
+      - name: importDatasets
+        value:
+          # Object decks (OBJ) — consumed at link time via SYSLIB in LinkEdit.yaml
+          - name: "${HLQ}.IMPORTS.OBJ"
+            options: "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)"
+            deployTypes:
+              - OBJ
+            copyMode: "BINARY"
+          # Generated BMS map copybooks (MAPCOPY) — consumed at compile time via
+          # SYSLIB in Cobol.yaml. deployType MAPCOPY matches the BMS CopyGen step
+          # output defined in BMS.yaml.
+          - name: "${HLQ}.IMPORTS.BMS.COPY"
+            options: "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)"
+            deployTypes:
+              - MAPCOPY
+            copyMode: "TEXT"
+
+      # Baseline dataset mappings — PackageInit uploads BOTH public and
+      # private artifacts from the baseline build package here. Baseline OBJ
+      # lands in the same dataset as current-build OBJ so the linker finds
+      # both naturally, with current-build members overwriting baseline members.
+      - name: baselineDatasets
+        value:
+          - name: "${HLQ}.OBJ"
+            options: "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)"
+            deployTypes:
+              - OBJ
+            copyMode: "BINARY"
+
+      # Persistent cache directory for downloaded build package TAR files.
+      # Shared across all builds and workspaces on this system.
+      # Default: $HOME/.dbb/cache/imports/
+      # Override with an absolute path if a different location is needed.
+      # - name: persistentCacheDirectory
+      #   value: "/absolute/path/to/cache"

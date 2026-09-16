@@ -1,0 +1,69 @@
+---
+version: 1.0.0
+application:
+  name: PaymentCalculator
+
+  # Statically pinned baseline
+  # baseline:
+  #   type: release
+  #   reference: "1.0.0"
+  #   buildid: "1"
+  #   repository: dbb
+
+  # Interfaces exported into the build package for downstream consumers.
+  # MortgageApplication consumes both the copybook (compile time) and the
+  # object deck (link time).
+  interfaces:
+
+    sources:
+      # Public copybook — consumed by MortgageApplication at compile time
+      # (COPY EPSPDATA in epscsmrt.cbl)
+      - "${APP_DIR_NAME}/copybook/*.cpy"
+
+    outputs:
+      # Public object deck — consumed by MortgageApplication at link time
+      # (INCLUDE SYSLMOD(EPSMPMT) in link/epsmlist.lnk)
+      - description: "EPSMPMT object deck"
+        usage: public
+        deployTypes:
+          - OBJ
+        buildFilePatterns:
+          - "${APP_DIR_NAME}/cobol/epsmpmt.cbl"
+
+  tasks:
+
+    # Variable overrides for the ImpactAnalysis task
+    - task: ImpactAnalysis
+      variables:
+        - name: impactQueryPatterns
+          value:
+            - languageExt: cbl
+              dependencyPatterns:
+                - ${APP_DIR_NAME}/copybook/*.cpy   # Copybook source dependency
+
+    # Variable overrides for the Cobol language task
+    - task: Cobol
+      variables:
+        # EPSMPMT is a static sub-module — its object deck is exported for
+        # downstream link-edit; no standalone load module is produced here.
+        - name: doLinkEdit
+          value: false
+          forFiles:
+            - "**/cobol/epsmpmt.cbl"
+
+    # Variable overrides for the ScanLoadModule task
+    - task: ScanLoadModule
+      variables:
+        - name: skipScan
+          value: true
+          forFiles:
+            - "**/cobol/epsmpmt.cbl"
+            - "**/copybook/**"
+
+    # Variable overrides for the ScannerInit task
+    - task: ScannerInit
+      variables:
+        - name: loadModuleExcludeList
+          value: "${SCEELKED}.*,${SDFHLOAD}.*"
+
+    # No dependencies section — PaymentCalculator has no upstream dependencies.

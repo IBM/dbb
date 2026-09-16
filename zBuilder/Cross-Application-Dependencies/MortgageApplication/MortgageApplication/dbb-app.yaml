@@ -1,0 +1,105 @@
+---
+version: 1.0.0
+application:
+  name: MortgageApplication
+
+  baseline:
+    type: last
+    repository: dbb-zbuilder  # update to your repository name
+
+  # Imported build packages consumed by this application.
+  # Update reference, buildId, and repository to match the published packages
+  # from each upstream application in your artifact repository.
+  imports:
+    - name: NumberValidation
+      type: "release"
+      reference: "1.0.0"        # update to the published release tag
+      buildId: "<buildId>"      # update to the specific build identifier
+      repository: dbb-zbuilder  # update to your repository name
+
+    - name: PaymentCalculator
+      type: "release"
+      reference: "1.0.0"        # update to the published release tag
+      buildId: "<buildId>"      # update to the specific build identifier
+      repository: dbb-zbuilder  # update to your repository name
+
+    - name: MortgageMaps
+      type: "release"
+      reference: "1.0.0"        # update to the published release tag
+      buildId: "<buildId>"      # update to the specific build identifier
+      repository: dbb-zbuilder  # update to your repository name
+
+  # Interfaces exported into the build package for potential future consumers
+  # of the COMMAREA layout.
+  interfaces:
+
+    sources:
+      # COMMAREA copybooks — exported for any future application that needs to
+      # compile against the mortgage calculation interface layout.
+      # Note: epsmortf.cpy is purely internal (VSAM file layout) and is not exported.
+      - "${APP_DIR_NAME}/copybook/epsmtcom.cpy"
+      - "${APP_DIR_NAME}/copybook/epsmtinp.cpy"
+      - "${APP_DIR_NAME}/copybook/epsmtout.cpy"
+
+  tasks:
+
+    # Variable overrides for the ImpactAnalysis task
+    - task: ImpactAnalysis
+      variables:
+        - name: impactQueryPatterns
+          value:
+            # Cobol program dependency patterns
+            - languageExt: cbl
+              dependencyPatterns:
+                - ${APP_DIR_NAME}/copybook/*.cpy          # Local copybook source dependency
+                - ${APP_DIR_NAME}/cobol/*.cbl             # Static call / link dependency
+                - ${IMPORT_SRC_PATTERN}/*.cpy             # Cross-app: copybook changes trigger COBOL rebuilds
+                - ${IMPORT_BIN_PATTERN}/*.MAPCOPY         # Cross-app: BMS copybook changes trigger COBOL rebuilds
+                - ${IMPORT_BIN_PATTERN}/*.OBJ             # Cross-app: object changes trigger link-edit rebuilds
+            # Link card dependency patterns
+            - languageExt: lnk
+              dependencyPatterns:
+                - ${APP_DIR_NAME}/cobol/*.cbl             # Static link dependency
+                - ${IMPORT_BIN_PATTERN}/*.OBJ             # Cross-app: object changes trigger link-edit rebuilds
+
+    # Variable overrides for the Cobol language task
+    - task: Cobol
+      variables:
+        # epsmlist.cbl produces no standalone load module — it is statically linked
+        # into the composite EPSMLIST load module via link/epsmlist.lnk.
+        # Note: the epsnbrvl.cbl overrides (fileBuildRank + doLinkEdit) are removed —
+        # EPSNBRVL source now lives in the NumberValidation application.
+        # Import datasets (${HLQ}.IMPORTS.COPY, ${HLQ}.IMPORTS.BMS.COPY) are added to
+        # SYSLIB automatically by Cobol.yaml when ${IMPORTS_ENABLED} is set by PackageInit.
+        - name: doLinkEdit
+          value: false
+          forFiles:
+            - "**/cobol/epsmlist.cbl"
+
+    # Variable overrides for the LinkEdit language task
+    - task: LinkEdit
+      variables:
+        # epsmlist.lnk links CICS programs — set the CICS flag so the linker
+        # includes the correct CICS stub libraries.
+        # ${HLQ}.IMPORTS.OBJ is added to SYSLIB automatically by LinkEdit.yaml when
+        # ${IMPORTS_ENABLED} is set by PackageInit.
+        - name: hasCICSModules
+          value: true
+          forFiles:
+            - "**/link/epsmlist.lnk"
+
+    # Variable overrides for the ScanLoadModule task
+    - task: ScanLoadModule
+      variables:
+        - name: skipScan
+          value: true
+          forFiles:
+            - "**/cobol/epsmlist.cbl"
+            - "**/copybook/**"
+
+    # Variable overrides for the ScannerInit task
+    - task: ScannerInit
+      variables:
+        - name: loadModuleExcludeList
+          value: "${SCEELKED}.*,${SDFHLOAD}.*"
+
