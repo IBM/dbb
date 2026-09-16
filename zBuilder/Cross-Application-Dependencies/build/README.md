@@ -1,8 +1,10 @@
-# Build configuration samples
+# Build configuration
 
-This directory contains enhanced versions of the DBB zBuilder shipped language configuration samples, modified to support cross-application dependency management for the MortgageApplication sample suite.
+This directory contains the sample build configuration for the cross-application dependency sample.
 
-These files are **not** drop-in replacements for your existing configuration. They are intended as a reference showing exactly which additions are needed. If you already have `Cobol.yaml` and `LinkEdit.yaml` in your build configuration directory, the changes described below are what you need to merge in.
+`BuildPackages.yaml` is a new file with no equivalent in the shipped samples. Copy it into your build configuration directory and update the repository URL — it is ready to use as-is for this sample.
+
+`Cobol.yaml` and `LinkEdit.yaml` are enhanced versions of the files shipped with DBB at `$DBB_HOME/samples/languages/`. If you are setting up a new build configuration, you can use these directly. If you already have these files in your build configuration directory, the sections below describe the specific additions to merge in.
 
 ## Files
 

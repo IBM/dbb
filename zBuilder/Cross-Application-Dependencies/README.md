@@ -42,9 +42,9 @@ MortgageWebService       (no ordering constraint)
 
 The first three can be built in parallel.
 
-## `build/` — build configuration
+## `build/` — sample build configuration
 
-The [`build/`](build/) directory contains the configuration files needed to enable cross-application dependency support alongside your existing zBuilder build configuration:
+The [`build/`](build/) directory contains sample build configuration for enabling cross-application dependency support in a zBuilder build:
 
 | File | Purpose |
 |---|---|
