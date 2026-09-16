@@ -1,38 +1,6 @@
 # MortgageApplication
 
-A CICS-based mortgage calculator running on IBM z/OS, built with IBM DBB zBuilder.
-
-## Branches
-
-| Branch | Description |
-|---|---|
-| `main` | Original monolithic application — all source in one repo, built as a single unit |
-| `cross-app` | **This branch** — refactored for cross-application dependency management |
-
-## What changed in this branch
-
-This branch demonstrates IBM DBB zBuilder's **cross-application dependency management** feature. The original monolithic application has been split into five independently buildable sub-applications:
-
-| Application | Repo | Contents | Depends on |
-|---|---|---|---|
-| `NumberValidation` | [github.ibm.com/Luke-Burgess/NumberValidation](https://github.ibm.com/Luke-Burgess/NumberValidation) | `EPSNBRVL`, `epsnbrpm.cpy` | — |
-| `PaymentCalculator` | [github.ibm.com/Luke-Burgess/PaymentCalculator](https://github.ibm.com/Luke-Burgess/PaymentCalculator) | `EPSMPMT`, `epspdata.cpy` | — |
-| `MortgageMaps` | [github.ibm.com/Luke-Burgess/MortgageMaps](https://github.ibm.com/Luke-Burgess/MortgageMaps) | BMS maps (`epsmort.bms`, `epsmlis.bms`) | — |
-| `MortgageWebService` | [github.ibm.com/Luke-Burgess/MortgageWebService](https://github.ibm.com/Luke-Burgess/MortgageWebService) | `EPSCSMRD` SOAP converter | — |
-| `MortgageApplication` | [github.ibm.com/Luke-Burgess/MortgageApplication](https://github.ibm.com/Luke-Burgess/MortgageApplication) | `EPSCMORT`, `EPSCSMRT`, `EPSMLIST`, link cards | `NumberValidation`, `PaymentCalculator`, `MortgageMaps` |
-
-The following source files were moved **out** of this repo into their own sub-applications:
-
-| File | Moved to |
-|---|---|
-| `cobol/epsnbrvl.cbl` | `NumberValidation` |
-| `copybook/epsnbrpm.cpy` | `NumberValidation` |
-| `cobol/epsmpmt.cbl` | `PaymentCalculator` |
-| `copybook/epspdata.cpy` | `PaymentCalculator` |
-| `bms/epsmort.bms` | `MortgageMaps` |
-| `bms/epsmlis.bms` | `MortgageMaps` |
-| `cobol/epscsmrd.cbl` | `MortgageWebService` |
-| `application-conf/` | Removed — replaced by `dbb-app.yaml` |
+The consumer application in the cross-application dependency sample. This is the main CICS-based mortgage calculator, refactored from the original [MortgageApplication](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=applications-sample-mortgage-application) monolith. It depends on build packages published by `NumberValidation`, `PaymentCalculator`, and `MortgageMaps`.
 
 ## Cross-application dependencies
 
