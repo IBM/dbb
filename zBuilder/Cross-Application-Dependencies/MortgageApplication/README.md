@@ -2,7 +2,7 @@
 
 This directory contains the IBM [MortgageApplication](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=applications-sample-mortgage-application) sample, refactored from a single monolith into five independently buildable sub-applications to demonstrate zBuilder's cross-application dependency management feature. The split is designed to cover the full range of artifact types the feature supports: authored source copybooks, compiled object decks, and generated BMS map copybooks.
 
-Each sub-application has its own `dbb-app.yaml` and can be built, versioned, and published separately. `MortgageApplication` is the consumer — it depends on build packages published by the other three provider applications.
+Each sub-application has its own `dbb-app.yaml` and can be built, versioned, and published separately. `MortgageApplication` is the consumer: it depends on build packages published by the other three provider applications.
 
 ## Sub-applications
 

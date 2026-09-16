@@ -2,7 +2,7 @@
 
 This directory contains the sample build configuration for the cross-application dependency sample.
 
-`BuildPackages.yaml` is a new file with no equivalent in the shipped samples. Copy it into your build configuration directory and update the repository URL — it is ready to use as-is for this sample.
+`BuildPackages.yaml` is a new file with no equivalent in the shipped samples. Copy it into your build configuration directory and update the repository URL. It is ready to use as-is for this sample.
 
 `Cobol.yaml` and `LinkEdit.yaml` are enhanced versions of the files shipped with DBB at `$DBB_HOME/samples/languages/`. If you are setting up a new build configuration, you can use these directly. If you already have these files in your build configuration directory, the sections below describe the specific additions to merge in.
 
@@ -10,7 +10,7 @@ This directory contains the sample build configuration for the cross-application
 
 | File | Based on |
 |---|---|
-| `BuildPackages.yaml` | New file — no shipped equivalent |
+| `BuildPackages.yaml` | New file (no shipped equivalent) |
 | `Cobol.yaml` | [`$DBB_HOME/samples/languages/Cobol.yaml`](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=zbuilder-getting-started) |
 | `LinkEdit.yaml` | [`$DBB_HOME/samples/languages/LinkEdit.yaml`](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=zbuilder-getting-started) |
 
@@ -21,8 +21,8 @@ This directory contains the sample build configuration for the cross-application
 This is a new file with no shipped equivalent. It centralises the `PackageInit` and `Publish` task configuration that is common across all applications using cross-application dependencies:
 
 - Artifact repository connection (`type`, `url`, `repositoryName`)
-- `importDatasets` — the z/OS PDS datasets that `PackageInit` uploads imported binary artifacts into (`${HLQ}.IMPORTS.OBJ` for object decks, `${HLQ}.IMPORTS.BMS.COPY` for generated BMS copybooks)
-- `baselineDatasets` — the z/OS PDS dataset that `PackageInit` uploads the application's own baseline build package binaries into (`${HLQ}.IMPORTS.OBJ`), so the linker finds both baseline and freshly-compiled objects in one place
+- `importDatasets`: the z/OS PDS datasets that `PackageInit` uploads imported binary artifacts into (`${HLQ}.IMPORTS.OBJ` for object decks, `${HLQ}.IMPORTS.BMS.COPY` for generated BMS copybooks)
+- `baselineDatasets`: the z/OS PDS dataset that `PackageInit` uploads the application's own baseline build package binaries into (`${HLQ}.IMPORTS.OBJ`), so the linker finds both baseline and freshly-compiled objects in one place
 
 Update the `url` and `repositoryName` values to match your artifact repository before use. See the main [`README.md`](../README.md) for integration steps.
 
@@ -42,7 +42,7 @@ Four additions relative to the shipped sample:
   value: search:${WORKSPACE}/?path=${IMPORT_SRC_PATTERN}/*.cpy
 ```
 
-`PackageInit` sets `${IMPORT_SRC_PATTERN}` to `dbb-imports/*/include/src` after extracting import packages to the workspace. When no imports are declared, the variable is empty and this search path resolves nothing — so it is harmless for applications that have no cross-application dependencies.
+`PackageInit` sets `${IMPORT_SRC_PATTERN}` to `dbb-imports/*/include/src` after extracting import packages to the workspace. When no imports are declared, the variable is empty and this search path resolves nothing, so it is harmless for applications that have no cross-application dependencies.
 
 ### 2. `${HLQ}.IMPORTS.COPY` dataset and second `dependencyCopy` entry in `copySrc`
 
@@ -67,10 +67,10 @@ The `packageSearchPath` search finds source copybooks staged by `PackageInit` in
 - {  dsn: "${HLQ}.IMPORTS.BMS.COPY", condition: "${IMPORTS_ENABLED}", options: "shr" }
 ```
 
-These are appended to the SYSLIB concatenation after `${HLQ}.BMS.COPY`. Both are conditional on `${IMPORTS_ENABLED}`, which is set by `PackageInit` only when imports are present — applications without an `imports:` block in `dbb-app.yaml` are completely unaffected.
+These are appended to the SYSLIB concatenation after `${HLQ}.BMS.COPY`. Both are conditional on `${IMPORTS_ENABLED}`, which is set by `PackageInit` only when imports are present. Applications without an `imports:` block in `dbb-app.yaml` are completely unaffected.
 
-- `${HLQ}.IMPORTS.COPY` — source copybooks from upstream packages (staged by the `copySrc` step above)
-- `${HLQ}.IMPORTS.BMS.COPY` — generated BMS map copybooks from upstream packages (uploaded directly to z/OS by `PackageInit`)
+- `${HLQ}.IMPORTS.COPY`: source copybooks from upstream packages (staged by the `copySrc` step above)
+- `${HLQ}.IMPORTS.BMS.COPY`: generated BMS map copybooks from upstream packages (uploaded directly to z/OS by `PackageInit`)
 
 ### 4. One conditional SYSLIB entry in the `linkEdit` step
 

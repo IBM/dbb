@@ -1,6 +1,6 @@
 # Cross-Application Dependencies
 
-This directory contains samples for IBM DBB zBuilder's cross-application dependency management feature. The feature lets z/OS applications publish versioned build artifacts (copybooks, object decks, generated BMS copybooks) to an artifact repository and consume them in other independently-built applications.
+This directory contains samples for IBM DBB zBuilder's cross-application dependency management feature. The feature allows z/OS applications to package and publish their build artifacts (shared source interfaces and compiled outputs) as versioned build packages in an artifact repository, so other independently-built applications can declare and consume them as explicit, pinned dependencies.
 
 For a step-by-step walkthrough of setting up this feature, see the [IBM DBB documentation](#TODO-replace-with-official-doc-link).
 
@@ -18,13 +18,13 @@ Applications that have no imports are completely unaffected by this configuratio
 |---|---|
 | [`MortgageApplication/`](MortgageApplication/) | The standard MortgageApplication split into five independently buildable sub-applications, covering source copybooks, object decks, and generated BMS map copybooks as dependency types. |
 
-## `build/` — sample build configuration
+## `build/` directory: sample build configuration
 
 The [`build/`](build/) directory contains sample build configuration for enabling cross-application dependency support in a zBuilder build:
 
 | File | Purpose |
 |---|---|
-| [`build/BuildPackages.yaml`](build/BuildPackages.yaml) | `PackageInit` and `Publish` task configuration — artifact repository connection and z/OS dataset mappings |
+| [`build/BuildPackages.yaml`](build/BuildPackages.yaml) | `PackageInit` and `Publish` task configuration: artifact repository connection and z/OS dataset mappings |
 | [`build/Cobol.yaml`](build/Cobol.yaml) | Enhanced version of the shipped `Cobol.yaml` sample with cross-application additions |
 | [`build/LinkEdit.yaml`](build/LinkEdit.yaml) | Enhanced version of the shipped `LinkEdit.yaml` sample with cross-application additions |
 
@@ -64,6 +64,6 @@ See [`build/README.md`](build/README.md) for a description of every change relat
 
 ## Further reading
 
-- [IBM DBB Cross-Application Dependencies — full tutorial](#TODO-replace-with-official-doc-link)
+- [IBM DBB Cross-Application Dependencies: full tutorial](#TODO-replace-with-official-doc-link)
 - [IBM DBB zBuilder documentation](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=zbuilder-getting-started)
 - [MortgageApplication sample](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=applications-sample-mortgage-application)

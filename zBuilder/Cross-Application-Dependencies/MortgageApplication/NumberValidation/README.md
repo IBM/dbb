@@ -6,7 +6,7 @@ A sub-application of the Mortgage Application suite, built with IBM DBB zBuilder
 
 | File | Description |
 |---|---|
-| `cobol/epsnbrvl.cbl` | Number validation sub-module (`EPSNBRVL`) — validates and parses numeric input fields |
+| `cobol/epsnbrvl.cbl` | Number validation sub-module (`EPSNBRVL`): validates and parses numeric input fields |
 | `copybook/epsnbrpm.cpy` | `EPS-NUMBER-VALIDATION` data interface copybook |
 
 ## Build output
@@ -17,8 +17,8 @@ This application produces **no standalone load module**. The compiled object dec
 
 | Type | Artifact | Consumed by |
 |---|---|---|
-| Source (copybook) | `epsnbrpm.cpy` | `MortgageApplication` — compile time |
-| Binary (OBJ) | `EPSNBRVL.OBJ` | `MortgageApplication` — link time |
+| Source (copybook) | `epsnbrpm.cpy` | `MortgageApplication` (compile time) |
+| Binary (OBJ) | `EPSNBRVL.OBJ` | `MortgageApplication` (link time) |
 
 ## Build order
 

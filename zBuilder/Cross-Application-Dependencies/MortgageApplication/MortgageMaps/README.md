@@ -8,8 +8,8 @@ This application owns the CICS BMS screen definitions for the Mortgage Applicati
 
 | File | Description |
 |---|---|
-| `bms/epsmort.bms` | BMS mapset `EPSMORT` — "EPS Mortgage Calculator" data entry screen (`EPMENU` map) |
-| `bms/epsmlis.bms` | BMS mapset `EPSMLIS` — "Better Mortgage Rates" lender list screen |
+| `bms/epsmort.bms` | BMS mapset `EPSMORT`: "EPS Mortgage Calculator" data entry screen (`EPMENU` map) |
+| `bms/epsmlis.bms` | BMS mapset `EPSMLIS`: "Better Mortgage Rates" lender list screen |
 
 ## Build output
 
@@ -19,8 +19,8 @@ The BMS compile step generates COBOL copybooks (deploy type `MAPCOPY`) from each
 
 | Type | Artifact | Consumed by |
 |---|---|---|
-| Generated output (MAPCOPY) | `EPSMORT` copybook | `MortgageApplication` — compile time (`COPY EPSMORT` in `epscmort.cbl`) |
-| Generated output (MAPCOPY) | `EPSMLIS` copybook | `MortgageApplication` — compile time (`COPY EPSMLIS` in `epsmlist.cbl`) |
+| Generated output (MAPCOPY) | `EPSMORT` copybook | `MortgageApplication` (compile time, `COPY EPSMORT` in `epscmort.cbl`) |
+| Generated output (MAPCOPY) | `EPSMLIS` copybook | `MortgageApplication` (compile time, `COPY EPSMLIS` in `epsmlist.cbl`) |
 
 ## Build order
 
