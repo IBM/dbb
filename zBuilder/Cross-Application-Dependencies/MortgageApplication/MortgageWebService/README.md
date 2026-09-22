@@ -25,5 +25,5 @@ This application has no upstream dependencies and no downstream consumers. It ca
 ## Building with DBB zBuilder
 
 ```shell
-dbb build full
+dbb build pipeline
 ```

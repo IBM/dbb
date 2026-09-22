@@ -33,5 +33,5 @@ PaymentCalculator  ──┘
 ## Building with DBB zBuilder
 
 ```shell
-dbb build full
+dbb build pipeline
 ```

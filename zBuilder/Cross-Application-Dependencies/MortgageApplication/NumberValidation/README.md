@@ -27,5 +27,5 @@ This application has no upstream dependencies and can be built independently, in
 ## Building with DBB zBuilder
 
 ```shell
-dbb build full
+dbb build pipeline
 ```
