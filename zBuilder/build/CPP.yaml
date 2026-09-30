@@ -1,0 +1,131 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2025, 2026
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+####################################
+# C/C++ language configuration
+#################################### 
+
+version: 1.0.2
+tasks:
+  # C/C++ Language task
+  - language: CPP
+
+    # source file association patterns
+    sources:
+      - "**.c"
+      - "**.C"
+      
+    # overridable variables
+    variables:
+      # conditional variable builds compile parameters i.e CICS,SQL
+      - name: compileParms
+        value: "/CXX XPLINK"
+            
+      # flag to perform linkedit
+      - name: doLinkEdit
+        value: true
+        
+      # default link edit parameters
+      - name: linkEditParms
+        value: AMODE=31,MAP,RENT,DYNAM=DLL,CASE=MIXED
+
+      # build record output deploy type
+      - name: deployType
+        value: LOAD  # default value
+        select:
+          - condition: ${IS_CICS}
+            value: CICSLOAD
+          - condition: ${IS_DLI}
+            value: IMSLOAD
+        
+      # default dependency search path for single repository build
+      - name: dependencySearchPath
+        value: search:${WORKSPACE}/?path=${APP_DIR_NAME}/**.h
+
+    # datasets that need to be created / validated for this language configuration
+    datasets:
+      - name: ${HLQ}.CPP
+        options: cyl space(1,5) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.HEADER
+        options: cyl space(1,5) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.OBJ
+        options: cyl space(1,5) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.LOAD
+        options: cyl space(1,5) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
+
+    # list of steps to execute for each program processed by this language configuration
+    steps:
+    
+      # Copy build file and dependency files to data sets
+      - step: copySrc
+        type: copy
+        source: ${FILE_PATH}
+        target: //'${HLQ}.CPP(${MEMBER})'
+        dependencyCopy:
+          - search: ${dependencySearchPath}
+            mappings:
+              - source: "**/*"
+                dataset: ${HLQ}.HEADER
+
+      # C compile step          
+      - step: compile
+        type: mvs
+        pgm: CCNDRVR
+        parm: ${compileParms}
+        maxRC: 4
+        dds:
+          - { name: "TASKLIB", dsn: "${SCEERUN2}", options: "shr" }
+          - {                  dsn: "${SCCNCMP}", options: "shr" }
+          - {                  dsn: "${SCEERUN}", options: "shr" }
+          - { name: "SYSIN", dsn: "${HLQ}.CPP(${MEMBER})", options: "shr" }
+          - { name: "SYSLIN", dsn: "${HLQ}.OBJ(${MEMBER})", options: "shr", output: true, deployType: "OBJ" }
+          - { name: "SYSLIB", dsn: "${HLQ}.HEADER", options: "shr" }
+          - {                 dsn: "${SCEEH}", options: "shr", condition: {exists: "${SCEEH}"} }
+          - {                 dsn: "${SCEEHH}", options: "shr", condition: {exists: "${SCEEHH}"} }
+          - {                 dsn: "${SCEEHSH}", options: "shr", condition: {exists: "${SCEEHSH}"} }
+          - {                 dsn: "${SCEEHAH}", options: "shr", condition: {exists: "${SCEEHAH}"} }
+          - {                 dsn: "${SCEEHNH}", options: "shr", condition: {exists: "${SCEEHNH}"} }
+          - {                 dsn: "${SCEEHNIH}", options: "shr", condition: {exists: "${SCEEHNIH}"} }
+          - {                 dsn: "${SCEEHT}", options: "shr", condition: {exists: "${SCEEHT}"} }
+          - {                 dsn: "${SCLBHH}", options: "shr", condition: {exists: "${SCLBHH}"} }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT5", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT6", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT7", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT8", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT9", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT10", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT14", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT16", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT17", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSMSGS", dsn: "${SCEEMSGP}", options: "shr" }
+          - { name: "SYSXMSGS", dsn: "${SCEEMSGP}", options: "shr" }
+          - { name: "SYSOUT", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", log: "${STEP}-${FILE_NAME}.log", logAppend: true }
+          - { name: "SYSCPRT", options: "cyl space(5,5) unit(vio) lrecl(133) recfm(f,b) new", log: "${STEP}-${FILE_NAME}.log", logAppend: true }
+          - { name: "SYSPRINT", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", log: "${STEP}-${FILE_NAME}.log", logAppend: true, logMode: "ASA_TEXT" }
+
+      # Link-Edit step
+      - step: linkEdit
+        type: mvs
+        pgm: IEWL
+        parm: ${linkEditParms}
+        condition: ${doLinkEdit}
+        maxRC: 0
+        dds:
+          - { name: "SYSLMOD", dsn: "${HLQ}.LOAD(${MEMBER})", options: "shr", output: true, deployType: "${deployType}" }
+          - { name: "SYSPRINT", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", log: "${STEP}-${FILE_NAME}.log", logAppend: true, logMode: "ASA_TEXT" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIN", dsn: "${HLQ}.OBJ(${MEMBER})", options: "shr" }
+          - {                 dsn: "CEE.SCEELIB(CELHSCPP)", options: "shr" }
+          - {                 dsn: "CEE.SCEELIB(CELHS003)", options: "shr" }
+          - {                 dsn: "CEE.SCEELIB(CELHS001)", options: "shr" }
+          - {                 dsn: "CEE.SCEELIB(C128)", options: "shr" }
+          - {                 dsn: "CBC.SCLBSID(IOSTREAM)", options: "shr" }
+          - {                 dsn: "CBC.SCLBSID(COMPLEX)", options: "shr" }
+          - { name: "SYSLIB", dsn: "${HLQ}.OBJ", options: "shr" }
+          - {                 dsn: "CEE.SCEEBND2", options: "shr" }

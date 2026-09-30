@@ -1,0 +1,151 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2025
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+####################################
+# Db2 Bind language configuration
+####################################
+
+version: 1.0.0
+tasks:
+  # NOTE: Db2Binds is intentionally NOT included in Languages.yaml.
+  # It is a user-build-only task (condition: userbuild == true).
+  # To enable pipeline Db2 bind, add Db2Binds explicitly to the relevant
+  # lifecycle in dbb-build.yaml after the Languages stage.
+  # Db2 Bind Language Task
+  - language: Db2Binds
+
+    # Db2 Bind should only run during a user build
+    condition:
+      exists: ${userbuild}
+      eval: ( ${userbuild} == true ) && ( ${STATUS} == 0 )
+
+    # source file association
+    sources:
+      - "**/cobol/*.cbl"
+
+    # overridable variables
+    variables:
+      # Flag indicating to run DB2 BIND PACKAGE.  Set to 'true' to bind SQL programs
+      # can be overridden by application variables
+      - name: performBindPackage
+        value: false
+
+      # Flag indicating to run DB2 BIND PLAN.  Set to 'true' to bind SQL programs
+      # can be overridden by application variables
+      - name: performBindPlan
+        value: false
+
+      # Bind jobcard for the JCL that is generated
+      # can be overridden by application variables
+      - name: jobCard
+        value: |-
+          //BINDPKG JOB 'DBB-PKGBIND',  
+          // MSGLEVEL=(1,1),MSGCLASS=R,NOTIFY=&SYSUID
+
+      # Specify the name of the DB2 subsystem
+      # Set value via application variables
+      #- name: db2Location
+      #  value: 
+
+      # Specify the DB2 collection (Package)
+      # Set value via application variables
+      #- name: collectionID
+      #  value: 
+
+      # Specify the DB2 Plan name
+      # Set value via application variables
+      #- name: plan
+      #  value: 
+
+      # Specify the DB2 Plan pklist
+      # example: *.MORTAGE.*
+      # Set value via application variables
+      #- name: plan_pklist
+      #  value: 
+
+      # Specify the owner of the package
+      # Set value via application variables
+      #- name: packageOwner
+      #  value: 
+
+      # Specify the value of the implicit qualifier
+      # Set value via application variables
+      #- name: qualifier
+      #  value:
+
+    # datasets that need to be created / validated for this language configuration
+    datasets:
+      - name: ${HLQ}.DBRM
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+
+    # list of steps to execute for each program processed by this language configuration
+    steps:
+      # Execute Db2 bind package
+      - step: bindPackage
+        condition: ${IS_SQL} && ${performBindPackage}
+        comment: Executing Db2 bind package for ${MEMBER}
+        type: job
+        maxRC: 4
+        logs:
+          - log: ${MEMBER}_bind_pkg.log
+            ddname: "*"
+            logEncoding: "${LOG_ENCODING}"
+        text: |
+          ${jobCard}
+          //*
+          //**PKGBIND
+          //PKGBIND EXEC PGM=IKJEFT01,DYNAMNBR=20,COND=(4,LT)
+          //STEPLIB  DD  DSN=${SDSNLOAD},DISP=SHR
+          //SYSTSPRT DD SYSOUT=*
+          //SYSPRINT DD SYSOUT=*
+          //SYSUDUMP DD SYSOUT=*
+          //SYSIN DD DUMMY
+          //SYSTSIN DD *
+          DSN SYSTEM(${db2Location})                                       
+          BIND PACKAGE(${collectionID})   +                                
+               MEMBER(${MEMBER})          +                                
+               LIBRARY('${HLQ}.DBRM')     +                                
+               OWNER(${packageOwner})     +                                
+               QUALIFIER(${qualifier})    +                                
+               ACTION(REPLACE)            +                                
+               ISOLATION(CS)                                        
+          END  
+          //
+
+      # Execute Db2 bind plan
+      - step: bindPlan
+        condition: ${IS_SQL} && ${performBindPlan}
+        comment: Executing Db2 bind plan for ${plan}
+        type: job
+        maxRC: 4
+        logs:
+          - log: ${plan}_bind_plan.log
+            ddname: "*"
+            logEncoding: "${LOG_ENCODING}"
+        text: |
+          ${jobCard}
+          //*
+          //**PLNBIND
+          //PLNBIND EXEC PGM=IKJEFT01,DYNAMNBR=20,COND=(4,LT)
+          //STEPLIB  DD  DSN=${SDSNLOAD},DISP=SHR
+          //SYSTSPRT DD SYSOUT=*
+          //SYSPRINT DD SYSOUT=*
+          //SYSUDUMP DD SYSOUT=*
+          //SYSIN DD DUMMY
+          //SYSTSIN DD *
+          DSN SYSTEM(${db2Location})                                       
+          BIND PLAN(${plan})              +                                
+               PKLIST(${plan_pklist})     +                                
+               OWNER(${packageOwner})     +                                
+               QUALIFIER(${qualifier})    +                                
+               ACTION(REPLACE)            +                                
+               ISOLATION(CS)              +
+               RELEASE(COMMIT)            +
+               ENCODING(EBCDIC)                                      
+          END  
+          //

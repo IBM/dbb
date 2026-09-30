@@ -1,5 +1,8 @@
 # Language Configuration
-This language step task extension allows users to provide simple YAML configuration files that can be used to override default language task configuration variables. With this extension users can: 
+
+> **Note:** Delivered as a product capability in [DBB 3.0.3](https://www.ibm.com/docs/en/adffz/dbb/3.0.x?topic=overview-what-is-new-noteworthy#version-303).
+
+This language step task extension allows users to provide simple YAML configuration files that can be used to override default language task configuration variables. With this extension users can:
 * Define an individual YAML configuration file for each program being built by a language.
 * Define *Language Group* YAML configuration files for common language environments and use file patterns to assign programs to them.
 

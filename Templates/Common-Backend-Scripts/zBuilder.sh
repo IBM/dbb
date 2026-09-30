@@ -34,19 +34,18 @@
 #        Build lifecycle  - The Lifecycle of build to perform. Refer to zBuilder
 #                           documentation and implementation
 #
-#        HLQ         - High Level data set qualifier used DBB build output.
+#        HLQ         - High Level data set qualifier used for DBB build output.
 #
-#      Review the "Build Lifecycle Customization" section below for additional information.
+#      Review the "Build Lifecycle Customization" section in
+#      utilities/dbbzBuilderUtils.sh for additional information.
 #
-#   3. This script supports Dependency Base Build V3. and above.
+#   3. This script supports Dependency Based Build V3 and above.
 #
 # Maintenance Log
 #
 # Date       Who Vers  Description
 # ---------- --- ----- --------------------------------------------------------------
-# 2024/12/12 DB  1.0.0 Initial Release
-# 2025/04/07 DB  1.1.0 Ability to fetch external dependencies based on application descriptor
-# 2026/08/04 DB  1.2.0 zBuilder Package and Publish task integration
+# 2026/08/04 DB  1.0.0 Initial Release - consolidates dbbBuild.sh and zBuilder.sh
 #===================================================================================
 Help() {
     echo $PGM" - Invoke DBB zBuilder ("$PGMVERS")                       "
@@ -73,20 +72,17 @@ Help() {
     echo "                                                              "
     echo "                 Ex: MortgageApplication/main/build-1         "
     echo "                                                              "
-    echo "                                                              "
     echo "       -a <Application>    - Folder name to the DBB Main      "
     echo "                             Application Source located under "
     echo "                             <Workspace>/<Application>.       "
     echo "                                                              "
     echo "                 Ex: MortgageApplication                      "
     echo "                                                              "
-    echo "                                                              "
     echo "       -b <Branch>        - Name of the Branch to compute     "
     echo "                            the build dataset qualifier.      "
     echo "                            Default=None, Required.           "
     echo "                                                              "
     echo "                 Ex: main                                     "
-    echo "                                                              "
     echo "                                                              "
     echo "       -p <PipelineType>  - Type of the pipeline to           "
     echo "                            control if this builds with       "
@@ -101,7 +97,7 @@ Help() {
     echo "                             performance optimized            "
     echo "                             executables                      "
     echo "                            *preview* -                       "
-    echo "                             perform build build in           "
+    echo "                             perform build in                 "
     echo "                             preview mode                     "
     echo "                                                              "
     echo "                 Ex: build                                    "
@@ -109,14 +105,26 @@ Help() {
     echo "       -q                 - (Optional) dataset qualifier      "
     echo "                             for build datasets               "
     echo "                             to override the configured       "
-    echo "                             dataset qualifer in              "
+    echo "                             dataset qualifier in             "
     echo "                             pipelineBackend.config           "
     echo "                 Ex: USER.APP                                 "
     echo "                                                              "
     echo "       -t                 - (Optional) zBuilder build         "
-    echo "                             lifecycle  override              "
+    echo "                             lifecycle override               "
     echo "                                                              "
     echo "                 Ex: -t 'full'                                "
+    echo "                                                              "
+    echo "       -i <buildId>       - (Optional) Build identifier       "
+    echo "                             passed to the zBuilder package   "
+    echo "                             task as build context variable   "
+    echo "                                                              "
+    echo "                 Ex: 20240101.1                               "
+    echo "                                                              "
+    echo "       -r <releaseId>     - (Optional) Release identifier     "
+    echo "                             passed to the zBuilder package   "
+    echo "                             task as build context variable   "
+    echo "                                                              "
+    echo "                 Ex: rel-1.0.0                                "
     echo "                                                              "
     echo "       -u <ArtiRepoUser>   - (Optional) Artifact repository   "
     echo "                             user name to override the        "
@@ -134,7 +142,6 @@ Help() {
     echo "                                                              "
     echo "       -v                 - (Optional) Verbose tracing        "
     echo "                                                              "
-    echo "                                                              "
     exit 0
 
 }
@@ -146,6 +153,7 @@ SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
 # Utility scripts
 buildUtilities="${SCRIPT_HOME}/utilities/dbbzBuilderUtils.sh"
+baselineRefUtilities="${SCRIPT_HOME}/utilities/baselineRefUtils.sh"
 fetchBuildDependenciesUtilities="${SCRIPT_HOME}/utilities/fetchBuildDependenciesUtils.sh"
 
 #
@@ -154,7 +162,7 @@ fetchBuildDependenciesUtilities="${SCRIPT_HOME}/utilities/fetchBuildDependencies
 #export BASH_XTRACEFD=1  # Write set -x trace to file descriptor
 
 PGM=$(basename "$0")
-PGMVERS="1.20"
+PGMVERS="1.00"
 USER=$USER
 SYS=$(uname -Ia)
 
@@ -175,22 +183,21 @@ HLQPrefix=""               # Prefix of HLQ, either specified via the cli option 
 outDir=""                  # Computed output directory to store build protocols
 nestedApplicationFolder="" # Flag to understand a nested repository
 Lifecycle=""               # Derived zBuilder lifecycle type
-userDefinedLifecycle=""    # Flag if the user has provided the lifecycle as argument 
+userDefinedLifecycle=""    # Flag if the user has provided the lifecycle as argument
 baselineRef=""             # baselineReference that is computed by utilities/dbbzBuilderUtils.sh
 zBuilderConfigOverrides="" # Override of default build config for zBuilder
 zBuilderLogDir=""          # Path where zBuilder will store the logs
-buildListFile=""           # Location of the generate zBuilder buildList
+buildListFile=""           # Location of the generated zBuilder buildList
 buildlistsize=0            # Used to assess if files got built
 
 buildIdentifier=""         # zBuilder package task build identifier (build context variable)
 releaseIdentifier=""       # zBuilder package task release identifier (build context variable)
 
-zBuilderPublishArtifactRepositoryUser=""     # Artifact repository user (CLI override via -u)
+zBuilderPublishArtifactRepositoryUser=""   # Artifact repository user (CLI override via -u)
 zBuilderPublishArtitfRepositoryPassword="" # Artifact repository password file (CLI override via -s)
 
 DBBLogger=""
 Verbose=""
-HELP=$1
 
 if [ "$HELP" = "?" ]; then
     Help
@@ -203,7 +210,6 @@ if [ -z "${currentShell}" ]; then
     ERRMSG=$PGM": [ERROR] The scripts are designed to run in bash. You are running a different shell. rc=${rc}. \n. $(ps -p $$)."
     echo $ERRMSG
 fi
-#
 
 if [ $rc -eq 0 ]; then
     echo $PGM": [INFO] DBB zBuilder Wrapper. Version="$PGMVERS
@@ -219,7 +225,7 @@ if [ $rc -eq 0 ]; then
         source $pipelineConfiguration
     fi
 
-    # Read and import utilities
+    # Read and import build utilities
     if [ ! -f "${buildUtilities}" ]; then
         rc=8
         ERRMSG=$PGM": [ERROR] DBB-Build internal utilities (${buildUtilities}) was not found. rc="$rc
@@ -228,12 +234,21 @@ if [ $rc -eq 0 ]; then
         source $buildUtilities
     fi
 
-  # Read and import utilities
-  if [ ! -f "${fetchBuildDependenciesUtilities}" ]; then
-    rc=8
-    ERRMSG=$PGM": [ERROR] DBB-Build internal utilities (${fetchBuildDependenciesUtilities}) was not found. rc="$rc
-    echo $ERRMSG
-  fi
+    # Read and import baseline reference utilities
+    if [ ! -f "${baselineRefUtilities}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] DBB-Build internal utilities (${baselineRefUtilities}) was not found. rc="$rc
+        echo $ERRMSG
+    else
+        source $baselineRefUtilities
+    fi
+
+    # Read and import fetch build dependencies utilities
+    if [ ! -f "${fetchBuildDependenciesUtilities}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] DBB-Build internal utilities (${fetchBuildDependenciesUtilities}) was not found. rc="$rc
+        echo $ERRMSG
+    fi
 
     #
     # Get Options
@@ -299,7 +314,7 @@ if [ $rc -eq 0 ]; then
                     break
                 fi
                 buildIdentifier="$argument"
-                ;;                
+                ;;
             r)
                 argument="$OPTARG"
                 nextchar="$(expr substr $argument 1 1)"
@@ -338,18 +353,16 @@ if [ $rc -eq 0 ]; then
                 nextchar="$(expr substr $argument 1 1)"
                 if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
                     rc=4
-                    INFO=$PGM": [INFO] No Pipeline Lifecycle specified. rc="$rc
+                    INFO=$PGM": [INFO] No Pipeline Type specified. rc="$rc
                     echo $INFO
                     break
                 fi
                 PipelineType="$argument"
                 ;;
             v)
-                # set the pipeline flag to turn on zAppBuild tracing
                 Verbose=1
                 ;;
             q)
-                # dataset qualifier
                 argument="$OPTARG"
                 nextchar="$(expr substr $argument 1 1)"
                 if [ -z "$argument" ] || [ "$nextchar" = "-" ]; then
@@ -410,9 +423,9 @@ validateOptions() {
 
         AppDir=$(getApplicationDir)
 
-        # Check if application directory contains
+        # Check if application directory contains a nested repository
         if [ -d "${AppDir}/${App}" ]; then
-            echo $PGM": [INFO] Detected the application respository (${App}) within the git repository layout structure."
+            echo $PGM": [INFO] Detected the application repository (${App}) within the git repository layout structure."
             echo $PGM": [INFO]  Assuming this as the new application location."
             AppDir="${AppDir}/${App}"
             nestedApplicationFolder="true"
@@ -424,7 +437,7 @@ validateOptions() {
             echo $ERRMSG
         fi
 
-        # Compute the outDir parameter
+        # Compute the zBuilder log directory
         zBuilderLogDir="${AppDir}/logs" # zBuilder convention
     fi
 
@@ -479,10 +492,6 @@ validateOptions() {
     #
     zBuilderConfigOverrides=${outDir}/overrides.yaml
 
-    #
-    # Check to see if debug options were requested and set up switches
-    # to enable.
-
     if [ ${LoggerConfig} -eq 1 ]; then
         DBBLogger="-classpath ${AppDir}/application-conf"
     fi
@@ -496,10 +505,7 @@ fi
 
 # Call utilities to compute build Lifecycle based on pipeline
 if [ $rc -eq 0 ]; then
-    ##DEBUG## echo $PGM": [DEBUG] **************************************************************"
-    ##DEBUG## echo $PGM": [DEBUG] ** Started - ComputeBuildConfiguration"
-
-    # Note : Error-handling within the utlities
+    # Note: Error-handling within the utilities
     computeBuildConfiguration
 fi
 
@@ -511,7 +517,6 @@ if [ $rc -eq 0 ]; then
         echo $ERRMSG
     fi
 fi
-
 
 # Setup build environment and pull external dependencies if an ApplicationDescriptor is found
 if [ $rc -eq 0 ] && [ "$fetchBuildDependencies" == "true" ]; then
@@ -564,10 +569,6 @@ if [ $rc -eq 0 ]; then
     echo ""
 fi
 
-# TLD - This is where I left off.  The below was taken directly from the Azure Script copy.
-# More updates will need to be performed to support DBB 2.x.  The following code segments
-# where derived directly from the Azure version of this script.
-
 #
 # Invoke the DBB Build
 if [ $rc -eq 0 ]; then
@@ -575,7 +576,6 @@ if [ $rc -eq 0 ]; then
 
     # Assemble build command
     cd ${AppDir}
-    # --outDir ${outDir}
     CMD="$DBB_HOME/bin/dbb build ${Lifecycle} --hlq ${HLQ} --log-encoding UTF-8"
     if [ ! -z "${dbbMetadataStoreJdbcId}" ]; then
         CMD="${CMD} --dbid ${dbbMetadataStoreJdbcId}" # Appending JDBC User Id if defined
@@ -620,14 +620,14 @@ if [ $rc -eq 0 ]; then
 
     if [ $rc -eq 0 ]; then
 
-        ## Except for the reset mode, check for "nothing to build" condition and throw an error to stop pipeline
+        ## Except for the reset mode, check for "nothing to build" condition and throw a warning
         if [ "$Lifecycle" != "reset" ]; then
 
             # Locate buildList in Build Log Directory within outDir.
             buildListFile="${outDir}/buildList.txt"
 
-            # If "buildList.txt" was found in the last Build Log Directory, determine the character count.
-            # wc -c will return the two values; Character Count and Log File Path.  Parse out the Character Count.
+            # If "buildList.txt" was found, determine the character count.
+            # wc -c will return two values; Character Count and Log File Path.  Parse out the Character Count.
             if [ -f ${buildListFile} ]; then
                 set $(wc -c <${buildListFile})
                 buildlistsize=$1

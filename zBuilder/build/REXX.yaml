@@ -1,0 +1,99 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2026
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+####################################
+# REXX language configuration
+#################################### 
+
+version: 1.0.2
+tasks:
+  # REXX Language task
+  - language: REXX
+
+    # source file association patterns
+    sources:
+      - "**/rexx/*.rexx"
+      
+    # overridable variables
+    variables:
+      # conditional variable builds compile parameters i.e CICS,SQL
+      - name: compileParms
+        value: OBJECT PRINT XREF CEXEC
+            
+      # flag to perform linkedit
+      - name: doLinkEdit
+        value: true
+        
+      # default link edit parameters
+      - name: linkEditParms
+        value: MAP,RENT,COMPAT(PM5)
+        
+      # default dependency search path for single repository build
+      - name: dependencySearchPath
+        value: search:${WORKSPACE}/?path=${APP_DIR_NAME}/rexx/*.rexx
+
+      # deploy type used for the CEXEC source DD in the compile step
+      - name: cexecDeployType
+        value: CEXEC
+
+    # datasets that need to be created / validated for this language configuration
+    datasets:
+      - name: ${HLQ}.REXX
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.OBJ
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.CEXEC
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(pds) dir(10)
+      - name: ${HLQ}.LOAD
+        options: cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
+
+    # list of steps to execute for each program processed by this language configuration
+    steps:
+    
+      # Copy build file and dependency files to data sets
+      - step: copySrc
+        type: copy
+        target: //'${HLQ}.REXX(${MEMBER})'
+        dependencyCopy:
+          - search: ${dependencySearchPath}
+            mappings:
+              - source: "**/*"
+                dataset: ${HLQ}.REXX
+                
+      # REXX compile step          
+      - step: compile
+        type: mvs
+        pgm: REXXCOMP
+        parm: ${compileParms}
+        maxRC: 4
+        dds:
+          - { name: "SYSIN", dsn: "${HLQ}.REXX(${MEMBER})", options: "shr", input: true }
+          - { name: "SYSPUNCH", dsn: "${HLQ}.OBJ(${MEMBER})", options: "shr", output: true, deployType: "OBJ" }
+          - { name: "SYSCEXEC", dsn: "${HLQ}.CEXEC(${MEMBER})", options: "shr", output: true, deployType: "${cexecDeployType}" }
+          - { name: "TASKLIB", dsn: "${SFANLMD}", options: "shr" }
+          - {                  dsn: "${SFELLOAD}", condition: { exists: "SFELLOAD" }, options: "shr" }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) blksize(121) lrecl(121) recfm(f,a) new", logMode: "ASA_TEXT" }
+          - { name: "SYSTERM", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIB", dsn: "${HLQ}.REXX", options: "shr" }
+
+      # Link-Edit step
+      - step: linkEdit
+        type: mvs
+        pgm: IEWBLINK
+        parm: ${linkEditParms}
+        condition: ${doLinkEdit}
+        maxRC: 4
+        dds:
+          - { name: "SYSLIN", dsn: "${HLQ}.OBJ(${MEMBER})", options: "shr" }
+          - { name: "SYSLMOD", dsn: "${HLQ}.LOAD(${MEMBER})", options: "shr", output: true, deployType: "LOAD" }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(133) recfm(f,b) new", logMode: "ASA_TEXT" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "RESLIB", condition: { exists: RESLIB }, options: "shr" }
+          - { name: "SYSLIB", dsn: "${HLQ}.OBJ", options: "shr" }
+          - {                 dsn: "${SCEELKED}", options: "shr" }
+          - {                 dsn: "${SEQAMOD}", condition: { eval: "${debug}", exists: "SEQAMOD"}, options: "shr" }

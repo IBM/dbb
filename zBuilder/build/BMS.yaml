@@ -1,0 +1,99 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2026
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+####################################
+# BMS language configuration
+#################################### 
+  
+version: 1.0.2
+tasks:
+  # BMS language task
+  - language: BMS
+
+    # source file association patterns
+    sources: 
+      - "**/*.bms"
+      - "*.bms"      
+  
+    # overridable variables
+    variables:
+      # default copybook generation parameters
+      - name: copyGenParms
+        value: SYSPARM(DSECT),DECK,NOOBJECT
+        
+      # default compile parameters
+      - name: compileParms
+        value: SYSPARM(MAP),DECK,NOOBJECT
+        
+      # default link parameters
+      - name: linkEditParms
+        value: MAP,RENT
+        
+   
+    # datasets that need to be created / validated for this language configuration
+    datasets:
+      - name: ${HLQ}.BMS
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.BMS.COPY
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.LOAD
+        options: cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
+    
+    # list of steps to execute for each program processed by this language configuration
+    steps:
+
+      # copy source files from USS to datasets for build
+      - step: CopySource
+        type: copy
+        target: //'${HLQ}.BMS(${MEMBER})'
+        
+      # BMS Copy Gen step
+      - step: CopyGen
+        type: mvs
+        pgm: ASMA90
+        parm: ${copyGenParms}
+        dds:
+          - { name: "SYSIN", dsn: "${HLQ}.BMS(${MEMBER})", options: "shr", input: true }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", logMode: "ASA_TEXT" }
+          - { name: "SYSPUNCH", dsn: "${HLQ}.BMS.COPY(${MEMBER})", options: "shr", output: true, deployType: "MAPCOPY" }
+          - { name: "TASKLIB", dsn: "${SASMMOD1}", options: "shr" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT2", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT3", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIB", dsn: "${SDFHMAC}", options: "shr" }
+          - {                 dsn: "${MACLIB}", options: "shr" }
+
+      # BMS compile step
+      - step: Compile
+        type: mvs
+        pgm: ASMA90
+        parm: ${compileParms}
+        dds:
+          - { name: "SYSIN", dsn: "${HLQ}.BMS(${MEMBER})", options: "shr", input: true }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", logMode: "ASA_TEXT" }
+          - { name: "SYSPUNCH", dsn: "&&TEMPOBJ", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", pass: true }
+          - { name: "TASKLIB", dsn: "${SASMMOD1}", options: "shr" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT2", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT3", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIB", dsn: "${SDFHMAC}", options: "shr" }
+          - {                 dsn: "${MACLIB}", options: "shr" }
+          
+      # BMS link edit step
+      - step: LinkEdit
+        type: mvs
+        pgm: IEWBLINK
+        parm: ${linkEditParms}
+        dds:
+          - { name: "SYSLIN", dsn: "&&TEMPOBJ", options: "shr" }
+          - { name: "SYSLMOD", dsn: "${HLQ}.LOAD(${MEMBER})", options: "shr", output: true, deployType: "MAPLOAD" }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", logMode: "ASA_TEXT" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIB", dsn: "${SCEELKED}", options: "shr" }
+          - {                 dsn: "${SDFHLOAD}", options: "shr" }
+          
