@@ -1,5 +1,17 @@
 # Common Backend Scripts for (any) Pipeline implementation
 
+> [!NOTE]
+> The contents of this subfolder is work in progress.
+
+Open items to further simplify and consolidate:
+
+- [ ] **Update pipeline templates to align with the strategic view** — The Azure DevOps, GitLab CI (distributed runner), GitHub Actions, and Jenkins pipeline templates (marked ⚠️ in the [Templates overview](../README.md)) still follow the legacy pattern: a separate `Packaging` stage driven by `packageBuildOutputs.sh` / `ucdPackaging.sh`, combined with `dbbBuild.sh` for the build step, and `baselineReference.config` for release tracking. They need to be updated to match the z/OS-native GitLab runner template as the reference implementation: use `zBuilder.sh` as the single build-and-package entry point, fold the release-version computation and release candidate tagging into the `Build` stage, and replace `baselineReference.config` references with `baselineRef.yaml`.
+- [ ] **Integrate `prepareLogs.sh` into the wrapper scripts** — Convert the standalone `prepareLogs.sh` (used by remote-runner architectures such as GitLab distributed runner, Azure DevOps, and GitHub Actions) into a utility that is called directly from within the wrapper scripts (e.g. `zBuilder.sh`). A dedicated flag or configuration item in pipelineBackend.config (e.g. `--prepareLogs`) should control whether the step is executed, keeping it opt-in for architectures that still need a separate log-transfer step.
+- [ ] **Update remote-runner pipeline templates to use the integrated log-preparation strategy** — Once the above item is implemented, update the Azure DevOps, GitLab distributed runner, and GitHub Actions pipeline templates to remove the explicit `prepareLogs.sh` invocation and rely on the flag introduced in the wrapper scripts instead.
+- [ ] **Adopt the built-in Wazi Deploy HTML evidence report** — Since Wazi Deploy 3.0.8 an HTML deployment report is automatically generated at the end of every deployment run. `wazideploy-evidence.sh` becomes optional in the pipeline templates. Switch the pipeline templates to consume this built-in report instead of driving a separate `wazideploy-evidence.sh` command invocation, and update the documentation accordingly.
+- [ ] **Align `generateCleanupCommands.sh` with DBB v3 CLI and zBuilder metadata layout** — The script currently issues `dbb collection list/delete` and `dbb build-group delete` commands and relies on the `dbbBuildUtils.sh` HLQ computation. These must be reviewed and updated to match the DBB v3 CLI command surface and the collection/build-group naming conventions produced by zBuilder (as opposed to the legacy `dbbBuild.sh` conventions).
+
+
 ## Overview
 
 The Common Backend Scripts for Pipeline Implementations is a collection of scripts that deliver central "services" and a simplified interface for pipeline configurations that implement a Git/DBB-based pipeline for mainframe applications. They use and simplify the parameterization of existing scripts in this repository to perform build, packaging, and deployment steps.
