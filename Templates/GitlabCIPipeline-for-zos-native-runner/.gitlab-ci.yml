@@ -439,40 +439,43 @@ Packaging:
                 currentBaselineVersion="rel-${currentBaselineVersion}"
                 echo [INFO] Current Baseline Version: ${currentBaselineVersion}
 
-                # Update baselineReference
+                # Update baselineRef.yaml with the new release tag
                 cd ${uniqueWorkspaceId}/${application}
                 export remoteFound=`git remote | grep gitlab_origin | wc -l`
-                 if [ $remoteFound -eq 1 ]; then
+                if [ $remoteFound -eq 1 ]; then
                     git remote remove gitlab_origin
                 fi
                 git remote add gitlab_origin ${CI_SERVER_PROTOCOL}://Automation:${AutomationToken}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_PATH}.git
 
-                baselineReferenceFile=$(find ${uniqueWorkspaceId} -name baselineReference.config)
+                baselineReferenceFile=$(find ${uniqueWorkspaceId} -name baselineRef.yaml)
 
                 if [ -z "${baselineReferenceFile}" ]; then
                     RC=8
-                    echo [ERROR] Unable to locate the baselineReference.config file. Exit code: ${RC}.
+                    echo [ERROR] Unable to locate the baselineRef.yaml file. Exit code: ${RC}.
                 fi
                 if [ ${RC} -eq 0 ]; then
                     if [ ${CI_COMMIT_BRANCH} == "main" ]; then
-                        echo [INFO] Update baselineReference.config file to set baseline references for the branches main and release/rel-${releaseVersion}
-                            cat ${baselineReferenceFile} | sed "s/main=refs\/tags\/${currentBaselineVersion}/main=refs\/tags\/${releaseVersion}/" > ${baselineReferenceFile}.new
-                            iconv -f ISO8859-1 -t IBM-1047 ${baselineReferenceFile}.new > ${baselineReferenceFile}
-                            chtag -tc IBM-1047 ${baselineReferenceFile}
-                            rm ${baselineReferenceFile}.new
-                            echo "release/${releaseVersion}=refs/tags/${releaseVersion}" >> ${baselineReferenceFile}
+                        echo [INFO] Update baselineRef.yaml to set baseline references for branches main and release/${releaseVersion}
+                        # Update the main branch baseline tag value
+                        sed "s/main: \"refs\/tags\/${currentBaselineVersion}\"/main: \"refs\/tags\/${releaseVersion}\"/" ${baselineReferenceFile} > ${baselineReferenceFile}.new
+                        iconv -f ISO8859-1 -t IBM-1047 ${baselineReferenceFile}.new > ${baselineReferenceFile}
+                        chtag -tc IBM-1047 ${baselineReferenceFile}
+                        rm ${baselineReferenceFile}.new
+                        # Append the new release maintenance branch entry
+                        echo "  release/${releaseVersion}: \"refs/tags/${releaseVersion}\"" >> ${baselineReferenceFile}
                     else
-                        echo [INFO] Update baselineReference.config file to set baseline reference for branch release/${releaseVersion}
-                        cat ${baselineReferenceFile} | sed "s/^release.*${currentBaselineVersion}/release\/${currentBaselineVersion}=refs\/tags\/${releaseVersion}/" > ${baselineReferenceFile}.new
+                        echo [INFO] Update baselineRef.yaml to set baseline reference for branch release/${releaseVersion}
+                        # Update the existing release branch baseline tag value
+                        sed "s/release\/${currentBaselineVersion}: \"refs\/tags\/${currentBaselineVersion}\"/release\/${currentBaselineVersion}: \"refs\/tags\/${releaseVersion}\"/" ${baselineReferenceFile} > ${baselineReferenceFile}.new
                         iconv -f ISO8859-1 -t IBM-1047 ${baselineReferenceFile}.new > ${baselineReferenceFile}
                         chtag -tc IBM-1047 ${baselineReferenceFile}
                         rm ${baselineReferenceFile}.new
                     fi
 
                     git add ${baselineReferenceFile}
-                    git commit -m "Updated baselineReference.config file for new release ${releaseVersion}"
+                    git commit -m "Updated baselineRef.yaml for new release ${releaseVersion}"
                     git push gitlab_origin HEAD:${CI_COMMIT_BRANCH} -o ci.skip
-                    echo [INFO] Pushed baselineReference.config file changes to branch: ${CI_COMMIT_BRANCH}.
+                    echo [INFO] Pushed baselineRef.yaml changes to branch: ${CI_COMMIT_BRANCH}.
                 fi
             fi
 

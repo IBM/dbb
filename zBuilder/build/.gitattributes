@@ -1,0 +1,7 @@
+# line endings
+* text eol=lf
+
+# file encodings
+*.groovy zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.sh zos-working-tree-encoding=ibm-1047 git-encoding=utf-8
+*.yaml zos-working-tree-encoding=utf-8 git-encoding=utf-8

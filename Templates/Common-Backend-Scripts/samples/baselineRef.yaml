@@ -1,0 +1,54 @@
+---
+#
+# baselineRef.yaml
+#
+# Baseline reference configuration for the DBB zBuilder pipeline.
+# This file is managed alongside dbb-app.yaml in the application repository
+# (typically under application-conf/).
+#
+# It serves two purposes:
+#
+#  1. long-lived-branches
+#     Maps each long-lived branch name to its baseline Git reference (tag or commit).
+#     The pipeline reads this to supply --baselineRef to 'dbb build impact' and
+#     'dbb build release' for main, release/*, and epic/* branches.
+#     This block is updated automatically by the "3-Create next release version"
+#     CI pipeline job each time a new release tag is cut.
+#
+#  2. topic-branch-behaviour
+#     Controls how topic branches (feature/*, hotfix/*) compute their baseline
+#     reference. This is an application-level decision owned by the development
+#     team. Valid values:
+#
+#       merge-base   (recommended) Computes 'git merge-base <branch> <base>' at
+#                    pipeline time and passes the resulting commit SHA as
+#                    --baselineRef. Produces the tightest possible build scope:
+#                    only changes introduced since the branch was forked.
+#
+#       cumulative   Passes the tip of the target integration branch
+#                    (e.g. origin/main, origin/epic/<name>) as --baselineRef.
+#                    Builds all changes contributed to the branch since it was
+#                    created, including any new commits on the target branch.
+#
+#       incremental  Does not pass --baselineRef. DBB computes the build list
+#                    from the last successful build record in the metadata store.
+#
+version: "1.0"
+
+# Long-lived branch baseline references.
+# Each key is an exact branch name; the value is the Git ref (tag or commit SHA)
+# that represents the baseline for impact analysis on that branch.
+long-lived-branches:
+  # main branch - baseline for the next planned release
+  main: "refs/tags/rel-2.1.0"
+
+  # release maintenance branch - for fixes against the current production release
+  release/rel-2.1.0: "refs/tags/rel-2.1.0"
+
+  # epic branch - baseline for a future release / larger development initiative
+  # epic/implementAI: "refs/tags/rel-2.1.0"
+
+# Topic branch build behaviour.
+# Controls how feature/* and hotfix/* branches compute --baselineRef.
+# Valid values: merge-base | cumulative | incremental
+topic-branch-behaviour: merge-base

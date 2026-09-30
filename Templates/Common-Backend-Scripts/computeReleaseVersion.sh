@@ -84,6 +84,7 @@ Help() {
 # Central configuration file leveraged by the backend scripts
 SCRIPT_HOME="$(dirname "$0")"
 pipelineConfiguration="${SCRIPT_HOME}/pipelineBackend.config"
+baselineRefUtilities="${SCRIPT_HOME}/utilities/baselineRefUtils.sh"
 # Customization - End
 
 # internal veriables
@@ -140,6 +141,15 @@ if [ $rc -eq 0 ]; then
   else
     echo $PGM": [INFO] Reading pipeline configuration file: ${pipelineConfiguration}"
     source $pipelineConfiguration
+  fi
+
+  # Read and import baseline reference utilities
+  if [ ! -f "${baselineRefUtilities}" ]; then
+    rc=8
+    ERRMSG=$PGM": [ERROR] Baseline reference utilities (${baselineRefUtilities}) was not found. rc="$rc
+    echo $ERRMSG
+  else
+    source $baselineRefUtilities
   fi
   #
 
@@ -252,10 +262,10 @@ validateOptions() {
   fi
 
   # Locate the baseline reference file based on the baselineReferenceLocation config in pipelineBackend.config
-  baselineReferenceFile="${AppDir}/$baselineReferenceLocation"
+  baselineReferenceFile="${AppDir}/${baselineReferenceLocation}"
   if [ ! -f "${baselineReferenceFile}" ]; then
     rc=8
-    ERRMSG=$PGM": [ERROR] Applications baseline reference configuration file ${baselineReferenceFile} was not found. rc="$rc
+    ERRMSG=$PGM": [ERROR] Application baseline reference file ${baselineReferenceFile} was not found. rc="$rc
     echo $ERRMSG
   fi
 
@@ -274,33 +284,35 @@ validateOptions() {
 }
 #
 
-# Get baseline reference version from current branch
+# Get baseline reference version from current branch.
+# Reads from the long-lived-branches block of baselineRef.yaml.
 getBaselineReference() {
 
-  # Break down the branch name into segements
+  # Break down the branch name into segments
   export mainBranchSegment=$(echo ${Branch} | awk -F "/" '{ print $1 }')
   export secondBranchSegment=$(echo ${Branch} | awk -F "/" '{ print $2 }')
   export thirdBranchSegment=$(echo ${Branch} | awk -F "/" '{ print $3 }')
-  # echo $PGM": [DEBUG] Branch segments: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}"
-
+  ##DEBUG ## echo $PGM": [DEBUG] Branch segments: ${mainBranchSegment}, ${secondBranchSegment}, ${thirdBranchSegment}"
 
   baselineRef=""
 
   case $(echo $mainBranchSegment | tr '[:lower:]' '[:upper:]') in
-  "RELEASE" | "EPIC")
-    baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}/${secondBranchSegment}" | awk -F "=" ' { print $2 }')
+  "RELEASE" | "EPIC" | "PROJ")
+    # Lookup: "  release/rel-x.y.z: ..." or "  epic/<name>: ..."
+    baselineRef=$(catBaselineRefFile "${baselineReferenceFile}" | grep "^  ${mainBranchSegment}/${secondBranchSegment}:" | awk -F ': ' '{ print $2 }' | tr -d '"' | tr -d "'" | xargs)
     ;;
-  "MAIN")
-    baselineRef=$(cat "${baselineReferenceFile}" | grep "^${mainBranchSegment}" | awk -F "=" ' { print $2 }')
+  "MAIN" | "MASTER" | "PROD")
+    # Lookup: "  main: ..."
+    baselineRef=$(catBaselineRefFile "${baselineReferenceFile}" | grep "^  ${mainBranchSegment}:" | awk -F ': ' '{ print $2 }' | tr -d '"' | tr -d "'" | xargs)
     ;;
   "FEATURE")
     rc=4
-    ERRMSG=$PGM": [ERROR] Branch name ${Branch} is a feature branch and does not need to compute the baseline reference. rc="$rc
+    ERRMSG=$PGM": [WARNING] Branch name ${Branch} is a feature branch and does not need to compute the baseline reference. rc="$rc
     echo $ERRMSG
     ;;
   *)
     rc=8
-    ERRMSG=$PGM": [ERROR] Branch name ${Branch} does not follow the recommended naming conventions to compute the baseline reference. Received '${mainBranchSegment}' which does not fall into the conventions of release, epic or main. rc="$rc
+    ERRMSG=$PGM": [ERROR] Branch name ${Branch} does not follow the recommended naming conventions to compute the baseline reference. Received '${mainBranchSegment}' which does not match main, release, epic, or proj. rc="$rc
     echo $ERRMSG
     ;;
   esac
@@ -308,12 +320,12 @@ getBaselineReference() {
   if [ $rc -eq 0 ]; then
     if [ -z "${baselineRef}" ]; then
       rc=8
-      ERRMSG=$PGM": [ERROR] No baseline ref was found for branch name ${Branch} in ${baselineReferenceFile}. rc="$rc
+      ERRMSG=$PGM": [ERROR] No baseline ref was found for branch '${Branch}' in ${baselineReferenceFile}. rc="$rc
       echo $ERRMSG
     fi
   fi
 
-  ##DEBUG ## echo -e "baselineRef \t: ${baselineRef}"    ## DEBUG
+  ##DEBUG ## echo -e "baselineRef \t: ${baselineRef}"
 }
 
 computeNextReleaseVersion() {

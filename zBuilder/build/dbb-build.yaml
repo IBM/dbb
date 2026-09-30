@@ -1,0 +1,231 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2026
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+###############################################################
+# Include other build configuration files
+###############################################################
+version: 1.0.0
+include: 
+  # IMPORTANT!  Copy and configure Languages.yaml and any other 
+  # language configuration files from #DBB_HOME/samples/languages
+  # to your $DBB_BUILD directory before executing zBuilder.
+  - file: Languages.yaml
+
+#########################################
+# Executable build lifecycles
+#########################################
+lifecycles:
+
+  # build single programs from the command line
+  - lifecycle: file
+    
+    # define the list of tasks to execute during the build lifecycle
+    tasks:
+      - Start
+      - ScannerInit
+      - MetadataInit
+      - FileAnalysis
+      - Languages    # Defined in Languages.yaml
+      - Finish
+
+  # build all programs for the application
+  - lifecycle: full
+    
+    # define the list of tasks to execute during the build lifecycle
+    tasks:
+      - Start
+      - ScannerInit
+      - MetadataInit
+      - FullAnalysis
+      - Languages    # Defined in Languages.yaml
+      - Finish
+
+  # build only programs impacted by changes to the application
+  - lifecycle: impact
+
+    # Optional argument to supply base line references for calculating change files
+    # See https://www.ibm.com/docs/en/dbb/3.0?topic=index-task-impactanalysis
+    cli:
+      usage: dbb build impact [arguments] [options]
+      options:
+        - longOption: "baselineRef"
+          hasArg: true
+          description: "Overrides the baseline reference to measure changes from."
+        - longOption: "release-id"
+          hasArg: true
+          description: "The release identifier for the package being created. ie: 1.0.0"
+        - longOption: "build-id"
+          hasArg: true
+          description: "The build identifier for the package being created. ie: 20240415.7"          
+    
+    # define the list of tasks to execute during the build lifecycle
+    tasks:
+      - Start
+      - ScannerInit
+      - MetadataInit
+      - ImpactAnalysis
+      - Languages    # Defined in Languages.yaml
+      - task: Package
+        condition: ${STATUS} == 2 || ${STATUS} == 0 # Skip task on build error or PREVIEW
+        variables:
+          - name: repositoryTarget
+            value: "build/${BRANCH}/"
+      - Publish  
+      - Finish
+
+  # build only changed programs on a topic branch which will be merged back into the main build branch
+  - lifecycle: merge
+ 
+    # define the list of tasks to execute during the build lifecycle
+    tasks:
+      - Start
+      - ScannerInit
+      - MetadataInit
+      - MergeAnalysis
+      - Languages    # Defined in Languages.yaml
+      - Finish
+
+  # user build for a single program 
+  - lifecycle: user
+    variables:
+      - name: userbuild
+        value: true
+
+    # CLI options specific to userbuild
+    cli:
+      usage: dbb build user [arguments] [options]
+      options:
+        - longOption: "dependencyFile"
+          hasArg: true
+          description: "JSON dependency file provided by an IDE used to skip the execution of the DBB scanner."
+        - longOption: "errPrefix"
+          hasArg: true
+          description: "Error prefix for writing error feedback to the Remote Error List view."
+        - longOption: "debug"
+          hasArg: false
+          description: "Enables the debug options on load modules."
+    
+    # define the list of tasks to execute during the build lifecycle
+    tasks:
+      - Start
+      - ScannerInit
+      - FileAnalysis
+      - Languages    # Defined in Languages.yaml
+      - task: UnitTest
+        condition: ${STATUS} == 2 || ${STATUS} == 0 # Skip task on build error or PREVIEW
+      - Finish
+  
+  # Scan source files and existing load modules to collect dependency data for source and outputs without creating load modules.
+  - lifecycle: metadata
+    variables:
+      - name: printScannedItems
+        value: true
+      - name: metadataBuild
+        value: true
+    # define the list of tasks to execute during the build lifecycle
+    tasks:
+      - Start
+      - ScannerInit
+      - MetadataInit
+    # - FullAnalysis
+      - ImpactAnalysis
+      - Languages    # Defined in Languages.yaml
+      - Finish
+
+  # build only programs impacted by changes to the application and package the build outputs
+  - lifecycle: release
+
+    # Optional argument to supply release and build identifiers for packaging
+    # See https://www.ibm.com/docs/en/dbb/3.0?topic=packaging
+    cli:
+      usage: dbb build release [arguments] [options]
+      options:
+        - longOption: "baselineRef"
+          hasArg: true
+          description: "Overrides the baseline reference to measure changes from."      
+        - longOption: "release-id"
+          hasArg: true
+          description: "The release identifier for the package being created. ie: 1.0.0"
+        - longOption: "build-id"
+          hasArg: true
+          description: "The build identifier for the package being created. ie: 20240415.7"
+
+    # define the list of tasks to execute during the build lifecycle
+    tasks:
+      - Start
+      - ScannerInit
+      - MetadataInit
+      #- FullAnalysis
+      - ImpactAnalysis
+      - Languages    # Defined in Languages.yaml
+      - task: Package
+        condition: ${STATUS} == 2 || ${STATUS} == 0 # Skip task on build error or PREVIEW
+        variables:
+          - name: repositoryTarget
+            value: "release/${RELEASE_IDENTIFIER}/"
+      - Publish
+      - Finish
+      
+#########################################################################
+# Basic task configurations that can be referenced by multiple lifecycles
+#########################################################################
+tasks:
+
+  # basic build initialization
+  - task: Start
+  
+  # initialize metadata store
+  - task: MetadataInit
+    variables:
+     - name: type
+       value: db2
+     - name: db2Conf
+       value: /var/dbb/config/db2Connection_GitLab.conf
+
+  # initialize dependency scanners
+  - task: ScannerInit
+  
+  # create simple build list
+  - task: FileAnalysis
+  
+  # create full build list
+  - task: FullAnalysis
+
+  # create a build list containing impacted files
+  - task: ImpactAnalysis
+
+  # create a build list of topic branch changes flowing back to the main build branch
+  - task: MergeAnalysis
+
+  # create build package
+  - task: Package
+    condition: ${STATUS} == 2 || ${STATUS} == 0 # Skip task on build error or PREVIEW
+    variables:
+    - name: repositoryTarget
+      value: "build/${BRANCH}/"
+    
+  # Publish packages to artifact repository
+  # Supports Artifactory (default) or Nexus (change type to nexus)
+  - task: Publish
+    condition: ${STATUS} == 2 || ${STATUS} == 0 # Skip task on build error or PREVIEW
+    variables:
+    # Required Variables
+    - name: type # Type of artifact repository.
+      value: artifactory # Valid values: "artifactory", "nexus".
+    - name: url # Base URL of the artifact repository.
+      value: http://10.3.20.231:8081/artifactory # Example: "https://artifactory.example.com/artifactory" or "https://nexus.example.com"
+    - name: repositoryName # Name of the repository within the artifact manager.
+      value: ${APPLICATION}-gitlabr-repo-local
+
+  # build finalization
+  - task: Finish
+  
+  # default empty Languages stage
+  # to be replaced by content of Languages.yaml
+  - stage: Languages
+    tasks:
