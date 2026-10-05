@@ -19,88 +19,6 @@
           "type": "string",
           "description": "Name of the application to override."
         },
-        "baseline": {
-          "type": "object",
-          "description": "Reference to a previous build package of this application. Incremental builds use this to carry forward artifacts from unchanged files into the new build package, ensuring every build package is complete regardless of how many files were recompiled.",
-          "additionalProperties": false,
-          "required": ["type", "repository"],
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["release", "snapshot", "last"],
-              "description": "The artifact repository layout type used to locate the baseline build package. Use 'release' or 'snapshot' to pin to a specific reference, or 'last' to resolve automatically from the most recent successful build result."
-            },
-            "reference": {
-              "type": "string",
-              "description": "The version of the baseline build package to retrieve (e.g. '1.5.0'). Required when type is 'release' or 'snapshot'. Not used when type is 'last'."
-            },
-            "repository": {
-              "type": "string",
-              "description": "The label of the artifact repository where the baseline build package is stored."
-            },
-            "buildid": {
-              "type": "string",
-              "description": "Uses a specific build as a baseline. When omitted, the latest build package matching the type and reference is used. Not used when type is 'last'. (optional)"
-            }
-          },
-          "if": {
-            "properties": { "type": { "enum": ["release", "snapshot"] } }
-          },
-          "then": {
-            "required": ["reference"]
-          }
-        },
-        "interfaces": {
-          "type": "object",
-          "description": "Declares which source files and build outputs the Package task collects into this application's build package for consumption by other applications.",
-          "additionalProperties": false,
-          "properties": {
-            "sources": {
-              "type": "array",
-              "description": "Authored source files (e.g. copybooks) to publish in the build package. All source interfaces are public and are placed under /include/src/ in the package. Each entry is a glob pattern relative to the workspace root.",
-              "items": {
-                "type": "string",
-                "description": "A glob pattern relative to the workspace root (e.g. '${APP_DIR_NAME}/copybook/*.cpy')."
-              }
-            },
-            "outputs": {
-              "type": "array",
-              "description": "Build outputs (e.g. object decks, generated BMS copybooks) to publish in the build package. Inside the package, public outputs are placed under /include/bin/; private outputs under /lib/bin/.",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["description", "usage", "deployTypes", "buildFilePatterns"],
-                "properties": {
-                  "description": {
-                    "type": "string",
-                    "description": "A human-readable label for this output interface (e.g. 'shared objects')."
-                  },
-                  "usage": {
-                    "type": "string",
-                    "description": "'public' artifacts are available to other applications. 'private' artifacts are intended for internal use only.",
-                    "enum": ["public", "private"]
-                  },
-                  "deployTypes": {
-                    "type": "array",
-                    "description": "The deploy types that identify which build outputs to include (e.g. OBJ, BMSCOPY, LOAD). Only outputs with a matching deploy type are packaged. The deploy type of the output will also be used as its file extension in the package.",
-                    "items": {
-                      "type": "string",
-                      "description": "A deploy type string as assigned in the language task (e.g. 'OBJ', 'LOAD', 'BMSCOPY')."
-                    }
-                  },
-                  "buildFilePatterns": {
-                    "type": "array",
-                    "description": "Glob patterns that select the input source files whose build outputs are packaged. The Package task looks up the build outputs produced from each matched source file.",
-                    "items": {
-                      "type": "string",
-                      "description": "A glob pattern relative to the workspace root (e.g. '${APP_DIR_NAME}/cobol/share/*.cbl')."
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "include": {
           "type": "array",
           "description": "Included files to merge into configuration.",
@@ -112,39 +30,6 @@
               "file": {
                 "type": "string",
                 "description": "The path of a file."
-              }
-            }
-          }
-        },
-        "imports": {
-          "type": "array",
-          "description": "List of external build packages to import when building this application.",
-          "items": {
-            "type": "object",
-            "description": "A single import entry pointing to an external build package.",
-            "additionalProperties": false,
-            "required": ["name", "type", "reference", "repository", "buildid"],
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "The name of the imported build package."
-              },
-              "type": {
-                "type": "string",
-                "description": "The artifact repository layout type used to locate the import.",
-                "enum": ["release", "snapshot"]
-              },
-              "reference": {
-                "type": ["string", "integer"],
-                "description": "The version reference of the build package (e.g. 1.2.0)."
-              },
-              "repository": {
-                "type": ["string", "integer"],
-                "description": "The artifact repository the build package is stored in."
-              },
-              "buildid": {
-                "type": ["string", "integer"],
-                "description": "The build identifier of the build package artifact."
               }
             }
           }
