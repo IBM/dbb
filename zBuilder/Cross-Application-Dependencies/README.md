@@ -2,7 +2,7 @@
 
 This directory contains samples for IBM DBB zBuilder's cross-application dependency management feature. The feature allows z/OS applications to package and publish their build artifacts (shared source interfaces and compiled outputs) as versioned build packages in an artifact repository, so other independently-built applications can declare and consume them as explicit, pinned dependencies.
 
-For a step-by-step walkthrough of setting up this feature, see the [IBM DBB documentation](#TODO-replace-with-official-doc-link).
+For details on the feature and its concepts, see [Cross-application dependency management](https://www.ibm.com/docs/en/developer-for-zos/18.0.x?topic=concepts-cross-application-dependency-management) in the IBM documentation.
 
 ## Overview
 
