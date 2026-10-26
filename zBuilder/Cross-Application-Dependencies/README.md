@@ -4,6 +4,11 @@ This directory contains samples for IBM DBB zBuilder's cross-application depende
 
 For details on the feature and its concepts, see [Cross-application dependency management](https://www.ibm.com/docs/en/developer-for-zos/18.0.x?topic=concepts-cross-application-dependency-management) in the IBM documentation.
 
+## Requirements
+
+- **Minimum required version:** IBM Dependency Based Build (DBB) 4.0.0.1 or later.
+- **External artifact repository:** Build packages are published to and downloaded from an external artifact repository. DBB supports JFrog Artifactory, Sonatype Nexus, and GitLab Package Registry.
+
 ## Overview
 
 Large z/OS applications are often split across multiple teams, each owning a distinct component. Without a formal dependency mechanism, sharing build artifacts between those teams typically means copying files by hand, keeping everything in one shared repository, or relying on build-time conventions that are easy to break. Cross-application dependency management replaces that with an explicit, versioned contract.
