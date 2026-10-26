@@ -1,0 +1,88 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2025
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+####################################
+# LinkEdit language configuration
+#################################### 
+
+version: 1.0.3
+tasks:
+  # LinkEdit Language task builds link cards
+  - language: LinkEdit
+
+    # source file association patterns
+    sources:
+      - "**.lnk"
+      
+    # overridable variables
+    variables:
+      # default link edit parameters
+      - name: linkEditParms
+        value: MAP,RENT
+        
+      # default flag to identify CICS load modules
+      - name: hasCICSModules
+        value: false
+        
+      # default flag to scan load modules  
+      - name: scanLoadModule
+        value: true
+
+        # build record output deploy type
+      - name: deployType
+        value: LOAD  # default value
+        select:
+          - condition: ${hasCICSModules}
+            value: CICSLOAD
+          - condition: ${IS_DLI}
+            value: IMSLOAD
+          - condition: ${isIMS}
+            value: IMSLOAD
+
+      # flag to activate IMS options
+      - name: isIMS
+        value: false
+        
+    # datasets that need to be created / validated for this language configuration
+    datasets:
+      - name: ${HLQ}.LINK
+        options: "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)"
+      - name: ${HLQ}.OBJ
+        options: "cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)"
+      - name: ${HLQ}.LOAD
+        options: cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
+
+    # list of steps to execute for each program processed by this language configuration
+    steps:
+    
+      # Copy build file and dependency files to data sets
+      - step: copySrc
+        type: copy
+        target: //'${HLQ}.LINK(${ENTRY})'
+
+
+      # Link-Edit step
+      - step: linkEdit
+        type: mvs
+        pgm: IEWBLINK
+        parm: ${linkEditParms}
+        maxRC: 0
+        dds:
+          - { name: "SYSLIN", dsn: "${HLQ}.LINK(${ENTRY})", options: "shr" }
+          - { name: "SYSLMOD", dsn: "${HLQ}.LOAD(${ENTRY})", options: "shr", output: true, deployType: "${deployType}", scan: "${scanLoadModule}" }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(133) recfm(f,b) new" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIB", dsn: "${HLQ}.OBJ", options: "shr" }
+          - {                 dsn: "${HLQ}.IMPORTS.OBJ", condition: "${IMPORTS_ENABLED}", options: "shr" }
+          - {                 dsn: "${SCEELKED}", options: "shr" }
+          - {                 dsn: "${SDFHLOAD}", condition: "${hasCICSModules}", options: "shr" }
+          - {                 dsn: "${SDSNLOAD}", condition: "${hasCICSModules}", options: "shr" }
+
+
+
+          

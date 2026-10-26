@@ -52,5 +52,6 @@ Sample | Description
 [WaziDeploy/Reporting](WaziDeploy/Reporting) | This category provides templates for querying IBM Wazi Deploy evidence files and generating detailed reports.
 [WaziDeploy/Schemas](WaziDeploy/Schemas) | Wazi Deploy schemas used to configure Yaml validation for the config file, the deployment method file and the manifest file.
 [WaziDeploy/zDeploy](WaziDeploy/zDeploy/) |  Wazi Deploy deployment configuration framework for both Ansible and Python, that allows maintaining application specific configuration along the core deployment configuration for Wazi Deploy.
-[zBuilder extensions](zBuilder/) | IBM zBuilder extensions showcasing advanced scenarios. 
+[zBuilder extensions](zBuilder/) | IBM zBuilder extensions showcasing advanced scenarios.
+[zBuilder/Cross-Application-Dependencies](zBuilder/Cross-Application-Dependencies/) | Sample configuration demonstrating zBuilder's cross-application dependency management feature, including the MortgageApplication split into five independently buildable sub-applications.
 [zBuilder/MortgageApplication](zBuilder/MortgageApplication/) | Mortgage Application sample application prepared to be built with IBM DBB zBuilder.
