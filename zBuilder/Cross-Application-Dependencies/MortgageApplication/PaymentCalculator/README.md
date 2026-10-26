@@ -32,6 +32,8 @@ PaymentCalculator  ──┘
 
 ## Building with DBB zBuilder
 
+> **Before building:** configure your artifact repository credentials. See [Requirements](../../README.md#requirements).
+
 ```shell
 dbb build pipeline
 ```

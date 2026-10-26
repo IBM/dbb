@@ -37,7 +37,9 @@ This application consumes three types of cross-application dependency:
 
 ## Building with DBB zBuilder
 
-> **Before building:** fill in the `reference`, `buildId`, and `repository` fields in the `imports` section of `dbb-app.yaml` with values pointing to a configured artifact repository and valid published build packages from the upstream applications.
+> **Before building:**
+> - Fill in the `reference`, `buildId`, and `repository` fields in the `imports` section of `dbb-app.yaml` with values pointing to a configured artifact repository and valid published build packages from the upstream applications.
+> - Configure your artifact repository credentials. See [Requirements](../../README.md#requirements).
 
 ```shell
 dbb build pipeline

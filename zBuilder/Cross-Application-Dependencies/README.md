@@ -8,6 +8,7 @@ For details on the feature and its concepts, see [Cross-application dependency m
 
 - **Minimum required version:** IBM Dependency Based Build (DBB) 4.0.0.1 or later.
 - **External artifact repository:** Build packages are published to and downloaded from an external artifact repository. DBB supports JFrog Artifactory, Sonatype Nexus, and GitLab Package Registry.
+- **Repository credentials:** Builds must authenticate to the artifact repository, using CLI options or environment variables. See [Authentication](https://www.ibm.com/docs/en/developer-for-zos/18.0.x?topic=index-task-packageinit#cli-authentication-options__title__1) in the IBM documentation.
 
 ## Overview
 
