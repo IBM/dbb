@@ -418,16 +418,34 @@ Build application:
                 cp ${baselineReferenceFile} ${baselineReferenceFile}.work
             fi
 
+            # baselineRef.yaml lists entries as:
+            #   - name: "<branch>"
+            #     reference: "<ref>"
+            # The awk programs below update the 'reference' line that follows the matching 'name' line.
             if [ ${CI_COMMIT_BRANCH} == "main" ]; then
                 echo [INFO] Update baselineRef.yaml to set baseline references for the branches main and release/${nextReleaseVersion}
-                sed "s|main: \"refs/tags/${currentBaselineVersion}\"|main: \"refs/tags/${releaseVersion}\"|" ${baselineReferenceFile}.work > ${baselineReferenceFile}.new
+                awk -v newRef="refs/tags/${releaseVersion}" -v relName="release/${nextReleaseVersion}" -v relRef="refs/tags/${nextReleaseVersion}" '
+                    index($0, "name: \"main\"") { inEntry = 1; print; next }
+                    inEntry && index($0, "reference:") {
+                        print "    reference: \"" newRef "\""
+                        print ""
+                        print "  - name: \"" relName "\""
+                        print "    reference: \"" relRef "\""
+                        inEntry = 0; next
+                    }
+                    { print }' ${baselineReferenceFile}.work > ${baselineReferenceFile}.new
                 iconv -f ISO8859-1 -t ${baselineRefEncoding} ${baselineReferenceFile}.new > ${baselineReferenceFile}
                 chtag -tc ${baselineRefEncoding} ${baselineReferenceFile}
                 rm ${baselineReferenceFile}.work ${baselineReferenceFile}.new
-                echo "  release/${nextReleaseVersion}: \"refs/tags/${nextReleaseVersion}\"" >> ${baselineReferenceFile}
             else
-                echo [INFO] Update baselineRef.yaml to set baseline reference for branch release/${nextReleaseVersion}
-                sed "s|release/${currentBaselineVersion}: \"refs/tags/${currentBaselineVersion}\"|release/${currentBaselineVersion}: \"refs/tags/${releaseVersion}\"|" ${baselineReferenceFile}.work > ${baselineReferenceFile}.new
+                echo [INFO] Update baselineRef.yaml to set baseline reference for branch release/${currentBaselineVersion}
+                awk -v relName="release/${currentBaselineVersion}" -v newRef="refs/tags/${releaseVersion}" '
+                    index($0, "name: \"" relName "\"") { inEntry = 1; print; next }
+                    inEntry && index($0, "reference:") {
+                        print "    reference: \"" newRef "\""
+                        inEntry = 0; next
+                    }
+                    { print }' ${baselineReferenceFile}.work > ${baselineReferenceFile}.new
                 iconv -f ISO8859-1 -t ${baselineRefEncoding} ${baselineReferenceFile}.new > ${baselineReferenceFile}
                 chtag -tc ${baselineRefEncoding} ${baselineReferenceFile}
                 rm ${baselineReferenceFile}.work ${baselineReferenceFile}.new

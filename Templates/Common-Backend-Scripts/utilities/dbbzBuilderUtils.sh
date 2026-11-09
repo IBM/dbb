@@ -220,7 +220,7 @@ computeBuildConfiguration() {
 }
 
 # Private method to retrieve the baseline reference from baselineRef.yaml
-# Reads the value for the current branch from the long-lived-branches block.
+# Reads the reference for the current branch from the baseline-references list.
 # Requires: mainBranchSegment, secondBranchSegment, baselineReferenceFile
 
 getBaselineReference() {
@@ -229,12 +229,12 @@ getBaselineReference() {
 
     case $(echo $mainBranchSegment | tr '[:lower:]' '[:upper:]') in
         "RELEASE" | "EPIC" | "PROJ")
-            # Lookup: "  release/rel-x.y.z: ..." or "  epic/<name>: ..."
-            baselineRef=$(catBaselineRefFile "${baselineReferenceFile}" | grep "^[[:space:]]\{1,\}${mainBranchSegment}/${secondBranchSegment}:" | awk -F ': ' '{ print $2 }' | tr -d '"' | tr -d "'" | tr -d '\r' | xargs)
+            # Lookup entry with name: "release/rel-x.y.z" or "epic/<name>"
+            baselineRef=$(getBaselineRefForBranch "${baselineReferenceFile}" "${mainBranchSegment}/${secondBranchSegment}")
             ;;
         "MAIN" | "MASTER" | "PROD")
-            # Lookup: "  main: ..."
-            baselineRef=$(catBaselineRefFile "${baselineReferenceFile}" | grep "^[[:space:]]\{1,\}${mainBranchSegment}:" | awk -F ': ' '{ print $2 }' | tr -d '"' | tr -d "'" | tr -d '\r' | xargs)
+            # Lookup entry with name: "main"
+            baselineRef=$(getBaselineRefForBranch "${baselineReferenceFile}" "${mainBranchSegment}")
             ;;
         *)
             rc=8

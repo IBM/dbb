@@ -285,7 +285,7 @@ validateOptions() {
 #
 
 # Get baseline reference version from current branch.
-# Reads from the long-lived-branches block of baselineRef.yaml.
+# Reads from the baseline-references list of baselineRef.yaml.
 getBaselineReference() {
 
   # Break down the branch name into segments
@@ -298,12 +298,12 @@ getBaselineReference() {
 
   case $(echo $mainBranchSegment | tr '[:lower:]' '[:upper:]') in
   "RELEASE" | "EPIC" | "PROJ")
-    # Lookup: "  release/rel-x.y.z: ..." or "  epic/<name>: ..."
-    baselineRef=$(catBaselineRefFile "${baselineReferenceFile}" | grep "^  ${mainBranchSegment}/${secondBranchSegment}:" | awk -F ': ' '{ print $2 }' | tr -d '"' | tr -d "'" | xargs)
+    # Lookup entry with name: "release/rel-x.y.z" or "epic/<name>"
+    baselineRef=$(getBaselineRefForBranch "${baselineReferenceFile}" "${mainBranchSegment}/${secondBranchSegment}")
     ;;
   "MAIN" | "MASTER" | "PROD")
-    # Lookup: "  main: ..."
-    baselineRef=$(catBaselineRefFile "${baselineReferenceFile}" | grep "^  ${mainBranchSegment}:" | awk -F ': ' '{ print $2 }' | tr -d '"' | tr -d "'" | xargs)
+    # Lookup entry with name: "main"
+    baselineRef=$(getBaselineRefForBranch "${baselineReferenceFile}" "${mainBranchSegment}")
     ;;
   "FEATURE")
     rc=4

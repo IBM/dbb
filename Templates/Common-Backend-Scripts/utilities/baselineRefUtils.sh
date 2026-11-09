@@ -34,3 +34,37 @@ catBaselineRefFile() {
             ;;
     esac
 }
+
+# getBaselineRefForBranch <file> <branch>
+#  Prints the 'reference' value of the entry in the 'baseline-references' list
+#  of baselineRef.yaml whose 'name' equals <branch> (exact match). Prints nothing
+#  if the branch has no entry. Expected format:
+#
+#    baseline-references:
+#      - name: "main"
+#        reference: "refs/tags/rel-2.1.0"
+#
+#  Comment lines, surrounding quotes and trailing inline comments are ignored.
+#  Parsing stops at the next top-level key. The file is read via
+#  catBaselineRefFile to handle the file encoding on z/OS.
+
+getBaselineRefForBranch() {
+    local file="$1"
+    local branch="$2"
+
+    catBaselineRefFile "${file}" | tr -d '\r' | awk -v branch="${branch}" '
+        function value(line) {
+            sub(/^[^:]*:[ \t]*/, "", line)     # drop "key:" (and a leading "- ")
+            sub(/[ \t]+#.*$/, "", line)        # drop trailing inline comment
+            gsub(/["\047]/, "", line)          # drop single and double quotes
+            sub(/[ \t]+$/, "", line)           # drop trailing blanks
+            return line
+        }
+        /^baseline-references:/ { inBlock = 1; next }
+        /^[^ \t#-]/             { inBlock = 0 }          # next top-level key
+        !inBlock                { next }
+        /^[ \t]*#/              { next }                 # comment line
+        /^[ \t]*-?[ \t]*name:/  { matched = (value($0) == branch); next }
+        matched && /^[ \t]*reference:/ { print value($0); exit }
+    '
+}
