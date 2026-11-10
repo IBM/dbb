@@ -1,0 +1,81 @@
+---
+########################################################################################
+#
+# Required configuration for the "CreateUCDComponentVersion" custom Groovy task.
+#
+# This YAML file defines the CreateUCDComponentVersion task and the build context
+# variables it reads. The Groovy script "CreateUCDComponentVersion.groovy" will be
+# automatically discovered as long as it is placed in the $DBB_BUILD/groovy directory.
+#
+# Setup Instructions:
+# - Copy this YAML file and CreateUCDComponentVersion.groovy to your $DBB_BUILD
+#   directory. Important: the Groovy script must reside in the groovy sub-directory.
+# - Set the required variables below (UCD_BUZTOOL_PATH, UCD_COMPONENT) to match
+#   your environment. Sensitive paths can be externalised via dbb-app.yaml.
+# - Include this YAML file in dbb-build.yaml.
+# - Add CreateUCDComponentVersion to the desired lifecycle in dbb-build.yaml,
+#   typically as a post-Languages step.
+#
+########################################################################################
+
+version: 1.0.0
+tasks:
+  - task: CreateUCDComponentVersion
+
+    variables:
+
+      # ── Required ──────────────────────────────────────────────────────────────
+
+      # Absolute USS path to the UrbanCode Deploy buztool.sh script.
+      - name: UCD_BUZTOOL_PATH
+        value: "/var/ucd/agent/bin/buztool.sh"
+
+      # Name of the UCD component to create a version in.
+      - name: UCD_COMPONENT
+        value: "MyApplication"
+
+      # ── Optional ──────────────────────────────────────────────────────────────
+
+      # Explicit UCD component version name. Leave empty to let UCD assign one.
+      # - name: UCD_VERSION_NAME
+      #   value: ""
+
+      # Absolute path to the buztool property file (UCD 7.1+, replaces UCD_ARTIFACT_REPOSITORY).
+      # - name: UCD_BUZTOOL_PROPERTY_FILE
+      #   value: "/var/ucd/agent/conf/artifactrepository/myapp.properties"
+
+      # Absolute path to the artifact repository server connection file (deprecated; use UCD_BUZTOOL_PROPERTY_FILE).
+      # - name: UCD_ARTIFACT_REPOSITORY
+      #   value: ""
+
+      # Set to "true" to use UCD packaging format v2 (requires buztool createzosversion2).
+      # - name: UCD_V2_PACKAGE_FORMAT
+      #   value: "false"
+
+      # JSON map of dataset last-level qualifiers to deployType (required for v2 format).
+      # - name: UCD_CONTAINER_MAPPING
+      #   value: '{"LOAD":"LOAD","DBRM":"DBRM","JCL":"TEXT","COPY":"TEXT"}'
+
+      # URL to the CI pipeline build result — stored as a component version property.
+      # - name: UCD_PIPELINE_URL
+      #   value: ""
+
+      # URL to the pull/merge request — stored as a component version property.
+      # - name: UCD_PULL_REQUEST_URL
+      #   value: ""
+
+      # Git branch name — stored as a component version property.
+      # - name: UCD_GIT_BRANCH
+      #   value: ""
+
+      # Git commit URL prefix for artifact traceability links (e.g. https://github.com/org/repo/commit).
+      # - name: UCD_GIT_COMMIT_URL_PREFIX
+      #   value: ""
+
+      # Git tree URL prefix for source traceability links (e.g. https://github.com/org/repo/tree).
+      # - name: UCD_GIT_TREE_URL_PREFIX
+      #   value: ""
+
+      # Set to "true" to generate the shiplist without invoking buztool.sh.
+      # - name: UCD_PREVIEW
+      #   value: "false"

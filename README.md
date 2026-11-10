@@ -36,11 +36,7 @@ Sample | Description
 --- | ---
 [IDE/GitISPFClient](IDE/GitISPFClient) | An ISPF interface that interacts with a Git repository to allow cloning, staging, checking in, pushing and pulling as well as other git commands.
 [Pipeline/AnalyzeCodeCoverageReport](Pipeline/AnalyzeCodeCoverageReport) | Sample script to extract and print Code Coverage information as collected by IBM Debug.
-[Pipeline/CreateUCDComponentVersion](Pipeline/CreateUCDComponentVersion) | Post-build script to parse the DBB Build report to generate a UCD component shiplist file and to create a new UCD component version.
 [Pipeline/DeployUCDComponentVersion](Pipeline/DeployUCDComponentVersion) | Sample script to trigger a UCD deployment from the pipeline, where the pipeline orchestrator does not provide standard plugins for this task.
-[Pipeline/PackageBuildOutputs](Pipeline/PackageBuildOutputs) | Post-build script to create a generic package with the produced build outputs, optionally uploads results to an Artifactory repository. Artifactory deploy/download sample script.    
-[Pipeline/RunIDZCodeReview](Pipeline/RunIDZCodeReview) | Post-build script to integrate IBM IDz Code Review application into a pipeline.
-[Pipeline/SimplePackageDeploy](Pipeline/SimplePackageDeploy) | Post-build script to deploy the tar package contents to the target libraries.
 [Scanners](Scanners) | Sample dependency scanner implementations using the extension framework of the DBB toolkit.
 [Schema](Schema) | zBuilder schema used to configure YAML validation for build and application configurations in an IDE.
 [Templates](Templates#pipeline-templates) | Contains Pipeline templates for various Pipeline orchestrators such as AzureDevOps, Gitlab, Github Actions and Jenkins.
@@ -52,5 +48,7 @@ Sample | Description
 [WaziDeploy/Reporting](WaziDeploy/Reporting) | This category provides templates for querying IBM Wazi Deploy evidence files and generating detailed reports.
 [WaziDeploy/Schemas](WaziDeploy/Schemas) | Wazi Deploy schemas used to configure Yaml validation for the config file, the deployment method file and the manifest file.
 [WaziDeploy/zDeploy](WaziDeploy/zDeploy/) |  Wazi Deploy deployment configuration framework for both Ansible and Python, that allows maintaining application specific configuration along the core deployment configuration for Wazi Deploy.
-[zBuilder extensions](zBuilder/) | IBM zBuilder extensions showcasing advanced scenarios. 
+[zBuilder](zBuilder/) | IBM zBuilder reference build configuration, custom extensions, and sample applications.
+[zBuilder/extensions](zBuilder/extensions/) | IBM zBuilder extensions showcasing advanced scenarios and custom build tasks.
+[zBuilder/extensions/CreateUCDComponentVersion](zBuilder/extensions/CreateUCDComponentVersion/) | zBuilder custom task that generates a UCD shiplist and creates a UCD component version from the zBuilder build report.
 [zBuilder/MortgageApplication](zBuilder/MortgageApplication/) | Mortgage Application sample application prepared to be built with IBM DBB zBuilder.

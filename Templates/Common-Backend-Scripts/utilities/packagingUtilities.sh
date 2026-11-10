@@ -59,63 +59,43 @@ getArtifactRepositoryName() {
 }
 
 computePackageUrl() {
-    artifactRepositoryHelpersScript="${SCRIPT_HOME}/../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy"
+    # Assemble the absolute artifact repository URL from the variables set by
+    # getReleasePackageConfiguration() or getPreliminaryPackageConfiguration().
+    #
+    # URL pattern:
+    #   release: <artifactRepositoryUrl>/<artifactRepositoryName>/release/<releaseIdentifier>/<App>-<releaseIdentifier>-<buildIdentifier>.tar
+    #   build:   <artifactRepositoryUrl>/<artifactRepositoryName>/build/<branch>/<App>-<buildIdentifier>.tar
 
-    # validate options
-    if [ ! -f "${artifactRepositoryHelpersScript}" ]; then
-        rc=8
-        ERRMSG=$PGM": [ERROR] Unable to locate ${artifactRepositoryHelpersScript}. rc="$rc
-        echo $ERRMSG
-    fi
-
-    # configuration variable defining the Artifactory repository name pattern
+    # First derive the repository name from the application and suffix
     getArtifactRepositoryName
 
-    #
-    # Invoke the Package Build Outputs script
-    if [ $rc -eq 0 ]; then
-        echo $PGM": [INFO] Invoking the ArtifactRepositoryHelper groovy script to compute Package Url."
-
-        CMD="$DBB_HOME/bin/groovyz ${log4j2} ${artifactRepositoryHelpersScript} --computeArchiveUrl"
-
-        # add tarfile name
-        if [ ! -z "${tarFileName}" ]; then
-            CMD="${CMD} --tarFileName ${tarFileName}"
-        fi
-
-        # artifactVersionName
-        if [ ! -z "${artifactVersionName}" ]; then
-            CMD="${CMD} --versionName ${artifactVersionName}"
-        fi
-
-        # Artifact repo options
-        if [ ! -z "${artifactRepositoryUrl}" ]; then
-            CMD="${CMD} --artifactRepositoryUrl \"${artifactRepositoryUrl}\""
-        fi
-
-        if [ ! -z "${artifactRepositoryName}" ]; then
-            CMD="${CMD} --artifactRepositoryName ${artifactRepositoryName}"
-        fi
-        if [ ! -z "${artifactRepositoryDirectory}" ]; then
-            CMD="${CMD} --artifactRepositoryDirectory ${artifactRepositoryDirectory}"
-        fi
-
-        echo $PGM": [INFO] ${CMD}"
-        artifactRepositoryAbsoluteUrl=$(${CMD} | grep "url=" | awk -F "=" ' { print $2 }')
-
-        if [ ! -z "${artifactRepositoryAbsoluteUrl}" ]; then
-            ERRMSG=$PGM": [INFO] Computation of Archive Url completed. rc="$rc
-            echo $ERRMSG
-        else
-            rc=12
-            ERRMSG=$PGM": [ERR] Computation of Archive Url failed. Check Console for details. rc="$rc
-            echo $ERRMSG
-
-        fi
+    if [ -z "${artifactRepositoryUrl}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] artifactRepositoryUrl is not configured in pipelineBackend.config. rc="$rc
+        echo $ERRMSG
+    elif [ -z "${artifactRepositoryName}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] artifactRepositoryName could not be computed. rc="$rc
+        echo $ERRMSG
+    elif [ -z "${artifactRepositoryDirectory}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] artifactRepositoryDirectory is not set. rc="$rc
+        echo $ERRMSG
+    elif [ -z "${artifactVersionName}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] artifactVersionName is not set. rc="$rc
+        echo $ERRMSG
+    elif [ -z "${tarFileName}" ]; then
+        rc=8
+        ERRMSG=$PGM": [ERROR] tarFileName is not set. rc="$rc
+        echo $ERRMSG
+    else
+        artifactRepositoryAbsoluteUrl="${artifactRepositoryUrl}/${artifactRepositoryName}/${artifactRepositoryDirectory}/${artifactVersionName}/${tarFileName}"
+        echo $PGM": [INFO] Computation of Archive Url completed. Url=${artifactRepositoryAbsoluteUrl} rc=${rc}"
     fi
 }
 
-# Method implementing the conventions in the CBS  the PACKAGING step using the PackageBuildOutputs.groovy script
+# Method implementing the conventions in the CBS
 computeArchiveInformation() {
     #############################################
     # output environment variables

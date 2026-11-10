@@ -1,0 +1,252 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2025
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+#########################################################
+# Sample zBuilder language task and variable declarations
+#########################################################
+version: 1.0.0
+
+#########################################################
+# Import language task configurations
+#########################################################
+include: 
+  - file: Transfer.yaml
+  - file: BMS.yaml
+  - file: Cobol.yaml
+  - file: CobolTestcase.yaml
+  - file: CPP.yaml
+  - file: Assembler.yaml
+  - file: PLI.yaml
+  - file: REXX.yaml
+  - file: LinkEdit.yaml
+
+############################################################################ 
+# stage: Languages used to create a reusable list of language configurations
+############################################################################ 
+tasks: 
+  - stage: Languages
+    tasks:
+     - Transfer       # Defined in Transfer.yaml
+     - BMS            # Defined in BMS.yaml
+     - Cobol          # Defined in Cobol.yaml
+     - CobolTestcase  # Defined in CobolTestcase.yaml
+     - CPP            # Defined in CPP.yaml
+     - Assembler      # Defined in Assembler.yaml
+     - PLI            # Defined in PLI.yaml
+     - LinkEdit       # Defined in LinkEdit.yaml
+     - REXX           # Defined in REXX.yaml
+
+##############################################################################     
+# Partition Data Sets (PDS) used by included language tasks
+# Please provide a fully qualified DSN for each build variable below as needed
+##############################################################################
+variables:
+
+  ############################################################
+  # Start: Datasets required for MortgageApplication sample
+  ############################################################
+  
+  # z/OS macro library. Example: SYS1.MACLIB
+  - name: MACLIB
+    value: SYS1.MACLIB 
+    
+  # LE (Language Environment) load library. Example: CEE.SCEELKED
+  - name: SCEELKED
+    value: CEE.SCEELKED
+
+  # LE (Language Environment) sample library. Example: CEE.SCEESAMP
+  - name: SCEESAMP
+    value: CEE.SCEESAMP
+
+  # High Level Assembler (HLASM) load library. Example: ASM.SASMMOD1
+  - name: SASMMOD1
+    value: HLASM.SASMMOD1
+
+  # Cobol Compiler Data Sets. Example: COBOL.V6R1M0.SIGYCOMP
+  - name: SIGYCOMP
+    value: COBOL.V6R4.SIGYCOMP
+
+  # CICS Macro Library. Example: CICSTS.V6R1M0.CICS.SDFHMAC
+  - name: SDFHMAC
+    value: CICSTS.V5R4.CICS.SDFHMAC
+
+  # CICS COBOL Library. Example: CICSTS.V6R1M0.CICS.SDFHCOB
+  - name: SDFHCOB
+    value: CICSTS.V5R4.CICS.SDFHCOB 
+  
+  # CICS Load Library. Example: CICSTS.V6R1M0.CICS.SDFHLOAD
+  - name: SDFHLOAD
+    value: CICSTS.V5R4.CICS.SDFHLOAD
+  
+  # DB2 Load Library. Example: DB2.V12R1M0.SDSNLOAD
+  - name: SDSNLOAD
+    value: DBC0CFG.DB2.V12.SDSNLOAD
+
+  # Optional IDz Load Library. Needed for Error Feedback option. Example: FEL.V16R0M0.SFELLOAD
+  #- name: SFELLOAD
+  #  value: 
+  
+  ############################################################
+  # End: Datasets required for MortgageApplication sample
+  ############################################################
+
+  ############################################################
+  # Start: Other datasets
+  ############################################################
+
+  ##############################
+  # Assembler Datasets
+  ##############################
+
+  # Assembler macro library. Example: CEE.SCEEMAC
+  #- name: SCEEMAC
+  #  value:
+
+  ##############################
+  # C/C++ Datasets
+  ##############################
+
+  # Contains standard C++ header files. Example: CEE.SCEEH
+  # - name: SCEEH
+  #   value:
+
+  # Contains standard C header files. Example: CEE.SCEEH.H
+  # - name: SCEEHH
+  #   value:
+
+  # Contains standard system header files. Example: CEE.SCEEH.SYS.H
+  # - name: SCEEHSH
+  #   value:
+
+  # Contains standard internet operations headers. Example: CEE.SCEEH.ARPA.H
+  # - name: SCEEHAH
+  #   value:
+
+  # Contains standard network interface headers. Example: CEE.SCEEH.NET.H
+  # - name: SCEEHNH
+  #   value:
+
+  # Contains standard internet protocol headers. Example: CEE.SCEEH.NETINET.H
+  # - name: SCEEHNIH
+  #   value:
+
+  # Contains standard template definitions. Example: CEE.SCEEH.T
+  # - name: SCEEHT
+  #   value:
+
+  # Contains class library header files. Example: CBC.SCLBH.H
+  # - name: SCLBHH
+  #   value:
+
+  # Required for XLC/C++ Compiler. Example: CEE.SCEERUN
+  # - name: SCEERUN
+  #   value:
+
+  # Contains the runtime library routines needed during execution of applications, and those that require to reside in a PDSE. Example: CEE.SCEERUN2
+  # - name: SCEERUN2
+  #   value:
+
+  # Required for XLC/C++ Compiler. Example: CBC.SCCNCMP
+  # - name: SCCNCMP
+  #   value:
+
+  # Contains the message file to be used by the C pre-linker. Example: CEE.SCEEMSGP
+  # - name: SCEEMSGP
+  #   value:
+
+  # Contains side-decks for DLLs provided by Language Environment. Example: CEE.SCEELIB
+  # - name: SCEELIB
+  #   value:
+
+  ##############################
+  # CICS Datasets
+  ##############################
+
+  # CICS PLI Library. Example: CICSTS.V6R1M0.CICS.SDFHPL1
+  #- name: SDFHPL1
+  #  value:
+
+  ##############################
+  # Db2 Datasets
+  ##############################
+
+  # DB2 Exit Library. Example: DB2.V12R1M0.SDSNEXIT
+  #- name: SDSNEXIT
+  #  value:
+
+  ##############################
+  # Debug Datasets
+  ##############################
+
+  # IBM Debug Library containing Exits
+  #- name: SEQAMOD
+  #  value:
+
+  # IBM Debug Tool library containing necessary TAz copybooks
+  #- name: SEQASAMP
+  #  value: 
+
+  ##############################
+  # IDz Datasets
+  ##############################
+
+  # Optional IDZ zUnit / WAZI VTP library containing necessary copybooks. Example : FEL.V16R2M0.SBZUSAMP
+  - name: SEQASAMP
+    value: DEBUG.V17.SEQASAMP
+
+  ##############################
+  # IMS Datasets
+  ##############################
+
+  # IMS Macro Library. Example: DFS.V11R1M0.SDFSMAC
+  #- name: SDFSMAC
+  #  value:
+
+  # IMS RESLIB. Example: DFS.V11R1M0.SDFSRESL
+  #- name: SDFSRESL
+  #  value:
+
+  ##############################
+  # MQ Datasets
+  ##############################
+
+  # MQ COBOL Library. Example: CSQ.V9R4M0.SCSQCOBC
+  - name: SCSQCOBC
+    value: WMQ.V9R4.SCSQCOBC
+
+  # MQ PLI Library. Example: CSQ.V9R4M0.SCSQPLIC
+  #- name: SCSQPLIC
+  #  value:
+
+  # MQ Assembler Library. Example: CSQ.V9R4M0.SCSQMACS
+  #- name: SCSQMACS
+  #  value:
+
+  # MQ Load Library. Example: CSQ.V9R4M0.SCSQLOAD
+  - name: SCSQLOAD
+    value: WMQ.V9R4.SCSQLOAD
+
+  ##############################
+  # PD Tools Datasets
+  ##############################
+
+  # PD Tools Common Component load library. Example : PDTCC.V1R8.SIPVMODA 
+  #- name: SIPVMODA
+  #  value:
+
+  ##############################
+  # PL/I Datasets
+  ##############################
+
+  # PL/I Compiler Data Sets.  Example: PLI.V6R1M0.SIBMZCMP
+  #- name: IBMZPLI
+  #  value:
+
+  ############################################################
+  # End: Other Datasets
+  ############################################################

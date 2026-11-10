@@ -1,0 +1,67 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2025
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+####################################
+# Transfer language configuration
+#################################### 
+
+version: 1.0.2
+tasks:
+  # Transfer language task transfers files to members without building. Reports files as
+  # build outputs in the build report. 
+  - language: Transfer
+
+    # Source file association patterns
+    # Can be used for JCL, PROC, CNTL, REXX and any other type of source code which needs
+    # to be packaged and processed by the pipeline. 
+    sources: 
+      - "**.jcl"
+      - "**.proc"
+      - "**.cntl"
+      - "**.rexx"
+
+    # Dataset allocation options
+    datasets:
+      - name: ${HLQ}.JCL
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.PROC
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.CNTL
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.REXX
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+    
+    # Single copy step for each file type
+    steps:
+      - step: copyJCL  
+        type: copy
+        condition: ${FILE_EXT} == "jcl"
+        target: //'${HLQ}.JCL(${MEMBER})'
+        copyMode: TEXT
+        deployType: JCL
+
+      - step: copyPROC
+        type: copy
+        condition: ${FILE_EXT} == "proc"
+        target: //'${HLQ}.PROC(${MEMBER})'
+        copyMode: TEXT
+        deployType: PROC
+
+      - step: copyCNTL
+        type: copy
+        condition: ${FILE_EXT} == "cntl"
+        target: //'${HLQ}.CNTL(${MEMBER})'
+        copyMode: TEXT
+        deployType: CNTL
+
+      - step: copyREXX
+        type: copy
+        condition: ${FILE_EXT} == "rexx"
+        target: //'${HLQ}.REXX(${MEMBER})'
+        copyMode: TEXT
+        deployType: REXX

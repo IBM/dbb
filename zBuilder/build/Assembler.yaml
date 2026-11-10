@@ -1,0 +1,219 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2026
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+####################################
+# Assembler language configuration
+#################################### 
+
+version: 1.0.2
+tasks:
+  # Assembler Language task
+  - language: Assembler
+
+    # source file association patterns
+    sources:
+      - "**.asm"
+      
+    # overridable variables
+    variables:
+      # default SQL translator parms
+      - name: SQLTranslatorParms
+        value: HOST(ASM)
+
+      # default CICS translator parms
+      - name: CICSTranslatorParms
+        value: ""
+
+      # conditional variable builds assembler parms
+      - name: assemblerParms
+        value: LIST
+        append:
+          - condition: 
+              exists: errPrefix
+            value: ADATA,EX(ADX(ELAXHASM))
+          - condition: 
+              exists: debug
+              notExits: errPrefix
+              eval: ${debug}
+            value: ADATA
+
+      # default debug side file parms
+      - name: debugSideFileParms
+        value: "(ASM ERROR LOUD"
+            
+      # flag to execute linkedit step
+      - name: doLinkEdit
+        value: true
+
+      # build record output deploy type
+      - name: deployType
+        value: LOAD  # default value
+        select:
+          - condition: ${IS_CICS}
+            value: CICSLOAD
+          - condition: ${IS_DLI}
+            value: IMSLOAD
+          - condition: ${isIMS}
+            value: IMSLOAD
+
+      # default link edit parms
+      - name: linkEditParms
+        value: MAP,RENT
+
+      # default dependency search path for single repository build
+      - name: dependencySearchPath
+        value: search:${WORKSPACE}/?path=${APP_DIR_NAME}/maclib/**.mac
+
+      # flag to scan load module for static link dependencies
+      - name: scanLoadModule
+        value: true
+
+      # may need to use DD Name substitution. For more information see
+      # https://www.ibm.com/docs/en/dbb/3.0?topic=commands-mvsexec#passing-data-sets-between-mvsexec-commands
+      - name: CICSTranslatorDDNameSubstitionList
+        value: ""  # default is an empty string
+        select:
+          - condition: ${IS_SQL}
+            value: SYSLIN,,,SYSLIB,SYSCIN,,,,,,,,,,,,,,
+
+      # may need to use DD Name substitution. For more information see
+      # https://www.ibm.com/docs/en/dbb/3.0?topic=commands-mvsexec#passing-data-sets-between-mvsexec-commands
+      - name: assemblerDDNameSubstitionList
+        value: ""  # default is an empty string
+        select:
+          - condition: ${IS_CICS}
+            value: SYSLIN,,,SYSLIB,SYSPUNCH,,,,,,,,,,,,,,
+          - condition: ${IS_SQL}
+            value: SYSLIN,,,SYSLIB,SYSCIN,,,,,,,,,,,,,,
+
+      # flag to activate IMS options
+      - name: isIMS
+        value: false
+
+      # flag to use ASMAOPTS
+      - name: isAsmaOptionsFile
+        value: false
+
+    # datasets that need to be created / validated for this language configuration
+    datasets:
+      - name: ${HLQ}.ASM
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.OBJ
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.DBRM
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.MACRO
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.LOAD
+        options: cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
+      - name: ${HLQ}.SYSADATA
+        options: cyl space(5,5) lrecl(32756) dsorg(PO) recfm(v,b) dsntype(library)
+      - name: ${HLQ}.EQALANGX
+        options: cyl dsorg(PO) dsntype(library) space(5,5) lrecl(1562) recfm(v,b)
+
+    # list of steps to execute for each program processed by this language configuration
+    steps:
+    
+      # Copy build file and dependency files to data sets
+      - step: copySrc
+        type: copy
+        target: //'${HLQ}.ASM(${MEMBER})'
+        dependencyCopy:
+          - search: ${dependencySearchPath}
+            mappings:
+              - source: "**/*"
+                dataset: ${HLQ}.MACRO
+                 
+      # SQL Translator Command
+      - step: SQLTranslator
+        condition: ${IS_SQL}
+        type: mvs
+        pgm: DSNHPC
+        parm: ${SQLTranslatorParms}
+        maxRC: 4
+        dds:
+          - { name: "SYSIN", dsn: "${HLQ}.ASM(${MEMBER})", options: "shr", input: true }
+          - { name: "DBRMLIB", dsn: "${HLQ}.DBRM(${MEMBER})", options: "shr", output: true, deployType: "DBRM" }          
+          - { name: "SYSCIN", dsn: "&&SYSCIN", options: "cyl space(5,5) unit(vio) new", pass: true }          
+          - { name: "TASKLIB", dsn: "${SDSNLOAD}", options: "shr" }
+          - {                  dsn: "${SDSNEXIT}", condition: { exists: "SDSNEXIT" }, options: "shr" }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new ", append: true, logMode: "ASA_TEXT" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+
+      # CICS Translator Command
+      - step: CICSTranslator
+        condition: ${IS_CICS}
+        type: mvs
+        pgm: DFHEAP1$
+        parm: ${CICSTranslatorParms}
+        maxRC: 4
+        ddnameSubstitution: ${CICSTranslatorDDNameSubstitionList}
+        dds:
+          - { name: "SYSIN", condition: "!${IS_SQL}", dsn: "${HLQ}.ASM(${MEMBER})", options: "shr", input: true }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new ", append: true, logMode: "ASA_TEXT" }
+          - { name: "SYSPUNCH", dsn: "&&SYSCICS", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new ", pass: true }
+          - { name: "TASKLIB", dsn: "${SDFHLOAD}", options: "shr" }
+
+               
+      # Assembler step          
+      - step: assembler
+        type: mvs
+        pgm: ASMA90
+        parm: ${assemblerParms}
+        maxRC: 4
+        ddnameSubstitution: ${assemblerDDNameSubstitionList}
+        dds:
+          - { name: "SYSIN", condition: "!${IS_CICS} && !${IS_SQL}", dsn: "${HLQ}.ASM(${MEMBER})", options: "shr", input: true }
+          - { name: "ASMAOPT", condition: "${isAsmaOptionsFile}", dsn: "${HLQ}.ASMAOPT(${MEMBER})", options: "shr", input: true }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", append: true, logMode: "ASA_TEXT" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIN", dsn: "${HLQ}.OBJ(${MEMBER})", options: "shr", output: true, deployType: "OBJ" }
+          - { name: "SYSLIB", dsn: "${HLQ}.MACRO", options: "shr" }
+          - {                 dsn: "${SCEEMAC}", condition: { exists: "SCEEMAC" }, options: "shr" }
+          - {                 dsn: "${MACLIB}", condition: { exists: "MACLIB" }, options: "shr" }
+          - {                 dsn: "${MODGEN}", condition: { exists: "MODGEN" }, options: "shr" }
+          - {                 dsn: "${SDFHMAC}", condition: "${IS_CICS}", options: "shr" }
+          - {                 dsn: "${SCSQMACS}", condition: "${IS_MQ}", options: "shr" }
+          - {                 dsn: "${SDFSMAC}", condition: { exists: "SDFSMAC" }, options: "shr" }
+          - { name: "SYSADATA", condition: { exists: "errPrefix" }, dsn: "${HLQ}.SYSADATA(${MEMBER})", options: "shr" }
+          - { name: "SYSADATA", condition: { exists: "debug", notExists: "errPrefix" }, dsn: "${HLQ}.SYSADATA(${MEMBER})", options: "shr" }
+          - { name: "SYSXMLSD", condition: { exists: "errPrefix" }, dsn: "${HLQ}.${errPrefix}.SYSXMLSD.XML", options: "tracks space(200,40) dsorg(PS) lrecl(16383) recfm(v,b) new keep" }
+
+      # Debug Side File Command
+      - step: debugSideFile
+        condition: 
+              exists: debug
+              eval: ${debug}
+        type: mvs
+        pgm: EQALANGX
+        parm: ${debugSideFileParms}
+        maxRC: 8
+        dds:
+          - { name: "TASKLIB", dsn: "${SIPVMODA}", options: "shr" }
+          - { name: "SYSADATA", dsn: "${HLQ}.SYSADATA(${MEMBER})", options: "shr" }
+          - { name: "IDILANGX", dsn: "${HLQ}.EQALANGX(${MEMBER})", options: "shr", output: true, deployType: "EQALANGX" }
+
+      # Link-Edit step
+      - step: linkEdit
+        type: mvs
+        pgm: IEWBLINK
+        parm: ${linkEditParms}
+        condition: ${doLinkEdit}
+        maxRC: 0
+        dds:
+          - { name: "SYSLMOD", dsn: "${HLQ}.LOAD(${MEMBER})", options: "shr", output: true, deployType: "${deployType}", scan: "${scanLoadModule}" }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new", append: true, logMode: "ASA_TEXT" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIN", dsn: "${HLQ}.OBJ(${MEMBER})", options: "shr", output: true }
+          - { name: "SYSLIB", dsn: "${HLQ}.OBJ", options: "shr" }
+          - {                 dsn: "${SCEELKED}", options: "shr" }
+          - {                 dsn: "${SDFHLOAD}", condition: "${IS_CICS}", options: "shr" }
+          - {                 dsn: "${SDFSRESL}", condition: "${isIMS}", options: "shr" }
+          - {                 dsn: "${SDSNLOAD}", condition: "${IS_SQL}", options: "shr" }
+          - {                 dsn: "${SCSQLOAD}", condition: "${IS_MQ}", options: "shr" }
+          - {                 dsn: "${CSSLIB}", condition: { exists: "CSSLIB" }, options: "shr" }

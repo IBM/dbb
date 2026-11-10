@@ -1,5 +1,17 @@
 # Common Backend Scripts for (any) Pipeline implementation
 
+> [!NOTE]
+> The contents of this subfolder is work in progress.
+
+Open items to further simplify and consolidate:
+
+- [ ] **Update pipeline templates to align with the strategic view** — The Azure DevOps, GitLab CI (distributed runner), GitHub Actions, and Jenkins pipeline templates (marked ⚠️ in the [Templates overview](../README.md)) still follow the legacy pattern: a separate `Packaging` stage driven by `packageBuildOutputs.sh` / `ucdPackaging.sh`, combined with `dbbBuild.sh` for the build step, and `baselineReference.config` for release tracking. They need to be updated to match the z/OS-native GitLab runner template as the reference implementation: use `zBuilder.sh` as the single build-and-package entry point, fold the release-version computation and release candidate tagging into the `Build` stage, and replace `baselineReference.config` references with `baselineRef.yaml`.
+- [ ] **Integrate `prepareLogs.sh` into the wrapper scripts** — Convert the standalone `prepareLogs.sh` (used by remote-runner architectures such as GitLab distributed runner, Azure DevOps, and GitHub Actions) into a utility that is called directly from within the wrapper scripts (e.g. `zBuilder.sh`). A dedicated flag or configuration item in pipelineBackend.config (e.g. `--prepareLogs`) should control whether the step is executed, keeping it opt-in for architectures that still need a separate log-transfer step.
+- [ ] **Update remote-runner pipeline templates to use the integrated log-preparation strategy** — Once the above item is implemented, update the Azure DevOps, GitLab distributed runner, and GitHub Actions pipeline templates to remove the explicit `prepareLogs.sh` invocation and rely on the flag introduced in the wrapper scripts instead.
+- [ ] **Adopt the built-in Wazi Deploy HTML evidence report** — Since Wazi Deploy 3.0.8 an HTML deployment report is automatically generated at the end of every deployment run. `wazideploy-evidence.sh` becomes optional in the pipeline templates. Switch the pipeline templates to consume this built-in report instead of driving a separate `wazideploy-evidence.sh` command invocation, and update the documentation accordingly.
+- [ ] **Align `generateCleanupCommands.sh` with DBB v3 CLI and zBuilder metadata layout** — The script currently issues `dbb collection list/delete` and `dbb build-group delete` commands and relies on the `dbbBuildUtils.sh` HLQ computation. These must be reviewed and updated to match the DBB v3 CLI command surface and the collection/build-group naming conventions produced by zBuilder (as opposed to the legacy `dbbBuild.sh` conventions).
+
+
 ## Overview
 
 The Common Backend Scripts for Pipeline Implementations is a collection of scripts that deliver central "services" and a simplified interface for pipeline configurations that implement a Git/DBB-based pipeline for mainframe applications. They use and simplify the parameterization of existing scripts in this repository to perform build, packaging, and deployment steps.
@@ -27,8 +39,8 @@ The provided scripts of this asset are implemented as bash scripts. The entire r
 
 ### Pre-requisites
 The following are required to use these scripts:
-* DBB 2.x or DBB 3.x toolkit is installed.
-* zAppBuild or zBuilder is set up on Unix Systems Services.
+* DBB 3.x toolkit is installed.
+* IBM DBB zBuilder is set up on UNIX System Services.
 * Git repository which follows the Git-based workflow outlined in IBM's documentation `The Git-based workflow for Mainframe development`.
 
 ### Installation
@@ -76,7 +88,7 @@ Central configuration | Description
 ---------- | ----------------------------------------------------------------------------------------
 buildRootDir | Absolute path to define the root workspace directory for pipeline executions, e.q. `/usr/pipeline/workspace`. Pipeline configurations can only pass a unique relative workspace.
 logsDir | A relative directory name for logs and temporary outputs. Default: logs
-zAppBuild and zBuilder settings | Multiple settings for zAppBuild, like path and credentials
+zBuilder settings | Settings for zBuilder, such as Artifact repository credentials and HLQ prefix
 UCD settings | Multiple settings for UCD server, like URL and credentials
 Wazi Deploy settings | Multiple settings for Wazi Deploy Generation, Deployment and Evidence Requests commands
 
@@ -115,7 +127,7 @@ Scripts can be invoked from a non-z/OS pipeline runner/agent via
 
 A non-interactive SSH session comes with a lightweight setup and is not fully initialized, like an interactive session can be by automatically loading the user's profile. The environment should be setup through the user's profile. The following snippet requires `bash` to be part of the PATH environment variable:
 ```
-ssh pipelineuser@lpar ". /u/pipelineuser/.profile && dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main"
+ssh pipelineuser@lpar ". /u/pipelineuser/.profile && zBuilder.sh -w MortApp/main/build-1 -a MortgageApplication -b main"
 ```
 
 An alternate configuration is to have `bash` defined as the default program in the OMVS segment of the user.
@@ -124,19 +136,17 @@ An alternate configuration is to have `bash` defined as the default program in t
 
 Zowe CLI by default initializes the environment with the user's profile:
 ```
-zowe zos-uss issue ssh "dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main
+zowe zos-uss issue ssh "zBuilder.sh -w MortApp/main/build-1 -a MortgageApplication -b main"
 ```
 
 # Script Inventory
 
-Artifact Name |  Description | Script details   
+Artifact Name |  Description | Script details
 ---------- | -----| -----------------------------------------------------
 [gitClone.sh](gitClone.sh) | Pipeline Shell Script to perform Git Clone to z/OS UNIX System Services | [script details](README.md#41---gitclonesh)
-[dbbBuild.sh](dbbBuild.sh) | Pipeline Shell Script to invoke the Dependency Based Build framework [zAppBuild](https://github.com/IBM/dbb-zappbuild) | [script details](#dbbbuildsh-for-zappbuild-framework)
-[zBuilder.sh](zBuilder.sh) | Pipeline Shell Script to invoke the zBuilder framework [zBuilder](https://www.ibm.com/docs/en/dbb/3.0?topic=building-zos-applications-zbuilder) | [script details](#zbuildersh-for-dbb-zbuilder)
-[computeReleaseVersion.sh](computeReleaseVersion.sh) | Pipeline Shell Script to compute the next release version based on the baseline version information stored in the application's [baselineReference.config](samples/baselineReference.config) file. | [script details](#computeReleaseVersionsh)
-[packageBuildOutputs.sh](packageBuildOutputs.sh) | Pipeline Shell Script to create a Package using the [PackageBuildOutputs groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/PackageBuildOutputs) | [script details](#packagebuildoutputssh)
-[ucdPackage.sh](ucdPackaging.sh) | Pipeline Shell Script to publish to UCD Code Station binary repository using the [CreateUCDComponentVersion groovy script](https://github.com/IBM/dbb/tree/main/Pipeline/CreateUCDComponentVersion) | [script details](#ucdpackagingsh)
+[zBuilder.sh](zBuilder.sh) | Pipeline Shell Script to invoke the [DBB zBuilder](https://www.ibm.com/docs/en/dbb/3.0?topic=building-zos-applications-zbuilder) framework | [script details](#zbuildersh-for-dbb-zbuilder)
+[computeReleaseVersion.sh](computeReleaseVersion.sh) | Pipeline Shell Script to compute the next release version based on the baseline version information stored in the application's [baselineRef.yaml](samples/baselineRef.yaml) file. | [script details](#computeReleaseVersionsh)
+[ucdPackage.sh](ucdPackaging.sh) | Pipeline Shell Script to publish to UCD Code Station binary repository using the [CreateUCDComponentVersion zBuilder task](../../zBuilder/extensions/CreateUCDComponentVersion) | [script details](#ucdpackagingsh)
 [wazideploy-generate.sh](wazideploy-generate.sh) | Pipeline Shell Script to generate a Deployment Plan to be used with Wazi Deploy | [script details](#wazideploy-generatesh)
 [wazideploy-deploy.sh](wazideploy-deploy.sh) | Pipeline Shell Script to trigger a deployment of a package based on Deployment Plan with Wazi Deploy | [script details](#wazideploy-deploysh)
 [wazideploy-evidence.sh](wazideploy-evidence.sh) | Pipeline Shell Script to query the Wazi Deploy Evidence YAML file and create a deployment report | [script details](#wazideploy-evidencesh)
@@ -233,17 +243,17 @@ feature/setmainbuildbranch
 
 #### Baseline references config
 
-The IBM recommended workflow approach leverages Git tags to identify the offset for calculating the changed files for a given deliverable. In this version, this utility script is retrieving the information from the [baselineReference.config](samples/baselineReference.config) file, that has to be maintained by the application team within the `application-conf` directory. It is the application teams' responsibility to maintain these references. 
+The IBM recommended workflow approach leverages Git tags to identify the offset for calculating the changed files for a given deliverable. In this version, this utility script is retrieving the information from the [baselineRef.yaml](samples/baselineRef.yaml) file, that has to be maintained by the application team within the `application-conf` directory. It is the application teams' responsibility to maintain these references.
 
-Note that the location of the baselineReferences.config file can be customized in the [pipelineBackend.config](pipelineBackend.config) file.
+Note that the location of the `baselineRef.yaml` file can be customized in the [pipelineBackend.config](pipelineBackend.config) file via the `baselineReferenceLocation` setting.
 
-[baselineReference.config](samples/baselineReference.config) is a sample, that indicates the baseline for the `main` and `release maintenance` branches.
+[baselineRef.yaml](samples/baselineRef.yaml) is a sample that indicates the baseline for the `main` and `release maintenance` branches.
 
 #### Fetching build dependencies
 
 The build stage can be enabled to pull external build dependencies into the build workspace based on the dependencies definition specified in the Application Descriptor file. 
 
-Each application version, represented by an archive, can export shared components such as public or shared include files, and build outputs such as object decks or NCAL load modules. The application archive needs to be created with the [packageBuildOutputs.sh](#packagebuildoutputssh) script and be uploaded to the artifact repository based on the implemented conventions.
+Each application version, represented by an archive, can export shared components such as public or shared include files, and build outputs such as object decks or NCAL load modules. The application archive is published to the artifact repository by the zBuilder `Publish` task embedded in the `impact` and `release` lifecycles.
 
 The Application Descriptor contains metadata about the application itself, but can contain the dependency configuration to other applications versions managed in an artifact repository, which are necessary inputs to the build process. Additional information about the Application Descriptor can be found at the [dbb-git-migration-modeler](https://github.com/IBM/dbb-git-migration-modeler) project, which documents cross-application dependencies and generates Application Descriptor files.
 
@@ -259,7 +269,7 @@ dependencies:
 
 The Application Descriptor file, called `applicationDescriptor.yml`, is expected to be on the root level of the application's Git repository.
 
-To fetch the dependencies, the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) is used. Under the covers, it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) and the [ArtifactoryHelpers](../../Pipeline/PackageBuildOutputs/ArtifactRepositoryHelpers.groovy) script to download the external dependencies into the working directory. The downloaded archives can be stored at a cache location to improve performance. Fetched archives are expanded in the `imports` subfolder of the pipeline's working directory.
+To fetch the dependencies, the subscript [fetchBuildDependenciesUtils.sh](utilities/fetchBuildDependenciesUtils.sh) is used. Under the covers, it uses the [fetchBuildDependencies.groovy](utilities/fetchBuildDependencies.groovy) script to download the external dependencies into the working directory. The downloaded archives can be stored at a cache location to improve performance. Fetched archives are expanded in the `imports` subfolder of the pipeline's working directory.
 
 **Fetch baseline package**
 
@@ -281,7 +291,7 @@ This script implements the invocation of the [zBuilder](https://www.ibm.com/docs
 
 By design, the script implements the recommended working practice. It makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/documentation-review/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zBuilder build lifecycles to set the baseline Git hash. This is used to identify all the committed changes for the upcoming deliverable (that can be a planned release, a emergency fix, or a significant development initiative)
 
-The computation of the build configuration is performed by the [dbbzBuilderUtils.sh](utilities/dbbzBuilderUtils.sh) script. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf` directory in order to compute the baseline reference.
+The computation of the build configuration is performed by the [dbbzBuilderUtils.sh](utilities/dbbzBuilderUtils.sh) script. It leverages the [application baseline configuration](samples/baselineRef.yaml) file which is expected to be present in the `application-conf` directory in order to compute the baseline reference.
 
 #### Invocation
 
@@ -290,8 +300,6 @@ The `zBuilder.sh` script can be invoked as follows:
 ```
 zBuilder.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
 ```
-
-On purpose, it accepts the same input arguments as dbbBuild.sh.
 
 CLI parameter | Description
 ---------- | ----------------------------------------------------------------------------------------
@@ -326,7 +334,7 @@ The zBuilder publish task supports two authentication modes as described in the 
 
 #### Output
 
-The section below contains the output that is produced by the `dbbBuild.sh` script.
+The section below contains the output that is produced by the `zBuilder.sh` script.
 
 <details>
   <summary>Script Output</summary>
@@ -390,129 +398,23 @@ zBuilder.sh: [INFO] DBB Build Complete. rc=0
 
 The [dbbzBuilderUtils](utilities/dbbzBuilderUtils.sh) script is a core utility script providing the `computeBuildConfiguration()` method to compute additional zBuilder CLI options and parameters according to the branch naming conventions. For instance
 
-* `build lifecycle`, such as the `impact` zAppBuild build option,
-  * the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file for integration branches, 
-* the configured topic branch build behavior (see parameter `featureBranchBuildBehaviour` in pipelineBackend.config), that can either be configured as
+* `build lifecycle`, such as the `impact` zBuilder lifecycle,
+  * the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the [baselineRef.yaml](samples/baselineRef.yaml) file for integration branches,
+* the configured topic branch build behavior (see `topic-branch-behaviour` in `application-conf/baselineRef.yaml`), that can either be configured as
   * `merge-base` (default) for cumulative builds that include all the changes added to the feature branch that flow to the integration branch. This setting automatically computes the merge-base commit, which defines the commit when the feature branch was forked.
   * `incremental` for standard zBuilder `--impactBuild` behavior.
-  * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`. 
-<!-- flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules). -->
-* the `mainBuildBranch` to configure feature branch pipelines to clone the corresponding DBB dependency metadata collections by generating a config.yaml that is passed into zBuilder.
-
-### dbbBuild.sh for zAppBuild framework
-
-This script implements the invocation of the [zAppBuild](https://github.com/IBM/dbb-zappbuild) framework. 
-
-By design, the script implements the recommended working practice. It makes use of the [baselineRef sub-option](https://github.com/IBM/dbb-zappbuild/blob/main/docs/BUILD.md#perform-impact-build-by-providing-baseline-reference-for-the-analysis-of-changed-files) provided by zAppBuild to set the baseline Git hash. This is used to identify all the committed changes for the upcoming deliverable (that can be a planned release, a emergency fix, or a significant development initiative)
-
-The computation of the build configuration is performed by the [dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) script. It leverages the [application baseline configuration](samples/baselineReference.config) file which is expected to be present in the `application-conf` directory in order to compute the baseline reference.
-
-#### Invocation
-
-The `dbbBuild.sh` script can be invoked as follows:
-
-```
-dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
-```
-
-CLI parameter | Description
----------- | ----------------------------------------------------------------------------------------
--w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps.
--a `<application>` | **Application name** to be built, which is passed to zAppBuild as the `--application` parameter.
--b `<branch>` | **Git branch** that is built. Used to compute various build properties such as the `--hlq` and build type.
--p `<build/release/preview>` | (Optional) **Pipeline Type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for optimized load modules), or if it runs in `preview` mode.
--v | (Optional) zAppBuild verbose tracing flag.
--t `<buildTypeArgument>` | (Optional) **zAppBuild Build Type** to specify the build type, such as `--fullBuild`, or `--impactBuild`. Arguments must be provided between quotes - e.g.: `-t '--fullBuild'`. Providing this parameter overrides the computation of the build type in the backend scripts. For instance can be used to initialize the DBB Metadatastore. 
--q `<hlqPrefix>` |(Optional) **HLQ prefix**. Default is retrieved from the [pipelineBackend.config](pipelineBackend.config) file, if the configuration file is not modified - the default value is set to the user executing the script.
-
-**Pipeline type**
-
-The type of pipeline (`-p` option), is used to modify the operational behavior of the build framework on producing executables:
-* `build` configures the build options for test/debug options. This is the **default**.
-* `release` used to indicate to produce executables with the flag for performance-optimized runtime modules. This is required for the release pipelines which include release candidate packages.
-* `preview` configures the build process to execute without producing any outputs. It is used to preview what the build will do. The pipeline should not have any subsequent actions.
-
-#### Output
-
-The section below contains the output that is produced by the `dbbBuild.sh` script.
-
-<details>
-  <summary>Script Output</summary>
-
-```
-dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p build
-
-$ dbbBuild.sh -w MortApp/main/build-1 -a MortgageApplication -b main -p b
-<ster/build-1 -a MortgageApplication -b main -p bu                 ild
-dbbBuild.sh: [INFO] Dependency Based Build. Version=1.00
-dbbBuild.sh: [INFO] **************************************************************
-dbbBuild.sh: [INFO] ** Started - DBB Build on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-dbbBuild.sh: [INFO] **          Workspace: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1
-dbbBuild.sh: [INFO] **        Application: MortgageApplication
-dbbBuild.sh: [INFO] **             Branch: main
-dbbBuild.sh: [INFO] **         Build Type: --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
-dbbBuild.sh: [INFO] **                HLQ: DBEHM.MORTGAGE.MAIN.BLD
-dbbBuild.sh: [INFO] **             AppDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/MortgageApplication
-dbbBuild.sh: [INFO] **             LogDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs
-dbbBuild.sh: [INFO] **     zAppBuild Path: /var/dbb/dbb-zappbuild_300
-dbbBuild.sh: [INFO] **           DBB_HOME: /usr/lpp/dbb/v2r0
-dbbBuild.sh: [INFO] **      DBB JDBC USER: DBEHM
-dbbBuild.sh: [INFO] **  DBB JDBC Pwd File: /var/dbb/config/db2-pwd-file.xml
-dbbBuild.sh: [INFO] **           Verbose : No
-dbbBuild.sh: [INFO] **         DBB Logger: No
-dbbBuild.sh: [INFO] **************************************************************
-
-dbbBuild.sh: [INFO] Invoking the zAppBuild Build Framework.
-dbbBuild.sh: [INFO] /usr/lpp/dbb/v2r0/bin/groovyz  /var/dbb/dbb-zappbuild_300/build.groovy --workspace /var/dbb/pipelineBackend/workspace/MortApp/main/build-1 --application MortgageApplication --outDir /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs --hlq DBEHM.MORTGAGE.MAIN.BLD --id DBEHM --pwFile /var/dbb/config/db2-pwd-file.xml  --logEncoding UTF-8 --propFiles /var/dbb/dbb-zappbuild-config/build.properties,/var/dbb/dbb-zappbuild-config/datasets.properties --impactBuild --baselineRef refs/tags/rel-1.0.0 --debug
-
-** Build start at 20230825.043936.039
-** Build output located at /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039
-** Build result created for BuildGroup:MortgageApplication-main BuildLabel:build.20230825.163936.039
-** Loading DBB scanner mapping configuration dbb.scannerMapping
-** --impactBuild option selected. Building impacted programs for application MortgageApplication 
-** Writing build list file to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/buildList.txt
-** Populating file level properties from individual artifact properties files.
-** Invoking build scripts according to build order: BMS.groovy,Cobol.groovy,LinkEdit.groovy
-** Building 2 files mapped to Cobol.groovy script
-*** (1/2) Building file MortgageApplication/cobol/epsnbrvl.cbl
-*** (2/2) Building file MortgageApplication/cobol/epscmort.cbl
-** Writing build report data to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/BuildReport.json
-** Writing build report to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/BuildReport.html
-** Updating build result BuildGroup:MortgageApplication-main BuildLabel:build.20230825.163936.039
-** Build ended at Fri Aug 25 16:39:43 GMT+01:00 2023
-** Build State : CLEAN
-** Total files processed : 2
-** Total build time  : 7.025 seconds
-
-** Build finished
-dbbBuild.sh: [INFO} LastBuildLog = /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/build.20230825.163936.039/buildList.txt
-dbbBuild.sh: [INFO] DBB Build Complete. rc=0
-```  
-
-</details>
-
-#### Script utility - dbbBuildUtils.sh
-
-The [dbbBuildUtils](utilities/dbbBuildUtils.sh) script is a core utility script providing the `computeBuildConfiguration()` method to compute the zAppBuild's options and parameters according to the branch naming conventions. For instance
-
-* `build type`, such as the `--impactBuild` zAppBuild build option,
-  * the baseline reference, `--baselineRef xxx`, where *xxx* is retrieved from the baselineReference.config file for integration branches, 
-* the configured topic branch build behavior (see parameter `featureBranchBuildBehaviour` in pipelineBackend.config), that can either be configured as
-  * `merge-base` (default) for cumulative builds that include all the changes added to the feature branch that flow to the integration branch. This setting automatically computes the merge-base commit, which defines the commit when the feature branch was forked.
-  * `incremental` for standard zAppBuild `--impactBuild` behavior.
-  * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`. 
-* flag to produce test modules (`--debug` in zAppBuild) or modules improved for performance (production runtime modules).
+  * `cumulative` for computing all the differences between the topic branch and the integration branch by passing the `--baselineRef`.
 * the `mainBuildBranch` to configure feature branch pipelines to clone the corresponding DBB dependency metadata collections.
 
 ## Packaging stage
 
-Depending on the Deployment Manager tool you are using, you can choose from either creating a package with the [PackageBuildOutputs](#packagebuildoutputssh) script that can be used with IBM Wazi Deploy, or the [UCD packaging](#ucdpackagingsh) script that creates the UCD shiplist and UCD component version.
+Depending on the Deployment Manager tool you are using, you can choose from either [wazideploy-generate.sh](#wazideploy-generatesh) for IBM Wazi Deploy, or the [UCD packaging](#ucdpackagingsh) script that creates the UCD shiplist and UCD component version. Packaging is handled by the zBuilder `Publish` task embedded in the `impact` and `release` lifecycles — there is no separate packaging step.
 
 ### computeReleaseVersion.sh
 
-This script is to compute the version for the next release based on the information of baseline version stored in the [baseineReference.config](samples/baselineReference.config) file. The computation of the release version follows the versioning described in [IBM recommended Git branching model for mainframe developer](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev). It follows the Systematic Versioning as MAJOR.MINOR.PATCH number. The number of the coresponding part is increased based on the type of release.
+This script is to compute the version for the next release based on the information of baseline version stored in the [baselineRef.yaml](samples/baselineRef.yaml) file. The computation of the release version follows the versioning described in [IBM recommended Git branching model for mainframe developer](https://ibm.github.io/z-devops-acceleration-program/docs/branching/git-branching-model-for-mainframe-dev). It follows the Systematic Versioning as MAJOR.MINOR.PATCH number. The number of the corresponding part is increased based on the type of release.
 
-The computed release version is used as part of the archive name to be uploaded or downloaded from the artifact repository. The release version is an input for [packageBuildOutputs.sh](#packagebuildoutputssh) and [wazideploy-generate.sh](#wazideploy-generatesh).
+The computed release version is used as part of the archive name to be uploaded or downloaded from the artifact repository. The release version is an input for [wazideploy-generate.sh](#wazideploy-generatesh).
 
 #### Invocation
 
@@ -586,147 +488,9 @@ if (pMatcher.find()) {
 
 </details>
 
-### packageBuildOutputs.sh
-
-This script is to execute the `PackageBuildOutputs.groovy` that packages up the build outputs and optionally uploads it to an artifact repository to publish the artifacts created by a DBB build in the pipeline.
-
-When uploading the archive to an artifact repository, this script implements naming conventions for the repository layout. The conventions are implemented in [utilities/packageUtils.sh](utilities/packageUtils.sh).
-The rules for the naming conventions are detailed hereafter.
-
-For any preliminary build (that uses the `pipelineType=build`), the outputs are uploaded into the directory
-
-`build/<reference>/<application>-<buildIdentifier>`:
-
-* **build** is defined for any builds, that are considered to be preliminary. They cannot be deployed to production.
-* **reference** is the name of the branch which the build originates from: for instance, `feature/123-update-mortgage-computation`, `main` or any hotfix and epic branches.
-* The archive's file name is computed using the application's name and a unique build identifier (`-i` argument). This parameter is typically the pipeline build number that is passed by the pipeline orchestrator. If a build identifier is not provided, the current timestamp is used.
-
-For release builds (that use the `pipelineType=release`), the archive is uploaded to the directory
-
-`release/<reference>/<application>-<buildIdentifier>`:
-
-* **release** is defined for release builds. 
-* **reference** is the release name: for instance, `rel-1.2.3` (provided through the mandatory `-r` argument). The release name can be automatically computed using the [computeReleaseVersion.sh](#computereleaseversionsh) script.
-
-The archive's file name is computed using the application's name, the release name (`-r` argument) and a unique build identifier (`-i` argument). This parameter is typically the pipeline build number that is passed by the pipeline orchestrator. If a build identifier is not provided, the current timestamp is used.
-
-
-#### Invocation
-
-The `packageBuildOutputs.sh` script can be invoked as follows:
-
-- Package only
-
-```
-packageBuildOutputs.sh -w MortApp/main/build-1 -t rel-1.0.0.tar
-```
-- Package and Upload
-```
-packageBuildOutputs.sh -w MortApp/main/build-1 -t rel-1.0.0.tar -a MortgageApplication -b main -u -p release -r rel-1.0.0 -i 4657
-```
-
-CLI parameter | Description
----------- | ----------------------------------------------------------------------------------------
-**Packaging options**
--w `<workspace>` | **Workspace directory**, an absolute or relative path that represents unique directory for this pipeline definition, that needs to be consistent through multiple steps. The `packageBuildOutputs.sh` script is evaluating the logs directory.
--t `<tarFileName>` | (Optional) Name of the **tar file** to create.
-**Artifact Upload options**
--u | Flag to enable upload of outputs to the configured artifact repository. Also available as a general setting in `pipelineBackend.config`.
--a `<application>` | **Application name** leveraged to define the artifact repository name.
--b `<branch>`| Name of the **git branch** turning into a segment of the directory path in the artifact repository. Naming convention rules are implemented in `utilities/packageUtils.sh`.
--p `<build/release>` | **Pipeline type** to indicate a `build` pipeline (build only with test/debug options) or a `release` pipeline (build for  optimized load modules) to determine the directory in the artifact repository for development and pipeline builds.
--r `<releaseIdentifier>` | **Release identifier** to indicate the next planned release name. This is a computed value based on the pipeline templates.
--i `<buildIdentifier>` | **Build identifier** a unique value, typically the build number provided by the pipeline orchestrator or a timestamp. Used to help qualifying the archive file. This is a computed value provided by the pipeline templates.
--v `<artifactVersion>` **deprecated** | Label of the **version** in the artifact repository turning into a segment of the directory path in the artifact repo. Deprecated - switch to `-r <releaseIdentifier>` and `-i <buildIdentifier>`.
--s `"<sbomAuthor>"` | (Optional) Name and email of the SBOM author enclosed with double quotes. Ex: "Build Engineer \<engineer@example.com\>" 
-
-Check out the pipelineBackend.config to define the `artifactRepositoryNameSuffix` that is appended to the application name to set the repository name in the artifact repository.
-
-#### Script conventions
-
-**SBOM Generation**
-
-The generation of an SBOM is controlled by the `generateSBOM` property defined in the [pipelineBackend.config](pipelineBackend.config) file. The default SBOM Author is also specified in the [pipelineBackend.config](pipelineBackend.config) file in the `sbomAuthor` property, but this property can be overridden with the `-s` parameter of this script. When the SBOM Author is provided as a parameter, it automatically enables the SBOM generation, even if set to `false` in the [pipelineBackend.config](pipelineBackend.config) file.
-
-#### Output 
-
-The section below contains the output that is produced by the `packageBuildOutputs.sh` script.
-
-<details>
-  <summary>Script Output</summary>
-
-```
-packageBuildOutputs.sh -w MortApp/main/build-1 -a MortgageApplication -t package.tar -b main -u -v MortgageApplication.2023-09-22_13-55-20 -p build
-
-packageBuildOutputs.sh: [INFO] Package Build Outputs wrapper. Version=1.00
-packageBuildOutputs.sh: [INFO] **************************************************************
-packageBuildOutputs.sh: [INFO] ** Started - Package Build Outputs on HOST/USER: z/OS ZT01 04.00 02 8561/BPXROOT
-packageBuildOutputs.sh: [INFO] **                  WorkDir: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1
-packageBuildOutputs.sh: [INFO] **              Application: MortgageApplication
-packageBuildOutputs.sh: [INFO] **                   Branch: main
-packageBuildOutputs.sh: [INFO] **         Type of pipeline: build
-packageBuildOutputs.sh: [INFO] **            Tar file Name: package.tar
-packageBuildOutputs.sh: [INFO] **     BuildReport Location: /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs
-packageBuildOutputs.sh: [INFO] **     PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy
-packageBuildOutputs.sh: [INFO] **     Packaging properties: /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
-packageBuildOutputs.sh: [INFO] ** Publish to Artifact Repo: true
-packageBuildOutputs.sh: [INFO] **            Artifact name: MortgageApplication.2023-09-22_13-55-20
-packageBuildOutputs.sh: [INFO] **         ArtifactRepo Url: http://10.3.20.231:8081/artifactory
-packageBuildOutputs.sh: [INFO] **        ArtifactRepo User: admin
-packageBuildOutputs.sh: [INFO] **    ArtifactRepo Password: xxxxx
-packageBuildOutputs.sh: [INFO] **   ArtifactRepo Repo name: MortgageApplication-repo-local
-packageBuildOutputs.sh: [INFO] **    ArtifactRepo Repo Dir: main/build
-packageBuildOutputs.sh: [INFO] **                 DBB_HOME: /usr/lpp/dbb/v2r0
-packageBuildOutputs.sh: [INFO] **************************************************************
-
-packageBuildOutputs.sh: [INFO] Invoking the ArtifactRepositoryHelper groovy script.
-packageBuildOutputs.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/PackageBuildOutputs.groovy --workDir /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs --tarFileName package.tar --packagingPropertiesFile /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties --addExtension --publish --artifactRepositoryUrl "http://10.3.20.231:8081/artifactory" --versionName MortgageApplication.2023-09-22_13-55-20 --artifactRepositoryUser admin --artifactRepositoryPassword artifactoryadmin --artifactRepositoryName MortgageApplication-repo-local --artifactRepositoryDirectory main/build
-** PackageBuildOutputs start at 20230922.125616.056
-** Properties at startup:
-   addExtension -> true
-   artifactRepository.directory -> main/build
-   artifactRepository.password -> xxxxxx 
-   artifactRepository.repo -> MortgageApplication-repo-local
-   artifactRepository.url -> http://10.3.20.231:8081/artifactory
-   artifactRepository.user -> admin
-   buildReportOrder -> [/var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/BuildReport.json]
-   copyModeMap -> ["COPYBOOK": "TEXT", "COPY": "TEXT", "DBRM": "BINARY", "LOAD": "LOAD", "JCL": "TEXT"]
-   packagingPropertiesFile -> /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties
-   publish -> true
-   startTime -> 20230922.125616.056
-   tarFileName -> package.tar
-   verbose -> false
-   versionName -> MortgageApplication.2023-09-22_13-55-20
-   workDir -> /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs
-** Read build report data from /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/BuildReport.json
-** Removing Output Records without deployType or with deployType=ZUNIT-TESTCASE 
-** Files detected in /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/BuildReport.json
-   DBEHM.MORTGAGE.MAIN.BLD.DBRM(EPSCMORT), DBRM
-   DBEHM.MORTGAGE.MAIN.BLD.LOAD(EPSCMORT), CICSLOAD
-*** Number of build outputs to package: 2
-** Copying BuildOutputs to temporary package dir.
-     Copying DBEHM.MORTGAGE.MAIN.BLD.DBRM(EPSCMORT) to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.BLD.DBRM/EPSCMORT.DBRM with DBB Copymode BINARY
-     Copying DBEHM.MORTGAGE.MAIN.BLD.LOAD(EPSCMORT) to /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/tempPackageDir/DBEHM.MORTGAGE.MAIN.BLD.LOAD/EPSCMORT.CICSLOAD with DBB Copymode LOAD
-** Copying /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/BuildReport.json to temporary package dir as BuildReport.json.
-** Copying /var/dbb/extensions/dbb20/Pipeline/PackageBuildOutputs/packageBuildOutputs.properties to temporary package dir.
-** Creating tar file at /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/package.tar.
-** Package successfully created at /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/package.tar.
-** Uploading package to Artifact Repository http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-09-22_13-55-20/package.tar.
-** ArtifactRepositoryHelper started for upload of /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-09-22_13-55-20/package.tar
-** Uploading /var/dbb/pipelineBackend/workspace/MortApp/main/build-1/logs/package.tar to http://10.3.20.231:8081/artifactory/MortgageApplication-repo-local/main/build/MortgageApplication.2023-09-22_13-55-20/package.tar
-** Upload completed
-** Build finished
-packageBuildOutputs.sh: [INFO] Package Build Outputs Complete. rc=0
-
-rc=0
-
-```
-
-</details>
-
 ### ucdPackaging.sh
 
-This script is to execute the `dbb-ucd-packaging.groovy` that invokes the Urban Code Deploy (UCD) buztool utility, to publish the artifacts created by the DBB Build from a pipeline.
+This script invokes the Urban Code Deploy (UCD) buztool utility to publish the artifacts created by the DBB zBuilder build from a pipeline. The UCD packaging logic is implemented as a zBuilder custom task in [zBuilder/extensions/CreateUCDComponentVersion](../../zBuilder/extensions/CreateUCDComponentVersion).
 
 #### Invocation
 
@@ -763,7 +527,7 @@ ucdPackaging.sh: [INFO] **                 WorkDir: /var/dbb/pipelineBackend/tes
 ucdPackaging.sh: [INFO] **             UCD Version: MortgageApplication.ID
 ucdPackaging.sh: [INFO] **           UCD Component: MortgageApplication
 ucdPackaging.sh: [INFO] **      Artifacts Location: /var/dbb/pipelineBackend/test/MortApp/release/rel-1.0.0/build-1/logs/buildList.txt
-ucdPackaging.sh: [INFO] **    PackagingScript Path: /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy
+ucdPackaging.sh: [INFO] **    PackagingScript Path: /var/dbb/extensions/zBuilder/extensions/CreateUCDComponentVersion/groovy/CreateUCDComponentVersion.groovy
 ucdPackaging.sh: [INFO] **            BuzTool Path: /var/ucd-agent/bin/buztool.sh
 ucdPackaging.sh: [INFO] ** External Repository cfg:
 ucdPackaging.sh: [INFO] **    Packaging properties:
@@ -773,7 +537,7 @@ ucdPackaging.sh: [INFO] **        Pull Request URL: https://github.com/IBM/dbb/i
 ucdPackaging.sh: [INFO] **                DBB_HOME: /usr/lpp/dbb/v2r0
 ucdPackaging.sh: [INFO] **************************************************************
 ucdPackaging.sh: [INFO] Invoking the DBB UCD Packaging.
-ucdPackaging.sh: [INFO] groovyz  /var/dbb/extensions/dbb20/Pipeline/CreateUCDComponentVersion/dbb-ucd-packaging.groovy -b /var/ucd-agent/bin/buztool.sh -w /var/dbb/pipelineBackend/test/MortApp/release/rel-1.0.0/build-1/logs/buildList.txt -c  -v  --propertyFile  --packagingPropFiles  --pipelineURL https://github.com/IBM/dbb/issues/117 --gitBranch main   --pullRequestURL https://github.com/IBM/dbb/issues/117
+ucdPackaging.sh: [INFO] dbb build ucd --buztool /var/ucd-agent/bin/buztool.sh --component MortgageApplication --version MortgageApplication.ID --pipelineURL https://github.com/IBM/dbb/issues/117 --gitBranch main --pullRequestURL https://github.com/IBM/dbb/issues/117
 ```
 
 </details>
@@ -786,7 +550,7 @@ Depending on the selected Deployment tool, select either from the scripts for IB
 
 ### wazideploy-generate.sh
 
-This script invokes the Wazi Deploy Generate command to generate a Deployment Plan based on the content of a package. The package should be created with the `PackageBuildOutputs.groovy` script or through the `packageBuildOutputs.sh` script.
+This script invokes the Wazi Deploy Generate command to generate a Deployment Plan based on the content of a package. The package is published to the artifact repository by the zBuilder `Publish` task during the `impact` or `release` lifecycle.
 
 This script assesses the configuration option `publish` from the `pipelineBackend.config` file. In case the configuration has enabled the upload to the Artifact repository, the script computes the URL where the package is expected to be found, and passes the URL into the wazideploy-generate command. This means that wazideploy-generate will download the package from the Artifact repository and allows to restore the package on a different system. It requires to pass in the additional arguments `-P`, `-R`, `-B`
 
@@ -1217,7 +981,7 @@ deleteWorkspace.sh: [INFO] Workspace directory successfully deleted. rc=0
 
 Script to generate and run the necessary cleanup steps of DBB Metadatastore collections and build groups (build results), and the deletion of the build datasets using the [DeletePDS.groovy](../../Utilities/DeletePDS/README.md) utility.
 
-The script lists all the existing DBB collections obtained by applying a filter based on the zAppBuild naming conventions. It checks if Git branches corresponding to the provided application name exist in the Git repository. If one or more branches are found, it generates the necessary command files that contain the removal statements. The generated scripts can be can automatically executed, if the `-p` flag is passed to the script.
+The script lists all the existing DBB collections obtained by applying a filter based on the DBB zBuilder naming conventions. It checks if Git branches corresponding to the provided application name exist in the Git repository. If one or more branches are found, it generates the necessary command files that contain the removal statements. The generated scripts can be automatically executed, if the `-p` flag is passed to the script.
 
 #### Invocation
 
@@ -1242,7 +1006,7 @@ For the standalone implementation, use the following process:
 2. Clone the application repository including all remote references.
 3. Execute the `generateCleanupCommands.sh` script like in the above sample. The user executing the script needs proper permissions on the DBB Metadatastore.
 
-Please note that the script leverages the [utilities/dbbBuildUtils.sh](utilities/dbbBuildUtils.sh) to compute the build high-level qualifier (HLQ).
+Please note that the script leverages the [utilities/dbbzBuilderUtils.sh](utilities/dbbzBuilderUtils.sh) to compute the build high-level qualifier (HLQ).
 
 ### Script output
 

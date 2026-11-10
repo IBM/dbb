@@ -1,0 +1,117 @@
+---
+#
+# Licensed materials - Property of IBM
+# 5655-AC5 Copyright IBM Corp. 2024, 2026
+# All rights reserved
+# US Government users restricted rights  -  Use, duplication or
+# disclosure restricted by GSA ADP schedule contract with IBM Corp.
+#
+#######################################
+# Cobol UnitTest language configuration
+####################################### 
+
+version: 1.0.2
+tasks:
+  # Cobol UnitTest Language task
+  - language: CobolTestcase
+
+    # source file association patterns
+    sources:
+      - "**/testcase/*.cbl"
+      
+    # overridable variables
+    variables:
+      # conditional variable builds compile parameters i.e CICS,SQL
+      - name: compileParms
+        append:
+          - condition: ${IS_CICS}
+            value: CICS
+          - condition: ${IS_SQL}
+            value: SQL
+          - condition: 
+              exists: errPrefix
+            value: ADATA,EX(ADX(ELAXMGUX))
+          - condition: 
+              exists: debug
+              eval: ${debug}
+            value: TEST
+            
+      # default link edit parameters
+      - name: linkEditParms
+        value: MAP,RENT
+
+    # datasets that need to be created / validated for this language configuration
+    datasets:
+      - name: ${HLQ}.TEST.COBOL
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.DBRM
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.OBJ
+        options: cyl space(1,1) lrecl(80) dsorg(PO) recfm(F,B) dsntype(library)
+      - name: ${HLQ}.TEST.LOAD
+        options: cyl space(1,1) dsorg(PO) recfm(U) blksize(32760) dsntype(library)
+
+    # list of steps to execute for each program processed by this language configuration
+    steps:
+      # Copy test build file to data sets
+      - step: copySrcTest
+        type: copy
+        target: //'${HLQ}.TEST.COBOL(${MEMBER})'
+                
+      # COBOL compile step          
+      - step: compileTest
+        type: mvs
+        pgm: IGYCRCTL
+        parm: ${compileParms}
+        maxRC: 4
+        dds:
+          - { name: "SYSIN", dsn: "${HLQ}.TEST.COBOL(${MEMBER})", options: "shr", input: true }
+          - { name: "SYSLIN", dsn: "${HLQ}.OBJ(${MEMBER})", options: "shr", output: true }
+          - { name: "TASKLIB", dsn: "${SIGYCOMP}", options: "shr" }
+          - {                  dsn: "${SDFHLOAD}", condition: "${IS_CICS}", options: "shr" }
+          - {                 dsn: "${SDSNLOAD}", condition: "${IS_SQL}", options: "shr" }
+          - {                 dsn: "${SFELLOAD}", condition: { exists: "SFELLOAD" }, options: "shr" }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(133) recfm(f,b) new", logMode: "ASA_TEXT" }
+          - { name: "SYSMDECK", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT2", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT3", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT4", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT5", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT6", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT7", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT8", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new"}
+          - { name: "SYSUT9", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT10", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT11", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT12", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT13", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT14", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT15", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT16", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSUT17", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "SYSLIB", dsn: "${SEQASAMP}", options: "shr" } # use SBZUSAMP for zUnit
+          - {                 dsn: "${SDFHCOB}", condition: "${IS_CICS}", options: "shr" }
+          - {                 dsn: "${SCSQCOBC}", condition: "${IS_MQ}", options: "shr" }
+          - { name: "DBRMLIB", dsn: "${HLQ}.DBRM(${MEMBER})", condition: "${IS_SQL}", options: "shr", output: true, deployType: "DBRM" }          
+          - { name: "SYSADATA", condition: { exists: "errPrefix" }, options: "DUMMY" }
+          - { name: "SYSXMLSD", condition: { exists: "errPrefix" }, dsn: "${HLQ}.${errPrefix}.SYSXMLSD.XML", options: "tracks space(200,40) dsorg(PS) lrecl(16383) recfm(v,b) new keep" }
+
+
+      # Link-Edit step
+      - step: linkEditTest
+        type: mvs
+        pgm: IEWBLINK
+        parm: ${linkEditParms}
+        maxRC: 0
+        dds:
+          - { name: "SYSLIN", dsn: "${HLQ}.OBJ(${MEMBER})", options: "shr" }
+          - { name: "SYSLMOD", dsn: "${HLQ}.TEST.LOAD(${MEMBER})", options: "shr", output: true, deployType: "UNIT-TESTCASE" }
+          - { name: "SYSPRINT", log: "${STEP}-${FILE_NAME}.log", logEncoding: "${LOG_ENCODING}", options: "cyl space(5,5) unit(vio) lrecl(133) recfm(f,b) new", logMode: "ASA_TEXT" }
+          - { name: "SYSUT1", options: "cyl space(5,5) unit(vio) lrecl(80) recfm(f,b) new" }
+          - { name: "RESLIB", condition: { exists: RESLIB }, options: "shr" }
+          - { name: "SYSLIB", dsn: "${HLQ}.OBJ", options: "shr" }
+          - {                 dsn: "${SCEELKED}", options: "shr" }
+          - {                 dsn: "${SDFHLOAD}", condition: "${IS_CICS}", options: "shr" }
+          - {                 dsn: "${SDSNLOAD}", condition: "${IS_SQL}", options: "shr" }
+
