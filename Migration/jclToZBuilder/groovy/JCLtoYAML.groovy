@@ -102,7 +102,7 @@ class DD {
 		}
 
 		if (name == null) {
-			throw IllegalStateException("No name was set for this DD concatenation: " + DSNs.toString())
+			throw new IllegalStateException("No name was set for this DD concatenation: " + DSNs.toString())
 		}
 
 		ddList.add(DSNs.get(0).toYaml(config, name))
@@ -133,7 +133,7 @@ class Step {
 		String name = this.name == null ? "<STEP_NAME>" : this.name
 
 		if ("mvs".equals(type) == false && "job".equals(type) == false) {
-			throw IllegalStateException("Unknown step type '$type' found. Step: $name Program: $program")
+			throw new IllegalStateException("Unknown step type '$type' found. Step: $name Program: $program")
 		}
 
 		// General fields
